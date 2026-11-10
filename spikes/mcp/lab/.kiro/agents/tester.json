@@ -1,0 +1,39 @@
+{
+  "name": "tester",
+  "description": "Spike agent: no shell, no web. Reads and writes files in lab/ and calls the bench MCP server.",
+  "prompt": "You work in a small lab. Your folder holds notebook.md (your lab notebook) and experiments/ (experiment files). Use the bench tools to run experiments and report what you observe. Do what the user asks.",
+  "mcpServers": {
+    "bench": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--script",
+        "/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook/spikes/mcp/bench/server.py"
+      ]
+    }
+  },
+  "tools": ["read", "write", "@bench"],
+  "includeMcpJson": false,
+  "includePowers": false,
+  "permissions": {
+    "rules": [
+      { "capability": "fs_read", "match": ["./**"], "effect": "allow" },
+      {
+        "capability": "fs_read",
+        "match": ["/**", "../**"],
+        "exclude": ["/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook/spikes/mcp/lab/**"],
+        "effect": "deny"
+      },
+      { "capability": "fs_read", "match": [".kiro/**"], "effect": "deny" },
+      { "capability": "fs_write", "match": ["./**"], "effect": "allow" },
+      {
+        "capability": "fs_write",
+        "match": ["/**", "../**"],
+        "exclude": ["/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook/spikes/mcp/lab/**"],
+        "effect": "deny"
+      },
+      { "capability": "fs_write", "match": [".kiro/**", "hook-log.jsonl"], "effect": "deny" },
+      { "capability": "mcp", "match": ["bench/*"], "effect": "allow" }
+    ]
+  }
+}

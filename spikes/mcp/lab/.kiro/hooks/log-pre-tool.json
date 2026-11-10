@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Log tool call (pre)",
+      "trigger": "PreToolUse",
+      "description": "Append tool name and input to hook-log.jsonl before every tool call.",
+      "action": {
+        "type": "command",
+        "command": "sh .kiro/hooks/log.sh pre"
+      }
+    }
+  ]
+}
