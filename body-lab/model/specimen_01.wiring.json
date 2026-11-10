@@ -1,0 +1,13 @@
+{
+  "comment": "Hidden wiring: Kiro channel -> actuator, polarity. Never shown to Kiro.",
+  "control_hz": 50,
+  "trial_seconds": 5.0,
+  "settle_seconds": 1.0,
+  "channels": [
+    {"channel": 0, "actuator": "jaw", "sign": 1},
+    {"channel": 1, "actuator": "wheel", "sign": -1},
+    {"channel": 2, "actuator": "shoulder", "sign": 1},
+    {"channel": 3, "actuator": "leg", "sign": -1},
+    {"channel": 4, "actuator": "elbow", "sign": 1}
+  ]
+}
