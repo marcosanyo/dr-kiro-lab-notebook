@@ -36,8 +36,13 @@ How the term list is built, at scan time, never copied by hand into the scanner:
 2. Remove the **allow list**: everything Dr. Kiro is told on purpose. That is each application's declared
    interface (knob names and ranges, number of channels, measurement names, picture, budget), taken from the
    application's own declaration, not from a second copy.
-3. Remove the **stop list**: ordinary English words that would flag text that is not a leak. The stop list is a
-   reviewed file, `.kiro/blind-scan/stop-list.txt`. Adding or removing a word needs the user's approval.
+3. Remove the **stop list**: names that say nothing about the body's structure, such as material and texture
+   names. The stop list is a reviewed file, `.kiro/blind-scan/stop-list.txt`. Adding or removing a word needs the
+   user's approval.
+
+Every part, joint and actuator name stays forbidden at the builder level, even when it is an ordinary English word.
+The builder words its own text in `lab/`, bench output and the notebook to avoid them; it does not add them to the
+stop list to make a check pass. There is no proximity rule: a forbidden term fails the scan wherever it appears.
 
 Two levels, by who wrote the text:
 
