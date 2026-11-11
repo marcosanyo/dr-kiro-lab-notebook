@@ -78,7 +78,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     outcome changes.
   - _Requirements: 6.4, 6.5, 7.7, 8.3, 8.4_
 
-- [ ] 9. Discovered spec table
+- [x] 9. Discovered spec table
   - `discovered.py`: find the table as the last level-2 section of `design.md`, parse the seven columns,
     `check_row(row, record)` for the four statuses and "replaced by".
   - Unit tests for every status rule, including `validated` with only inside or not-comparable hits (refused) and
