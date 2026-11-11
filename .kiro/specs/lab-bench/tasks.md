@@ -120,7 +120,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     folder.
   - _Requirements: 1.1, 1.3, 1.4, 3.1-3.4, 6, 7, 8, 9.1, 9.2, 10, 11, 13.1, 13.2, 13.5, 15.8_
 
-- [ ] 14. Full session against the fake application
+- [x] 14. Full session against the fake application
   - One example-based test that runs a whole session through the core interface: hypotheses in all four phases,
     compare and sweep experiments, a not-measured outcome, verdicts of all three kinds, a discovered spec table
     with each status, end, seal, `bench-verify` and `bench-scan` on the sealed folder.
