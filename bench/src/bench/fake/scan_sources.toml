@@ -1,0 +1,7 @@
+# Blind scan sources of the fake application (design 11.1). Paths are relative to this file.
+# "gain" in the fake model is also a knob name, so the allow list removes it; "grid" is on the stop list.
+adapter = "bench.fake.adapter:FakeAdapter"
+
+[[source]]
+path = "model/fake_model.json"
+extractor = "fake-json"

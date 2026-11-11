@@ -85,7 +85,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     `observed` with not-comparable hits (accepted).
   - _Requirements: 12.1-12.4_
 
-- [ ] 10. Fake application
+- [x] 10. Fake application
   - Function knob, number knob, two scalar measurements and one series, one declared not-measured outcome
     triggered by a fixed rule on the inputs, a small PNG without text chunks, `fake = True`.
   - `fail_on` and a request for a not-measured outcome; `model/fake_model.json` with made-up part names and
