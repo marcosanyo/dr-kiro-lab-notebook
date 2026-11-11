@@ -21,3 +21,6 @@ node_modules/
 cdk.out/
 
 # Note: /.kiro and every lab/.kiro must stay tracked (hackathon rule). Do not add them here.
+# MCP spike: only the record of what was learned is kept
+spikes/mcp/*
+!spikes/mcp/results.md

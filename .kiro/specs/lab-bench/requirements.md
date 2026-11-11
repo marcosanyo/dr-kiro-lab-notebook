@@ -15,7 +15,7 @@ The requirements are in two groups:
 - **Core** (Requirements 1-16): gates, records, snapshots, the sealed session record, the adapter contract, the
   blind scan, and the property-based tests. The core does not depend on the front end.
 - **Front end** (Requirement 17): how Dr. Kiro calls the bench, its permissions, how pictures reach it, and long
-  and parallel runs. Left open until the MCP spike in `spikes/mcp/` reports.
+  and parallel runs. Decided after the MCP spike; its results are in `spikes/mcp/results.md`.
 
 Each requirement says which Kiro it is about. "Dr. Kiro" is the experimenter agent. "The builder" is Kiro working
 in this repository, or a person operating the bench.
@@ -456,16 +456,91 @@ for actions nobody thought to try.
 
 # Front end
 
-### Requirement 17: Front end (open)
 
-Left open until the MCP spike in `spikes/mcp/` reports. Nothing in the core depends on it.
+### Requirement 17: Front end
 
-Topics to specify then:
-- how Dr. Kiro calls the bench actions;
-- Dr. Kiro's permissions, and the two lab hooks from the prototype (one that stops reads and writes outside the
-  lab's notebook files, one that logs every action);
-- how pictures reach Dr. Kiro;
-- long runs (wind-tunnel runs take minutes) and parallel runs.
+**User story:** As Dr. Kiro, I want to run the bench through a few tools and open my pictures as files, so that I
+can experiment without a shell. As the builder, I want Dr. Kiro kept inside its lab by something that refuses, not
+by something that asks, so that no session waits for a person.
 
-Open decision: `[DECIDE after the MCP spike: the bench is an MCP server and Dr. Kiro has no shell; or the bench is
-one command and Dr. Kiro's shell allows only that.]`
+Decided by the user after the MCP spike (`spikes/mcp/results.md`): the front end is an MCP server and Dr. Kiro has
+no shell; pictures are returned as files in the lab with their paths; parallel calls are queued and run one at a
+time; a pre-tool hook refuses any file read or write outside the lab folder, because the spike's deny rule asked
+instead of denying. The blind needs nothing extra here: the core's scan (Requirement 15) already covers everything
+the front end writes or returns. Nothing in the core depends on this requirement.
+
+#### Acceptance criteria
+
+*Calling the bench*
+
+1. THE front end SHALL be an MCP server over stdio, named `bench`, that turns Dr. Kiro's tool calls into core calls
+   (Requirement 1) and returns the core's outcome. It SHALL add no gate of its own.
+2. THE front end SHALL expose one tool for each bench action that Dr. Kiro uses: register hypothesis, run
+   experiment, record verdict, end session. Start session and stop session SHALL NOT be tools; they are the
+   builder's (Requirements 3.1 and 11.4).
+3. THE front end SHALL return the three outcomes of Requirement 1.1 as follows:
+   - ran: a tool result holding only the measurements, the not-measured outcomes, the picture paths and the
+     remaining budget (Requirement 7.6);
+   - refused: a tool error whose text is the refusal reason in Dr. Kiro's terms, so that Dr. Kiro can fix it;
+   - bench failure: the session is sealed as stopped (Requirement 11.3), the reason is shown in Dr. Kiro's terms
+     (Requirement 11.5), and every later call is refused.
+4. THE tool names, descriptions and input schemas SHALL be written by the builder and SHALL describe only what the
+   adapter declares (Requirement 2.2).
+5. THE session's configuration (budget, seed, folders) SHALL come from the builder at session start
+   (Requirement 1.3). Dr. Kiro SHALL NOT be able to set or change it through a tool input.
+
+*Dr. Kiro's agent and permissions*
+
+6. Dr. Kiro's agent definition SHALL give it file read and write tools and the bench tools, and nothing else: no
+   shell, no web access, no other MCP server (including a workspace MCP configuration), and no powers.
+7. Dr. Kiro SHALL NOT be able to read or change its own agent definition, hooks, steering or MCP configuration
+   (the lab's `.kiro/` folder), nor add or start an MCP server. A deny rule on that folder SHALL enforce this.
+8. A pre-tool hook in the lab's `.kiro/` SHALL refuse every tool call that reads or writes a path outside the lab
+   folder. THE hook SHALL resolve the path (relative paths, `..` segments and symbolic links) before it compares,
+   and SHALL NOT rely on a permission rule alone. A call outside the lab SHALL end as a refusal, never as a prompt
+   to a person.
+9. IF the hook cannot read its input, cannot resolve a path, or meets a call whose input it cannot classify, THEN
+   it SHALL refuse the call, with the blocking exit code and a reason in Dr. Kiro's terms (the folder rule, not the
+   hook's internals). It SHALL NOT let the call through.
+10. THE content and file-name search tools, whose input has no path, SHALL search only the workspace, and the
+    workspace SHALL be the lab folder (Requirement 17.12). The hook SHALL NOT check them further.
+11. A second hook SHALL record the name and input of every tool call, before and after it runs. THE log SHALL be
+    kept outside the lab, for the builder, and SHALL NOT be part of the sealed session record. This includes the
+    hook's own refusals.
+12. Dr. Kiro SHALL run only in Kiro CLI, started with the lab folder as the working folder. The Kiro IDE is for the
+    builder and for showing the specs, and is never used to run Dr. Kiro.
+
+*Pictures*
+
+13. WHEN an experiment ran, THE front end SHALL write each trial's picture as a file in a pictures folder in the
+    lab, and SHALL return its path, relative to the lab, with that trial's measurements. THE front end SHALL NOT
+    return image content in a tool result.
+14. THE picture's file name SHALL identify the experiment and the trial.
+15. THE front end SHALL have written every picture file before it returns the result. IF a file cannot be written,
+    THEN it is a bench failure.
+16. THE file in the lab is a copy. The picture in the sealed record (Requirement 13.2) is the one the adapter
+    returned, and a change to the lab's copy SHALL NOT change the record.
+
+*Long and parallel calls*
+
+17. THE front end SHALL keep a call open until its bench action ends and SHALL return the result in that same call.
+    It SHALL NOT hand back a job id for Dr. Kiro to poll.
+18. THE front end SHALL support a single call of up to 900 s. The spike returned calls of 120 s, 300 s and 900 s in
+    Kiro CLI with no timeout (`spikes/mcp/results.md`, Q4). Polling SHALL NOT be used.
+19. THE front end SHALL queue calls that arrive while another is being applied, and apply them one at a time in the
+    order they arrived (Requirement 1.4). Each queued call SHALL be checked against the state the previous call
+    left. For example, of several parallel `run experiment` calls only the first can run; the others are refused
+    because an earlier experiment has no verdict (Requirement 7.3), and use no budget.
+20. THE session record SHALL show the order in which the calls were applied (Requirement 3.3).
+
+*Tests*
+
+21. THE confinement hook SHALL have two tests: a call with a path outside the lab is refused with the blocking exit
+    code; and malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code.
+
+#### Notes
+
+- The spike opened a PNG only. Whether Dr. Kiro's file tool can show the wind-tunnel's vorticity animation is not
+  verified; the `wind-tunnel` spec decides the picture format with the adapter.
+- Not tested in the spike: calls longer than 900 s, and a write outside the lab (the spike's write rule has the
+  same patterns as the read rule that asked).
