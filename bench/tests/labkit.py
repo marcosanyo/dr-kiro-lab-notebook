@@ -1,6 +1,7 @@
 """Helpers for session tests. A temporary lab: Dr. Kiro's spec files, the experiments folder, and a
 session config against the fake application."""
 
+import os
 import textwrap
 from dataclasses import replace
 from pathlib import Path
@@ -87,3 +88,8 @@ class Lab:
         outcome = Session.start(replace(self.config, **changes))
         assert isinstance(outcome, Ran), outcome
         return outcome.result
+
+
+def examples(count: int) -> int:
+    """Property test example counts, multiplied by BENCH_PROPERTY_SCALE (default 1) for thorough runs."""
+    return count * int(os.environ.get("BENCH_PROPERTY_SCALE", "1"))

@@ -133,6 +133,6 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     failure).
   - _Requirements: 16.1-16.3, 16.5, 16.8_
 
-- [ ] 16. Final checkpoint — **Stop and ask**
+- [x] 16. Final checkpoint — **Stop and ask**
   - Run all tests (property tests at a raised example count) and ruff. Report the results, the test counts and
     run times as measured, and anything left for the front end.

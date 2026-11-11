@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 from bench.record import chain
 from bench.record.chain import VerifyError, verify
 from bench.record.store import Store, authored
+from labkit import examples
 
 json_leaf = (
     st.none()
@@ -53,7 +54,7 @@ def _build(folder: Path, specs: list) -> Path:
     return sealed
 
 
-@settings(max_examples=150, deadline=None)
+@settings(max_examples=examples(150), deadline=None)
 @given(
     specs=st.lists(entry_spec, min_size=1, max_size=6),
     pick=st.floats(min_value=0, max_value=1, exclude_max=True),

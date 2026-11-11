@@ -23,7 +23,7 @@ from bench.adapter import NotMeasured, Picture
 from bench.core.outcome import BenchFailure, Message, Ran, Refused
 from bench.core.session import Accepted, RunResult, Session
 from bench.fake.adapter import FAIL_AT_GAIN, FakeAdapter
-from labkit import DESIGN_START, SPEC_DIR, Lab, exp_file, hyp_block
+from labkit import DESIGN_START, SPEC_DIR, Lab, examples, exp_file, hyp_block
 
 BUDGET = 8
 HIDS = ["H1", "H2", "H3"]
@@ -572,7 +572,7 @@ def replay_and_compare(root: Path, script: list[tuple], live: Lab) -> None:
 
 
 SessionMachine.TestCase.settings = settings(
-    max_examples=150,
+    max_examples=examples(150),
     stateful_step_count=50,
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],

@@ -10,6 +10,7 @@ from bench.adapter import Declaration, FunctionKnob, Measurement
 from bench.lang.check import LangRefusal, Source, parse_and_check
 from bench.lang.evaluate import Interpreter
 from bench.lang.experiment import load
+from labkit import examples
 
 DECL = Declaration(
     knobs=(FunctionKnob("drive", -1.0, 1.0, (0.0, 0.5, 1.0), 1.0),),
@@ -89,7 +90,7 @@ FORBIDDEN_STATEMENTS = [
 ]
 
 
-@settings(max_examples=300, deadline=None)
+@settings(max_examples=examples(300), deadline=None)
 @given(snippet=st.sampled_from(FORBIDDEN_STATEMENTS), inside=st.booleans())
 def test_forbidden_constructs_are_refused(snippet: str, inside: bool) -> None:
     if inside and not snippet.startswith(("def ", "@", "async ", "class ", "import ", "from ")):
@@ -214,7 +215,7 @@ def programs(draw: st.DrawFn) -> str:
     )
 
 
-@settings(max_examples=400, deadline=None)
+@settings(max_examples=examples(400), deadline=None)
 @given(program=programs(), bound=st.integers(min_value=1, max_value=3000), t=NUMBERS, a=NUMBERS)
 def test_allowed_programs_never_raise_and_respect_the_bound(program: str, bound: int, t: str, a: str) -> None:
     src = Source("experiments/e.py", program)

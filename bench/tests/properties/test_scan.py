@@ -7,6 +7,7 @@ from hypothesis import strategies as st
 
 from bench.scan.scan import Scanner
 from bench.scan.terms import AppSources
+from labkit import examples
 
 SYLLABLES = ["zor", "quin", "blat", "dle", "frob", "wob", "bet", "nic", "plax", "trov", "gub", "yeld"]
 FILLER = [
@@ -82,7 +83,7 @@ def scenario(draw: st.DrawFn) -> tuple[Scanner, str, str, str, str]:
     return scanner, text, harmless, form, f"{names[0]}_model.xml"
 
 
-@settings(max_examples=300, deadline=None)
+@settings(max_examples=examples(300), deadline=None)
 @given(case=scenario())
 def test_planted_terms(case: tuple[Scanner, str, str, str, str]) -> None:
     scanner, text, harmless, form, _ = case
@@ -104,7 +105,7 @@ LEAKS = st.sampled_from(
 )
 
 
-@settings(max_examples=200, deadline=None)
+@settings(max_examples=examples(200), deadline=None)
 @given(case=scenario(), leak=LEAKS, level=st.sampled_from(["builder", "dr-kiro"]))
 def test_paths_file_names_and_credentials_at_both_levels(
     case: tuple[Scanner, str, str, str, str], leak: tuple[str, set[str]], level: str
