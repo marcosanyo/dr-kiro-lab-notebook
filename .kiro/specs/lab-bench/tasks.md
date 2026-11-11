@@ -175,8 +175,8 @@ one place where the MCP SDK is imported.
   - Exactly two tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
     code 2; malformed input is refused with exit code 2.
   - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
-    `read_file`, `fs_write`, `fs_append` (field `path`); `file_search`, `grep_search`, `tool_load` and
-    `mcp_bench_*` (no path). Any other tool is refused.
+    `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
+    and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
   - _Requirements: 17.7-17.11, 17.21_
 
 - [ ] 21. Check by hand in Kiro CLI — **Stop and ask**
@@ -186,7 +186,9 @@ one place where the MCP SDK is imported.
     - the agent lists the four tools and calls each one;
     - `BENCH_SESSION_CONFIG` reaches the server (`${BENCH_SESSION_CONFIG}` in `env`), and `BENCH_HOOK_LOG` reaches
       the hooks;
-    - one read and one write outside the lab are refused by the hook, not asked about;
+    - one read and one write outside the lab are refused by the hook, not asked about; an in-place edit with
+      `str_replace` inside the lab works, and one outside is refused (this also confirms its `path` field in the
+      hook log);
     - a write inside `.kiro/` is denied.
   - Report what failed. A failure is not worked around (`rules.md` 2).
   - _Requirements: 17.7, 17.8, 17.11, 17.12_

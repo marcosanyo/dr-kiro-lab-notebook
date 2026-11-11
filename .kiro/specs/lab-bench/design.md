@@ -652,11 +652,14 @@ stderr. This catch converts a failure into a refusal; it does not hide it.
 
 Tool table. The names and path fields are those in the spike's hook log (`hook-log.jsonl`): `read_file`,
 `list_directory`, `fs_write` and `fs_append` carry `path`; `file_search`, `grep_search`, `tool_load` and the bench
-tools carry none. A tool not in the table is refused until it is seen in a hook log and added here:
+tools carry none. `str_replace` was added at the user's request, so that Dr. Kiro edits `requirements.md` and the
+discovered spec table in place; it takes the same path check as `fs_write`. It did not appear in the spike's hook
+log: its `path` field is taken from the Kiro tool definition, and task 21 confirms it. `delete_file` stays refused.
+A tool not in the table is refused until it is seen in a hook log and added here:
 
 | Class | Tools (path field) |
 |---|---|
-| Path-taking | `read_file` (`path`), `list_directory` (`path`), `fs_write` (`path`), `fs_append` (`path`) |
+| Path-taking | `read_file` (`path`), `list_directory` (`path`), `fs_write` (`path`), `fs_append` (`path`), `str_replace` (`path`) |
 | Path-less, allowed | `file_search`, `grep_search`, `tool_load`, `mcp_bench_register_hypothesis`, `mcp_bench_run_experiment`, `mcp_bench_record_verdict`, `mcp_bench_end_session` |
 
 Precondition for 17.10: Dr. Kiro runs only in Kiro CLI, started with the lab as the working folder (17.12), so
