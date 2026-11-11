@@ -21,7 +21,11 @@ json_leaf = (
 )
 json_value = st.recursive(
     json_leaf,
-    lambda inner: st.lists(inner, max_size=4) | st.dictionaries(st.text(max_size=8), inner, max_size=4),
+    # "blob" is the key of a blob reference, so plain values never use it.
+    lambda inner: (
+        st.lists(inner, max_size=4)
+        | st.dictionaries(st.text(max_size=8).filter(lambda k: k != "blob"), inner, max_size=4)
+    ),
     max_leaves=12,
 )
 author = st.sampled_from(["bench", "dr-kiro"])

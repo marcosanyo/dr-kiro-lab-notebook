@@ -18,6 +18,9 @@ from bench.record.chain import (
     ENTRY_KINDS,
     GENESIS,
     LOG_NAME,
+    VerifyError,
+    blob_refs,
+    check_blob_ref,
     entry_hash,
     sha256_hex,
     verify,
@@ -110,6 +113,13 @@ class Store:
             raise StoreError(f"unknown entry kind {kind!r}")
         if self.sealed:
             raise StoreError("the record is sealed")
+        for ref in blob_refs(body):
+            try:
+                check_blob_ref(ref, kind)
+            except VerifyError as error:
+                raise StoreError(f"entry would not verify: {error}") from error
+            if not (self.folder / BLOB_DIR / ref["blob"]).is_file():
+                raise StoreError(f"entry references blob {ref['blob']} that is not stored")
         prev = self._entries[-1]["hash"] if self._entries else GENESIS
         entry: dict[str, Any] = {"seq": len(self._entries) + 1, "kind": kind, "body": body, "prev": prev}
         entry["hash"] = entry_hash(entry)

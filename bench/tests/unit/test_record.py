@@ -110,3 +110,13 @@ def test_truncated_log_fails(tmp_path: Path) -> None:
     log.write_bytes(b"\n".join(lines[:2]) + b"\n")
     with pytest.raises(VerifyError):
         verify(sealed, sealed=True)
+
+
+def test_append_refuses_a_malformed_or_missing_blob_reference(tmp_path: Path) -> None:
+    (tmp_path / "state").mkdir()
+    store = Store.create(tmp_path / "state" / "s1")
+    with pytest.raises(StoreError, match="would not verify"):
+        store.append("start", {"x": {"blob": None}})
+    with pytest.raises(StoreError, match="not stored"):
+        store.append("start", {"x": {"blob": "a" * 64, "author": "bench", "media": "text/plain"}})
+    assert store.entries == ()

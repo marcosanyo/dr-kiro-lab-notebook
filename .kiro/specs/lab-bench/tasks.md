@@ -126,7 +126,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     with each status, end, seal, `bench-verify` and `bench-scan` on the sealed folder.
   - _Requirements: 14.4_
 
-- [ ] 15. Stateful property test of the gates
+- [x] 15. Stateful property test of the gates
   - `RuleBasedStateMachine` per design 13, with a reference model.
   - Invariants P1-P14 after every step; P16 (same seed and actions give byte-identical sealed records); P19 (a
     refusal quoting Dr. Kiro's text with a derived term stays a refusal; the same term in bench wording is a bench

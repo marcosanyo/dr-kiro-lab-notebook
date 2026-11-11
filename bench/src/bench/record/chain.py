@@ -73,7 +73,7 @@ def blob_refs(value: Any) -> Iterator[dict[str, Any]]:
             yield from blob_refs(v)
 
 
-def _check_blob_ref(ref: dict[str, Any], where: str) -> None:
+def check_blob_ref(ref: dict[str, Any], where: str) -> None:
     if set(ref) != {"blob", "author", "media"}:
         raise VerifyError(where, f"blob reference has keys {sorted(ref)}")
     if not isinstance(ref["blob"], str) or not _HEX64.fullmatch(ref["blob"]):
@@ -121,7 +121,7 @@ def read_entries(folder: Path) -> list[dict[str, Any]]:
         if entry["hash"] != entry_hash(without):
             raise VerifyError(where, "hash does not match the entry")
         for ref in blob_refs(entry["body"]):
-            _check_blob_ref(ref, where)
+            check_blob_ref(ref, where)
         entries.append(entry)
         prev = entry["hash"]
     return entries
