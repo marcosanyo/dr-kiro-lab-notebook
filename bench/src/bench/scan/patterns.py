@@ -1,0 +1,72 @@
+"""Path, file name and credential patterns of the blind scan (design 11.2). Scanned at both levels.
+
+Absolute paths are recognised by their root folder, not by any `/x/y`, so that division in experiment code
+(`(t + a)/period/2`) is not mistaken for a path.
+"""
+
+import re
+from collections.abc import Iterable
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Match:
+    start: int
+    end: int
+    kind: str  # "path" | "file name" | "credential"
+    text: str
+
+
+ROOTS = (
+    "home", "root", "etc", "tmp", "usr", "var", "opt", "mnt", "srv", "dev", "proc", "sys", "bin", "lib",
+    "private", "projects", "workspace", "app", "Users", "Volumes",
+)  # fmt: skip
+
+_PATHS = [
+    re.compile(r"(?<![\w.])\.\.(?=[/\\])"),
+    re.compile(rf"(?<![\w.~/:-])/(?:{'|'.join(ROOTS)})(?=/|\b)[\w./-]*"),
+    re.compile(r"(?<![\w/])~/[\w./-]*"),
+    re.compile(r"(?<![\w])[A-Za-z]:\\[\w.\\ -]*"),
+    re.compile(r"(?i)(?<![\w-])(?:model|adapter)[/\\]"),
+]
+
+_CREDENTIALS = [
+    re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
+    re.compile(r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----"),
+    re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{30,}"),
+    re.compile(
+        r"(?i)(?<![A-Za-z0-9])(?:api[_-]?key|secret|token|password|passwd|access[_-]?key)(?![A-Za-z0-9])"
+        r"[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9/+=_-]{16,}"
+    ),
+]
+
+
+def redact(text: str) -> str:
+    return text[:4] + "…" if len(text) > 4 else "…"
+
+
+class Patterns:
+    def __init__(self, file_names: Iterable[str], solver_dirs: Iterable[str]) -> None:
+        names: set[str] = set()
+        for name in file_names:
+            names.add(name)
+            names.add(name.split(".", 1)[0])
+        self._names = [
+            re.compile(rf"(?i)(?<![\w.-]){re.escape(n)}(?![\w-])")
+            for n in sorted(names, key=len, reverse=True)
+            if n
+        ]
+        self._dirs = [re.compile(rf"(?i)(?<![\w-]){re.escape(d)}[/\\]") for d in sorted(set(solver_dirs))]
+
+    def find(self, text: str) -> list[Match]:
+        found: list[Match] = []
+        for pattern in _PATHS + self._dirs:
+            found += [Match(m.start(), m.end(), "path", m.group()) for m in pattern.finditer(text)]
+        for pattern in self._names:
+            found += [Match(m.start(), m.end(), "file name", m.group()) for m in pattern.finditer(text)]
+        for pattern in _CREDENTIALS:
+            found += [
+                Match(m.start(), m.end(), "credential", redact(m.group())) for m in pattern.finditer(text)
+            ]
+        return sorted(found, key=lambda m: (m.start, m.kind))

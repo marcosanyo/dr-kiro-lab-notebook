@@ -93,7 +93,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
   - Unit tests: determinism, the not-measured trigger, the failure trigger.
   - _Requirements: 14.1-14.3, 14.5_
 
-- [ ] 11. Blind scan
+- [x] 11. Blind scan
   - `tokens.py`, `terms.py` (extractors `mjcf`, `wiring-json`, `fake-json`; source file names and stems),
     `patterns.py` (paths, file names, credentials), `levels.py` (lab folder rules, recorded authors,
     `.authors.json` sidecars), `scan.py` and `bench-scan`.
