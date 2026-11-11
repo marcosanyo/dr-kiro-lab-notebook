@@ -293,6 +293,10 @@ record can be trusted.
 4. THE bench SHALL make every record entry append-only: no entry is changed or removed after it is written.
 5. THE bench SHALL record who wrote each piece of text in the record (the bench or Dr. Kiro), so that the blind
    scan can apply the right level to it (Requirement 15).
+6. WHEN Dr. Kiro gives the bench a path outside the lab (absolute, with a `..` part, resolving outside the lab
+   folder, or flagged by the blind scan), THE bench SHALL refuse the action without echoing the path, SHALL record
+   the refusal with "a path outside the lab" in place of the path, and SHALL write the full path to the
+   builder-side log only. The record keeps the fact that Dr. Kiro tried, and the session can still be sealed.
 
 ### Requirement 10: Snapshots of Dr. Kiro's spec files
 

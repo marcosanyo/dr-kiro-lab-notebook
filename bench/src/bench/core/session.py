@@ -70,6 +70,8 @@ WITHHELD = "the bench stopped the session: its output did not pass the blind che
 ADAPTER_RAISED = "the trial stopped with an error in the application"
 ADAPTER_BROKE_CONTRACT = "the trial result did not meet the application contract"
 SEAL_FAILED = "the session could not be sealed"
+# Recorded in place of a path outside the lab (Requirement 9.6); the path itself goes to builder.log only.
+OUTSIDE_PATH = "a path outside the lab"
 
 
 class SessionError(RuntimeError):
@@ -459,18 +461,33 @@ class Session:
         )
         return Ran(Accepted(self.state.remaining))
 
+    def outside_path(self, path: object) -> bool:
+        """A path that is absolute, has a `..` part, resolves outside the lab, or that the blind scan flags.
+        Such a path is never echoed to Dr. Kiro and never written to the record (Requirement 9.6)."""
+        if not isinstance(path, str):
+            return False
+        if Path(path).is_absolute() or ".." in Path(path).parts:
+            return True
+        if not self._lab_file(path).resolve().is_relative_to(self._lab):
+            return True
+        return bool(self.scanner.scan_text(path, "dr-kiro", "path"))
+
     def run(self, experiment_path: str) -> Outcome:
-        given = {"path": authored("dr-kiro", str(experiment_path))}
+        if self.outside_path(experiment_path):
+            self.store.builder_log(f"run named a path outside the lab: {experiment_path!r}")
+            given = {"path": authored("bench", OUTSIDE_PATH)}
+        else:
+            given = {"path": authored("dr-kiro", str(experiment_path))}
         return self._act("run", given, lambda: self._run(experiment_path))
 
     def _experiment_file(self, path: str) -> tuple[Path, str]:
-        shown = Quote(str(path), str(path) or "(empty)", 1)
         if not isinstance(path, str) or not path:
             raise _refuse("give the experiment file's path inside the lab")
-        # A path that points outside the experiments folder is not echoed back: the blind scan flags such
-        # paths at every level, and quoting it would turn a fixable refusal into a bench failure.
-        if Path(path).is_absolute():
-            raise _refuse("the experiment path must be relative to the lab")
+        # A path outside the lab is not echoed back: the blind scan flags such paths at every level, and
+        # quoting it would turn a fixable refusal into a bench failure.
+        if self.outside_path(path):
+            raise _refuse(f"the experiment file must be a plain path inside {self.config.experiments_dir}")
+        shown = Quote(path, path, 1)
         experiments = self._lab_file(self.config.experiments_dir).resolve()
         full = self._lab_file(path).resolve()
         if not full.is_relative_to(experiments):

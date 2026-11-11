@@ -94,8 +94,11 @@ class Session:
 - Results: `run` returns the experiment id, each trial's id, measurements (or not-measured outcomes) and picture,
   and the remaining budget. `register`, `verdict` and `end` return only the remaining budget. Condition classes,
   outcomes and flags are recorded for the notebook, not returned. Paths inside the bench never reach Dr. Kiro.
-- A path that points outside the experiments folder is not echoed back in a refusal, because the blind scan flags
-  such paths at every level.
+- A path outside the lab (absolute, with a `..` part, resolving outside the lab folder, or flagged by the blind
+  scan) is never echoed back in a refusal and never written to the record. The refusal entry records "a path
+  outside the lab" as bench text in place of the path, and the full path goes to `builder.log` (9.6). Without
+  this, one mistyped path would make the whole session impossible to seal, because the scan flags paths at every
+  level.
 - `Outcome` is one of `Ran(result)`, `Refused(message)`, `BenchFailure(message)` (1.1).
 - `Message` is a list of spans: `BenchText(text)` written by the bench, and `Quote(text, file, line)` copied from
   Dr. Kiro's files. Every span carries its author, so the scan applies the right level (15.4, 15.5, 15.8). The

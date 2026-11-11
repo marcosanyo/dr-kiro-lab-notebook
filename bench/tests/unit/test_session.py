@@ -116,8 +116,9 @@ def test_run_records_and_returns_only_measurements_pictures_and_budget(lab: Lab)
 def test_run_gates_in_order(lab: Lab) -> None:
     session = lab.start(adapter=FakeAdapter(budget=3))
     refused(session.run("experiments/none.py"), "does not exist")
-    refused(session.run("../outside.py"), "must be inside experiments")
-    refused(session.run("/etc/passwd"), "relative to the lab")
+    refused(session.run("../outside.py"), "must be a plain path inside experiments")
+    refused(session.run("/etc/passwd"), "must be a plain path inside experiments")
+    refused(session.run(".kiro/specs/lab/tasks.md"), "must be inside experiments")
     refused(session.run(lab.experiment("e0.py", exp_file("H1", [[0.5, 1.0]]))), "is not registered")
     registered(lab, session)
     refused(session.run(lab.experiment("bad.py", "# H1\nimport os\n")), "only `import math`")
@@ -335,3 +336,29 @@ def test_record_has_no_absolute_paths(lab: Lab) -> None:
     log = (session.store.folder / "log.jsonl").read_text()
     assert str(lab.root) not in log
     assert all(json.loads(line)["kind"] for line in log.splitlines())
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "../../model/zorblat.xml",
+        "/Users/someone/lab/experiments/e.py",
+        "experiments/../../x.py",
+        "~/x.py",
+        "experiments/model/x.py",
+    ],
+)
+def test_outside_path_refusal_is_recorded_without_the_path_and_seals(lab: Lab, path: str) -> None:
+    session = lab.start()
+    refused(session.run(path), "must be a plain path inside experiments")
+    refusal = session.store.entries[-1]
+    assert refusal["kind"] == "refusal"
+    assert refusal["body"]["given"]["path"] == {"author": "bench", "text": "a path outside the lab"}
+    assert repr(path) in (session.store.folder / "builder.log").read_text()
+    assert isinstance(session.stop("test over"), Ran)
+    sealed = session.sealed_path
+    assert sealed is not None
+    contents = (sealed / "log.jsonl").read_text() + "".join(
+        b.read_text(errors="replace") for b in (sealed / "blobs").iterdir()
+    )
+    assert path not in contents and path.replace("/", "\\/") not in contents
