@@ -7,7 +7,7 @@ clean. Tests use only the fake application or small hand-made fixtures; no code 
 
 A task marked **Stop and ask** ends with a report to the user, and the next task waits for the answer.
 
-- [ ] 1. Set up the `bench` project
+- [x] 1. Set up the `bench` project
   - Create `bench/` as a `uv` project named `lab-bench`, Python 3.12, with the package layout of design section 2.
   - Dev dependencies: `pytest`, `hypothesis`, `ruff`. No runtime dependencies.
   - Console scripts `bench-scan` and `bench-verify` (stubs that exit non-zero with "not implemented").

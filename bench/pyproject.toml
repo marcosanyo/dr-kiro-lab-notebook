@@ -1,0 +1,56 @@
+[project]
+name = "lab-bench"
+version = "0.1.0"
+description = "The lab bench: gates, records and the blind scan for Dr. Kiro's experiments."
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.scripts]
+bench-scan = "bench.scan.scan:main"
+bench-verify = "bench.record.chain:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "bench"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.15",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-ra"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "TID", "BLE", "S110", "SIM"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+# Requirement 1.2: the core imports no front end, transport, agent framework or hook.
+# The front end (Requirement 17) will live outside this package and is not bound by this list.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"mcp".msg = "The core must not import a front end or transport (Requirement 1.2)."
+"fastmcp".msg = "The core must not import a front end or transport (Requirement 1.2)."
+"asyncio".msg = "The core is synchronous and must not import a transport (Requirement 1.2)."
+"socket".msg = "The core must not import a transport (Requirement 1.2)."
+"socketserver".msg = "The core must not import a transport (Requirement 1.2)."
+"http".msg = "The core must not import a transport (Requirement 1.2)."
+"urllib".msg = "The core must not import a transport (Requirement 1.2)."
+"xmlrpc".msg = "The core must not import a transport (Requirement 1.2)."
+"subprocess".msg = "The core must not start processes or hooks (Requirement 1.2)."
+
+[tool.ruff.lint.per-file-ignores]
+# Tests start a fresh interpreter to check what the core imports.
+"tests/unit/test_imports.py" = ["TID251"]
