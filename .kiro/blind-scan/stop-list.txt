@@ -1,0 +1,27 @@
+# Blind scan stop list (see .kiro/steering/rules.md, "Blind scan").
+#
+# Names among the terms derived from the model and solver files that say nothing about the body's structure.
+# They are dropped from the automatic term list. Paths and file names are still scanned regardless of this list.
+#
+# Every part, joint and actuator name stays forbidden for builder-level text (builder files in lab/, bench output,
+# the notebook's own text), even when it is an ordinary English word.
+#
+# Format: one lowercase word per line; "#" starts a comment. Changes need the user's approval.
+#
+# Derived from body-lab/model/specimen_01.xml and specimen_01.wiring.json. The derived terms are:
+#   bone elbow floor foot forearm grid hand hide jaw leg metal rubber servo shoulder specimen_01 top torso
+#   upper_arm wheel
+# Still forbidden (not on this list): elbow foot forearm hand jaw leg shoulder torso wheel upper_arm specimen_01 servo
+#
+# wind-tunnel: no solver files exist yet. The wind-tunnel spec proposes its words here, for review.
+
+# body-lab: materials and textures
+bone
+grid
+hide
+metal
+rubber
+
+# body-lab: other names
+floor
+top
