@@ -31,7 +31,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     with and without a text chunk.
   - _Requirements: 2.1-2.8, 2.10_
 
-- [ ] 4. Record store, canonical JSON and hash chain
+- [x] 4. Record store, canonical JSON and hash chain
   - `canonical.py`, `store.py` (append-only log, blobs by SHA-256, `fsync`, state folder lock), `chain.py`
     (entry hash, seal entry, verify naming the first mismatch).
   - Every text field and blob reference carries its author.

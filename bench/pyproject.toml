@@ -25,7 +25,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--strict-markers", "-ra"]
+addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
 
 [tool.ruff]
 line-length = 110
