@@ -18,6 +18,8 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 /sessions/         published session records
 /bench-run/        builder-side files of a running session (session config, hook log); git-ignored
 /docs/brief.md     the brief
+/docs/ja/          Japanese reference translations of the specs (see japanese-translations.md)
+/scripts/          repository scripts (ja-check.sh)
 /spikes/           scratch area, not part of the product
 ```
 

@@ -1,4 +1,5 @@
-> **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。この訳はコミット `fdfdd8a` 時点の英語版に対応します。Kiro はこのファイルを読みません。
+> **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
+> 原文 SHA-256: `dce9c12a9c2179726ac351492337d6063acf0298017b8c7824ccc45b539fa827`
 
 # 設計: lab-bench（コア）
 

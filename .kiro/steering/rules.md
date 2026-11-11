@@ -119,6 +119,9 @@ Not flagged: `disabled`, `invalid input`, `broken` (as in a broken build), `faul
 
 - English for code, comments, steering, specs, docs and UI text. (The current `README.md` is replaced in the README
   step; do not edit it before then.)
+- Exception: `docs/ja/` holds Japanese reference translations of the specs for the user. This is the user's policy;
+  see `japanese-translations.md`. The English specs stay the source of truth.
+- Reports and questions to the user are in Japanese. Code, commits, specs and steering stay in English.
 - No co-author lines in commit messages.
 - Commit only the files you created or changed for the task, each added by name. Never `git add -A` or `git add .`.
 
