@@ -9,7 +9,7 @@ import ast
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from bench.core.outcome import BenchText, Message, Quote, Span
+from bench.core.outcome import BenchText, Message, Quote, RefusalError, Span
 
 MATH_CONSTANTS = frozenset({"pi", "e", "tau"})
 MATH_FUNCTIONS = frozenset(
@@ -68,12 +68,8 @@ _READABLE = {
 }
 
 
-class LangRefusal(Exception):
+class LangRefusal(RefusalError):
     """An experiment file is refused. `message` says why, in Dr. Kiro's terms."""
-
-    def __init__(self, message: Message) -> None:
-        super().__init__(message.plain())
-        self.message = message
 
 
 @dataclass

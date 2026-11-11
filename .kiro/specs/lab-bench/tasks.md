@@ -63,7 +63,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     before fixing the value in code.
   - _Requirements: 4.4_
 
-- [ ] 7. Lab spec files: hypotheses and EARS
+- [x] 7. Lab spec files: hypotheses and EARS
   - `hypotheses.py`: find `### H<n>` blocks, extract the frozen part exactly (design 5.1), parse the `prediction`
     TOML block, check predictions against the declaration.
   - `ears.py`: the five EARS shapes.

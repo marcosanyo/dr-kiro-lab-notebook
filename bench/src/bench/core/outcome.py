@@ -66,6 +66,14 @@ def message(*parts: str | Span) -> Message:
     return Message(tuple(BenchText(p) if isinstance(p, str) else p for p in parts))
 
 
+class RefusalError(Exception):
+    """Raised inside the bench when a lab rule refuses an action. The session turns it into `Refused`."""
+
+    def __init__(self, message: Message) -> None:
+        super().__init__(message.plain())
+        self.message = message
+
+
 @dataclass(frozen=True)
 class Ran:
     """The action ran. `result` is what the action returns."""
