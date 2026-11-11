@@ -75,7 +75,7 @@ def extract_fake_json(path: Path) -> list[str]:
     data = _load_json(path)
     names = data.get("names") if isinstance(data, dict) else None
     if not isinstance(names, list) or not all(isinstance(n, str) and n for n in names):
-        raise ScanError(f"{path}: fake model needs a list of names")
+        raise ScanError(f"{path}: the fake application file needs a list of names")
     return list(names)
 
 

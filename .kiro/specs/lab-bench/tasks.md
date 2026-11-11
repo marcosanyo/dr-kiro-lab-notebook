@@ -104,7 +104,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     file names and credentials found at both; allow-list and stop-list words not found.
   - _Requirements: 2.2, 15.1-15.7, 16.7_
 
-- [ ] 12. Checkpoint — **Stop and ask**
+- [x] 12. Checkpoint — **Stop and ask**
   - Run all tests and ruff. Report what passed, anything that needed a design change, and any bench wording the
     scan flagged.
 

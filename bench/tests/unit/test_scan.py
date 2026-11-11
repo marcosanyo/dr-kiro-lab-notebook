@@ -45,8 +45,13 @@ def app(tmp_path: Path, *, allow: tuple[str, ...] = (), lab: LabLayout | None = 
 
 
 def test_tokenizer() -> None:
-    assert term_tokens("upper_arm") == term_tokens("upperArm") == term_tokens("Upper-Arm") == ("upper", "arm")
-    assert term_tokens("specimen_01") == term_tokens("specimen01") == ("specimen", "01")
+    assert (
+        term_tokens("quindle_arm")
+        == term_tokens("quindleArm")
+        == term_tokens("Quindle-Arm")
+        == ("quindle", "arm")
+    )
+    assert term_tokens("gadget_07") == term_tokens("gadget07") == ("gadget", "07")
     assert term_tokens("XMLParser") == ("xml", "parser")
     assert [t.text for t in tokenize("legAmp=0.5")] == ["leg", "amp", "0", "5"]
 

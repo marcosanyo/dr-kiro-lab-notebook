@@ -1,8 +1,8 @@
 """Tokeniser shared by the derived terms and the scanned text (design 11.2).
 
 Text is split into lowercase tokens at every character that is not a letter or digit, at camelCase
-boundaries, and between letters and digits. So `upper_arm`, `upperArm`, `upper-arm` and `Upper Arm` all give
-`upper`, `arm`, and `specimen_01` and `specimen01` both give `specimen`, `01`.
+boundaries, and between letters and digits. So `quindle_arm`, `quindleArm`, `quindle-arm` and `Quindle Arm`
+all give `quindle`, `arm`, and `gadget_07` and `gadget07` both give `gadget`, `07`.
 """
 
 import bisect
