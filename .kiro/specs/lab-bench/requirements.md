@@ -28,6 +28,11 @@ defines the machine-readable formats the bench reads (the hypothesis and predict
 `## Discovered spec` table); the `dr-kiro` templates use those formats and do not redefine them. Dr. Kiro's
 permissions stay in Requirement 17.
 
+Notes for the `dr-kiro` spec:
+- Dr. Kiro keeps parameter names stable across experiments. The bench compares conditions by parameter name
+  (Requirement 6.4), and a renamed parameter makes a prediction not comparable, which does not count toward
+  `validated` (Requirement 12.3).
+
 ## Glossary
 
 - **Bench**: the system specified here.
@@ -321,17 +326,20 @@ the notebook can be traced and no rule claims more than its evidence.
 #### Acceptance criteria
 
 1. WHEN Dr. Kiro ends a session, THE bench SHALL check that `design.md` ends with a `## Discovered spec` table with
-   one rule per row and the columns: rule, scope, experiments, predictions, status, replaced by.
+   one rule per row and the columns: id, rule, scope, experiments, predictions, status, replaced by.
 2. IF the table is missing, a row lacks a required column, or a row cites an experiment, prediction or row that
    does not exist in the record or the table, THEN THE bench SHALL refuse to end the session, naming the row.
 3. THE bench SHALL accept exactly four status values and SHALL refuse to end the session, naming the row and the
    cited outcomes and condition classes, unless the status agrees with the record as follows:
    - `observed` (seen in experiments, not tested by prediction on untried conditions): the row cites at least one
-     experiment, and every prediction it cites has the condition class inside the tried range.
+     experiment, no cited prediction is a miss, and no cited prediction has the condition class new combination
+     or outside the tried range.
    - `validated` (every cited prediction held): the row cites at least one prediction, every cited prediction is
-     a hit, and at least one cited hit has a condition class other than inside the tried range.
+     a hit, and at least one cited hit has the condition class new combination or outside the tried range. A hit
+     that is inside the tried range or not comparable does not count toward `validated`.
    - `partly` (some cited predictions held): the row cites at least one hit and at least one miss.
-   - `rejected`: the row cites at least one miss, and its "replaced by" column names the row that replaces it.
+   - `rejected`: the row cites at least one miss, and its "replaced by" column names the id of the row that
+     replaces it.
 4. Rows with any status other than `rejected` SHALL leave "replaced by" empty.
 
 ### Requirement 13: Sealed session record
@@ -389,16 +397,19 @@ output or in the records that reveals the model, so that the blind holds by cons
 3. THE blind scan SHALL remove from the derived terms the application's adapter declaration (the allow list) and
    the words in `.kiro/blind-scan/stop-list.txt` (the stop list), and nothing else.
 4. THE blind scan SHALL scan text written by the builder or the bench (everything the builder puts in `lab/`
-   other than Dr. Kiro's spec files and experiment files, all bench output, and text the bench wrote in the
+   other than Dr. Kiro's spec files and experiment files, the bench's own wording in its output and in the
    record) for terms, paths and file names, and credentials.
-5. THE blind scan SHALL scan text written by Dr. Kiro (its spec files, experiment files, snapshots of them, and
-   its verdict words) for paths and file names, and credentials only.
+5. THE blind scan SHALL scan text written by Dr. Kiro (its spec files, experiment files, snapshots of them, its
+   verdict words, and any line or name from Dr. Kiro's files that the bench quotes in a message) for paths and
+   file names, and credentials only.
 6. WHERE text is copied (snapshots, the sealed record, the notebook build output, published files), THE blind scan
    SHALL apply the level of the text's author, using the author recorded with it.
 7. IF the blind scan cannot determine the author of a piece of text, or cannot read a model or solver file, or the
    stop list, THEN THE blind scan SHALL fail, naming it, and SHALL NOT assume a level or skip the file.
-8. WHEN the bench is about to return anything to Dr. Kiro, THE bench SHALL scan it at the builder level, and IF
-   the scan finds anything, THEN THE bench SHALL treat it as a bench failure and return nothing of it.
+8. WHEN the bench is about to return anything to Dr. Kiro, THE bench SHALL scan the bench's own wording at the
+   builder level and any quoted text from Dr. Kiro's files at the Dr. Kiro level, and IF the scan finds anything,
+   THEN THE bench SHALL treat it as a bench failure and return nothing of it. A quote of Dr. Kiro's own text SHALL
+   NOT turn a refusal into a bench failure because it contains a term.
 
 ### Requirement 16: Property-based tests of the gates
 
@@ -419,7 +430,8 @@ for actions nobody thought to try.
    has a snapshot; nothing returned to Dr. Kiro contains anything other than measurements, not-measured outcomes,
    pictures, remaining budget, and refusal reasons in Dr. Kiro's terms.
 3. THE tests SHALL check that ending a session is accepted exactly when the `## Discovered spec` table agrees with
-   the record as Requirement 12 defines, including `validated` rows whose only hits are inside the tried range.
+   the record as Requirement 12 defines, including `validated` rows whose only hits are inside the tried range or
+   not comparable.
 4. THE tests SHALL check that a sealed record passes the hash check, and that changing any byte of it makes the
    check fail.
 5. THE tests SHALL check that the same seed and the same action sequence give the same sealed record.
@@ -428,6 +440,9 @@ for actions nobody thought to try.
 7. THE tests SHALL check that the blind scan finds every derived term not on the allow list or stop list when it
    is planted in builder-level text, ignores the same terms in Dr. Kiro-level text, and finds planted paths, file
    names and credentials at both levels.
+8. THE tests SHALL check that a refusal whose message quotes Dr. Kiro's own text containing a derived term (for
+   example a parameter name built from a part name) stays a refusal and reaches Dr. Kiro, while the same term in
+   the bench's own wording is a bench failure.
 
 ---
 
