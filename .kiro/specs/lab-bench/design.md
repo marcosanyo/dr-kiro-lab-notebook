@@ -475,14 +475,14 @@ Invariants after every step:
 2. **[ASK 2] Step bound.** I will measure the steps of a prototype-like keyframe experiment over a 5 s trial at
    the sample rate body-lab will use, and propose `STEP_BOUND` from that measurement for you to confirm. I will
    not pick it before measuring.
-5. **Sample times and the blind.** Requirement 2.1 has function knobs declare their sample times, and 2.2 says the
+3. **Sample times and the blind.** Requirement 2.1 has function knobs declare their sample times, and 2.2 says the
    declaration is what Dr. Kiro is told. For body-lab the sample times come from the control rate, which
    `body-lab/model/README.md` lists among the wiring details never shown to Dr. Kiro. Options: (a) the control
    rate may be told, because it is a property of the instrument and not of the body; (b) the declaration gets a
    part the bench uses but does not tell Dr. Kiro, which changes 2.2. I propose (a), but it is your call, and it
    could also wait for the `body-lab` spec.
-3. **Change to Requirement 12.1.** I added an `id` column to the table, because "replaced by" must name a row and
+4. **Change to Requirement 12.1.** I added an `id` column to the table, because "replaced by" must name a row and
    rule text is not a stable name. Requirement 12.1 is updated.
-4. **Change to Requirement 12.3, `observed`.** With not-comparable hits removed from `validated`, the old wording
+5. **Change to Requirement 12.3, `observed`.** With not-comparable hits removed from `validated`, the old wording
    left a rule whose predictions are all not comparable with no valid status. `observed` now allows cited
    predictions that are inside the tried range or not comparable, and no misses.
