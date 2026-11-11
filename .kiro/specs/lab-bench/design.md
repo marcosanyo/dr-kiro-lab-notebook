@@ -78,7 +78,7 @@ class Session:
     @classmethod
     def start(cls, config: SessionConfig) -> Outcome: ...          # Req 3
     @classmethod
-    def open(cls, state_dir: Path, adapter: Adapter) -> "Session": ...  # replay, section 6.4
+    def open(cls, config: SessionConfig) -> "Session": ...             # replay, section 6.4
     def register(self, hypothesis_id: str) -> Outcome: ...          # Req 6
     def run(self, experiment_path: str) -> Outcome: ...             # Req 4, 5, 7
     def verdict(self, experiment_id: str, verdict: str, words: str) -> Outcome: ...  # Req 8
@@ -86,9 +86,19 @@ class Session:
     def stop(self, reason: str) -> Outcome: ...                     # Req 11.4, builder only
 ```
 
-- `SessionConfig` has required fields only: `session_id`, `adapter`, `lab_dir`, `spec_files` (the three paths),
-  `experiments_dir`, `state_dir`, `seed`, `scan_sources`. A missing field refuses the start (1.3). The session id is
-  given by the builder, so that two identical sessions produce identical records (3.4).
+- `SessionConfig` has required fields only: `session_id`, `application`, `adapter`, `lab_dir`, `spec_files` (the
+  three paths, relative to the lab), `experiments_dir` (relative to the lab), `state_dir`, `sessions_dir`, `seed`,
+  `scan_sources` and `stop_list`. A missing field refuses the start (1.3). The session id is given by the builder,
+  so that two identical sessions produce identical records (3.4). `open` takes the same config and checks that the
+  record's start entry matches it.
+- Results: `run` returns the experiment id, each trial's id, measurements (or not-measured outcomes) and picture,
+  and the remaining budget. `register`, `verdict` and `end` return only the remaining budget. Condition classes,
+  outcomes and flags are recorded for the notebook, not returned. Paths inside the bench never reach Dr. Kiro.
+- A path outside the lab (absolute, with a `..` part, resolving outside the lab folder, or flagged by the blind
+  scan) is never echoed back in a refusal and never written to the record. The refusal entry records "a path
+  outside the lab" as bench text in place of the path, and the full path goes to `builder.log` (9.6). Without
+  this, one mistyped path would make the whole session impossible to seal, because the scan flags paths at every
+  level.
 - `Outcome` is one of `Ran(result)`, `Refused(message)`, `BenchFailure(message)` (1.1).
 - `Message` is a list of spans: `BenchText(text)` written by the bench, and `Quote(text, file, line)` copied from
   Dr. Kiro's files. Every span carries its author, so the scan applies the right level (15.4, 15.5, 15.8). The
@@ -193,6 +203,8 @@ Notes and results appended here are free text (6.7).
 ```
 
 - It must be the last level-2 section of `design.md`, and nothing but whitespace may follow the table (12.1).
+- The table is checked only by `end()`. At that point it needs at least one row (12.5). During the session it may
+  be empty or missing; snapshots copy `design.md` as it is and never check it.
 - Lists are comma-separated ids. Empty cells are allowed only for "predictions" and "replaced by".
 - The status check in 12.3 is a pure function `check_row(row, record) -> list[Problem]`, tested directly and in
   the state machine.
@@ -293,16 +305,22 @@ the operator and context nodes these need.
 
 Calls are allowed to functions defined in the file, to `math.<name>`, and to `abs`, `min`, `max`, `len`, and
 `range` (integer arguments, only as the iterable of a `for`). Anything else is refused with the line and the
-construct. `While` is not in the whitelist. Every loop iteration costs steps, so the step bound (7.3) limits
+construct. `While` is not in the whitelist. Every loop iteration costs steps, so the step bound limits
 loops as well as recursion.
+
+**Step bound: `STEP_BOUND = 5_000_000`** (confirmed by the user after the task 6 measurement). The bound counts
+every step of one experiment file, across all its trials and all sample times, including the top level. A file
+that goes over the bound is a refusal: it is found at step 7 of the run gate order (6.1), before the budget
+check and before any trial runs, so it costs no budget. The measurement fixtures are in
+`bench/tests/fixtures/step_bound/`, measured with `bench/scripts/measure_steps.py`; the heaviest used
+1,661,521 steps.
 
 ### 7.3 Evaluator (4.3-4.6)
 
 - A tree-walking interpreter over the checked tree. It never calls `exec`, `eval` or `compile` for execution;
   `ast.parse` is used only to build the tree.
-- Every node visited costs one step. The bound is per experiment file, across all trials and all sample times:
-  `STEP_BOUND`, set from a measurement (tasks.md, task 6) and confirmed by the user before it is fixed.
-  Recursion depth is also bounded, so deep recursion is refused, not a Python
+- Every node visited costs one step, counted against `STEP_BOUND` (7.2) for the whole file. Function call
+  depth (100) and evaluation nesting (200) are also bounded, so deep recursion is refused, not a Python
   `RecursionError`.
 - Values are `int`, `float`, `bool`, and lists of these. Strings exist only in the top-level constants. Arithmetic
   on lists or strings, an `int` result with magnitude above 2^53, and lists longer than a fixed bound are refused,
@@ -379,7 +397,9 @@ that is not here, that is a change to this spec, not a second source.
 - Trial results are simple closed-form functions of the inputs. They are not results and the declaration has
   `fake = True`, which the record carries (14.5).
 - Picture: a small PNG written with `zlib` and no text chunks.
-- `FakeAdapter(fail_on={trial numbers})` fails on request for the bench failure tests (14.2).
+- Failures and not-measured outcomes are triggered by fixed input values only (14.2), so a reopened session with a
+  new adapter behaves the same: `gain` above 2.5 gives the not-measured outcome `lost` for `turn`;
+  `gain == 0.125` returns a `TrialFailure`; `gain == 0.375` raises an exception. The adapter keeps no state.
 - `fake/model/fake_model.json` holds made-up part names, and `scan_sources.toml` names it with the `fake-json`
   extractor (14.3).
 
@@ -400,8 +420,13 @@ that is not here, that is a change to this spec, not a second source.
 - Text and terms are split into lowercase tokens on non-letters, non-digits and camelCase boundaries. A term
   matches a run of consecutive tokens. So `upper_arm` matches "upper arm", "upperArm" and "upper-arm", and `leg`
   matches `leg_amp` and "legs" (plural forms `s` and `es` are matched).
+- A derived term whose tokens are all digits (for example a name `01`) is never a term.
 - Paths: `..`-segments, absolute paths, and any path that contains `model/`, `adapter/`, a solver directory
-  named by a source, or the name of a source file.
+  named by a source, or the name of a source file. An absolute path is one that starts at a known root folder
+  (Linux and macOS: `/home`, `/root`, `/Users`, `/private`, `/var`, `/Volumes`, `/opt`, `/etc`, `/tmp`, `/usr`
+  and others in `patterns.py`), `~/`, or a drive letter, so that division in experiment code is not taken for a
+  path. At scan time the current home folder and the repository's absolute path are also flagged, whatever they
+  are.
 - Credentials: AWS access key ids (`AKIA`/`ASIA` + 16), private key headers, GitHub token prefixes, and
   `key|secret|token|password` assignments followed by a long value. The patterns live in `patterns.py`.
 
@@ -489,5 +514,6 @@ Approved by the user before the tasks were written.
    never shown is which channel drives which part and with which sign. `body-lab/model/README.md` was updated to
    say so, at the user's request.
 4. **`id` column** in the Discovered spec table (Requirement 12.1).
-5. **`observed`** allows cited predictions that are inside the tried range or not comparable, and no misses
-   (Requirement 12.3).
+5. **`observed`** means no cited prediction missed; hits of any class, not-run and not-checkable predictions are
+   allowed (Requirement 12.3, revised at the task 12 checkpoint). Under-claiming is fine; over-claiming is
+   refused.
