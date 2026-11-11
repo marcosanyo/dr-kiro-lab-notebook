@@ -25,8 +25,14 @@ asked about if it is a real choice.
 
 ## Bench interface
 
-Open: `[DECIDE after the MCP spike: the bench is an MCP server and Dr. Kiro has no shell; or the bench is one
-command and Dr. Kiro's shell allows only that.]` Do not build either until the user decides in the `lab-bench` spec.
+Decided in the `lab-bench` spec (Requirement 17), after the MCP spike (`spikes/mcp/results.md`): the bench is an
+MCP server over stdio, and Dr. Kiro has no shell. Dr. Kiro's tools are file read and write, limited to its lab by a
+pre-tool hook, and the four bench tools. Pictures are returned as files in the lab. Parallel calls are queued.
+
+Dr. Kiro runs only in Kiro CLI, started in its lab folder. The Kiro IDE is for the builder and for showing the specs.
+
+The MCP SDK (`mcp==2.3.0`) is the one runtime dependency outside the standard library. It is allowed only in the
+bench front end, in the optional dependency group `frontend` (`lab-bench` design, F12, approved by the user).
 
 ## Session records
 

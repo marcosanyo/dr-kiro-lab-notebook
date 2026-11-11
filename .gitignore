@@ -24,3 +24,5 @@ cdk.out/
 # MCP spike: only the record of what was learned is kept
 spikes/mcp/*
 !spikes/mcp/results.md
+# Builder-side files of a running session (never in a lab)
+bench-run/

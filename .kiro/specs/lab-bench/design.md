@@ -1,14 +1,15 @@
 # Design: lab-bench (core)
 
-This design covers the core, Requirements 1-16. The front end (Requirement 17) waits for the MCP spike. Nothing
-here depends on it. The core is a Python library and two commands that the front end will wrap.
+This design covers the core, Requirements 1-16, in sections 1-14, and the front end, Requirement 17, in the part
+"Front end" after "Decisions". Nothing in the core depends on the front end. The core is a Python library and two
+commands that the front end wraps.
 
 Decisions taken while writing this design are listed in "Decisions" at the end.
 
 ## 1. Overview
 
 ```
-            front end (Req 17, open)            builder / tests
+            front end (Req 17, "Front end")     builder / tests
                      |                                |
                      v                                v
    +------------------------------- core API (bench.core) ---------------------------+
@@ -491,3 +492,236 @@ Approved by the user before the tasks were written.
 4. **`id` column** in the Discovered spec table (Requirement 12.1).
 5. **`observed`** allows cited predictions that are inside the tried range or not comparable, and no misses
    (Requirement 12.3).
+
+---
+
+# Front end (Requirement 17)
+
+Source: `spikes/mcp/results.md` and the user's decisions recorded in Requirement 17. Nothing under `spikes/` is
+imported or copied at runtime (`structure.md`). What the spike showed is used here as a reason, not as code.
+
+## F1. Overview
+
+```
+ Kiro CLI            --stdio-->  bench-mcp (MCP server, builder side)  -->  core Session
+  Dr. Kiro: file tools            4 tools, one FIFO queue                    (design sections 3-9)
+  + bench tools                   writes picture files into lab/pictures/
+        |
+        +-- pre-tool hooks (in lab/.kiro/hooks/):  confine  -> refuse paths outside the lab
+        |                                          calllog  -> append every call to a builder-side log
+        +-- post-tool hook:                        calllog
+```
+
+- `bench-mcp` is the only process that holds the session. Dr. Kiro reaches the core only through its four tools.
+- The hooks run in Kiro's process tree, not in the bench. They know nothing of the session.
+- The front end adds no gate (17.1). Every refusal text comes from the core.
+
+## F2. Package layout
+
+Added under `bench/src/bench/` (section 2):
+
+```
+frontend/
+  server.py        MCP server: tool definitions, queue, call into the core
+  render.py        Outcome -> MCP result (section F4)
+  pictures.py      write picture files into lab/pictures/ (F5)
+  describe.py      tool descriptions built from the adapter declaration (F3)
+  config.py        read the session config file named by BENCH_SESSION_CONFIG (F7)
+  stop.py          the bench-stop command (F7)
+  hooks/
+    confine.py     the confinement hook (F8)
+    calllog.py     the logging hook (F9)
+```
+
+Added console scripts: `bench-mcp`, `bench-stop`, `bench-lab-hooks`. `bench-lab-hooks <lab>` copies `confine.py`
+and `calllog.py` and writes the three hook JSON files into `<lab>/.kiro/hooks/`. The copy is needed because a hook
+in a lab may not point at a path outside the lab (`rules.md`, Blind). A test checks that the copies in each lab are
+byte-equal to the sources.
+
+The front end is the only part that imports the MCP SDK. `bench.core` still imports no front end; the banned-import
+rule of task 1 also bans `mcp` there. See D1.
+
+## F3. Tools (17.2, 17.4)
+
+| Tool | Input | Core call |
+|---|---|---|
+| `register_hypothesis` | `id: str` | `Session.register` |
+| `run_experiment` | `path: str`, relative to the lab | `Session.run` |
+| `record_verdict` | `experiment: str`, `verdict: str`, `words: str` | `Session.verdict` |
+| `end_session` | none | `Session.end` |
+
+- No `start`, no `stop` (17.2). No `get_budget` or `get_result` tool: Requirement 17.2 lists four actions, and the
+  remaining budget comes back with every run (7.6).
+- Descriptions are built in `describe.py` from `Adapter.declaration()`: knob names and ranges, the sample times of
+  function knobs, the trial length, measurement names and units, the not-measured outcome names, the picture kind
+  and the budget. The declaration is the only source (2.2); there is no second copy to keep in step. The
+  `dr-kiro` spec decides whether Dr. Kiro's steering points at the tool descriptions or repeats the declaration.
+- At startup `bench-mcp` scans the generated descriptions at the builder level with the core's scan
+  (`bench.scan`). A finding stops the server with a non-zero exit and the finding on stderr. No other blind
+  check is added here; the core's scan already covers the record and every outcome (Requirement 15).
+
+## F4. Rendering outcomes (17.3)
+
+Spans are joined in order into plain text, with no added words. The front end builds no message text of its own
+(section 3).
+
+| Core outcome | MCP result |
+|---|---|
+| `Ran(result)` | One JSON text content. No image content. Picture bytes in `result` are replaced by paths (F5). |
+| `Refused(message)` | A tool error whose text is the message. The SDK sets the error flag. |
+| `BenchFailure(message)` | A tool error whose text is the message. The core has already sealed the session as stopped (11.3), so every later call gets `Refused` from the core's first gate (6.1, step 1). The front end keeps no state. |
+
+`Ran.result` is taken to be a plain dict of JSON types (measurements, not-measured outcomes, budget remaining)
+with each picture as `(media type, bytes)`. If the core's result type differs, task 17 adapts the renderer; if the
+core would need to change, stop and ask (section 14).
+
+Run result, for `run_experiment` (keys are fixed here; values come from the core):
+
+```json
+{"experiment": "E<n>",
+ "trials": [{"trial": "T<n>", "measurements": {"<name>": "<value>"},
+             "not_measured": {"<name>": {"outcome": "<declared>", "reason": "<text>"}},
+             "picture": "pictures/E<n>-T<n>.<ext>"}],
+ "budget_remaining": "<n>"}
+```
+
+## F5. Picture files (17.13-17.16)
+
+- Name: `pictures/<experiment id>-<trial id>.<ext>`, for example `E3-T7.png`. Trial ids are numbered across the
+  session (6.3), so the name is unique. `<ext>` follows the declared media type (`png`, `gif`, `webp`).
+- Each file is written to a temporary name in the same folder, flushed, and renamed. The folder is created on the
+  first picture. Every file is written before the result is returned (17.15).
+- A file that cannot be written is a bench failure: the front end calls `Session.stop` with a fixed bench reason
+  ("a picture could not be delivered"), writes the system error to `builder.log`, and returns that reason as a tool
+  error. The front end is the builder's process, so `stop` is available to it (6.2).
+- The lab's copy is not read back by the bench. The record holds the adapter's bytes (17.16).
+- The spike opened a PNG only. Whether Dr. Kiro's file tool shows a GIF or WebP, such as the wind-tunnel
+  animation, is not verified. The `wind-tunnel` spec decides the picture format.
+
+## F6. Queue (17.17-17.21)
+
+- Every tool handler awaits one `anyio.Lock` first, before anything else. The lock is fair, so calls are applied in
+  the order the SDK dispatched them. The SDK handles stdio calls concurrently (the spike showed three calls
+  starting within 0.55 s of each other), so the lock is what serialises them.
+- The core call runs in a worker thread (`anyio.to_thread.run_sync`) so that the event loop stays free while a long
+  run is in progress. The thread is not abandoned if the client cancels: the run finishes and is recorded, and the
+  cancelled call just never gets its answer. Calls queued behind it then see its state (17.19).
+- A call is held open until the core returns (17.17). The front end sets no timeout and has no progress
+  messages. The spike returned a 900 s call in Kiro CLI with no timeout (`spikes/mcp/results.md`, Q4), so the
+  front end does nothing different for long calls (17.18).
+- Sequence numbers come from the core (3.3), so the record shows the order applied (17.20).
+- Several parallel `run_experiment` calls: the first runs; the next sees an experiment without a verdict and is
+  refused by gate 6 of 6.1, with no budget used (17.19).
+
+## F7. Starting and stopping (17.5)
+
+- `bench-mcp` takes no arguments. It reads `BENCH_SESSION_CONFIG`, the path of a TOML file that the builder writes
+  outside the lab. A missing variable, file or field stops the server with a message (1.3, `rules.md` 2). Fields:
+  `session_id`, `adapter` (`module:factory`), `lab_dir`, `spec_files`, `experiments_dir`, `state_dir`, `seed`,
+  `scan_sources`, and `resume` (`true` opens an existing session with `Session.open`; `false` starts a new one;
+  no default).
+- Dr. Kiro never sees the file or the variable. No tool input sets any of it.
+- When Kiro closes the connection, the server exits and leaves the session open. It does not end or stop it.
+- `bench-stop <config> --reason <text>` opens the session with `Session.open` and calls `Session.stop`
+  (11.4). It works only when `bench-mcp` is not running, because the state folder is locked (section 3). A
+  record left open by a closed connection is stopped this way.
+
+## F8. The confinement hook (17.7-17.10)
+
+Runs before every tool call. Hook input is JSON on stdin with `tool_name` and `tool_input` (spike, Q2). Both
+hook scripts use only the standard library and run as `uv run --no-project python .kiro/hooks/<script>.py`, with
+the lab as the working folder, as the spike's hooks did (Python through `uv` only, `tech.md`).
+
+```
+lab = the folder two levels above this script's folder (the script lives in <lab>/.kiro/hooks/)
+```
+
+1. Read stdin as JSON. It must be an object with a string `tool_name` and an object `tool_input`. Otherwise refuse.
+2. Look the tool up in a table of path-taking tools (below). A tool with path fields: every listed field must be a
+   non-empty string. Otherwise refuse.
+3. Resolve each path against `lab` (so `~` is not expanded and a relative path means "inside the lab"), with
+   `..` segments and symbolic links resolved. If the result is not `lab` or inside it, refuse.
+4. A tool in the path-less list is allowed without further checks (17.10).
+5. Any other tool name is refused: the hook cannot classify it (17.9).
+
+Refusal: exit 2, and one line on stderr in Dr. Kiro's terms: "That path is outside your folder. Use a path inside
+your folder." for a path outside the lab, and "That tool is not available in this lab." for malformed input or a tool
+not in the table. The lines name no path. Any exception in the script is caught at the top level and also exits 2,
+because any other non-zero exit lets the call through. The exception text goes to the builder-side log, not to
+stderr. This catch converts a failure into a refusal; it does not hide it.
+
+Tool table. The names and path fields are those in the spike's hook log (`hook-log.jsonl`): `read_file`,
+`list_directory`, `fs_write` and `fs_append` carry `path`; `file_search`, `grep_search`, `tool_load` and the bench
+tools carry none. A tool not in the table is refused until it is seen in a hook log and added here:
+
+| Class | Tools (path field) |
+|---|---|
+| Path-taking | `read_file` (`path`), `list_directory` (`path`), `fs_write` (`path`), `fs_append` (`path`) |
+| Path-less, allowed | `file_search`, `grep_search`, `tool_load`, `mcp_bench_register_hypothesis`, `mcp_bench_run_experiment`, `mcp_bench_record_verdict`, `mcp_bench_end_session` |
+
+Precondition for 17.10: Dr. Kiro runs only in Kiro CLI, started with the lab as the working folder (17.12), so
+the workspace the search tools see is the lab. The IDE is never used to run Dr. Kiro.
+
+The hook text is the builder's wording and passes the core's scan with the rest of `lab/.kiro/` (Requirement 15).
+It contains no paths.
+
+## F9. The logging hook (17.11)
+
+- `calllog.py` appends one JSON line per call to the file named by `BENCH_HOOK_LOG`, outside the lab:
+  `{"phase": "pre" | "post" | "refused", "tool_name", "tool_input", "reason"?}`. The confinement hook writes its
+  refusals with the same function. No timestamp is hashed or sealed; the log is not part of the record (17.11).
+- The path comes from an environment variable so that no path outside the lab appears in `lab/.kiro/`. If the
+  variable is missing or the line cannot be written, the pre-tool hook exits 2 (no unlogged call). The post-tool
+  hook cannot undo the call and exits 2 as well, which only reports the failure.
+- Whether Kiro CLI passes the variable to hooks is not known. Task 21 checks it. If it does not, stop and ask.
+
+## F10. The agent definition (17.6, 17.7, 17.12)
+
+The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
+
+```json
+{
+  "mcpServers": {"bench": {"command": "bench-mcp", "args": [],
+      "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}}},
+  "tools": ["read", "write", "@bench"],
+  "includeMcpJson": false,
+  "includePowers": false,
+  "permissions": {"rules": [
+    {"capability": "fs_read",  "match": ["./**"],    "effect": "allow"},
+    {"capability": "fs_write", "match": ["./**"],    "effect": "allow"},
+    {"capability": "fs_read",  "match": [".kiro/**"], "effect": "deny"},
+    {"capability": "fs_write", "match": [".kiro/**"], "effect": "deny"},
+    {"capability": "mcp",      "match": ["bench/*"], "effect": "allow"}
+  ]}
+}
+```
+
+- The spike's `/**` and `../**` deny rules are dropped: they asked instead of denying, and they needed an absolute
+  path to the lab, which a lab file may not contain. The hook confines.
+- `bench-mcp` is on the builder's `PATH` through `uv tool install --editable ./bench`, so that no path to the
+  repository appears in the lab. `${...}` in `env` is the interpolation shown in the Kiro agent documentation; it
+  was not used in the spike. Task 21 checks it. If it fails, stop and ask.
+- `hook-log.jsonl` is no longer in the lab, so the spike's `fs_write` deny on it goes.
+- Whether the `.kiro/**` write deny holds was observed only for reads and for the agent's refusal to add a server
+  (Q7). Task 21 tries a write.
+
+## F11. Tests
+
+- Confinement hook (17.21): two tests. A call with a path outside the lab is refused with exit code 2. Malformed
+  input is refused with exit code 2.
+- Server, through the SDK's in-process client with the fake application: the four tools are listed; a refusal is a
+  tool error with the core's text; a run returns no image content and the picture file exists with the adapter's
+  bytes; two parallel runs give one `Ran` and one `Refused` (gate 6). These are example tests.
+- What needs the user's Kiro CLI is checked by hand (task 21), not in the test suite.
+
+## F12. Decisions (approved by the user)
+
+- **D1. A runtime dependency.** Sections 1 and 14 say the bench has no runtime dependency outside the standard
+  library, and that a need for one means stop and ask. The MCP server needs the `mcp` package. Approved: pin
+  `mcp==2.3.0` (the version the spike used) in an optional dependency group `frontend`, so the core and its tests
+  stay standard-library only.
+- **D2. Where the hook log and session config live.** Both are outside the lab and are named by environment
+  variables (`BENCH_HOOK_LOG`, `BENCH_SESSION_CONFIG`). Approved: a `bench-run/` folder at the repository root, ignored
+  by git and listed in `structure.md`.
+- **D3. Long calls.** Not needed. The 900 s call passed in the spike, so there is no parallel-trials fallback.
+- **D4. Dr. Kiro runs only in Kiro CLI**, started in the lab folder (Requirement 17.12). The IDE is for the builder.
