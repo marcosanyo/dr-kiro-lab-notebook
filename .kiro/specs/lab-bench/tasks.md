@@ -71,7 +71,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     line ending normalisation, every refusal case in 6.2 and 6.3.
   - _Requirements: 6.1-6.3, 6.6-6.8_
 
-- [ ] 8. Conditions, prediction outcomes and verdict flags
+- [x] 8. Conditions, prediction outcomes and verdict flags
   - `conditions.py`: comparable trials by parameter set, the four condition classes, exact-repeat detection,
     prediction outcomes (hit, miss, not checkable, not run), the flag rule of 8.4.
   - Unit tests for each class and outcome; a not-run prediction turned into a hit by a later experiment; no other
