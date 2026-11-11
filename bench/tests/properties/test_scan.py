@@ -73,7 +73,7 @@ def scenario(draw: st.DrawFn) -> tuple[Scanner, str, str, str, str]:
         allow=(allowed,),
         lab=None,
     )
-    scanner = Scanner([app], [stopped])
+    scanner = Scanner([app], [stopped], local_paths=())
     filler = draw(st.lists(st.sampled_from(FILLER), min_size=0, max_size=8))
     at = draw(st.integers(min_value=0, max_value=len(filler)))
     form = draw(forms(planted))

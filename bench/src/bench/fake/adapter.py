@@ -3,11 +3,9 @@
 Fast, deterministic trials from simple closed-form functions of the inputs. Its numbers are not results: the
 declaration says `fake = True` and every record made with it carries that label.
 
-For tests it can fail, raise, or return a not-measured outcome on request. Requests name the adapter's own
-call count (1 for its first trial), because an adapter is told only the computed inputs and the seed.
+The adapter keeps no state. Failures and not-measured outcomes are triggered by fixed input values only, so a
+reopened session, which builds a new adapter, behaves exactly the same (14.2).
 """
-
-from collections.abc import Iterable
 
 from bench.adapter import (
     ComputedInputs,
@@ -24,11 +22,16 @@ from bench.pictures import encode_png
 
 SAMPLE_TIMES = tuple(k / 10 for k in range(11))
 TRIAL_SECONDS = 1.0
-# The fixed rule for the declared not-measured outcome: above this gain, `turn` is lost.
+# Above this gain, `turn` is the not-measured outcome `lost`.
 LOST_ABOVE_GAIN = 2.5
+# At exactly this gain the trial returns a TrialFailure.
+FAIL_AT_GAIN = 0.125
+# At exactly this gain `run_trial` raises, as a broken adapter would.
+RAISE_AT_GAIN = 0.375
+BUDGET = 12
 
 
-def declaration(budget: int = 12) -> Declaration:
+def declaration(budget: int = BUDGET) -> Declaration:
     return Declaration(
         knobs=(
             FunctionKnob("drive", -1.0, 1.0, SAMPLE_TIMES, TRIAL_SECONDS),
@@ -46,35 +49,21 @@ def declaration(budget: int = 12) -> Declaration:
 
 
 class FakeAdapter:
-    def __init__(
-        self,
-        *,
-        budget: int = 12,
-        fail_on: Iterable[int] = (),
-        raise_on: Iterable[int] = (),
-        not_measured_on: Iterable[int] = (),
-    ) -> None:
+    def __init__(self, budget: int = BUDGET) -> None:
         self._declaration = declaration(budget)
-        self.fail_on = frozenset(fail_on)
-        self.raise_on = frozenset(raise_on)
-        self.not_measured_on = frozenset(not_measured_on)
-        self.calls = 0
 
     def declaration(self) -> Declaration:
         return self._declaration
 
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
-        self.calls += 1
-        if self.calls in self.raise_on:
-            raise RuntimeError(f"fake adapter asked to raise on call {self.calls}")
-        if self.calls in self.fail_on:
-            return TrialFailure(
-                "the trial did not complete", f"fake adapter asked to fail on call {self.calls}"
-            )
         drive = inputs["drive"]
         gain = inputs["gain"]
         if not isinstance(drive, tuple) or isinstance(gain, tuple):
             raise TypeError("fake adapter got inputs of the wrong shape")
+        if gain == RAISE_AT_GAIN:
+            raise RuntimeError(f"fake adapter raises at gain {RAISE_AT_GAIN}")
+        if gain == FAIL_AT_GAIN:
+            return TrialFailure("the trial did not complete", f"fake adapter fails at gain {FAIL_AT_GAIN}")
         n = len(drive)
         distance = gain * sum(drive) / n
         trace = []
@@ -83,7 +72,7 @@ class FakeAdapter:
             total += gain * value / n
             trace.append(total)
         turn: float | NotMeasured
-        if gain > LOST_ABOVE_GAIN or self.calls in self.not_measured_on:
+        if gain > LOST_ABOVE_GAIN:
             turn = NotMeasured("lost", "the fake tracker lost the target")
         else:
             turn = gain * (drive[-1] - drive[0])

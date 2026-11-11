@@ -73,7 +73,7 @@ def test_extractors(tmp_path: Path) -> None:
 
 
 def test_terms_found_in_all_forms_at_builder_level(tmp_path: Path) -> None:
-    scanner = Scanner([app(tmp_path)], [])
+    scanner = Scanner([app(tmp_path)], [], local_paths=())
     for text in [
         "lower frame",
         "LOWER_FRAME",
@@ -89,14 +89,14 @@ def test_terms_found_in_all_forms_at_builder_level(tmp_path: Path) -> None:
 
 
 def test_dr_kiro_level_ignores_terms_but_not_paths(tmp_path: Path) -> None:
-    scanner = Scanner([app(tmp_path)], [])
+    scanner = Scanner([app(tmp_path)], [], local_paths=())
     assert scanner.scan_text("channel 2 acts like a paddle", "dr-kiro", "x") == []
     kinds = [f.kind for f in scanner.scan_text("see ../model/gadget_7.xml", "dr-kiro", "x")]
     assert kinds.count("path") == 2 and "file name" in kinds
 
 
 def test_allow_list_and_stop_list(tmp_path: Path) -> None:
-    scanner = Scanner([app(tmp_path, allow=("paddle",))], ["plastic", "dots"])
+    scanner = Scanner([app(tmp_path, allow=("paddle",))], ["plastic", "dots"], local_paths=())
     assert scanner.scan_text("paddle, plastic and dots", "builder", "x") == []
     assert [f.match for f in scanner.scan_text("flexor", "builder", "x")] == ["flexor"]
 
@@ -110,13 +110,19 @@ def test_allow_list_and_stop_list(tmp_path: Path) -> None:
         "at /projects/sandbox",
         "~/notes",
         "C:\\Users\\x",
+        "/Users/someone/Documents/run",
+        "/private/var/folders/xy/T/tmp1",
+        "/Volumes/Disk/x",
+        "/opt/tool",
+        "/etc/hosts",
+        "/var/log/x",
         "model/thing",
         "Adapter/run.py",
         "casefolder/0/U",
     ],
 )
 def test_paths(text: str) -> None:
-    assert [m.kind for m in Patterns([], ["casefolder"]).find(text)] == ["path"]
+    assert [m.kind for m in Patterns([], ["casefolder"], ()).find(text)] == ["path"]
 
 
 @pytest.mark.parametrize(
@@ -133,7 +139,7 @@ def test_paths(text: str) -> None:
     ],
 )
 def test_not_paths(text: str) -> None:
-    assert Patterns([], []).find(text) == []
+    assert Patterns([], [], ()).find(text) == []
 
 
 @pytest.mark.parametrize(
@@ -148,12 +154,12 @@ def test_not_paths(text: str) -> None:
     ],
 )
 def test_credentials_are_found_and_redacted(text: str) -> None:
-    (match,) = Patterns([], []).find(text)
+    (match,) = Patterns([], [], ()).find(text)
     assert match.kind == "credential" and match.text.endswith("…") and len(match.text) <= 5
 
 
 def test_message_spans_keep_their_level(tmp_path: Path) -> None:
-    scanner = Scanner([app(tmp_path)], [])
+    scanner = Scanner([app(tmp_path)], [], local_paths=())
     quoted = message("cannot evaluate ", Quote("paddle_amp = 2", "experiments/e.py", 3))
     assert scanner.scan_message(quoted, "out") == []
     assert [f.kind for f in scanner.scan_message(message("the paddle moved"), "out")] == ["term"]
@@ -166,7 +172,9 @@ def test_lab_levels_and_sidecars(tmp_path: Path) -> None:
     (lab / "experiments" / "e1.py").write_text("paddle = 1\n")
     (lab / "spec" / "requirements.md").write_text("Maybe a paddle.\n")
     (lab / "steering.md").write_text("Line one.\nThe paddle is here.\n")
-    scanner = Scanner([app(tmp_path, lab=LabLayout(lab, ("experiments/**", "spec/requirements.md")))], [])
+    scanner = Scanner(
+        [app(tmp_path, lab=LabLayout(lab, ("experiments/**", "spec/requirements.md")))], [], local_paths=()
+    )
     (finding,) = scanner.scan_paths([lab])
     assert (Path(finding.file).name, finding.line, finding.kind) == ("steering.md", 2, "term")
 
@@ -214,7 +222,7 @@ def test_record_levels(tmp_path: Path) -> None:
         {"file": store.put_blob(b"# H1\nmaybe a paddle\n", "dr-kiro", "text/markdown")},
     )
     store.append("refusal", {"message": [authored("bench", "plain words")]})
-    scanner = Scanner([app(tmp_path)], [])
+    scanner = Scanner([app(tmp_path)], [], local_paths=())
     assert scanner.scan_paths([store.folder]) == []
     store.append("failure", {"reason": authored("bench", "the pusher stalled")})
     (finding,) = scanner.scan_paths([store.folder])
@@ -228,7 +236,7 @@ def test_record_with_unknown_media_or_author_fails(tmp_path: Path) -> None:
     store = Store.create(tmp_path / "state" / "s1")
     store.append("start", {"file": store.put_blob(b"\x00", "bench", "application/octet-stream")})
     with pytest.raises(ScanError, match="media type"):
-        Scanner([app(tmp_path)], []).scan_paths([store.folder])
+        Scanner([app(tmp_path)], [], local_paths=()).scan_paths([store.folder])
 
 
 def test_missing_sources_fail(tmp_path: Path) -> None:
@@ -273,3 +281,32 @@ def test_fake_sources_and_command(tmp_path: Path, capsys: pytest.CaptureFixture[
     )
     assert main(["--config", str(FAKE_CONFIG), "--stop-list", str(STOP_LIST), str(out)]) == 0
     assert main(["--config", str(FAKE_CONFIG), "--stop-list", str(tmp_path / "none"), str(out)]) == 2
+
+
+def test_local_paths_are_flagged_whatever_their_root(tmp_path: Path) -> None:
+    patterns = Patterns([], [], ["/srvx/build/me", "/"])
+    assert [m.kind for m in patterns.find("logs in /srvx/build/me/x")] == ["path"]
+    assert patterns.find("logs in /srvx/build/mexico") == []
+    assert patterns.find("a / b") == []  # "/" alone is never a local path
+
+
+def test_from_config_flags_home_and_repository(tmp_path: Path) -> None:
+    scanner = Scanner.from_config([FAKE_CONFIG], STOP_LIST)
+    repo = str(REPO.resolve())
+    assert [f.kind for f in scanner.scan_text(f"see {repo}/notes", "dr-kiro", "x")] == ["path"]
+    home = str(Path.home().resolve())
+    assert "path" in {f.kind for f in scanner.scan_text(f"see {home}/x", "dr-kiro", "x")}
+
+
+def test_repository_root_is_required(tmp_path: Path) -> None:
+    from bench.scan.scan import repository_root
+
+    with pytest.raises(ScanError, match="not inside a git repository"):
+        repository_root(tmp_path)
+
+
+def test_digit_only_names_are_never_terms(tmp_path: Path) -> None:
+    sources = AppSources(("01", "7", "1_2", "gadget_01"), (), (), (), None)
+    scanner = Scanner([sources], [], local_paths=())
+    assert scanner.scan_text("trial 01, 7 and 1 2", "builder", "x") == []
+    assert [f.kind for f in scanner.scan_text("gadget 01", "builder", "x")] == ["term"]

@@ -339,9 +339,9 @@ the notebook can be traced and no rule claims more than its evidence.
    does not exist in the record or the table, THEN THE bench SHALL refuse to end the session, naming the row.
 3. THE bench SHALL accept exactly four status values and SHALL refuse to end the session, naming the row and the
    cited outcomes and condition classes, unless the status agrees with the record as follows:
-   - `observed` (seen in experiments, not tested by prediction on untried conditions): the row cites at least one
-     experiment, no cited prediction is a miss, and no cited prediction has the condition class new combination
-     or outside the tried range.
+   - `observed` (seen in experiments): the row cites at least one experiment, and no cited prediction is a miss.
+     Hits of any condition class, and not-run and not-checkable predictions, are allowed: a rule may claim less
+     than its evidence, never more.
    - `validated` (every cited prediction held): the row cites at least one prediction, every cited prediction is
      a hit, and at least one cited hit has the condition class new combination or outside the tried range. A hit
      that is inside the tried range or not comparable does not count toward `validated`.
@@ -349,6 +349,8 @@ the notebook can be traced and no rule claims more than its evidence.
    - `rejected`: the row cites at least one miss, and its "replaced by" column names the id of the row that
      replaces it.
 4. Rows with any status other than `rejected` SHALL leave "replaced by" empty.
+5. THE table SHALL have at least one row when the session ends. An empty table is allowed in every earlier state
+   of `design.md`, including the snapshots taken during the session (Requirement 10).
 
 ### Requirement 13: Sealed session record
 
@@ -381,8 +383,9 @@ and tested without a simulator.
 1. THE bench SHALL include a fake application that implements the adapter contract with at least one
    function-of-time knob and at least one number knob, fast and deterministic trials, at least one declared
    not-measured outcome, and a small picture.
-2. THE fake application SHALL be able to fail on request and to return a not-measured outcome on request, so that
-   both can be tested.
+2. THE fake application SHALL fail, and return a not-measured outcome, for fixed input values, so that both can be
+   tested. The trigger SHALL depend on the computed inputs only, never on a call count or other adapter state, so
+   that a reopened session, which builds a new adapter, behaves the same.
 3. THE fake application SHALL include model files with its own part names, so that the blind scan can be tested
    against it.
 4. A full session against the fake application SHALL run from start to sealing through the core interface.

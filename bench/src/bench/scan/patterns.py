@@ -47,7 +47,13 @@ def redact(text: str) -> str:
 
 
 class Patterns:
-    def __init__(self, file_names: Iterable[str], solver_dirs: Iterable[str]) -> None:
+    def __init__(
+        self, file_names: Iterable[str], solver_dirs: Iterable[str], local_paths: Iterable[str]
+    ) -> None:
+        """`local_paths` are absolute paths of this machine (the home folder, the repository) that are flagged
+        wherever they appear, whatever their root."""
+        paths = sorted({p.rstrip("/") for p in local_paths if len(p.rstrip("/")) > 1}, key=len, reverse=True)
+        self._local = [re.compile(rf"{re.escape(p)}(?![\w-])") for p in paths]
         names: set[str] = set()
         for name in file_names:
             names.add(name)
@@ -61,8 +67,16 @@ class Patterns:
 
     def find(self, text: str) -> list[Match]:
         found: list[Match] = []
-        for pattern in _PATHS + self._dirs:
-            found += [Match(m.start(), m.end(), "path", m.group()) for m in pattern.finditer(text)]
+        spans = {
+            (m.start(), m.end())
+            for pattern in _PATHS + self._dirs + self._local
+            for m in pattern.finditer(text)
+        }
+        # One path is reported once: drop a span that lies inside a longer span found by another pattern.
+        for start, end in sorted(spans):
+            inside = any(s <= start and end <= e and (s, e) != (start, end) for s, e in spans)
+            if not inside:
+                found.append(Match(start, end, "path", text[start:end]))
         for pattern in self._names:
             found += [Match(m.start(), m.end(), "file name", m.group()) for m in pattern.finditer(text)]
         for pattern in _CREDENTIALS:

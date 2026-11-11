@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from bench.adapter import NotMeasured, TrialFailure, TrialResult, check_declaration, check_result
-from bench.fake.adapter import LOST_ABOVE_GAIN, SAMPLE_TIMES, FakeAdapter
+from bench.fake.adapter import FAIL_AT_GAIN, LOST_ABOVE_GAIN, RAISE_AT_GAIN, SAMPLE_TIMES, FakeAdapter
 
 DRIVE = tuple(0.5 for _ in SAMPLE_TIMES)
 
@@ -38,16 +38,16 @@ def test_not_measured_rule_on_inputs() -> None:
     check_result(FakeAdapter().declaration(), result)
 
 
-def test_requests_by_call_count() -> None:
-    adapter = FakeAdapter(fail_on={2}, not_measured_on={1}, raise_on={3})
-    first = adapter.run_trial(inputs(), 0)
-    assert isinstance(first, TrialResult) and isinstance(first.values["turn"], NotMeasured)
-    assert adapter.run_trial(inputs(), 0) == TrialFailure(
-        "the trial did not complete", "fake adapter asked to fail on call 2"
-    )
-    with pytest.raises(RuntimeError):
-        adapter.run_trial(inputs(), 0)
-    assert isinstance(adapter.run_trial(inputs(), 0), TrialResult)
+def test_failures_come_from_input_values_only() -> None:
+    adapter = FakeAdapter()
+    for _ in range(3):  # the same inputs give the same outcome on every call
+        assert adapter.run_trial(inputs(gain=FAIL_AT_GAIN), 0) == TrialFailure(
+            "the trial did not complete", f"fake adapter fails at gain {FAIL_AT_GAIN}"
+        )
+        with pytest.raises(RuntimeError):
+            adapter.run_trial(inputs(gain=RAISE_AT_GAIN), 0)
+        assert isinstance(adapter.run_trial(inputs(), 0), TrialResult)
+    assert FakeAdapter().run_trial(inputs(), 0) == adapter.run_trial(inputs(), 0)
 
 
 def test_model_file_has_made_up_names() -> None:

@@ -88,7 +88,8 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
 - [x] 10. Fake application
   - Function knob, number knob, two scalar measurements and one series, one declared not-measured outcome
     triggered by a fixed rule on the inputs, a small PNG without text chunks, `fake = True`.
-  - `fail_on` and a request for a not-measured outcome; `model/fake_model.json` with made-up part names and
+  - A failure, an exception and a not-measured outcome triggered by fixed input values (revised at the task 12
+    checkpoint: never by call count); `model/fake_model.json` with made-up part names and
     `scan_sources.toml`.
   - Unit tests: determinism, the not-measured trigger, the failure trigger.
   - _Requirements: 14.1-14.3, 14.5_

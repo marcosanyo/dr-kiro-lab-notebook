@@ -48,7 +48,8 @@ def test_parse() -> None:
     [
         "| R1 | r | s | E1 | | observed | |",
         "| R1 | r | s | E1 | H1.P1, H1.P2 | observed | |",
-        "| R1 | r | s | E1 | H4.P2 | observed | |",
+        "| R1 | r | s | E1 | H4.P1, H4.P2 | observed | |",
+        "| R1 | r | s | E1 | H2.P1, H2.P2 | observed | |",
         "| R1 | r | s | E1 | H2.P1 | validated | |",
         "| R1 | r | s | E1 | H1.P1, H2.P2 | validated | |",
         "| R1 | r | s | E1 | H2.P1, H3.P1 | partly | |",
@@ -78,8 +79,6 @@ def test_rejected_with_replacement() -> None:
         ("| R1 | r | s | E1 | | validated | |", "at least one prediction"),
         ("| R1 | r | s | E1 | H2.P1, H4.P1 | validated | |", "must be a hit"),
         ("| R1 | r | s | E1 | H2.P1, H3.P1 | validated | |", "must be a hit"),
-        ("| R1 | r | s | E1 | H2.P1 | observed | |", "cannot cite a prediction on untried conditions"),
-        ("| R1 | r | s | E1 | H4.P1 | observed | |", "cannot cite a prediction on untried conditions"),
         ("| R1 | r | s | E1 | H3.P2 | observed | |", "missed prediction"),
         ("| R1 | r | s | E1 | H2.P1, H2.P2 | partly | |", "at least one hit and at least one miss"),
         ("| R1 | r | s | E1 | H2.P1 | rejected | R1 |", "at least one miss"),

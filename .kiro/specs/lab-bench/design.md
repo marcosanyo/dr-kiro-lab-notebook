@@ -193,6 +193,8 @@ Notes and results appended here are free text (6.7).
 ```
 
 - It must be the last level-2 section of `design.md`, and nothing but whitespace may follow the table (12.1).
+- The table is checked only by `end()`. At that point it needs at least one row (12.5). During the session it may
+  be empty or missing; snapshots copy `design.md` as it is and never check it.
 - Lists are comma-separated ids. Empty cells are allowed only for "predictions" and "replaced by".
 - The status check in 12.3 is a pure function `check_row(row, record) -> list[Problem]`, tested directly and in
   the state machine.
@@ -385,7 +387,9 @@ that is not here, that is a change to this spec, not a second source.
 - Trial results are simple closed-form functions of the inputs. They are not results and the declaration has
   `fake = True`, which the record carries (14.5).
 - Picture: a small PNG written with `zlib` and no text chunks.
-- `FakeAdapter(fail_on={trial numbers})` fails on request for the bench failure tests (14.2).
+- Failures and not-measured outcomes are triggered by fixed input values only (14.2), so a reopened session with a
+  new adapter behaves the same: `gain` above 2.5 gives the not-measured outcome `lost` for `turn`;
+  `gain == 0.125` returns a `TrialFailure`; `gain == 0.375` raises an exception. The adapter keeps no state.
 - `fake/model/fake_model.json` holds made-up part names, and `scan_sources.toml` names it with the `fake-json`
   extractor (14.3).
 
@@ -406,8 +410,13 @@ that is not here, that is a change to this spec, not a second source.
 - Text and terms are split into lowercase tokens on non-letters, non-digits and camelCase boundaries. A term
   matches a run of consecutive tokens. So `upper_arm` matches "upper arm", "upperArm" and "upper-arm", and `leg`
   matches `leg_amp` and "legs" (plural forms `s` and `es` are matched).
+- A derived term whose tokens are all digits (for example a name `01`) is never a term.
 - Paths: `..`-segments, absolute paths, and any path that contains `model/`, `adapter/`, a solver directory
-  named by a source, or the name of a source file.
+  named by a source, or the name of a source file. An absolute path is one that starts at a known root folder
+  (Linux and macOS: `/home`, `/root`, `/Users`, `/private`, `/var`, `/Volumes`, `/opt`, `/etc`, `/tmp`, `/usr`
+  and others in `patterns.py`), `~/`, or a drive letter, so that division in experiment code is not taken for a
+  path. At scan time the current home folder and the repository's absolute path are also flagged, whatever they
+  are.
 - Credentials: AWS access key ids (`AKIA`/`ASIA` + 16), private key headers, GitHub token prefixes, and
   `key|secret|token|password` assignments followed by a long value. The patterns live in `patterns.py`.
 
@@ -495,5 +504,6 @@ Approved by the user before the tasks were written.
    never shown is which channel drives which part and with which sign. `body-lab/model/README.md` was updated to
    say so, at the user's request.
 4. **`id` column** in the Discovered spec table (Requirement 12.1).
-5. **`observed`** allows cited predictions that are inside the tried range or not comparable, and no misses
-   (Requirement 12.3).
+5. **`observed`** means no cited prediction missed; hits of any class, not-run and not-checkable predictions are
+   allowed (Requirement 12.3, revised at the task 12 checkpoint). Under-claiming is fine; over-claiming is
+   refused.

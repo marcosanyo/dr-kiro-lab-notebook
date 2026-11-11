@@ -171,15 +171,9 @@ def check_row(row: Row, evidence: Evidence, row_ids: frozenset[str], file: str) 
     untried_hits = sum(1 for kind, cls in cited if kind == "hit" and cls in UNTRIED)
     summary = _summary(row, evidence, file)
     if row.status == "observed":
+        # Under-claiming is fine: hits of any class, not-run and not-checkable predictions are allowed.
         if misses:
             problem("an observed rule cannot cite a missed prediction (", summary, ")")
-        if any(cls in UNTRIED for _, cls in cited):
-            problem(
-                "an observed rule cannot cite a prediction on untried conditions "
-                "(a new combination or outside the tried range) (",
-                summary,
-                ")",
-            )
     elif row.status == "validated":
         if not cited:
             problem("a validated rule cites at least one prediction")

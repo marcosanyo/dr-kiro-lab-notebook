@@ -21,6 +21,20 @@ from bench.scan.tokens import term_tokens, tokenize
 STATE_ONLY = frozenset({"builder.log", ".lock"})
 
 
+def repository_root(inside: Path) -> Path:
+    """The folder holding `.git` above a path in the repository. Fail if there is none."""
+    start = inside.resolve()
+    for folder in (start, *start.parents):
+        if (folder / ".git").exists():
+            return folder
+    raise ScanError(f"{inside}: not inside a git repository, so the repository path cannot be flagged")
+
+
+def local_paths(inside_repository: Path) -> tuple[str, ...]:
+    """This machine's home folder and the repository's absolute path, flagged wherever they appear."""
+    return (str(Path.home().resolve()), str(repository_root(inside_repository)))
+
+
 @dataclass(frozen=True)
 class Finding:
     file: str
@@ -33,7 +47,9 @@ class Finding:
 
 
 class Scanner:
-    def __init__(self, apps: Sequence[AppSources], stop_list: Iterable[str]) -> None:
+    def __init__(
+        self, apps: Sequence[AppSources], stop_list: Iterable[str], *, local_paths: Iterable[str]
+    ) -> None:
         if not apps:
             raise ScanError("the scan needs at least one application's sources")
         stop = {term_tokens(w) for w in stop_list}
@@ -45,7 +61,9 @@ class Scanner:
             derived += [f.rsplit(".", 1)[0] for f in app.file_names]
             for name in derived:
                 tokens = term_tokens(name)
-                if tokens and tokens not in allow and tokens not in stop:
+                if all(t.isdigit() for t in tokens):
+                    continue  # a token made only of digits is never a term
+                if tokens not in allow and tokens not in stop:
                     terms.setdefault(tokens, name)
         self.terms = terms
         self._single = {t[0] for t in terms if len(t) == 1}
@@ -54,13 +72,17 @@ class Scanner:
             if len(t) > 1:
                 self._multi.setdefault(t[0], []).append(t)
         self.patterns = Patterns(
-            [f for a in apps for f in a.file_names], [d for a in apps for d in a.solver_dirs]
+            [f for a in apps for f in a.file_names],
+            [d for a in apps for d in a.solver_dirs],
+            local_paths,
         )
         self.labs: list[LabLayout] = [a.lab for a in apps if a.lab is not None]
 
     @classmethod
     def from_config(cls, configs: Sequence[Path], stop_list: Path) -> "Scanner":
-        return cls([load_app(c) for c in configs], load_stop_list(stop_list))
+        """The scanner for these applications. The repository is the one that holds the stop list."""
+        stop = load_stop_list(stop_list)
+        return cls([load_app(c) for c in configs], stop, local_paths=local_paths(Path(stop_list)))
 
     # Text
 
