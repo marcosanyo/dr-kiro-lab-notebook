@@ -54,7 +54,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     raise a Python error and never exceed the bound; `while` is refused.
   - _Requirements: 4.1-4.8, 5.1-5.4, 7.4, 16.6_
 
-- [ ] 6. Measure the step count and propose `STEP_BOUND` — **Stop and ask**
+- [x] 6. Measure the step count and propose `STEP_BOUND` — **Stop and ask**
   - Write measurement fixtures in the style the prototype used: a 5-knob keyframe experiment with linear
     interpolation and phase offsets, a piecewise experiment, and a sweep with 6 trials, at a control rate of
     50 Hz over a 5 s trial (the body-lab values in `docs/brief.md` and `body-lab/model/README.md`).

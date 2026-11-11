@@ -76,7 +76,11 @@ def _kind(v: Value) -> str:
 
 
 class Interpreter:
-    """Evaluates one checked experiment file. Use `run_module` once, then `call` for each trial."""
+    """Evaluates one checked experiment file. Use `run_module` once, then `call` for each trial.
+
+    One interpreter serves the whole file, so `step_bound` counts every step across all its trials.
+    The session passes `bench.lang.experiment.STEP_BOUND`; tests may pass smaller bounds.
+    """
 
     def __init__(self, tree: ast.Module, src: Source, step_bound: int) -> None:
         if isinstance(step_bound, bool) or not isinstance(step_bound, int) or step_bound < 1:

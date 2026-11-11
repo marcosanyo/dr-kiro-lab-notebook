@@ -293,16 +293,22 @@ the operator and context nodes these need.
 
 Calls are allowed to functions defined in the file, to `math.<name>`, and to `abs`, `min`, `max`, `len`, and
 `range` (integer arguments, only as the iterable of a `for`). Anything else is refused with the line and the
-construct. `While` is not in the whitelist. Every loop iteration costs steps, so the step bound (7.3) limits
+construct. `While` is not in the whitelist. Every loop iteration costs steps, so the step bound limits
 loops as well as recursion.
+
+**Step bound: `STEP_BOUND = 5_000_000`** (confirmed by the user after the task 6 measurement). The bound counts
+every step of one experiment file, across all its trials and all sample times, including the top level. A file
+that goes over the bound is a refusal: it is found at step 7 of the run gate order (6.1), before the budget
+check and before any trial runs, so it costs no budget. The measurement fixtures are in
+`bench/tests/fixtures/step_bound/`, measured with `bench/scripts/measure_steps.py`; the heaviest used
+1,661,521 steps.
 
 ### 7.3 Evaluator (4.3-4.6)
 
 - A tree-walking interpreter over the checked tree. It never calls `exec`, `eval` or `compile` for execution;
   `ast.parse` is used only to build the tree.
-- Every node visited costs one step. The bound is per experiment file, across all trials and all sample times:
-  `STEP_BOUND`, set from a measurement (tasks.md, task 6) and confirmed by the user before it is fixed.
-  Recursion depth is also bounded, so deep recursion is refused, not a Python
+- Every node visited costs one step, counted against `STEP_BOUND` (7.2) for the whole file. Function call
+  depth (100) and evaluation nesting (200) are also bounded, so deep recursion is refused, not a Python
   `RecursionError`.
 - Values are `int`, `float`, `bool`, and lists of these. Strings exist only in the top-level constants. Arithmetic
   on lists or strings, an `int` result with magnitude above 2^53, and lists longer than a fixed bound are refused,

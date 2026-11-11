@@ -23,6 +23,12 @@ from bench.lang.evaluate import Interpreter, Value
 from bench.record.canonical import canonical_json
 from bench.record.chain import sha256_hex
 
+# The step bound (Requirement 4.4, design 7.2), confirmed by the user after the task 6 measurement.
+# It counts every step of one experiment file: the top level, every trial and every sample time together,
+# not per trial. A file over the bound is a refusal. The session evaluates the file before its budget check
+# and before any trial runs, so a file over the bound costs no budget.
+STEP_BOUND = 5_000_000
+
 PHASES = ("map", "rules", "test", "best")
 MODES = ("compare", "sweep")
 COMPARE_VARIANTS = (1, 3)
