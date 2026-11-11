@@ -40,7 +40,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
     names the right entry or blob.
   - _Requirements: 3.3, 9.3-9.5, 13.3, 13.4, 16.4_
 
-- [ ] 5. Experiment language
+- [x] 5. Experiment language
   - `check.py`: the whitelist of design 7.2, including `For` over a list or `range(...)`, `Break`, `Continue`;
     refusal names the line and the construct.
   - `evaluate.py`: tree-walking evaluator with step counter, recursion depth bound, value and list size bounds,
