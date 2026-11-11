@@ -78,7 +78,7 @@ class Session:
     @classmethod
     def start(cls, config: SessionConfig) -> Outcome: ...          # Req 3
     @classmethod
-    def open(cls, state_dir: Path, adapter: Adapter) -> "Session": ...  # replay, section 6.4
+    def open(cls, config: SessionConfig) -> "Session": ...             # replay, section 6.4
     def register(self, hypothesis_id: str) -> Outcome: ...          # Req 6
     def run(self, experiment_path: str) -> Outcome: ...             # Req 4, 5, 7
     def verdict(self, experiment_id: str, verdict: str, words: str) -> Outcome: ...  # Req 8
@@ -86,9 +86,16 @@ class Session:
     def stop(self, reason: str) -> Outcome: ...                     # Req 11.4, builder only
 ```
 
-- `SessionConfig` has required fields only: `session_id`, `adapter`, `lab_dir`, `spec_files` (the three paths),
-  `experiments_dir`, `state_dir`, `seed`, `scan_sources`. A missing field refuses the start (1.3). The session id is
-  given by the builder, so that two identical sessions produce identical records (3.4).
+- `SessionConfig` has required fields only: `session_id`, `application`, `adapter`, `lab_dir`, `spec_files` (the
+  three paths, relative to the lab), `experiments_dir` (relative to the lab), `state_dir`, `sessions_dir`, `seed`,
+  `scan_sources` and `stop_list`. A missing field refuses the start (1.3). The session id is given by the builder,
+  so that two identical sessions produce identical records (3.4). `open` takes the same config and checks that the
+  record's start entry matches it.
+- Results: `run` returns the experiment id, each trial's id, measurements (or not-measured outcomes) and picture,
+  and the remaining budget. `register`, `verdict` and `end` return only the remaining budget. Condition classes,
+  outcomes and flags are recorded for the notebook, not returned. Paths inside the bench never reach Dr. Kiro.
+- A path that points outside the experiments folder is not echoed back in a refusal, because the blind scan flags
+  such paths at every level.
 - `Outcome` is one of `Ran(result)`, `Refused(message)`, `BenchFailure(message)` (1.1).
 - `Message` is a list of spans: `BenchText(text)` written by the bench, and `Quote(text, file, line)` copied from
   Dr. Kiro's files. Every span carries its author, so the scan applies the right level (15.4, 15.5, 15.8). The

@@ -109,7 +109,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
   - Run all tests and ruff. Report what passed, anything that needed a design change, and any bench wording the
     scan flagged.
 
-- [ ] 13. Session
+- [x] 13. Session
   - `Session.start` with required config only; `register`, `run` in the gate order of design 6.1, `verdict`,
     `end`, `stop`; snapshots from the spec files read before trials; bench failure seals as stopped.
   - Output scanning before every return (design 11.4); a finding is a bench failure with a fixed public reason.
