@@ -16,7 +16,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
   - Commit `uv.lock`.
   - _Requirements: 1.2_
 
-- [ ] 2. Outcomes, messages and ids
+- [x] 2. Outcomes, messages and ids
   - `Ran`, `Refused`, `BenchFailure`; `Message` as a list of `BenchText` and `Quote(text, file, line)` spans.
   - Experiment, trial and prediction ids (`E<n>`, `T<n>`, `H<n>.P<n>`); trial seed derivation (design 6.3).
   - Unit tests for id formats and seed derivation against values computed in the test from the formula.

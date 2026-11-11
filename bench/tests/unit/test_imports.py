@@ -37,9 +37,7 @@ def _modules_after_import() -> tuple[set[str], set[str]]:
         "    __import__(name)\n"
         "print(json.dumps([sorted(before), sorted(sys.modules)]))\n"
     )
-    result = subprocess.run(
-        [sys.executable, "-I", "-c", script], capture_output=True, text=True, check=True
-    )
+    result = subprocess.run([sys.executable, "-I", "-c", script], capture_output=True, text=True, check=True)
     before, after = json.loads(result.stdout)
     return set(after), set(before)
 
