@@ -1,7 +1,7 @@
-# Tasks: lab-bench (core)
+# Tasks: lab-bench
 
-Tasks for the core (Requirements 1-16, design sections 1-13). The front end (Requirement 17) gets its own tasks
-after the MCP spike. Each task ends with its tests passing and `uv run ruff check` and `uv run ruff format --check`
+Tasks for the core (Requirements 1-16, design sections 1-13), then the front end (Requirement 17, design part
+"Front end", tasks 17-21). Each task ends with its tests passing and `uv run ruff check` and `uv run ruff format --check`
 clean. Tests use only the fake application or small hand-made fixtures; no code or test in `bench/` reads
 `body-lab/model/`.
 
@@ -136,3 +136,60 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
 - [x] 16. Final checkpoint — **Stop and ask**
   - Run all tests (property tests at a raised example count) and ruff. Report the results, the test counts and
     run times as measured, and anything left for the front end.
+
+## Front end (Requirement 17)
+
+These tasks follow tasks 13-16, which are done. The decisions in design F12 are approved. The front end is the
+one place where the MCP SDK is imported.
+
+- [ ] 17. MCP server, rendering and queue
+  - Add the optional dependency group `frontend` with the pinned `mcp` version approved in D1; extend the
+    banned-import rule so `bench.core` cannot import `mcp`. Commit `uv.lock`.
+  - `config.py` (the session config file, no defaults, `resume` required), `describe.py` (descriptions from the
+    declaration, scanned at the builder level at startup), `render.py`, `server.py` with the four tools and the
+    fair lock around a worker-thread core call (design F3, F4, F6, F7). Console script `bench-mcp`.
+  - Adapt `render.py` to the core's actual `Ran` result type. If the core must change, stop and ask.
+  - Tests through the SDK's in-process client with the fake application: the four tools are listed and `start` and
+    `stop` are not; a refusal is a tool error with the core's text; a bench failure is a tool error and a later
+    call is refused; two parallel `run_experiment` calls give one `Ran` and one `Refused`; a missing session
+    config variable stops the server.
+  - _Requirements: 17.1-17.5, 17.17, 17.19, 17.20_
+
+- [ ] 18. Picture files
+  - `pictures.py`: write `pictures/<experiment>-<trial>.<ext>` through a temporary name and a rename, before the
+    result is returned; a write failure stops the session with a fixed reason and writes the error to `builder.log`
+    (design F5).
+  - Tests with the fake application: the file exists with the adapter's bytes and the result holds its relative
+    path and no image content; a read-only pictures folder gives a bench failure and a stopped session; changing
+    the lab's copy leaves the sealed record's picture unchanged.
+  - _Requirements: 17.13-17.16_
+
+- [ ] 19. `bench-stop`
+  - `stop.py`: open the session from the config, call `Session.stop` with the given reason. It fails with a message
+    while `bench-mcp` holds the state folder.
+  - Tests: stops an open session left by a closed server; fails while the lock is held.
+  - _Requirements: 11.4, 17.2_
+
+- [ ] 20. Hooks
+  - `hooks/confine.py` and `hooks/calllog.py` (design F8, F9); `bench-lab-hooks <lab>` copies them and writes the
+    three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the sources.
+  - Exactly two tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
+    code 2; malformed input is refused with exit code 2.
+  - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
+    `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
+    and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
+  - _Requirements: 17.7-17.11, 17.21_
+
+- [ ] 21. Check by hand in Kiro CLI — **Stop and ask**
+  - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
+    report each result as observed or not observed. Kiro CLI only; the IDE is never used to run Dr. Kiro.
+  - With the fake application's lab, started in the lab folder, and the agent definition of design F10:
+    - the agent lists the four tools and calls each one;
+    - `BENCH_SESSION_CONFIG` reaches the server (`${BENCH_SESSION_CONFIG}` in `env`), and `BENCH_HOOK_LOG` reaches
+      the hooks;
+    - one read and one write outside the lab are refused by the hook, not asked about; an in-place edit with
+      `str_replace` inside the lab works, and one outside is refused (this also confirms its `path` field in the
+      hook log);
+    - a write inside `.kiro/` is denied.
+  - Report what failed. A failure is not worked around (`rules.md` 2).
+  - _Requirements: 17.7, 17.8, 17.11, 17.12_

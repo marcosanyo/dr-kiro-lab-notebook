@@ -16,6 +16,7 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 /notebook/         the lab notebook (static site)
 /infra/            AWS CDK
 /sessions/         published session records
+/bench-run/        builder-side files of a running session (session config, hook log); git-ignored
 /docs/brief.md     the brief
 /spikes/           scratch area, not part of the product
 ```
