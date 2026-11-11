@@ -9,7 +9,7 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 ## Layout
 
 ```
-/.kiro/            builder specs, steering, hooks (how the lab was built)
+/.kiro/            builder specs, steering, hooks (how the lab was built); blind-scan/ holds the reviewed stop list
 /bench/            the skeleton
 /body-lab/         application 1 (adapter/, model/, lab/)
 /wind-tunnel/      application 2 (same shape)
@@ -26,7 +26,8 @@ Each application has the same three folders:
 
 - `adapter/`: the code that plugs the application into the bench. An application provides only its knobs, how to
   run one trial, what is measured, one picture, and its budget.
-- `model/`: the system itself (for wind-tunnel, the solver setup). Never visible from `lab/`.
+- `model/`: the system itself. Never visible from `lab/`. For wind-tunnel this is the solver setup, which the
+  builder writes from the `wind-tunnel` spec.
 - `lab/`: the only folder Dr. Kiro opens. It holds Dr. Kiro's own `.kiro/` (agent, steering, hooks, its lab spec)
   and its experiment files. It must pass the blind scan at all times.
 
@@ -35,7 +36,7 @@ Each application runs on its own. body-lab needs no Docker.
 ## Fixed contents
 
 - `body-lab/model/` is supplied by the user from the earlier prototype. Do not edit, move or rename anything in it.
-  Code elsewhere reads it.
+  Code elsewhere reads it. It is the only `model/` folder that is fixed.
 - `docs/brief.md` is the user's input. Do not edit it.
 
 ## Two kinds of `.kiro`

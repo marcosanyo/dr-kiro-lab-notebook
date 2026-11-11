@@ -1,0 +1,40 @@
+# Blind scan stop list (see .kiro/steering/rules.md, "Blind scan").
+#
+# Ordinary English words that appear among the terms derived from the model and solver files.
+# They are dropped from the automatic term list, so text that uses them in their everyday sense is not flagged.
+# Paths and file names are still scanned regardless of this list.
+#
+# Format: one lowercase word per line; "#" starts a comment. Changes need the user's approval.
+#
+# Derived from body-lab/model/specimen_01.xml and specimen_01.wiring.json. The derived terms are:
+#   bone elbow floor foot forearm grid hand hide jaw leg metal rubber servo shoulder specimen_01 top torso
+#   upper_arm wheel
+# Not on this list, so still forbidden: specimen_01, upper_arm, servo (see the note below).
+#
+# wind-tunnel: no solver files exist yet. The wind-tunnel spec adds its words here, for review.
+
+# body-lab: parts and joints
+elbow
+foot
+forearm
+hand
+jaw
+leg
+shoulder
+torso
+wheel
+
+# body-lab: materials and textures
+bone
+grid
+hide
+metal
+rubber
+
+# body-lab: other names
+floor
+top
+
+# servo: an ordinary word, but it tells how the channels are driven.
+# Proposed to stay forbidden. Uncomment to drop it from the term list.
+# servo

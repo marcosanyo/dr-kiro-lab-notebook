@@ -23,13 +23,31 @@ Dr. Kiro must never learn how the system works except by experiment.
 
 ### Blind scan
 
-An automated check that fails, naming the file and line, when it finds any of:
-- content or identifiers from `body-lab/model/` (part, joint, actuator, body and site names; file names);
-- wind-tunnel solver files, case setup, or identifiers from them;
-- a path pointing outside the lab into `model/`, `adapter/`, solver directories or the repository root;
-- anything that looks like a credential.
+An automated check that fails, naming the file and line, when it finds a forbidden item. It looks for three kinds:
 
-The forbidden terms are derived from the model and solver files at scan time, not copied by hand into the scanner.
+- **Terms**: names from `body-lab/model/` (the values of `name`, `class`, `joint`, `material`, `texture` and
+  `model` attributes, and the actuator names in the wiring) and identifiers from the wind-tunnel solver setup.
+- **Paths and file names**: a path pointing outside the lab into `model/`, `adapter/`, solver directories or the
+  repository root, and the file names of the model and solver files.
+- **Credentials**: anything that looks like one.
+
+How the term list is built, at scan time, never copied by hand into the scanner:
+1. Derive the terms from the model and solver files.
+2. Remove the **allow list**: everything Dr. Kiro is told on purpose. That is each application's declared
+   interface (knob names and ranges, number of channels, measurement names, picture, budget), taken from the
+   application's own declaration, not from a second copy.
+3. Remove the **stop list**: ordinary English words that would flag text that is not a leak. The stop list is a
+   reviewed file, `.kiro/blind-scan/stop-list.txt`. Adding or removing a word needs the user's approval.
+
+Two levels, by who wrote the text:
+
+| Written by | What | Scanned for |
+|---|---|---|
+| The builder or the bench | Everything the builder puts in `lab/` (agent, steering, hooks, templates); all bench output; the notebook's own text | Terms, paths and file names, credentials |
+| Dr. Kiro | Its lab spec (`requirements.md`, `design.md`, `tasks.md`) and its experiment files | Paths and file names, credentials |
+
+A guess written by Dr. Kiro, such as "this channel acts like a leg", is a hypothesis, not a leak. Text keeps the
+level of its author wherever it is copied: snapshots in `sessions/`, the notebook build output, anything published.
 
 Scope: every `lab/` folder, all bench output, `sessions/`, the notebook build output, and anything published.
 Publishing refuses if the scan fails.
@@ -77,15 +95,18 @@ Initial word list (pending user review). Match whole words, case-insensitive, in
 | cripple | crippled, crippling |
 | hobble | hobbles, hobbling, hobbled |
 | injured | injury, injuries |
-| wounded | wound (as a verb or noun about the body) |
+| wounded | |
 | maimed | maim |
+| seizure | seizures |
+| convulsion | convulsions, convulsing, convulse |
 | hurt | hurts |
 | paralysed | paralyzed, paralysis |
 | handicap | handicapped |
 | spastic | spasm, spasms |
 | amputee | amputated, amputation |
 | deformed | deformity |
-| invalid (as a person) | (manual review only: `invalid` is normal in code and in "invalid input") |
+| invalid (as a person) | manual review only: normal in code and in "invalid input" |
+| wound (an injury) | manual review only: normal in "wound up" |
 
 Not flagged: `disabled`, `invalid input`, `broken` (as in a broken build), `fault`, `failure`.
 
