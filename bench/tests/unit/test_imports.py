@@ -13,6 +13,10 @@ CORE_PACKAGES = [
     "bench.record",
     "bench.scan",
     "bench.fake",
+    "bench.adapter",
+    "bench.pictures",
+    "bench.core.outcome",
+    "bench.core.ids",
 ]
 
 BANNED_PREFIXES = (

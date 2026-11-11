@@ -22,7 +22,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
   - Unit tests for id formats and seed derivation against values computed in the test from the formula.
   - _Requirements: 1.1, 3.2, 15.8_
 
-- [ ] 3. Adapter contract and result validation
+- [x] 3. Adapter contract and result validation
   - Declaration types, `Adapter` protocol, `TrialResult`, `NotMeasured`, `TrialFailure` (design 4).
   - Declaration checks: identifier names, ranges with low < high, sample times inside the trial length, budget
     positive, picture kind one of the three media types.
