@@ -32,6 +32,9 @@ Notes for the `dr-kiro` spec:
 - Dr. Kiro keeps parameter names stable across experiments. The bench compares conditions by parameter name
   (Requirement 6.4), and a renamed parameter makes a prediction not comparable, which does not count toward
   `validated` (Requirement 12.3).
+- Compare variants are rows of parameter values passed through one set of functions (design 7.1). A structurally
+  different variant needs a flag parameter and an `if`, for example the amplitude of a second channel set to 0 in
+  one variant. The templates show this.
 
 ## Glossary
 
@@ -111,7 +114,8 @@ that a new application needs no change to the bench.
 #### Acceptance criteria
 
 1. THE bench SHALL accept an application through an adapter that provides only: its knobs (name, kind, and range;
-   for function-of-time knobs also the trial length and the sample times), how to run one trial, the names and
+   for function-of-time knobs also the trial length and the sample times, which follow from the control rate),
+   how to run one trial, the names and
    units of what is measured with the not-measured outcomes each measurement may have, one kind of picture, and
    its budget in trials.
 2. THE bench SHALL treat the adapter's declaration as the complete description of the application that Dr. Kiro
@@ -131,6 +135,9 @@ that a new application needs no change to the bench.
 9. Both applications, body-lab and wind-tunnel, are deterministic and do not use the seed: the same computed
    inputs give the same result. This is why the bench refuses an exact repeat of a trial (Requirements 6.5 and
    7.4) instead of running it again.
+10. THE control rate, the trial length and the sample times of function-of-time knobs SHALL be part of the
+    declaration Dr. Kiro is told: they belong to the instrument, not to the system under study. Which channel
+    drives which part of the system, and with which sign, SHALL NOT be part of the declaration.
 
 ### Requirement 3: Session start and seeds
 
@@ -156,8 +163,9 @@ time, keyframes with interpolation, phase offsets), so that I can express the in
 #### Acceptance criteria
 
 1. THE bench SHALL accept knob values written in a restricted subset of Python that allows: function definitions,
-   local variables, `if`/`else` and conditional expressions, comparisons, lists and indexing, arithmetic, and the
-   functions and constants of the `math` module.
+   local variables, `if`/`else` and conditional expressions, comparisons, lists and indexing, `for` loops over a
+   list or `range(...)` with `break` and `continue`, arithmetic, and the functions and constants of the `math`
+   module. `while` SHALL NOT be allowed; the step bound (4.4) covers loops.
 2. THE bench SHALL check every experiment file against a whitelist of syntax-tree node types before evaluating
    anything, and SHALL refuse the file, naming the line and the construct, if it contains anything outside the
    whitelist. Refused constructs include any import other than `math`, attribute access other than `math`

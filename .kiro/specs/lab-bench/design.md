@@ -3,7 +3,7 @@
 This design covers the core, Requirements 1-16. The front end (Requirement 17) waits for the MCP spike. Nothing
 here depends on it. The core is a Python library and two commands that the front end will wrap.
 
-Open points are marked **[ASK n]** and collected in "Questions before tasks" at the end.
+Decisions taken while writing this design are listed in "Decisions" at the end.
 
 ## 1. Overview
 
@@ -124,6 +124,9 @@ class TrialFailure:  public_reason: str; detail: str
 ```
 
 - Knob and measurement names must be Python identifiers, so they can be used in experiment files and predictions.
+- `sample_times` and `trial_seconds` are told to Dr. Kiro with the rest of the declaration (2.10). For body-lab
+  they follow from the control rate. The channel-to-part mapping and its signs stay inside the adapter and never
+  enter the declaration.
 - `PictureKind` is a media type (`image/png`, `image/gif`, `image/webp`). The picture is bytes of that type.
 - The bench validates every `TrialResult` (2.4-2.6): every declared measurement present, no extra keys, scalar
   values finite floats, series values finite, `NotMeasured.outcome` declared for that measurement, picture of the
@@ -273,25 +276,33 @@ def <function knob name>(t, amp, period):
 - For each **number knob**, either the knob is in `PARAMS` (its value is given directly) or the file defines a
   function with that name taking the parameters and returning a number. Exactly one of the two.
 - In sweep mode the parameters not in `SWEEP` must have the same value in every row (5.3).
+- Compare variants are rows of `TRIALS` through the same functions. A structurally different variant uses a flag
+  parameter and an `if`, for example `amp2 = 0` in one row to leave a second channel still. The `dr-kiro`
+  templates show this.
 
 ### 7.2 Whitelist (4.2)
 
 Allowed syntax-tree nodes: `Module`, `Import` (only `import math`, top level), `FunctionDef` (no decorators,
 positional parameters without defaults), `Return`, `Assign` (single name target), `AugAssign`, `If`, `IfExp`,
+`For` (single name target, no `else` clause, iterating over a list value or a `range(...)` call), `Break`,
+`Continue`,
 `Compare`, `BoolOp`, `UnaryOp`, `BinOp`, `Constant` (int, float, bool; str only as a top-level `PHASE`/`MODE`/
 `PARAMS`/`SWEEP` value), `Name`, `List`, `Subscript` with an index (no slices), `Call`, `Attribute` (only
 `math.<name>` for names in `math`'s numeric functions and constants), `Expr` (only a docstring), `Pass`, and
 the operator and context nodes these need.
 
-Calls are allowed to functions defined in the file, to `math.<name>`, and to `abs`, `min`, `max`, `len`. Anything
-else is refused with the line and the construct. Loops are not in the subset as approved **[ASK 1]**.
+Calls are allowed to functions defined in the file, to `math.<name>`, and to `abs`, `min`, `max`, `len`, and
+`range` (integer arguments, only as the iterable of a `for`). Anything else is refused with the line and the
+construct. `While` is not in the whitelist. Every loop iteration costs steps, so the step bound (7.3) limits
+loops as well as recursion.
 
 ### 7.3 Evaluator (4.3-4.6)
 
 - A tree-walking interpreter over the checked tree. It never calls `exec`, `eval` or `compile` for execution;
   `ast.parse` is used only to build the tree.
 - Every node visited costs one step. The bound is per experiment file, across all trials and all sample times:
-  `STEP_BOUND = <value>` **[ASK 2]**. Recursion depth is also bounded, so deep recursion is refused, not a Python
+  `STEP_BOUND`, set from a measurement (tasks.md, task 6) and confirmed by the user before it is fixed.
+  Recursion depth is also bounded, so deep recursion is refused, not a Python
   `RecursionError`.
 - Values are `int`, `float`, `bool`, and lists of these. Strings exist only in the top-level constants. Arithmetic
   on lists or strings, an `int` result with magnitude above 2^53, and lists longer than a fixed bound are refused,
@@ -467,22 +478,16 @@ Invariants after every step:
 - Any finding of the MCP spike that would need a change to the core rather than the front end.
 - Any need for a runtime dependency outside the standard library.
 
-## Questions before tasks
+## Decisions
 
-1. **[ASK 1] Loops.** The approved subset has no loops. Keyframes with interpolation over a list are awkward
-   without one (recursion works but costs depth). Should `for` over a list or `range(...)` be allowed, bounded by
-   the step counter? No `while`.
-2. **[ASK 2] Step bound.** I will measure the steps of a prototype-like keyframe experiment over a 5 s trial at
-   the sample rate body-lab will use, and propose `STEP_BOUND` from that measurement for you to confirm. I will
-   not pick it before measuring.
-3. **Sample times and the blind.** Requirement 2.1 has function knobs declare their sample times, and 2.2 says the
-   declaration is what Dr. Kiro is told. For body-lab the sample times come from the control rate, which
-   `body-lab/model/README.md` lists among the wiring details never shown to Dr. Kiro. Options: (a) the control
-   rate may be told, because it is a property of the instrument and not of the body; (b) the declaration gets a
-   part the bench uses but does not tell Dr. Kiro, which changes 2.2. I propose (a), but it is your call, and it
-   could also wait for the `body-lab` spec.
-4. **Change to Requirement 12.1.** I added an `id` column to the table, because "replaced by" must name a row and
-   rule text is not a stable name. Requirement 12.1 is updated.
-5. **Change to Requirement 12.3, `observed`.** With not-comparable hits removed from `validated`, the old wording
-   left a rule whose predictions are all not comparable with no valid status. `observed` now allows cited
-   predictions that are inside the tried range or not comparable, and no misses.
+Approved by the user before the tasks were written.
+
+1. **Loops.** `for` over a list or `range(...)`, with `break` and `continue`, is allowed. `while` is not. The
+   step bound covers loops (Requirement 4.1, section 7.2).
+2. **Step bound.** Measured first, then proposed to the user (tasks.md, task 6). Not fixed before that.
+3. **Control rate.** Told to Dr. Kiro: it belongs to the instrument, not the body (Requirement 2.10). What is
+   never shown is which channel drives which part and with which sign. `body-lab/model/README.md` was updated to
+   say so, at the user's request.
+4. **`id` column** in the Discovered spec table (Requirement 12.1).
+5. **`observed`** allows cited predictions that are inside the tried range or not comparable, and no misses
+   (Requirement 12.3).
