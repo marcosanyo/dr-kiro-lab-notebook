@@ -9,7 +9,8 @@
         "run",
         "--script",
         "/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook/spikes/mcp/bench/server.py"
-      ]
+      ],
+      "env": {"BENCH_BUDGET": "20", "BENCH_DELAY_S": "2", "BENCH_PICTURE": "inline"}
     }
   },
   "tools": ["read", "write", "@bench"],

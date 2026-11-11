@@ -7,6 +7,9 @@
 Settings (environment variables):
   BENCH_DELAY_S   seconds run_experiment sleeps before answering (default 2)
   BENCH_BUDGET    number of experiments allowed (default 5)
+  BENCH_PICTURE   "inline" (default): the PNG is returned as image content, preceded by a line naming the
+                  experiment. "file": the PNG is written to lab/pictures/<experiment name>.png and its
+                  path (relative to the lab) is returned in the JSON as "picture".
   BENCH_LAB       the agent's folder (default ../lab next to this file)
   BENCH_LEDGER    ledger file (default ledger.jsonl next to this file)
 """
@@ -29,6 +32,9 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = Path(__file__).resolve().parent
 DELAY_S = float(os.environ.get("BENCH_DELAY_S", "2"))
 BUDGET = int(os.environ.get("BENCH_BUDGET", "5"))
+PICTURE = os.environ.get("BENCH_PICTURE", "inline")
+if PICTURE not in ("inline", "file"):
+    raise SystemExit(f"BENCH_PICTURE must be 'inline' or 'file', got {PICTURE!r}")
 LAB = Path(os.environ.get("BENCH_LAB", HERE.parent / "lab")).resolve()
 LEDGER = Path(os.environ.get("BENCH_LEDGER", HERE / "ledger.jsonl")).resolve()
 EXPERIMENTS = LAB / "experiments"
@@ -66,9 +72,19 @@ def _result(entry: dict, budget_remaining: int | None = None) -> CallToolResult:
     ImageDraw.Draw(img).text((80, 40), str(number), fill="black", anchor="mm", font=ImageFont.load_default(size=48))
     buf = io.BytesIO()
     img.save(buf, "PNG")
+    if PICTURE == "file":
+        picture = LAB / "pictures" / f"{Path(entry['path']).stem}.png"
+        picture.parent.mkdir(exist_ok=True)
+        picture.write_bytes(buf.getvalue())
+        data["picture"] = picture.relative_to(LAB).as_posix()
+        return CallToolResult(content=[TextContent(text=json.dumps(data))])
     png = base64.b64encode(buf.getvalue()).decode()
     return CallToolResult(
-        content=[TextContent(text=json.dumps(data)), ImageContent(data=png, mime_type="image/png")]
+        content=[
+            TextContent(text=json.dumps(data)),
+            TextContent(text=f"The picture for {entry['path']} follows."),
+            ImageContent(data=png, mime_type="image/png"),
+        ]
     )
 
 

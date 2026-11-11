@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Block run_experiment",
+      "enabled": false,
+      "trigger": "PreToolUse",
+      "description": "Exit with the blocking code (2) when the tool name contains run_experiment.",
+      "action": {
+        "type": "command",
+        "command": "sh .kiro/hooks/block-run.sh"
+      }
+    }
+  ]
+}
