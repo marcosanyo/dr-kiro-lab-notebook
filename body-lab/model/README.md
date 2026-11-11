@@ -5,6 +5,9 @@ the only prototype files brought into this repository. They are data: everything
 
 **Nothing in this folder may be visible from `body-lab/lab/` or appear in any bench output.**
 
+In the wiring, what must never be shown is which channel drives which part and with which sign. The control rate
+belongs to the instrument, not the body, and Dr. Kiro is told it (`lab-bench` spec, Requirement 2.10).
+
 | File | What it is |
 |---|---|
 | `specimen_01.xml` | The body as a MuJoCo model (MJCF). x = forward, y = left, z = up. Units: m, kg. |
