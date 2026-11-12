@@ -3,19 +3,20 @@
 # Used by the Kiro hook .kiro/hooks/bench-check-after-task.json after each spec task; also runs by hand:
 #   sh bench/scripts/check.sh
 # POSIX sh, so it runs the same on macOS and Linux. Needs uv on PATH. Exits 1 if anything fails.
+# The front end tests need the `frontend` extra (the MCP SDK), so it is always installed here.
 
 cd "$(dirname "$0")/.." || exit 2
 
-tests_out=$(uv run --quiet pytest -q -p no:cacheprovider 2>&1)
+tests_out=$(uv run --quiet --extra frontend pytest -q -p no:cacheprovider 2>&1)
 tests_status=$?
 tests_line=$(printf '%s\n' "$tests_out" | grep -E '[0-9]+ (passed|failed|error)' | tail -n 1 | sed 's/=//g; s/^ *//; s/ *$//')
 [ -n "$tests_line" ] || tests_line="no test summary (pytest exit $tests_status)"
 
-lint_out=$(uv run --quiet ruff check --quiet --output-format=concise . 2>&1)
+lint_out=$(uv run --quiet --extra frontend ruff check --quiet --output-format=concise . 2>&1)
 lint_status=$?
 lint_count=$(printf '%s\n' "$lint_out" | grep -c ':[0-9]*:[0-9]*: ')
 
-format_out=$(uv run --quiet ruff format --check --quiet . 2>&1)
+format_out=$(uv run --quiet --extra frontend ruff format --check --quiet . 2>&1)
 format_status=$?
 format_count=$(printf '%s\n' "$format_out" | grep -c '^Would reformat')
 

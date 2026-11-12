@@ -142,7 +142,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
 These tasks follow tasks 13-16, which are done. The decisions in design F12 are approved. The front end is the
 one place where the MCP SDK is imported.
 
-- [ ] 17. MCP server, rendering and queue
+- [x] 17. MCP server, rendering and queue
   - Add the optional dependency group `frontend` with the pinned `mcp` version approved in D1; extend the
     banned-import rule so `bench.core` cannot import `mcp`. Commit `uv.lock`.
   - `config.py` (the session config file, no defaults, `resume` required), `describe.py` (descriptions from the
@@ -157,7 +157,7 @@ one place where the MCP SDK is imported.
     config variable stops the server.
   - _Requirements: 17.1-17.5, 17.17, 17.19, 17.20_
 
-- [ ] 18. Picture files
+- [x] 18. Picture files
   - Core: add `Session.fail(action, public, detail)` (design section 3, D10), and make the blind scan check
     pictures in a `lab/` folder with `check_picture` instead of reading them as text (Requirement 15.9, design 11.3,
     D9). Unit tests for both, including a picture with a text chunk found by the scan.
@@ -170,25 +170,25 @@ one place where the MCP SDK is imported.
     with picture files.
   - _Requirements: 11.3, 15.9, 17.13-17.16_
 
-- [ ] 19. `bench-stop`
+- [x] 19. `bench-stop`
   - `stop.py`: open the session from the config, call `Session.stop` with the given reason. It fails with a message
     while `bench-mcp` holds the state folder.
   - Tests: stops an open session left by a closed server; fails while the lock is held.
   - _Requirements: 11.4, 17.2_
 
-- [ ] 20. Hooks
+- [x] 20. Hooks
   - `hooks/confine.py` and `hooks/calllog.py` (design F8, F9), including the refusal of writes into the protected
     folders (F8 step 6, D7) and no literal path strings in the scripts; `bench-lab-hooks <lab>` copies them and
     writes the three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the
     sources, and a test that `bench-scan` finds nothing in a generated lab.
-  - Exactly two tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
-    code 2; malformed input is refused with exit code 2.
+  - Exactly three tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
+    code 2; malformed input is refused with exit code 2; a write into a protected folder is refused with exit code 2.
   - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
     `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
     and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
   - _Requirements: 15, 17.7-17.11, 17.21_
 
-- [ ] 21. Check by hand in Kiro CLI — **Stop and ask**
+- [x] 21. Check by hand in Kiro CLI — **Stop and ask**
   - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
     report each result as observed or not observed. Kiro CLI only; the IDE is never used to run Dr. Kiro.
   - With the fake application's lab, started in the lab folder, and the agent definition of design F10:
@@ -201,4 +201,5 @@ one place where the MCP SDK is imported.
     - a write into `.kiro/hooks/` is refused by the hook, not asked about; a write into `.kiro/specs/` works;
     - note whether `grep_search` returns content from `.kiro/hooks/` (expected, design D6).
   - Report what failed. A failure is not worked around (`rules.md` 2).
-  - _Requirements: 17.7, 17.8, 17.11, 17.12_
+  - Results are recorded in design F12 (D11, D12, and the results paragraph).
+  - _Requirements: 17.6-17.8, 17.11, 17.12_

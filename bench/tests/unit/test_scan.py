@@ -310,3 +310,22 @@ def test_digit_only_names_are_never_terms(tmp_path: Path) -> None:
     scanner = Scanner([sources], [], local_paths=())
     assert scanner.scan_text("trial 01, 7 and 1 2", "builder", "x") == []
     assert [f.kind for f in scanner.scan_text("gadget 01", "builder", "x")] == ["term"]
+
+
+def test_pictures_in_a_lab_are_checked_as_pictures(tmp_path: Path) -> None:
+    from bench.pictures import _png_chunk, encode_png
+
+    lab = tmp_path / "lab"
+    (lab / "pictures").mkdir(parents=True)
+    png = encode_png([[(0, 0, 0)]])
+    (lab / "pictures" / "E1-T1.png").write_bytes(png)
+    scanner = Scanner([app(tmp_path, lab=LabLayout(lab, ("experiments/**",)))], [], local_paths=())
+    assert scanner.scan_paths([lab]) == []
+    end = png.rindex(b"IEND") - 4
+    (lab / "pictures" / "E1-T2.png").write_bytes(png[:end] + _png_chunk(b"tEXt", b"a\x00paddle") + png[end:])
+    (finding,) = scanner.scan_paths([lab])
+    assert finding.kind == "picture"
+    (lab / "pictures" / "E1-T2.png").unlink()
+    (lab / "data.bin").write_bytes(b"\xff\xfe\x00")
+    with pytest.raises(ScanError, match="not UTF-8"):
+        scanner.scan_paths([lab])

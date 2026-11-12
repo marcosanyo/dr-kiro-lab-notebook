@@ -675,7 +675,8 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 1. Read stdin as JSON. It must be an object with a string `tool_name` and an object `tool_input`. Otherwise refuse.
 2. Look the tool up in a table of path-taking tools (below). A tool with path fields: every listed field must be a
    non-empty string. Otherwise refuse.
-3. Resolve each path against `lab` (so `~` is not expanded and a relative path means "inside the lab"), with
+3. A path whose first part starts with `~` is refused as outside the lab: the hook cannot know whether the tool
+   expands it to a home folder. Resolve every other path against `lab` (a relative path means "inside the lab"), with
    `..` segments and symbolic links resolved. If the result is not `lab` or inside it, refuse.
 4. A tool in the path-less list is allowed without further checks (17.10).
 5. Any other tool name is refused: the hook cannot classify it (17.9).
@@ -756,8 +757,8 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
 
 ## F11. Tests
 
-- Confinement hook (17.21): two tests. A call with a path outside the lab is refused with exit code 2. Malformed
-  input is refused with exit code 2.
+- Confinement hook (17.21): three tests. A call with a path outside the lab is refused with exit code 2. Malformed
+  input is refused with exit code 2. A write into a protected folder is refused with exit code 2.
 - Server, through the SDK's in-process client with the fake application: the four tools are listed; a refusal is a
   tool error with the core's text; a run returns no image content and the picture file exists with the adapter's
   bytes; two parallel runs give one `Ran` and one `Refused` (gate 6). These are example tests.
@@ -786,4 +787,20 @@ Approved in the review of tasks 17-21, after the core was built:
 - **D9. Pictures in a lab** are checked as pictures by the blind scan, not read as text (15.9, 11.3). This changes
   the core's scan.
 - **D10. `Session.fail`** is added to the core, so that a picture that cannot be written is recorded as a bench
-  failure like any other (17.15, section 3, F5). Tests of the confinement hook stay at two (17.21).
+  failure like any other (17.15, section 3, F5). The confinement hook gets a third test for protected writes (17.21).
+
+Approved after the manual check in Kiro CLI (task 21):
+
+- **D11. Extra tools.** Kiro's `read` and `write` groups also offer `code`, `delete_file`, `disclose_context` and
+  `tool_call`. They are not removed from the agent; the confinement hook refuses them, as every tool outside its
+  table (17.6, 17.9). Bench tools reach the hooks as `mcp_bench_<tool>`, after a `tool_load`; `tool_call` was not
+  used.
+- **D12. Relative paths in Dr. Kiro's files.** Kiro passes absolute paths in tool inputs, so Dr. Kiro knows the
+  lab's absolute path. The `dr-kiro` spec tells Dr. Kiro to write only lab-relative paths in its files, because the
+  blind scan flags absolute paths and a session with one cannot be sealed.
+
+Results of task 21 (Kiro CLI on macOS, fake application): the four bench tools were listed and each call reached
+the core; `BENCH_SESSION_CONFIG` reached the server and `BENCH_HOOK_LOG` the hooks; reads and writes outside the
+lab and a write into `.kiro/hooks/` were refused by the hook without a prompt; `str_replace` carries `path` and
+worked in `.kiro/specs/`; the agent reported no steering in its context (its own report). Not checked:
+`grep_search` on `.kiro/hooks/` (expected to work, D6).
