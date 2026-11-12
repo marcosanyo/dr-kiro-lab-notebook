@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `dce9c12a9c2179726ac351492337d6063acf0298017b8c7824ccc45b539fa827`
+> 原文 SHA-256: `acf50fc2bb504934eb3ff6cfc034a12712ab4aca245a2f01c1f18b89aec3b6a2`
 
 # 設計: lab-bench（コア）
 
@@ -85,7 +85,10 @@ class Session:
     def verdict(self, experiment_id: str, verdict: str, words: str) -> Outcome: ...  # Req 8
     def end(self) -> Outcome: ...                                   # Req 11.1, 12
     def stop(self, reason: str) -> Outcome: ...                     # Req 11.4, builder only
+    def fail(self, action: str, public: str, detail: str) -> BenchFailure: ...  # Req 11.3, builder side only
 ```
+
+- `fail` は、コアの外、つまりビルダー自身のプロセスで起きるベンチ障害（フロントエンドが画像ファイルを書く場合、F5）を、コアが自身の障害を記録するのとまったく同じように記録します: 公開用の理由を持つ `failure` エントリ、`builder.log` への詳細、そして `stopped` としての封印です。フロントエンドはこれを Dr. Kiro に公開しません。
 
 - `SessionConfig` は必須フィールドだけを持ちます。`session_id`、`application`、`adapter`、`lab_dir`、`spec_files`（ラボからの相対パスで指定する 3 つのパス）、`experiments_dir`（ラボからの相対パス）、`state_dir`、`sessions_dir`、`seed`、`scan_sources`、`stop_list` です。フィールドが 1 つでも欠けていれば開始は拒否されます (1.3)。セッション ID はビルダーが与えます。これにより、同一の 2 つのセッションは同一の記録を生成します (3.4)。`open` は同じ設定を受け取り、記録の start エントリがそれと一致することを確認します。
 - 返す内容: `run` は実験 ID、各試行の ID、計測値（または未計測結果）と画像、残りの予算を返します。`register`、`verdict`、`end` は残りの予算だけを返します。条件クラス、結果、フラグはノートブックのために記録されますが、返されません。ベンチ内部のパスが Dr. Kiro に届くことはありません。
@@ -338,6 +341,7 @@ def <function knob name>(t, amp, period):
 - `lab/` フォルダーの中では、Dr. Kiro の 3 つの仕様ファイルと `experiments/` 内のすべてが Dr. Kiro レベルで、それ以外はすべてビルダーレベルです。
 - 記録の中では、各テキストフィールドと各 blob に記録された作成者に従います。
 - その他の生成ファイル（ノートブックのビルド出力、公開ファイル）は、作成者ごとの文字範囲を列挙したサイドカー `<file>.authors.json` を持たなければなりません。これは `lab-notebook` 仕様が生成します。スキャン対象のファイルにレベルの情報源がなければ、スキャンは失敗します (15.7)。
+- `lab/` フォルダー内の画像（`.png`、`.gif`、`.webp`）はテキストとして読まれません。拡張子が示すメディアタイプについて `check_picture`（セクション 4）を通り、失敗は種類 `picture` の検出になります (15.9)。
 - `bench-scan <paths...>` は検出ごとに `file:line: kind: match` を出力し、検出が 1 つでもあれば 0 以外の終了コードで終了します。
 
 ### 11.4 Dr. Kiro への出力 (15.8)
@@ -472,7 +476,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 | `Refused(message)` | テキストがそのメッセージであるツールエラー。エラーフラグは SDK が設定する。 |
 | `BenchFailure(message)` | テキストがそのメッセージであるツールエラー。コアはすでにセッションを stopped として封印している (11.3) ので、以降の呼び出しはすべてコアの最初のゲートで `Refused` を受け取る (6.1、ステップ 1)。フロントエンドは状態を持たない。 |
 
-`Ran.result` は、JSON の型から成るプレーンな dict（計測値、未計測結果、残りの予算）で、各画像は `(media type, bytes)` であるものとします。コアの結果の型がこれと異なる場合は、task 17 で表示処理を合わせます。コアの変更が必要になる場合は、作業を止めて相談します（セクション 14）。
+`Ran.result` は、`run` ではコアの `RunResult`、`register`、`verdict`、`end` では `Accepted` です（セクション 3）。`RunResult` では、試行の `measurements` が値と `NotMeasured` の結果を 1 つのマッピングに保持し、`picture` は `Picture`（メディアタイプとバイト列）です。表示処理は未計測結果を `not_measured` に分け、各画像をそのファイルパスに置き換えます (F5)。`Accepted` は `{"budget_remaining": <n>}` として表示されます。`Session.fail`（セクション 3）を超えてコアの変更が必要になる場合は、作業を止めて相談します（セクション 14）。
 
 `run_experiment` の実行結果（キーはここで固定し、値はコアから来ます）:
 
@@ -488,7 +492,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 
 - 名前: `pictures/<experiment id>-<trial id>.<ext>`。たとえば `E3-T7.png` です。試行 ID はセッション全体を通して番号付けされる (6.3) ので、名前は一意です。`<ext>` は宣言されたメディアタイプ（`png`、`gif`、`webp`）に従います。
 - 各ファイルは同じフォルダー内の一時的な名前で書き込まれ、フラッシュされてから名前を変更されます。フォルダーは最初の画像のときに作られます。すべてのファイルは結果を返す前に書き込まれます (17.15)。
-- 書き込めないファイルはベンチ障害です。フロントエンドは固定のベンチの理由（「a picture could not be delivered」）を付けて `Session.stop` を呼び、システムエラーを `builder.log` に書き、その理由をツールエラーとして返します。フロントエンドはビルダーのプロセスなので、`stop` を使えます (6.2)。
+- 書き込めないファイルはベンチ障害です。フロントエンドは固定のベンチの理由（「a picture could not be delivered」）と、詳細としてのシステムエラーを付けて `Session.fail` を呼び、その理由をツールエラーとして返します。その結果、記録には、ほかのベンチ障害と同じように `failure` エントリと `stopped` の封印が残ります (17.15, 11.3)。
 - ラボ内のコピーをベンチが読み戻すことはありません。記録が保持するのはアダプターのバイト列です (17.16)。
 - スパイクで開いたのは PNG だけでした。wind-tunnel のアニメーションのような GIF や WebP を Dr. Kiro のファイルツールが表示できるかは検証されていません。画像の形式は `wind-tunnel` 仕様が決めます。
 
@@ -502,7 +506,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 
 ## F7. 開始と停止 (17.5)
 
-- `bench-mcp` は引数を取りません。`BENCH_SESSION_CONFIG` を読みます。これは、ビルダーがラボの外に書く TOML ファイルのパスです。変数、ファイル、フィールドのいずれかが欠けていれば、サーバーはメッセージを出して停止します (1.3, `rules.md` 2)。フィールド: `session_id`、`adapter`（`module:factory`）、`lab_dir`、`spec_files`、`experiments_dir`、`state_dir`、`seed`、`scan_sources`、`resume`（`true` は `Session.open` で既存のセッションを開き、`false` は新しいセッションを開始します。デフォルトはありません）。
+- `bench-mcp` は引数を取りません。`BENCH_SESSION_CONFIG` を読みます。これは、ビルダーがラボの外に書く TOML ファイルのパスです。変数、ファイル、フィールドのいずれかが欠けていれば、サーバーはメッセージを出して停止します (1.3, `rules.md` 2)。フィールドは `SessionConfig`（セクション 3）の各フィールドに 1 つずつです: `session_id`、`application`、`adapter`（`module:factory`）、`lab_dir`、`spec_files`、`experiments_dir`、`state_dir`、`sessions_dir`、`seed`、`scan_sources`、`stop_list`。それに加えて `resume`（`true` は `Session.open` で既存のセッションを開き、`false` は新しいセッションを開始します。デフォルトはありません）。
 - Dr. Kiro がそのファイルや変数を見ることはありません。どのツール入力でも、それらは一切設定できません。
 - Kiro が接続を閉じると、サーバーは終了し、セッションは開いたまま残ります。サーバーはセッションを終了も停止もしません。
 - `bench-stop <config> --reason <text>` は `Session.open` でセッションを開き、`Session.stop` を呼びます (11.4)。状態フォルダーがロックされているため（セクション 3）、これは `bench-mcp` が動いていないときにだけ機能します。閉じた接続によって開いたまま残った記録は、この方法で停止します。
@@ -520,8 +524,9 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 3. 各パスを `lab` を基準に解決し（そのため `~` は展開されず、相対パスは「ラボの中」を意味します）、`..` セグメントとシンボリックリンクも解決します。結果が `lab` 自身でもその中でもなければ、拒否します。
 4. パスなしのリストにあるツールは、それ以上の確認なしに許可されます (17.10)。
 5. それ以外のツール名は拒否されます。フックがそれを分類できないからです (17.9)。
+6. 解決したパスが 17.7 の保護フォルダー（ラボの下の `.kiro/agents`、`.kiro/hooks`、`.kiro/steering`、`.kiro/settings`）の中にある書き込みツール（`fs_write`、`fs_append`、`str_replace`）は拒否されます。これにより、その書き込みは確認ではなく拒否で終わります (17.8)。`.kiro/specs/` への書き込みは許可されます。
 
-拒否: 終了コード 2 で終了し、stderr に Dr. Kiro の言葉で 1 行を出力します。ラボ外のパスに対しては「That path is outside your folder. Use a path inside your folder.」、不正な入力や表にないツールに対しては「That tool is not available in this lab.」です。これらの行はパスを示しません。スクリプト内の例外はすべてトップレベルで捕捉され、やはり終了コード 2 で終了します。それ以外の 0 以外の終了コードでは呼び出しが通ってしまうからです。例外の文は stderr ではなくビルダー側のログに書かれます。この捕捉は障害を拒否に変えるものであり、障害を隠すものではありません。
+拒否: 終了コード 2 で終了し、stderr に Dr. Kiro の言葉で 1 行を出力します。ラボ外のパスに対しては「That path is outside your folder. Use a path inside your folder.」、保護フォルダーへの書き込みに対しては「That file is part of the lab's setup and cannot be changed.」、不正な入力や表にないツールに対しては「That tool is not available in this lab.」です。これらの行はパスを示しません。スクリプト内の例外はすべてトップレベルで捕捉され、やはり終了コード 2 で終了します。それ以外の 0 以外の終了コードでは呼び出しが通ってしまうからです。例外の文は stderr ではなくビルダー側のログに書かれます。この捕捉は障害を拒否に変えるものであり、障害を隠すものではありません。
 
 ツールの表。名前とパスフィールドは、スパイクのフックログ（`hook-log.jsonl`）にあるものです。`read_file`、`list_directory`、`fs_write`、`fs_append` は `path` を持ち、`file_search`、`grep_search`、`tool_load` とベンチのツールはパスを持ちません。`str_replace` は、Dr. Kiro が `requirements.md` と Discovered spec 表をその場で編集できるよう、ユーザーの依頼で追加しました。これは `fs_write` と同じパスの確認を受けます。このツールはスパイクのフックログには現れませんでした。その `path` フィールドは Kiro のツール定義から取ったもので、task 21 で確認します。`delete_file` は引き続き拒否されます。表にないツールは、フックログで確認されてここに追加されるまで拒否されます。
 
@@ -532,7 +537,7 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 
 17.10 の前提条件: Dr. Kiro は Kiro CLI でのみ、ラボを作業フォルダーとして起動して実行されます (17.12)。そのため、検索ツールが見るワークスペースはラボです。Dr. Kiro の実行に IDE が使われることはありません。
 
-フックの文はビルダーの文言であり、`lab/.kiro/` の他の部分とともにコアのスキャンを通ります (Requirement 15)。パスは含みません。
+フックの文はビルダーの文言であり、`lab/.kiro/` の他の部分とともにコアのスキャンを通ります (Requirement 15)。パスは含みません: スクリプトは親フォルダーとホームフォルダーの確認を `pathlib` の部品から組み立て、`..` セグメントや `~/` 接頭辞のようなリテラル文字列は決して使いません。スキャンはそれらをパスとして検出するからです。`bench-lab-hooks` が生成したラボに対して `bench-scan` を実行するテストがあります。
 
 ## F9. ログ記録フック (17.11)
 
@@ -552,10 +557,10 @@ lab = the folder two levels above this script's folder (the script lives in <lab
   "includeMcpJson": false,
   "includePowers": false,
   "permissions": {"rules": [
-    {"capability": "fs_read",  "match": ["./**"],    "effect": "allow"},
-    {"capability": "fs_write", "match": ["./**"],    "effect": "allow"},
-    {"capability": "fs_read",  "match": [".kiro/**"], "effect": "deny"},
-    {"capability": "fs_write", "match": [".kiro/**"], "effect": "deny"},
+    {"capability": "fs_read",  "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": [".kiro/agents/**", ".kiro/hooks/**", ".kiro/steering/**",
+                                         ".kiro/settings/**"], "effect": "deny"},
     {"capability": "mcp",      "match": ["bench/*"], "effect": "allow"}
   ]}
 }
@@ -564,7 +569,8 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 - スパイクの `/**` と `../**` の deny ルールは削除しました。これらは拒否する代わりに確認を求めてしまい、またラボへの絶対パスを必要としましたが、ラボのファイルにはそれを含められないからです。閉じ込めはフックが行います。
 - `bench-mcp` は `uv tool install --editable ./bench` によってビルダーの `PATH` 上に置かれるので、リポジトリへのパスがラボに現れることはありません。`env` 内の `${...}` は Kiro のエージェントドキュメントに示されている変数展開ですが、スパイクでは使っていませんでした。task 21 で確認します。うまくいかない場合は、作業を止めて相談します。
 - `hook-log.jsonl` はもうラボの中にないので、それに対するスパイクの `fs_write` の deny は不要になります。
-- `.kiro/**` への書き込みの deny が守られるかどうかは、読み取りと、エージェントがサーバーの追加を拒んだ場合についてしか観察されていません (Q7)。task 21 で書き込みを試します。
+- deny は保護フォルダーへの書き込みだけを対象にします。`.kiro/specs/` は読み書きできるままです。Dr. Kiro のラボの仕様ファイルがそこにあるからです (17.7)。読み取りは deny しません: 検索ツールは deny ルールで止まらない (Q7) ので、読み取りの deny は実際に守れる以上のことを約束してしまいます。閉じ込めフックも保護フォルダーへの書き込みを拒否します（F8、ステップ 6）。
+- 書き込みの deny が守られるかどうかは、エージェントがサーバーの追加を拒んだ場合についてしか観察されていません (Q7)。task 21 で `.kiro/hooks/` への書き込みと `.kiro/specs/` への書き込みを 1 つずつ試します。
 
 ## F11. テスト
 
@@ -578,3 +584,12 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 - **D2. フックログとセッション設定の置き場所。** どちらもラボの外にあり、環境変数（`BENCH_HOOK_LOG`、`BENCH_SESSION_CONFIG`）で指定されます。承認された内容: リポジトリのルートに `bench-run/` フォルダーを置き、git の管理対象外とし、`structure.md` に記載します。
 - **D3. 長い呼び出し。** 必要ありません。スパイクで 900 s の呼び出しが通ったので、並行試行による代替策は用意しません。
 - **D4. Dr. Kiro は Kiro CLI でのみ実行し**、ラボフォルダーで起動します (Requirement 17.12)。IDE はビルダーのためのものです。
+
+コアを構築した後、task 17-21 のレビューで承認された内容:
+
+- **D5. 保護フォルダー。** 保護するのは `.kiro/agents`、`.kiro/hooks`、`.kiro/steering`、`.kiro/settings` だけです。Dr. Kiro は `.kiro/specs/` で自身の仕様ファイルを読み書きします (17.7, F10)。
+- **D6. 読み取りではなく変更。** Requirement 17.7 が約束するのは、Dr. Kiro が保護フォルダーを変更できないことであり、読めないことではありません（Q7: 検索ツールは deny ルールを越えて読みます）。
+- **D7. フックも保護フォルダーへの書き込みを拒否します。** これにより、それらは確認ではなく拒否で終わります（17.8、F8 ステップ 6）。
+- **D8. セッション設定ファイル**は、`SessionConfig` の各フィールドに 1 つずつのフィールドと、`resume` を持ちます (F7)。
+- **D9. ラボ内の画像**は、ブラインドスキャンによってテキストとして読まれるのではなく、画像として検査されます (15.9, 11.3)。これはコアのスキャンを変更します。
+- **D10. `Session.fail`** をコアに追加します。これにより、書き込めない画像は、ほかのベンチ障害と同じようにベンチ障害として記録されます（17.15、セクション 3、F5）。閉じ込めフックのテストは 2 つのままです (17.21)。

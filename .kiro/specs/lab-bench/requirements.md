@@ -425,6 +425,10 @@ output or in the records that reveals the model, so that the blind holds by cons
    builder level and any quoted text from Dr. Kiro's files at the Dr. Kiro level, and IF the scan finds anything,
    THEN THE bench SHALL treat it as a bench failure and return nothing of it. A quote of Dr. Kiro's own text SHALL
    NOT turn a refusal into a bench failure because it contains a term.
+9. WHERE a file in a `lab/` folder is a picture (its name ends in `.png`, `.gif` or `.webp`), THE blind scan SHALL
+   check it with the picture check of the adapter contract (design section 4: the format's signature, and no text
+   or metadata chunks) instead of reading it as text, and SHALL report a picture that fails the check as a finding.
+   Any other file that is not UTF-8 text still fails the scan (15.7).
 
 ### Requirement 16: Property-based tests of the gates
 
@@ -500,12 +504,17 @@ the front end writes or returns. Nothing in the core depends on this requirement
 
 6. Dr. Kiro's agent definition SHALL give it file read and write tools and the bench tools, and nothing else: no
    shell, no web access, no other MCP server (including a workspace MCP configuration), and no powers.
-7. Dr. Kiro SHALL NOT be able to read or change its own agent definition, hooks, steering or MCP configuration
-   (the lab's `.kiro/` folder), nor add or start an MCP server. A deny rule on that folder SHALL enforce this.
+7. Dr. Kiro SHALL NOT be able to change its own agent definition, hooks, steering, settings or MCP configuration
+   (the lab's `.kiro/agents/`, `.kiro/hooks/`, `.kiro/steering/` and `.kiro/settings/`, the protected folders),
+   nor add or start an MCP server. Deny rules on the protected folders SHALL enforce this, and the confinement hook
+   SHALL refuse writes into them as well (17.8). Dr. Kiro SHALL be able to read and write its lab spec files in
+   `.kiro/specs/`. Reading the protected folders is not prevented: the search tools are not stopped by deny rules
+   (`spikes/mcp/results.md`, Q7), and their content is builder text that passes the blind scan (Requirement 15).
 8. A pre-tool hook in the lab's `.kiro/` SHALL refuse every tool call that reads or writes a path outside the lab
    folder. THE hook SHALL resolve the path (relative paths, `..` segments and symbolic links) before it compares,
    and SHALL NOT rely on a permission rule alone. A call outside the lab SHALL end as a refusal, never as a prompt
-   to a person.
+   to a person. THE hook SHALL also refuse every write into the protected folders of 17.7, because Kiro asks a
+   person before writes to `.kiro/agents/` and `.kiro/hooks/` by default.
 9. IF the hook cannot read its input, cannot resolve a path, or meets a call whose input it cannot classify, THEN
    it SHALL refuse the call, with the blocking exit code and a reason in Dr. Kiro's terms (the folder rule, not the
    hook's internals). It SHALL NOT let the call through.
@@ -524,7 +533,7 @@ the front end writes or returns. Nothing in the core depends on this requirement
     return image content in a tool result.
 14. THE picture's file name SHALL identify the experiment and the trial.
 15. THE front end SHALL have written every picture file before it returns the result. IF a file cannot be written,
-    THEN it is a bench failure.
+    THEN it is a bench failure, recorded in the session record as any other bench failure (Requirement 11.3).
 16. THE file in the lab is a copy. The picture in the sealed record (Requirement 13.2) is the one the adapter
     returned, and a change to the lab's copy SHALL NOT change the record.
 
