@@ -32,10 +32,13 @@ section 9.
     continue line, interactive and headless, and the steps for the fake session of task 5.
   - _Requirements: 6_
 
-- [ ] 5. One fake session in Kiro CLI — **Stop and ask**
-  - Not automated: it needs the user's Kiro CLI. The user runs the fake session from `bench/README.md` with a
-    budget of 12 trials, sending only the start line and, if needed, the continue line.
-  - Pass: the record ends with an `ended` seal, and `bench-scan` on the sealed folder reports nothing. Also note
-    whether any steering other than `method.md` and `workflow.md` appears in Dr. Kiro's context (design 11).
-  - Nothing else is judged. A failure is reported, not worked around (`rules.md` 2).
+- [ ] 5. Check Dr. Kiro in the first `body-lab` session (deferred)
+  - Deferred by the user: no separate fake session. The first `body-lab` session in Kiro CLI checks the same
+    points, and its `body-lab` task names this one.
+  - Pass: the record ends with an `ended` seal; `bench-scan` on the sealed folder reports nothing; no steering
+    other than `method.md` and `workflow.md` appears in Dr. Kiro's context (design 11). Note how many continue lines
+    were needed.
+  - If it fails, the session is stopped with `bench-stop` and a new one started after the fix; nothing else is
+    judged here. A failure is reported, not worked around (`rules.md` 2).
+  - The steps for a fake session stay in `bench/README.md` for a quick check after builder-file changes.
   - _Requirements: 7.4_
