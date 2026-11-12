@@ -1,0 +1,89 @@
+"""The `bench` MCP server and the `bench-mcp` command (Requirement 17.1-17.5, 17.17-17.20, design F3, F6, F7).
+
+Four tools, one fair lock. Every handler takes the lock first, then runs the core call (and the rendering,
+which writes the picture files) in a worker thread, so the event loop stays free during a long run. The
+worker thread is not abandoned if the client cancels: the run finishes and is recorded. The front end adds
+no gate and builds no message text of its own.
+"""
+
+import sys
+from collections.abc import Callable
+
+import anyio
+import anyio.to_thread
+from mcp.server.mcpserver import MCPServer
+from mcp_types import CallToolResult
+
+from bench.core.outcome import Outcome, Ran
+from bench.core.session import Session, SessionError
+from bench.frontend import config as config_file
+from bench.frontend.describe import descriptions
+from bench.frontend.pictures import PictureWriter
+from bench.frontend.render import render
+
+TOOLS = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
+
+
+class StartupError(Exception):
+    """The server cannot start. The message says why."""
+
+
+class BenchServer:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+        self.lock = anyio.Lock()
+        self.write_picture = PictureWriter(session.config.lab_dir)
+        texts = descriptions(session.declaration)
+        findings = [
+            f for name, text in texts.items() for f in session.scanner.scan_text(text, "builder", name)
+        ]
+        if findings:
+            raise StartupError("tool descriptions fail the blind scan: " + "; ".join(map(str, findings)))
+        self.mcp = MCPServer("bench")
+
+        async def register_hypothesis(id: str) -> CallToolResult:
+            return await self._call(lambda: self.session.register(id))
+
+        async def run_experiment(path: str) -> CallToolResult:
+            return await self._call(lambda: self.session.run(path))
+
+        async def record_verdict(experiment: str, verdict: str, words: str) -> CallToolResult:
+            return await self._call(lambda: self.session.verdict(experiment, verdict, words))
+
+        async def end_session() -> CallToolResult:
+            return await self._call(self.session.end)
+
+        for fn in (register_hypothesis, run_experiment, record_verdict, end_session):
+            self.mcp.add_tool(fn, name=fn.__name__, description=texts[fn.__name__], structured_output=False)
+
+    async def _call(self, action: Callable[[], Outcome]) -> CallToolResult:
+        async with self.lock:
+            return await anyio.to_thread.run_sync(lambda: render(action(), self.write_picture))
+
+    def close(self) -> None:
+        self.session.close()
+
+
+def open_session(cfg: config_file.ServerConfig) -> Session:
+    if cfg.resume:
+        try:
+            return Session.open(cfg.session)
+        except SessionError as error:
+            raise StartupError(f"cannot reopen the session: {error}") from error
+    outcome = Session.start(cfg.session)
+    if not isinstance(outcome, Ran):
+        raise StartupError(f"cannot start the session: {outcome.message.plain()}")
+    return outcome.result
+
+
+def main() -> int:
+    try:
+        server = BenchServer(open_session(config_file.from_environment()))
+    except (config_file.ConfigError, StartupError) as error:
+        print(f"bench-mcp: {error}", file=sys.stderr)
+        return 2
+    try:
+        server.mcp.run("stdio")
+    finally:
+        server.close()
+    return 0

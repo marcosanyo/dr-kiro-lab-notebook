@@ -142,7 +142,7 @@ A task marked **Stop and ask** ends with a report to the user, and the next task
 These tasks follow tasks 13-16, which are done. The decisions in design F12 are approved. The front end is the
 one place where the MCP SDK is imported.
 
-- [ ] 17. MCP server, rendering and queue
+- [x] 17. MCP server, rendering and queue
   - Add the optional dependency group `frontend` with the pinned `mcp` version approved in D1; extend the
     banned-import rule so `bench.core` cannot import `mcp`. Commit `uv.lock`.
   - `config.py` (the session config file, no defaults, `resume` required), `describe.py` (descriptions from the
