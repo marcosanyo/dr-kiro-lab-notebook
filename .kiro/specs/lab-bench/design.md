@@ -85,7 +85,12 @@ class Session:
     def verdict(self, experiment_id: str, verdict: str, words: str) -> Outcome: ...  # Req 8
     def end(self) -> Outcome: ...                                   # Req 11.1, 12
     def stop(self, reason: str) -> Outcome: ...                     # Req 11.4, builder only
+    def fail(self, action: str, public: str, detail: str) -> BenchFailure: ...  # Req 11.3, builder side only
 ```
+
+- `fail` records a bench failure that happens outside the core, in the builder's own process (the front end
+  writing a picture file, F5), exactly as the core records its own: a `failure` entry with the public reason, the
+  detail in `builder.log`, then sealing as `stopped`. The front end does not expose it to Dr. Kiro.
 
 - `SessionConfig` has required fields only: `session_id`, `application`, `adapter`, `lab_dir`, `spec_files` (the
   three paths, relative to the lab), `experiments_dir` (relative to the lab), `state_dir`, `sessions_dir`, `seed`,
@@ -439,6 +444,8 @@ that is not here, that is a change to this spec, not a second source.
 - Other generated files (notebook build output, published files) must have a sidecar `<file>.authors.json`
   listing the character ranges by author. The `lab-notebook` spec produces it. A file in scope with no level
   source fails the scan (15.7).
+- A picture in a `lab/` folder (`.png`, `.gif`, `.webp`) is not read as text. It goes through `check_picture`
+  (section 4) for the media type its extension names, and a failure is a finding of kind `picture` (15.9).
 - `bench-scan <paths...>` prints `file:line: kind: match` for each finding and exits non-zero if there are any.
 
 ### 11.4 Output to Dr. Kiro (15.8)
@@ -597,9 +604,11 @@ Spans are joined in order into plain text, with no added words. The front end bu
 | `Refused(message)` | A tool error whose text is the message. The SDK sets the error flag. |
 | `BenchFailure(message)` | A tool error whose text is the message. The core has already sealed the session as stopped (11.3), so every later call gets `Refused` from the core's first gate (6.1, step 1). The front end keeps no state. |
 
-`Ran.result` is taken to be a plain dict of JSON types (measurements, not-measured outcomes, budget remaining)
-with each picture as `(media type, bytes)`. If the core's result type differs, task 17 adapts the renderer; if the
-core would need to change, stop and ask (section 14).
+`Ran.result` is the core's `RunResult` for `run` and `Accepted` for `register`, `verdict` and `end` (section 3).
+In `RunResult`, a trial's `measurements` holds values and `NotMeasured` outcomes in one mapping, and `picture` is a
+`Picture` (media type and bytes). The renderer splits the not-measured outcomes into `not_measured` and replaces
+each picture by its file path (F5). `Accepted` is rendered as `{"budget_remaining": <n>}`. If the core would need
+to change beyond `Session.fail` (section 3), stop and ask (section 14).
 
 Run result, for `run_experiment` (keys are fixed here; values come from the core):
 
@@ -617,9 +626,9 @@ Run result, for `run_experiment` (keys are fixed here; values come from the core
   session (6.3), so the name is unique. `<ext>` follows the declared media type (`png`, `gif`, `webp`).
 - Each file is written to a temporary name in the same folder, flushed, and renamed. The folder is created on the
   first picture. Every file is written before the result is returned (17.15).
-- A file that cannot be written is a bench failure: the front end calls `Session.stop` with a fixed bench reason
-  ("a picture could not be delivered"), writes the system error to `builder.log`, and returns that reason as a tool
-  error. The front end is the builder's process, so `stop` is available to it (6.2).
+- A file that cannot be written is a bench failure: the front end calls `Session.fail` with a fixed bench reason
+  ("a picture could not be delivered") and the system error as the detail, and returns the reason as a tool error.
+  The record then holds a `failure` entry and a `stopped` seal, as for any other bench failure (17.15, 11.3).
 - The lab's copy is not read back by the bench. The record holds the adapter's bytes (17.16).
 - The spike opened a PNG only. Whether Dr. Kiro's file tool shows a GIF or WebP, such as the wind-tunnel
   animation, is not verified. The `wind-tunnel` spec decides the picture format.
@@ -642,9 +651,10 @@ Run result, for `run_experiment` (keys are fixed here; values come from the core
 ## F7. Starting and stopping (17.5)
 
 - `bench-mcp` takes no arguments. It reads `BENCH_SESSION_CONFIG`, the path of a TOML file that the builder writes
-  outside the lab. A missing variable, file or field stops the server with a message (1.3, `rules.md` 2). Fields:
-  `session_id`, `adapter` (`module:factory`), `lab_dir`, `spec_files`, `experiments_dir`, `state_dir`, `seed`,
-  `scan_sources`, and `resume` (`true` opens an existing session with `Session.open`; `false` starts a new one;
+  outside the lab. A missing variable, file or field stops the server with a message (1.3, `rules.md` 2). Fields,
+  one for each field of `SessionConfig` (section 3): `session_id`, `application`, `adapter` (`module:factory`),
+  `lab_dir`, `spec_files`, `experiments_dir`, `state_dir`, `sessions_dir`, `seed`, `scan_sources`, `stop_list`;
+  and `resume` (`true` opens an existing session with `Session.open`; `false` starts a new one;
   no default).
 - Dr. Kiro never sees the file or the variable. No tool input sets any of it.
 - When Kiro closes the connection, the server exits and leaves the session open. It does not end or stop it.
@@ -669,9 +679,13 @@ lab = the folder two levels above this script's folder (the script lives in <lab
    `..` segments and symbolic links resolved. If the result is not `lab` or inside it, refuse.
 4. A tool in the path-less list is allowed without further checks (17.10).
 5. Any other tool name is refused: the hook cannot classify it (17.9).
+6. A write tool (`fs_write`, `fs_append`, `str_replace`) whose resolved path is inside a protected folder of 17.7
+   (`.kiro/agents`, `.kiro/hooks`, `.kiro/steering`, `.kiro/settings` under the lab) is refused, so that the write
+   ends as a refusal and not as a prompt (17.8). Writes in `.kiro/specs/` are allowed.
 
 Refusal: exit 2, and one line on stderr in Dr. Kiro's terms: "That path is outside your folder. Use a path inside
-your folder." for a path outside the lab, and "That tool is not available in this lab." for malformed input or a tool
+your folder." for a path outside the lab, "That file is part of the lab's setup and cannot be changed." for a write
+into a protected folder, and "That tool is not available in this lab." for malformed input or a tool
 not in the table. The lines name no path. Any exception in the script is caught at the top level and also exits 2,
 because any other non-zero exit lets the call through. The exception text goes to the builder-side log, not to
 stderr. This catch converts a failure into a refusal; it does not hide it.
@@ -692,7 +706,9 @@ Precondition for 17.10: Dr. Kiro runs only in Kiro CLI, started with the lab as 
 the workspace the search tools see is the lab. The IDE is never used to run Dr. Kiro.
 
 The hook text is the builder's wording and passes the core's scan with the rest of `lab/.kiro/` (Requirement 15).
-It contains no paths.
+It contains no paths: the script builds the parent-folder and home-folder checks from `pathlib` parts, never from
+literal strings such as a `..` segment or a `~/` prefix, which the scan flags as paths. A test runs `bench-scan` on
+a lab that `bench-lab-hooks` generated.
 
 ## F9. The logging hook (17.11)
 
@@ -716,10 +732,10 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
   "includeMcpJson": false,
   "includePowers": false,
   "permissions": {"rules": [
-    {"capability": "fs_read",  "match": ["./**"],    "effect": "allow"},
-    {"capability": "fs_write", "match": ["./**"],    "effect": "allow"},
-    {"capability": "fs_read",  "match": [".kiro/**"], "effect": "deny"},
-    {"capability": "fs_write", "match": [".kiro/**"], "effect": "deny"},
+    {"capability": "fs_read",  "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": [".kiro/agents/**", ".kiro/hooks/**", ".kiro/steering/**",
+                                         ".kiro/settings/**"], "effect": "deny"},
     {"capability": "mcp",      "match": ["bench/*"], "effect": "allow"}
   ]}
 }
@@ -731,8 +747,12 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
   repository appears in the lab. `${...}` in `env` is the interpolation shown in the Kiro agent documentation; it
   was not used in the spike. Task 21 checks it. If it fails, stop and ask.
 - `hook-log.jsonl` is no longer in the lab, so the spike's `fs_write` deny on it goes.
-- Whether the `.kiro/**` write deny holds was observed only for reads and for the agent's refusal to add a server
-  (Q7). Task 21 tries a write.
+- The deny covers writes into the protected folders only. `.kiro/specs/` stays readable and writable, because
+  Dr. Kiro's lab spec files live there (17.7). Reads are not denied: the search tools are not stopped by deny rules
+  (Q7), so a read deny would promise more than it holds. The confinement hook refuses protected writes as well
+  (F8, step 6).
+- Whether the write deny holds was observed only for the agent's refusal to add a server (Q7). Task 21 tries a
+  write into `.kiro/hooks/` and one into `.kiro/specs/`.
 
 ## F11. Tests
 
@@ -754,3 +774,16 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
   by git and listed in `structure.md`.
 - **D3. Long calls.** Not needed. The 900 s call passed in the spike, so there is no parallel-trials fallback.
 - **D4. Dr. Kiro runs only in Kiro CLI**, started in the lab folder (Requirement 17.12). The IDE is for the builder.
+
+Approved in the review of tasks 17-21, after the core was built:
+
+- **D5. Protected folders.** Only `.kiro/agents`, `.kiro/hooks`, `.kiro/steering` and `.kiro/settings` are
+  protected; Dr. Kiro reads and writes its spec files in `.kiro/specs/` (17.7, F10).
+- **D6. Change, not read.** Requirement 17.7 promises that Dr. Kiro cannot change the protected folders, not that it
+  cannot read them (Q7: search tools read past deny rules).
+- **D7. The hook refuses protected writes** too, so that they end as refusals and not as prompts (17.8, F8 step 6).
+- **D8. Session config file** has one field for each field of `SessionConfig`, plus `resume` (F7).
+- **D9. Pictures in a lab** are checked as pictures by the blind scan, not read as text (15.9, 11.3). This changes
+  the core's scan.
+- **D10. `Session.fail`** is added to the core, so that a picture that cannot be written is recorded as a bench
+  failure like any other (17.15, section 3, F5). Tests of the confinement hook stay at two (17.21).

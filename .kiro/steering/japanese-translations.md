@@ -45,6 +45,6 @@ reads, executes and ticks only the English files.
   bench failure=ベンチ障害, session record=セッション記録, sealed session record=封印済みセッション記録,
   blind scan=ブラインドスキャン, not-measured outcome=未計測結果, builder=ビルダー, phase=フェーズ,
   parameter=パラメーター, budget=予算, snapshot=スナップショット, allow list=許可リスト, stop list=除外リスト,
-  step bound=ステップ上限, hash chain=ハッシュチェーン, seal=封印.
+  step bound=ステップ上限, hash chain=ハッシュチェーン, seal=封印, protected folders=保護フォルダー.
 - The Honest rule applies: no invented numbers, and no words that suggest human injury or disability for how the
   body moves.

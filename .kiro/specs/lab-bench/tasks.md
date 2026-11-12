@@ -148,7 +148,9 @@ one place where the MCP SDK is imported.
   - `config.py` (the session config file, no defaults, `resume` required), `describe.py` (descriptions from the
     declaration, scanned at the builder level at startup), `render.py`, `server.py` with the four tools and the
     fair lock around a worker-thread core call (design F3, F4, F6, F7). Console script `bench-mcp`.
-  - Adapt `render.py` to the core's actual `Ran` result type. If the core must change, stop and ask.
+  - `config.py` reads one field for each field of `SessionConfig`, plus `resume` (design F7, D8).
+  - `render.py` renders `RunResult` with not-measured outcomes split into `not_measured` and pictures as paths, and
+    `Accepted` as `{"budget_remaining": n}` (design F4). If the core must change beyond task 18, stop and ask.
   - Tests through the SDK's in-process client with the fake application: the four tools are listed and `start` and
     `stop` are not; a refusal is a tool error with the core's text; a bench failure is a tool error and a later
     call is refused; two parallel `run_experiment` calls give one `Ran` and one `Refused`; a missing session
@@ -156,13 +158,17 @@ one place where the MCP SDK is imported.
   - _Requirements: 17.1-17.5, 17.17, 17.19, 17.20_
 
 - [ ] 18. Picture files
+  - Core: add `Session.fail(action, public, detail)` (design section 3, D10), and make the blind scan check
+    pictures in a `lab/` folder with `check_picture` instead of reading them as text (Requirement 15.9, design 11.3,
+    D9). Unit tests for both, including a picture with a text chunk found by the scan.
   - `pictures.py`: write `pictures/<experiment>-<trial>.<ext>` through a temporary name and a rename, before the
-    result is returned; a write failure stops the session with a fixed reason and writes the error to `builder.log`
-    (design F5).
+    result is returned; a write failure calls `Session.fail` with a fixed reason and the error as detail (design
+    F5).
   - Tests with the fake application: the file exists with the adapter's bytes and the result holds its relative
-    path and no image content; a read-only pictures folder gives a bench failure and a stopped session; changing
-    the lab's copy leaves the sealed record's picture unchanged.
-  - _Requirements: 17.13-17.16_
+    path and no image content; a read-only pictures folder gives a bench failure, a `failure` entry and a stopped
+    session; changing the lab's copy leaves the sealed record's picture unchanged; `bench-scan` passes on a lab
+    with picture files.
+  - _Requirements: 11.3, 15.9, 17.13-17.16_
 
 - [ ] 19. `bench-stop`
   - `stop.py`: open the session from the config, call `Session.stop` with the given reason. It fails with a message
@@ -171,14 +177,16 @@ one place where the MCP SDK is imported.
   - _Requirements: 11.4, 17.2_
 
 - [ ] 20. Hooks
-  - `hooks/confine.py` and `hooks/calllog.py` (design F8, F9); `bench-lab-hooks <lab>` copies them and writes the
-    three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the sources.
+  - `hooks/confine.py` and `hooks/calllog.py` (design F8, F9), including the refusal of writes into the protected
+    folders (F8 step 6, D7) and no literal path strings in the scripts; `bench-lab-hooks <lab>` copies them and
+    writes the three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the
+    sources, and a test that `bench-scan` finds nothing in a generated lab.
   - Exactly two tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
     code 2; malformed input is refused with exit code 2.
   - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
     `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
     and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
-  - _Requirements: 17.7-17.11, 17.21_
+  - _Requirements: 15, 17.7-17.11, 17.21_
 
 - [ ] 21. Check by hand in Kiro CLI — **Stop and ask**
   - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
@@ -190,6 +198,7 @@ one place where the MCP SDK is imported.
     - one read and one write outside the lab are refused by the hook, not asked about; an in-place edit with
       `str_replace` inside the lab works, and one outside is refused (this also confirms its `path` field in the
       hook log);
-    - a write inside `.kiro/` is denied.
+    - a write into `.kiro/hooks/` is refused by the hook, not asked about; a write into `.kiro/specs/` works;
+    - note whether `grep_search` returns content from `.kiro/hooks/` (expected, design D6).
   - Report what failed. A failure is not worked around (`rules.md` 2).
   - _Requirements: 17.7, 17.8, 17.11, 17.12_
