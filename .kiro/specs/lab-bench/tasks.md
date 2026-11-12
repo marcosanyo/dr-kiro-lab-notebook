@@ -176,7 +176,7 @@ one place where the MCP SDK is imported.
   - Tests: stops an open session left by a closed server; fails while the lock is held.
   - _Requirements: 11.4, 17.2_
 
-- [ ] 20. Hooks
+- [x] 20. Hooks
   - `hooks/confine.py` and `hooks/calllog.py` (design F8, F9), including the refusal of writes into the protected
     folders (F8 step 6, D7) and no literal path strings in the scripts; `bench-lab-hooks <lab>` copies them and
     writes the three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the

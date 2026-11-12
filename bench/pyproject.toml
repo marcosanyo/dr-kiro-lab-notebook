@@ -10,6 +10,7 @@ bench-scan = "bench.scan.scan:main"
 bench-verify = "bench.record.chain:main"
 bench-mcp = "bench.frontend.server:main"
 bench-stop = "bench.frontend.stop:main"
+bench-lab-hooks = "bench.frontend.labhooks:main"
 
 [project.optional-dependencies]
 frontend = [

@@ -675,7 +675,8 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 1. Read stdin as JSON. It must be an object with a string `tool_name` and an object `tool_input`. Otherwise refuse.
 2. Look the tool up in a table of path-taking tools (below). A tool with path fields: every listed field must be a
    non-empty string. Otherwise refuse.
-3. Resolve each path against `lab` (so `~` is not expanded and a relative path means "inside the lab"), with
+3. A path whose first part starts with `~` is refused as outside the lab: the hook cannot know whether the tool
+   expands it to a home folder. Resolve every other path against `lab` (a relative path means "inside the lab"), with
    `..` segments and symbolic links resolved. If the result is not `lab` or inside it, refuse.
 4. A tool in the path-less list is allowed without further checks (17.10).
 5. Any other tool name is refused: the hook cannot classify it (17.9).
