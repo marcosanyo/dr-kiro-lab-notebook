@@ -12,7 +12,11 @@ reads, executes and ticks only the English files.
 ## When to update
 
 - Whenever an English spec file changes, update its translation in the same change, and commit both together.
-  The hook `.kiro/hooks/ja-translation-sync.json` reminds the agent after each save of a spec file.
+  The hook `.kiro/hooks/ja-translation-sync.json` reminds the agent after each save of a `requirements.md` or
+  `design.md`. It leaves out `tasks.md`, so that ticking a task does not fire it.
+- Ticking a task does not count as a change: for `tasks.md`, `scripts/ja-check.sh` hashes `- [x]` as `- [ ]`.
+  So the 完了/未着手 marks in the translation may lag behind; they are as of the last translation. Any other change
+  to `tasks.md` (new tasks, changed wording) makes the translation stale and needs an update.
 - A new spec file gets a new translation.
 - `sh scripts/ja-check.sh` lists translations that are missing or out of date, and exits 1 if there are any.
   Run it before committing a spec change, and wherever hooks do not run (for example Kiro Web).
@@ -25,7 +29,8 @@ reads, executes and ticks only the English files.
   > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/<spec>/<file>`](../../../.kiro/specs/<spec>/<file>) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
   > 原文 SHA-256: `<sha256 of the English file>`
   ```
-  The hash is what `scripts/ja-check.sh` compares; set it to the hash of the English file as translated.
+  The hash is what `scripts/ja-check.sh` compares; set it to the hash the script computes for the English file
+  (for `tasks.md`, with ticks counted as unticked).
 - Keep the structure exactly: headings, numbering, order, tables, lists. Do not summarise, add or drop content.
 - Copy code blocks byte for byte. Never translate text in backticks, paths, identifiers, ids (H1, E1, P1, R1, T1),
   status and verdict values, condition-class values, requirement numbers, numbers and units, or literal strings

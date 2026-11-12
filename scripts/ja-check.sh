@@ -6,12 +6,20 @@
 
 cd "$(dirname "$0")/.." || exit 2
 
-hash_of() {
+sha256() {
     if command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$1" | cut -d ' ' -f 1
+        sha256sum | cut -d ' ' -f 1
     else
-        shasum -a 256 "$1" | cut -d ' ' -f 1
+        shasum -a 256 | cut -d ' ' -f 1
     fi
+}
+
+# For tasks.md, ticking a task does not make the translation stale: "- [x]" is hashed as "- [ ]".
+hash_of() {
+    case "$1" in
+        */tasks.md) sed 's/^\([[:space:]]*- \)\[[xX]\]/\1[ ]/' "$1" | sha256 ;;
+        *) sha256 < "$1" ;;
+    esac
 }
 
 checked=0
