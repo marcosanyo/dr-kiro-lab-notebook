@@ -756,8 +756,8 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
 
 ## F11. Tests
 
-- Confinement hook (17.21): two tests. A call with a path outside the lab is refused with exit code 2. Malformed
-  input is refused with exit code 2.
+- Confinement hook (17.21): three tests. A call with a path outside the lab is refused with exit code 2. Malformed
+  input is refused with exit code 2. A write into a protected folder is refused with exit code 2.
 - Server, through the SDK's in-process client with the fake application: the four tools are listed; a refusal is a
   tool error with the core's text; a run returns no image content and the picture file exists with the adapter's
   bytes; two parallel runs give one `Ran` and one `Refused` (gate 6). These are example tests.
@@ -786,4 +786,4 @@ Approved in the review of tasks 17-21, after the core was built:
 - **D9. Pictures in a lab** are checked as pictures by the blind scan, not read as text (15.9, 11.3). This changes
   the core's scan.
 - **D10. `Session.fail`** is added to the core, so that a picture that cannot be written is recorded as a bench
-  failure like any other (17.15, section 3, F5). Tests of the confinement hook stay at two (17.21).
+  failure like any other (17.15, section 3, F5). The confinement hook gets a third test for protected writes (17.21).

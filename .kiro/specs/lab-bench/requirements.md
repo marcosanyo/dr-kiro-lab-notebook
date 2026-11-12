@@ -551,8 +551,9 @@ the front end writes or returns. Nothing in the core depends on this requirement
 
 *Tests*
 
-21. THE confinement hook SHALL have two tests: a call with a path outside the lab is refused with the blocking exit
-    code; and malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code.
+21. THE confinement hook SHALL have three tests: a call with a path outside the lab is refused with the blocking
+    exit code; malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code; and
+    a write into a protected folder (17.7) is refused with the blocking exit code.
 
 #### Notes
 

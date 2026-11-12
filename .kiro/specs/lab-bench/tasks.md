@@ -181,8 +181,8 @@ one place where the MCP SDK is imported.
     folders (F8 step 6, D7) and no literal path strings in the scripts; `bench-lab-hooks <lab>` copies them and
     writes the three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the
     sources, and a test that `bench-scan` finds nothing in a generated lab.
-  - Exactly two tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
-    code 2; malformed input is refused with exit code 2.
+  - Exactly three tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
+    code 2; malformed input is refused with exit code 2; a write into a protected folder is refused with exit code 2.
   - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
     `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
     and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
