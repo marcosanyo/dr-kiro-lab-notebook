@@ -85,36 +85,6 @@ Publishing refuses if the scan fails.
 - No words that suggest human injury or disability for how the body moves. Describe the motion itself: direction,
   distance, heading, speed, symmetry, which channels were active.
 
-### Wording check
-
-A separate check from the blind scan. It runs on prose only: README files, `docs/`, UI text of the notebook, and
-Dr. Kiro's lab steering and agent prompts. It does not run on code identifiers, and it does not flag words that
-are normal in code.
-
-Initial word list (pending user review). Match whole words, case-insensitive, including the listed forms:
-
-| Flagged | Forms |
-|---|---|
-| limp | limps, limping, limped |
-| lame | lameness |
-| cripple | crippled, crippling |
-| hobble | hobbles, hobbling, hobbled |
-| injured | injury, injuries |
-| wounded | |
-| maimed | maim |
-| seizure | seizures |
-| convulsion | convulsions, convulsing, convulse |
-| hurt | hurts |
-| paralysed | paralyzed, paralysis |
-| handicap | handicapped |
-| spastic | spasm, spasms |
-| amputee | amputated, amputation |
-| deformed | deformity |
-| invalid (as a person) | manual review only: normal in code and in "invalid input" |
-| wound (an injury) | manual review only: normal in "wound up" |
-
-Not flagged: `disabled`, `invalid input`, `broken` (as in a broken build), `fault`, `failure`.
-
 ## 5. Language and commits
 
 - English for code, comments, steering, specs, docs and UI text. (The current `README.md` is replaced in the README
