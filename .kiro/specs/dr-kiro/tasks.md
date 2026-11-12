@@ -14,7 +14,7 @@ section 9.
     design F10 plus the fields of design 3.
   - _Requirements: 1.1, 1.2, 2, 3, 4, 7.2_
 
-- [ ] 2. `bench-make-lab`
+- [x] 2. `bench-make-lab`
   - `lab.py` and the console script (design 7.1): copy the builder files, run the `bench-lab-hooks` installer,
     create `experiments/`, write the lab's `.gitignore`. Overwrite builder files only; never touch Dr. Kiro's files.
   - Test: a lab made by `bench-make-lab` passes `bench-scan` for the fake application.

@@ -11,6 +11,8 @@ bench-verify = "bench.record.chain:main"
 bench-mcp = "bench.frontend.server:main"
 bench-stop = "bench.frontend.stop:main"
 bench-lab-hooks = "bench.frontend.labhooks:main"
+bench-make-lab = "bench.drkiro.lab:main"
+bench-new-session = "bench.drkiro.session:main"
 
 [project.optional-dependencies]
 frontend = [
