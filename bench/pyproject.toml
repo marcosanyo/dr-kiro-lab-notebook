@@ -9,6 +9,7 @@ dependencies = []
 bench-scan = "bench.scan.scan:main"
 bench-verify = "bench.record.chain:main"
 bench-mcp = "bench.frontend.server:main"
+bench-stop = "bench.frontend.stop:main"
 
 [project.optional-dependencies]
 frontend = [

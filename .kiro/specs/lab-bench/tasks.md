@@ -170,7 +170,7 @@ one place where the MCP SDK is imported.
     with picture files.
   - _Requirements: 11.3, 15.9, 17.13-17.16_
 
-- [ ] 19. `bench-stop`
+- [x] 19. `bench-stop`
   - `stop.py`: open the session from the config, call `Session.stop` with the given reason. It fails with a message
     while `bench-mcp` holds the state folder.
   - Tests: stops an open session left by a closed server; fails while the lock is held.
