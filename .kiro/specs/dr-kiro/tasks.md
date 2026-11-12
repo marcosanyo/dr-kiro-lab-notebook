@@ -20,7 +20,7 @@ section 9.
   - Test: a lab made by `bench-make-lab` passes `bench-scan` for the fake application.
   - _Requirements: 1.3, 5.1, 5.4, 7.1_
 
-- [ ] 3. `bench-new-session`
+- [x] 3. `bench-new-session`
   - `session.py` and the console script (design 7.2), steps 1-7 in order, every argument required, nothing changed
     before step 4 if a check fails.
   - Test: it refuses while a session in the state folder is not sealed; after it runs, the lab holds only builder
