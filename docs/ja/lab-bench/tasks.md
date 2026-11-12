@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `bf1ff3de19e36fb5808653b87d883bc108cfae0551951d6d288795bcb7af5f67`
+> 原文 SHA-256: `fffca17f631cac6dffecc16bb053905bb338883a45fdd89aeaa686a1d80c35db`
 
 # タスク: lab-bench
 
