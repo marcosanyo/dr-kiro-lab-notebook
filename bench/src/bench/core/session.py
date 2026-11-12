@@ -704,6 +704,16 @@ class Session:
             return sealed
         return Ran(Accepted(self.state.remaining))
 
+    def fail(self, action: str, public: str, detail: str) -> BenchFailure:
+        """Builder side only: record a bench failure that happened outside the core, in the builder's
+        own process (the front end writing a picture file), as the core records its own: a failure entry
+        with the public reason, the detail in builder.log, and sealing as stopped (11.3, design 3)."""
+        with self._lock:
+            if self.state.sealed is not None:
+                self.store.builder_log(f"bench failure in {action} after sealing: {detail}")
+                return BenchFailure(_msg(public))
+            return self._fail(action, public, detail)
+
     def stop(self, reason: str) -> Outcome:
         """Builder only: seal the session as stopped, without the table check (11.4)."""
         with self._lock:

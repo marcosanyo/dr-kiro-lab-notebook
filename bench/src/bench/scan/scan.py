@@ -12,10 +12,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from bench.core.outcome import Message, Quote
+from bench.pictures import PictureError, check_picture
 from bench.scan.levels import LEVELS, SIDECAR_SUFFIX, Piece, record_pieces, sidecar_pieces
 from bench.scan.patterns import Patterns
 from bench.scan.terms import AppSources, LabLayout, ScanError, load_app, load_stop_list
 from bench.scan.tokens import term_tokens, tokenize
+
+PICTURE_SUFFIXES = {".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}
 
 # Files in a bench state folder that are never part of a record and are not scanned as one.
 STATE_ONLY = frozenset({"builder.log", ".lock"})
@@ -150,6 +153,14 @@ class Scanner:
         return None
 
     def scan_file(self, path: Path) -> list[Finding]:
+        level = self._lab_level(path)
+        if level is not None and path.suffix.lower() in PICTURE_SUFFIXES:
+            # A picture in a lab is checked as a picture, not read as text (15.9).
+            try:
+                check_picture(PICTURE_SUFFIXES[path.suffix.lower()], path.read_bytes())
+            except PictureError as error:
+                return [Finding(str(path), 1, "picture", str(error))]
+            return []
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError as error:

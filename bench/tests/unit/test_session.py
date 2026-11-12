@@ -362,3 +362,13 @@ def test_outside_path_refusal_is_recorded_without_the_path_and_seals(lab: Lab, p
         b.read_text(errors="replace") for b in (sealed / "blobs").iterdir()
     )
     assert path not in contents and path.replace("/", "\\/") not in contents
+
+
+def test_fail_records_a_failure_and_seals_as_stopped(lab: Lab) -> None:
+    session = lab.start()
+    outcome = session.fail("run", "a picture could not be delivered", "disk full")
+    assert isinstance(outcome, BenchFailure) and outcome.message.plain() == "a picture could not be delivered"
+    assert kinds(session)[-2:] == ["failure", "seal"]
+    assert session.store.entries[-2]["body"]["reason"]["text"] == "a picture could not be delivered"
+    assert "disk full" in (session.store.folder / "builder.log").read_text()
+    verify(session.sealed_path, sealed=True)

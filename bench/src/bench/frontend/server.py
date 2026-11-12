@@ -18,7 +18,7 @@ from bench.core.outcome import Outcome, Ran
 from bench.core.session import Session, SessionError
 from bench.frontend import config as config_file
 from bench.frontend.describe import descriptions
-from bench.frontend.pictures import PictureWriter
+from bench.frontend.pictures import NOT_DELIVERED, PictureWriteError, PictureWriter
 from bench.frontend.render import render
 
 TOOLS = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
@@ -58,7 +58,15 @@ class BenchServer:
 
     async def _call(self, action: Callable[[], Outcome]) -> CallToolResult:
         async with self.lock:
-            return await anyio.to_thread.run_sync(lambda: render(action(), self.write_picture))
+            return await anyio.to_thread.run_sync(lambda: self._apply(action))
+
+    def _apply(self, action: Callable[[], Outcome]) -> CallToolResult:
+        outcome = action()
+        try:
+            return render(outcome, self.write_picture)
+        except PictureWriteError as error:
+            # A picture that cannot be written is a bench failure, recorded as any other (17.15, design F5).
+            return render(self.session.fail("run", NOT_DELIVERED, error.detail), self.write_picture)
 
     def close(self) -> None:
         self.session.close()

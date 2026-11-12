@@ -157,7 +157,7 @@ one place where the MCP SDK is imported.
     config variable stops the server.
   - _Requirements: 17.1-17.5, 17.17, 17.19, 17.20_
 
-- [ ] 18. Picture files
+- [x] 18. Picture files
   - Core: add `Session.fail(action, public, detail)` (design section 3, D10), and make the blind scan check
     pictures in a `lab/` folder with `check_picture` instead of reading them as text (Requirement 15.9, design 11.3,
     D9). Unit tests for both, including a picture with a text chunk found by the scan.
