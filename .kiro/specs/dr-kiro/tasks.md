@@ -4,7 +4,7 @@ Tasks for Requirements 1-7 (design sections 1-9). Each task ends with `sh bench/
 ruff check, ruff format). Verification is kept to the minimum of Requirement 7: no tests beyond the four in design
 section 9.
 
-- [ ] 1. Builder files and templates
+- [x] 1. Builder files and templates
   - Write `bench/src/bench/drkiro/files/`: `dr-kiro.json` (design 3), `dr-kiro-prompt.md` (design 4), `method.md`
     and `workflow.md` with `inclusion: always` front matter and the fenced examples with placeholders (design 5),
     and the three templates (design 6). English, no path, no part name, no number from a run.
