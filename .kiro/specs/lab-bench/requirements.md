@@ -35,6 +35,9 @@ Notes for the `dr-kiro` spec:
 - Compare variants are rows of parameter values passed through one set of functions (design 7.1). A structurally
   different variant needs a flag parameter and an `if`, for example the amplitude of a second channel set to 0 in
   one variant. The templates show this.
+- Dr. Kiro writes only paths relative to the lab in its spec and experiment files. Kiro gives the agent the lab's
+  absolute path (its tools take absolute paths), but the blind scan flags absolute paths at every level, so an
+  absolute path in Dr. Kiro's files stops the session from being sealed (Requirement 15, design D12).
 
 ## Glossary
 
@@ -503,7 +506,10 @@ the front end writes or returns. Nothing in the core depends on this requirement
 *Dr. Kiro's agent and permissions*
 
 6. Dr. Kiro's agent definition SHALL give it file read and write tools and the bench tools, and nothing else: no
-   shell, no web access, no other MCP server (including a workspace MCP configuration), and no powers.
+   shell, no web access, no other MCP server (including a workspace MCP configuration), and no powers. Kiro's
+   `read` and `write` tool groups also offer some other tools (observed in task 21: `code`, `delete_file`,
+   `disclose_context`, `tool_call`). These SHALL be refused by the confinement hook, which refuses every tool not
+   in its table (17.9).
 7. Dr. Kiro SHALL NOT be able to change its own agent definition, hooks, steering, settings or MCP configuration
    (the lab's `.kiro/agents/`, `.kiro/hooks/`, `.kiro/steering/` and `.kiro/settings/`, the protected folders),
    nor add or start an MCP server. Deny rules on the protected folders SHALL enforce this, and the confinement hook

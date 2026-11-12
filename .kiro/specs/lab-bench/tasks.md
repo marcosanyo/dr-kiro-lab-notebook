@@ -188,7 +188,7 @@ one place where the MCP SDK is imported.
     and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
   - _Requirements: 15, 17.7-17.11, 17.21_
 
-- [ ] 21. Check by hand in Kiro CLI — **Stop and ask**
+- [x] 21. Check by hand in Kiro CLI — **Stop and ask**
   - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
     report each result as observed or not observed. Kiro CLI only; the IDE is never used to run Dr. Kiro.
   - With the fake application's lab, started in the lab folder, and the agent definition of design F10:
@@ -201,4 +201,5 @@ one place where the MCP SDK is imported.
     - a write into `.kiro/hooks/` is refused by the hook, not asked about; a write into `.kiro/specs/` works;
     - note whether `grep_search` returns content from `.kiro/hooks/` (expected, design D6).
   - Report what failed. A failure is not worked around (`rules.md` 2).
-  - _Requirements: 17.7, 17.8, 17.11, 17.12_
+  - Results are recorded in design F12 (D11, D12, and the results paragraph).
+  - _Requirements: 17.6-17.8, 17.11, 17.12_

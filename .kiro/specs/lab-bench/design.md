@@ -788,3 +788,19 @@ Approved in the review of tasks 17-21, after the core was built:
   the core's scan.
 - **D10. `Session.fail`** is added to the core, so that a picture that cannot be written is recorded as a bench
   failure like any other (17.15, section 3, F5). The confinement hook gets a third test for protected writes (17.21).
+
+Approved after the manual check in Kiro CLI (task 21):
+
+- **D11. Extra tools.** Kiro's `read` and `write` groups also offer `code`, `delete_file`, `disclose_context` and
+  `tool_call`. They are not removed from the agent; the confinement hook refuses them, as every tool outside its
+  table (17.6, 17.9). Bench tools reach the hooks as `mcp_bench_<tool>`, after a `tool_load`; `tool_call` was not
+  used.
+- **D12. Relative paths in Dr. Kiro's files.** Kiro passes absolute paths in tool inputs, so Dr. Kiro knows the
+  lab's absolute path. The `dr-kiro` spec tells Dr. Kiro to write only lab-relative paths in its files, because the
+  blind scan flags absolute paths and a session with one cannot be sealed.
+
+Results of task 21 (Kiro CLI on macOS, fake application): the four bench tools were listed and each call reached
+the core; `BENCH_SESSION_CONFIG` reached the server and `BENCH_HOOK_LOG` the hooks; reads and writes outside the
+lab and a write into `.kiro/hooks/` were refused by the hook without a prompt; `str_replace` carries `path` and
+worked in `.kiro/specs/`; the agent reported no steering in its context (its own report). Not checked:
+`grep_search` on `.kiro/hooks/` (expected to work, D6).

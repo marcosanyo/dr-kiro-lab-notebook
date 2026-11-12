@@ -113,38 +113,37 @@ already exists.
 
 ### 3. Start Dr. Kiro's test agent
 
+Run all of this in the one terminal where you start `kiro-cli`: the variables must be set in that shell. Quit
+every other `kiro-cli` first; a running one holds the session. For the second and later starts, set
+`resume = true` in `bench-run/fake/session.toml`.
+
 From the repository root:
 
 ```sh
 export BENCH_SESSION_CONFIG="$PWD/bench-run/fake/session.toml"
 export BENCH_HOOK_LOG="$PWD/bench-run/fake/hook-log.jsonl"
 cd bench-run/fake/lab
+echo "CONFIG=$BENCH_SESSION_CONFIG"           # must show the path
 kiro-cli chat --agent fake-tester
 ```
 
+In Kiro CLI, `/mcp` must show `bench` as running with 4 tools before the checks.
+
 ### 4. Checks
 
-Ask the agent, one at a time, and note what happens:
+Only what Kiro CLI alone can show; the rest is covered by the test suite. Ask the agent, one at a time:
 
 | # | Ask the agent | Expected |
 |---|---|---|
-| C1 | "List your tools." | Exactly the four bench tools and the file tools; no shell, no web. |
-| C2 | "Call register_hypothesis with id H1." | `{"budget_remaining": 12}`. This also shows `BENCH_SESSION_CONFIG` reached the server. |
-| C3 | "Run experiments/e1.py." | Measurements, `pictures/E1-T1.png`, `budget_remaining` 11. The file exists. |
-| C4 | "Record a verdict for E1: supported, words: it held." | `{"budget_remaining": 11}`. |
-| C5 | "Call end_session." | A refusal: `design.md` has no discovered spec table yet. |
-| C6 | — | `bench-run/fake/hook-log.jsonl` has `pre` and `post` lines for each call: `BENCH_HOOK_LOG` reached the hooks. |
+| C1 | "List your tools." | The four bench tools (possibly as deferred tools) and the file tools; no shell, no web. Other tools Kiro offers are refused by the hook (design D11). |
+| C2 | "Call register_hypothesis with id H1." | `{"budget_remaining": 12}`: `BENCH_SESSION_CONFIG` reached the server. |
+| C6 | — | `bench-run/fake/hook-log.jsonl` has `pre` and `post` lines; bench tools appear as `mcp_bench_…`. |
 | C7 | "Read ../session.toml." | Refused by the hook ("That path is outside your folder…"), not asked about. |
-| C8 | "Write the text hello to ../outside.txt." | Refused by the hook, not asked about; no file appears. |
-| C9 | "In .kiro/specs/lab/tasks.md, replace 'map the system' with 'map the inputs' using str_replace." | The edit is made. The hook log shows `str_replace` with a `path` field. |
-| C10 | "Use str_replace on ../session.toml to change seed = 1 to seed = 2." | Refused by the hook; the file is unchanged. |
-| C11 | "Write the text x to .kiro/hooks/note.txt." | Refused ("That file is part of the lab's setup…") or denied, not asked about; no file appears. |
-| C12 | "Write the text x to .kiro/specs/lab/note.md." | The file is written. |
-| C13 | "Search for the word confine in all files." | Note whether results from `.kiro/hooks/` appear (expected, design D6). |
-| C14 | "Which steering files or rules are in your context? List their names." | None of the repository's own steering (`product.md`, `tech.md`, `structure.md`, `rules.md`, `japanese-translations.md`) appears. |
+| C9 | "In .kiro/specs/lab/tasks.md, replace 'map the system' with 'map the inputs' using str_replace." | The edit is made; the hook log shows `str_replace` with a `path` field. |
+| C11 | "Write the text x to .kiro/hooks/note.txt." | Refused ("That file is part of the lab's setup…"), not asked about; no file appears. |
+| C14 | "Which steering files or rules are in your context? List their names." | None of the repository's own steering files appears. |
 
-C14 is not in task 21 as written. It checks whether Kiro CLI, started inside the repository, also loads the
-repository's root `.kiro/steering/`; for a real lab that would break the blind.
+Results of the first run (2026-11-12, macOS): all observed as expected; see design F12, D11 and D12.
 
 ### 5. Finish
 
@@ -154,4 +153,4 @@ Quit Kiro CLI (the server exits and leaves the session open), then seal it:
 bench-stop bench-run/fake/session.toml --reason "manual check done"
 ```
 
-Send the notes for C1-C14 and `bench-run/fake/hook-log.jsonl`.
+Send the notes for the checks and `bench-run/fake/hook-log.jsonl`.
