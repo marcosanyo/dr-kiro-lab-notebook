@@ -27,7 +27,7 @@ section 9.
     files and templates, the session is open, and the config file has `resume = true`.
   - _Requirements: 5.2, 5.3, 7.3_
 
-- [ ] 4. Running Dr. Kiro
+- [x] 4. Running Dr. Kiro
   - Add the section "Running Dr. Kiro" to `bench/README.md` (design 8): the commands, the start line and the
     continue line, interactive and headless, and the steps for the fake session of task 5.
   - _Requirements: 6_

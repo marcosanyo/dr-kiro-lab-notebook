@@ -154,3 +154,52 @@ bench-stop bench-run/fake/session.toml --reason "manual check done"
 ```
 
 Send the notes for the checks and `bench-run/fake/hook-log.jsonl`.
+
+## Running Dr. Kiro
+
+Dr. Kiro runs only in Kiro CLI, started in its lab folder. Its builder files are installed with `bench-make-lab`;
+each session starts with `bench-new-session`, which resets Dr. Kiro's files, starts the session and writes its
+config. After pulling new bench code, reinstall the commands:
+
+```sh
+uv tool install --editable './bench[frontend]' --reinstall
+```
+
+- Start line (type it as the first message): `Begin the session.`
+- Continue line (only if Kiro CLI ends a turn before the session ends): `Continue the session.`
+- Send nothing else. Dr. Kiro does not ask questions.
+- Without interaction, if you have a `KIRO_API_KEY`:
+  `kiro-cli chat --v3 --no-interactive --require-mcp-startup --agent dr-kiro "Begin the session."`
+- If a session does not end on its own: quit Kiro CLI and run `bench-stop <config> --reason <text>`.
+
+### The fake session (dr-kiro task 5)
+
+One short session with the fake application (budget 12 trials). Its numbers are not results. From the repository
+root, in the one terminal where you will start `kiro-cli`, with every other `kiro-cli` closed:
+
+```sh
+R=bench-run/fake
+mkdir -p $R/lab $R/state $R/sessions
+bench-make-lab $R/lab
+bench-new-session --application fake --adapter bench.fake.adapter:FakeAdapter \
+  --scan-sources bench/src/bench/fake/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
+  --lab $R/lab --state $R/state --sessions $R/sessions --session-id drk-1 --seed 1 --config-out $R/drk-1.toml
+export BENCH_SESSION_CONFIG="$PWD/$R/drk-1.toml"
+export BENCH_HOOK_LOG="$PWD/$R/drk-1.hook-log.jsonl"
+cd $R/lab
+kiro-cli chat --agent dr-kiro
+```
+
+In Kiro CLI, check that `/mcp` shows `bench` running, then type `Begin the session.` When Dr. Kiro says the
+session has ended, ask once: "Which steering files are in your context? List their names." Then quit, go back to
+the repository root, and run:
+
+```sh
+bench-verify bench-run/fake/sessions/fake/drk-1
+bench-scan --config bench/src/bench/fake/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
+  bench-run/fake/sessions/fake/drk-1
+tail -n 1 bench-run/fake/sessions/fake/drk-1/log.jsonl
+```
+
+Pass: `bench-verify` verifies, `bench-scan` reports no findings, and the last line has `"end":"ended"`. Send these
+three outputs, Dr. Kiro's answer about steering, and how many continue lines you sent.
