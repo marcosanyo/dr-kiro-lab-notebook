@@ -68,9 +68,11 @@ EOF
 bench-lab-hooks $R/lab
 ~~~
 
-The agent file, `bench-run/fake/lab/.kiro/agents/fake-tester.json` (design F10, with a test prompt):
+Then write the agent file (design F10, with a test prompt) and the session config. Paths in the session
+config are relative to that file. Still from the repository root, with `R` set as above:
 
-```json
+~~~sh
+cat > $R/lab/.kiro/agents/fake-tester.json <<'EOF'
 {
   "name": "fake-tester",
   "description": "Front-end check: file tools and the bench tools only.",
@@ -88,11 +90,8 @@ The agent file, `bench-run/fake/lab/.kiro/agents/fake-tester.json` (design F10, 
     {"capability": "mcp",      "match": ["bench/*"], "effect": "allow"}
   ]}
 }
-```
-
-The session config, `bench-run/fake/session.toml` (paths relative to this file):
-
-```toml
+EOF
+cat > $R/session.toml <<'EOF'
 session_id = "check-1"
 application = "fake"
 adapter = "bench.fake.adapter:FakeAdapter"
@@ -105,7 +104,9 @@ seed = 1
 scan_sources = ["../../bench/src/bench/fake/scan_sources.toml"]
 stop_list = "../../.kiro/blind-scan/stop-list.txt"
 resume = false
-```
+EOF
+ls $R/session.toml $R/lab/.kiro/agents/fake-tester.json     # both must exist
+~~~
 
 After the first start, set `resume = true` before starting Kiro CLI again; `resume = false` refuses an id that
 already exists.
