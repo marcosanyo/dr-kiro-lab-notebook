@@ -17,6 +17,7 @@ dev = ["hypothesis", "pytest", "ruff"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
+pythonpath = ["tests"]
 [tool.ruff]
 line-length = 110
 target-version = "py312"
