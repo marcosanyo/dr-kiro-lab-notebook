@@ -1,12 +1,12 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/design.md`](../../../.kiro/specs/wind-tunnel/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `4b3486d30b01c234436e5c9547a9e010784a3faa8cbc5ce120b902e9ea6f1e68`
+> 原文 SHA-256: `517bd20821430ecef44d8c3b65d5061d7054dec5c39296599f010eddaf19ba0c`
 # Design: wind-tunnel
 
 要件 1-18 を対象とします。設定は `wind-tunnel/model/settings.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
 
 ## Overview
 
-1 試行は、ソルバーの 1 回の実行です。アダプターは 4 つの数を、ボディの輪郭、メッシュ、OpenFOAM のケースにし、固定したダイジェストの Docker イメージで、実時間の上限のもとケースを 1 回実行し、力の履歴とサンプリングした渦度を読み、純関数で 5 つの計測を計算し、計測値とアニメーション GIF を 1 つ返します。何か問題があれば、固定の公開理由をもつ試行の失敗であり（要件 8）、作り上げた値は決して返しません。
+1 試行は、ソルバーの 1 回の実行です。アダプターは 4 つの数を、ボディの輪郭、メッシュ、OpenFOAM のケースにし、固定したダイジェストの Docker イメージで、実時間の上限のもとケースを 1 回実行し、力の履歴とサンプリングした渦度を読み、純関数で 5 つの計測を計算し、計測値と、時間順の渦度フレームの PNG 画像シートを 1 枚返します。何か問題があれば、固定の公開理由をもつ試行の失敗であり（要件 8）、作り上げた値は決して返しません。
 
 「モデルは `lab/` から決して見えない」という規則を 1 か所で守るため、システムを 2 つのプロジェクトに分けます。
 
@@ -19,7 +19,7 @@
 |---|---|---|
 | ストローハル数の推定器 | 細かい周波数格子での最小二乗による正弦波フィットを、黄金分割探索で精密化する。FFT は使わない | ビンの幅 1/70（0.17 の約 8%）よりずっと細かく分解できる。適応時間刻みの不均等な時刻でも使える（5.2） |
 | ソルバーの出力 | 関数オブジェクトが実行中に `force.dat` とサンプリングした渦度を書く。フィールドのダンプも再構成もしない | 実行が短く、ディスク使用が小さく、力と画像が同じ実行から来る |
-| 画像 | Pillow の GIF。固定の 256 色パレットで、渦度をパレットの添字に写す | 色スケールが構成上すべての試行で同じ（9.1）。作図ライブラリも、文字も、メタデータもない |
+| 画像 | PNG の画像シート 1 枚: 渦度の 6 フレームを 2 行 3 列に並べ、固定の色ランプ、numpy と `bench.pictures.encode_png`、Pillow なし | 色スケールが構成上すべての試行で同じ（9.1）。Dr. Kiro のファイルツールは 1 枚の静止画を届ける（GIF チェックは失敗した）。作図ライブラリも、文字も、メタデータもない。`body-lab` の画像と同じ形 |
 | Docker | 固定したイメージの `docker run`。ケースフォルダーをバインドマウントし、`model/` の 1 つのスクリプト（`Allrun`）を使う | タイムアウトして kill するコマンドが 1 つ。イメージ内のコマンドはソルバー設定なので `model/` に置く（6.9） |
 | 環境チェック | アダプターの構築時。スキャンは宣言だけを作る別のファクトリーを使う | `bench-scan` は Docker なしで動く必要がある（Kiro Web、公開） |
 | Docker なしのテスト | 2 つの小さなプロトコルの背後に、偽のランナーと偽のメッシャー | 低速の 3 つのチェック以外は Kiro Web で動く |
@@ -49,7 +49,7 @@ wind-tunnel/
       settle.py                   settle criterion (8.3)
     tests/
   adapter/                        uv project "wind-tunnel-adapter"
-    pyproject.toml                depends on lab-bench (path), wind-tunnel-model (path), numpy, pillow
+    pyproject.toml                depends on lab-bench (path), wind-tunnel-model (path), numpy
     scan_sources.toml             solver files and lab layout (13.5)
     src/wind_tunnel/
       declaration.py              knobs, measurements, told text, budget, goal (1, 3, 4, 11)
@@ -57,7 +57,7 @@ wind-tunnel/
       environment.py              Docker and image check, environment record (7)
       runner.py                   Runner protocol, DockerRunner (8.7, 10)
       failures.py                 failure kinds and fixed public reasons (8)
-      picture.py                  vorticity -> palette index -> GIF (9)
+      picture.py                  vorticity -> colour -> picture sheet PNG (9)
       circle_check.py             the circle check and its record (15)
       told_set.py                 export of the told set (2)
     tests/                        ordinary tests (no Docker)
@@ -80,7 +80,7 @@ flowchart TD
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
     I -->|not settled| F
-    I --> J[picture: GIF]
+    I --> J[picture: PNG sheet]
     J --> K[TrialResult]
     F --> L[keep case folder, detail to builder log only]
     K --> M[remove case folder]
@@ -94,7 +94,7 @@ flowchart TD
 
 - ノブ: `NumberKnob` が 4 つ。順序は `aspect`、`corner`、`splitter`、`angle` で、範囲は 3.1、ノブの文は 3.2 のとおり。文は `declaration.py` の定数です。テストはそれを要件 3.2 のテキストと比べます（spec ファイルがあるときはそこから読むので、両者はずれません。`.kiro/` がない場所では、目に見える理由つきでスキップ）。
 - 計測: `cd`、`cl_mean`、`cl_amp`、`strouhal`、`shedding`。単位は `1`、種類は `scalar`。`strouhal` は未計測結果 `not_shedding` を持ちます。
-- `picture = "image/gif"`、`budget = 24`、`fake = False`、`goal` は 11.2、`measured_by` は 4.2。「落ち着いた部分」とだけ言い、時刻には触れません（4.3）。文面では、文が許す所で "force" を単数形で使い、伝える集合のどの語も、ソルバーファイルが与える語と等しくならないようにします（13.8）。決めるのは 13.8 のテストで、避けられないものは要件 13.4 と 13.9 の道をたどります。
+- `picture = "image/png"`、`budget = 24`、`fake = False`、`goal` は 11.2、`measured_by` は 4.2。「落ち着いた部分」とだけ言い、時刻には触れません（4.3）。文面では、文が許す所で "force" を単数形で使い、伝える集合のどの語も、ソルバーファイルが与える語と等しくならないようにします（13.8）。決めるのは 13.8 のテストで、避けられないものは要件 13.4 と 13.9 の道をたどります。
 - **ノブの文は `description` 項目に入れます。** これは `lab-bench` 要件 18 が `NumberKnob` に加えるものです（選択肢 A、Decision 18）。ベンチはそれをツールの説明のノブの行に出力して記録し、ほかは何も読みません。文は要件 3.2 の 4 つで、`declaration.py` で定数から作ります。ただし `splitter` の文の板の厚さは `settings.body.thickness` から書式化し（`f"{t:g}"`、0.08）、数が 1 か所にだけ存在するようにします。各文は 800 文字以下（最長で約 450）で、改行を含みません。文面の設計と、各文の理由:
   - `aspect`、`corner`: 承認済みの文から変更なし。
   - `splitter`: 板が何で、どこにあるか（ボディの後ろ、流れから遠い側）。長さの数え方（板なしのボディの最後端から。後ろが半円のときも含め、すべての `corner` で明確に定まる）。ボディの長さ方向の中央を通る線上にあること。隙間なく付くこと。厚さ。0 の意味。
@@ -111,7 +111,7 @@ flowchart TD
 - 回転前のボディの座標系: 長方形は x が [-a/2, a/2]、y が [-1/2, 1/2]、`a = aspect`。流れは +x 向きなので、後ろは +x 側です。
 - 角の半径 `r = corner * min(1, a) / 2`（6.2）。直線部分は、長さ `side - 2r` が 0 より大きいとき残し、ちょうど 0 のとき省きます（`corner = 1` と短い辺。`a = 1` では 4 辺すべてが省かれ、輪郭は 4 つの四分円弧、つまり円になります）。`corner` と 2 のべき乗の浮動小数点の積は、ちょうど 0 になる場合を正確にします。
 - 板（`splitter` > 0 のとき）: 厚さ `t` = 0.08（`settings.toml`）で、中心線上に（`splitter` の文で伝える）、`x = a/2 - t`（ボディの内側。丸めがどうでも隙間ができない）から `x = a/2 + s` まで。輪郭は和集合です: 後ろの直線部分（または円弧）は、板の上辺と下辺がそれと交わる所で切ります。交点は閉じた式で求めます: `t/2 <= 1/2 - r` のとき `x_c = a/2`（`a < 1` では `r <= 1/4` なので後ろは常に直線）、そうでなければ `x_c = a/2 - r + sqrt(r^2 - (t/2 - (1/2 - r))^2)`。板の内側の重なりに、独自の輪郭は要りません。
-- 原点（長方形の中心）まわりに `angle` 度の回転。向きは要件 6.4 のとおり: 正の角度 `θ` は先端側（回転前の -x）を +y の向きに動かします。流れが +x、+y が上のとき、これは時計回りで、迎え角の正の向きとして通常のものです。行列では `(x, y) -> (x cos θ + y sin θ, -x sin θ + y cos θ)`。点 `(-a/2, 0)` は `(-(a/2) cos θ, (a/2) sin θ)` に移り、`θ > 0` では軸の上にあります。点 `(a/2, 0)` は軸の下に移ります。向きは `geometry.py` に、この行列の符号として 1 回だけ書きます。伝えるテキストとずれうる `rotation_sense` の設定はありません。向きは `angle` の文（要件 3.2）で伝え、性質 3 が固定します。この向きを選んだ理由: ユーザーが通常の規約（先端が上がる）を求め、プロトタイプ自身の向きはこのリポジトリになく、これまでに計算したものは何もそれに依存しないため（この設計の Decision 14、要件の Decision 19）。
+- 原点（長方形の中心）まわりに `angle` 度の回転。向きは要件 6.4 のとおり: 正の角度 `θ` は先端側（回転前の -x）を +y の向きに動かします。流れが +x、+y が上のとき、これは時計回りで、迎え角の正の向きとして通常のものです。行列では `(x, y) -> (x cos θ + y sin θ, -x sin θ + y cos θ)`。点 `(-a/2, 0)` は `(-(a/2) cos θ, (a/2) sin θ)` に移り、`θ > 0` では軸の上にあります。点 `(a/2, 0)` は軸の下に移ります。向きは `geometry.py` に、この行列の符号として 1 回だけ書きます。伝えるテキストとずれうる `rotation_sense` の設定はありません。向きは `angle` の文（要件 3.2）で伝え、性質 3 が固定します。この向きを選んだ理由: プロトタイプの向きで、ユーザーが確認済み（要件の Decision 19）。
 - 出力: 順序づけられた閉じたプリミティブの並び（`Line(p, q)`、`Arc(p, centre, q)`）。端点は正確です。
 - `GeometryError`（ノブの値と理由を持つ。ビルダー側だけ）: 正の長さの部分が `min_edge` より短いとき、または `x_c` が定義できないとき。長さがちょうど 0 の部分はエラーではありません（要件 6.10）。`min_edge` はユーザーが別に決めるまで `settings.toml` で 0.0 です。要件 17.2 の端に近いケースは、計測できるようにメッシャーとソルバーに届かなければならず、ジオメトリでの拒否は結果を隠してしまうからです。0.0 では、負の部分か定義できない部分だけが `GeometryError` です。Decision 12。
 
@@ -142,7 +142,7 @@ flowchart TD
 | `Allrun` | `set -e`、`gmshToFoam`、`changeDictionary`、`decomposePar`、`mpirun -np 3 pimpleFoam -parallel` |
 
 - 上下の境界は brief で指定されていません（"walls 7 above and below"）。この設計は `slip` を取ります。受け入れられるかは円柱チェックが決めます（Decision 5）。
-- 渦度のサンプリング: 関数オブジェクト `vorticity` と、画像の窓を覆う `grid_x * grid_y` 点の規則格子上の cloud `sets` サンプラー。raw テキストで、最初のフレームの時刻から終わりまで、`spacing` 時間単位ごとに書きます。格子点は `casegen` がケースに書きます（設定だけで決まります）。流体の外の点はサンプラーが返さず、画像はそれをボディのマスクとして読みます。出力はどちらもケースの `postProcessing/` に入ります。これは並列実行の集約された出力なので、`reconstructPar` は要りません。正確な綴りは、スモーク実行のタスクで確認します（停止条件 S5）。
+- 渦度のサンプリング: 関数オブジェクト `vorticity` と、画像の窓を覆う `cell_width * cell_height` 点の規則格子上の cloud `sets` サンプラー。raw テキストで、フレームの時刻（`end - (frames - 1 - k) * spacing`、k = 0..frames-1: 145、146、…、150）に書きます。格子点は `casegen` がケースに書きます（設定だけで決まります）。流体の外の点はサンプラーが返さず、画像はそれをボディのマスクとして読みます。出力はどちらもケースの `postProcessing/` に入ります。これは並列実行の集約された出力なので、`reconstructPar` は要りません。正確な綴りは、スモーク実行のタスクで確認します（停止条件 S5）。
 - `Allrun` のイメージ内コマンドは、ほかの何かの 2 つ目の写しではありません: ソルバー設定です（6.9）。
 
 ### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `model/estimators.py`, `settle.py`
@@ -160,7 +160,7 @@ flowchart TD
 ### 6. Environment and run (Req 7, 8.7, 10)
 
 - `environment.check(settings)` は `WindAdapter.__init__` で走ります。Docker がなければ、最初の試行ではなくベンチサーバーの起動時に止まります。`docker version`、記録したダイジェストでのイメージの `docker image inspect`、Docker マシンの CPU 数の `docker info`（10.1 の 3 プロセス以上。さもないと `mpirun` が始められない）を実行します。失敗はそれぞれ `EnvironmentFailure` で、次のどれか、期待したもの、見つけたものを名指します: Docker に届かない、イメージがない、ダイジェストが違う、CPU が足りない。pull もほかのタグもしません（7.4）。
-- 次に、`bench-run/wind-tunnel/environment.jsonl`（git 管理外、ビルダー側）に JSON を 1 行追記します: イメージ名、ダイジェスト、イメージ ID、Gmsh のバージョン、Pillow と numpy のバージョン、プラットフォーム。時刻は書かないので、ファイルは環境の関数になります（7.5）。封印された記録はこれを持たず、`measured_by` も触れません。
+- 次に、`bench-run/wind-tunnel/environment.jsonl`（git 管理外、ビルダー側）に JSON を 1 行追記します: イメージ名、ダイジェスト、イメージ ID、Gmsh のバージョン、numpy のバージョン、プラットフォーム。時刻は書かないので、ファイルは環境の関数になります（7.5）。封印された記録はこれを持たず、`measured_by` も触れません。
 - イメージ: `opencfd/openfoam-default:2412`。`name@digest` として実行します。`settings.toml [image]` は `name` と `tag` を持ちます。ダイジェストとイメージ ID は `model/image-lock.toml` にあり、ダイジェストのタスクが走るまで存在しません。それがない間、`WindAdapter`（`scan_adapter` ではない）は「image lock missing」で失敗するので、プレースホルダーが値として読み込まれることはなく、Docker なしの部分はダイジェストを必要としません。ユーザーの Mac 上のタスクが、`docker image inspect` で両方を書きます（ダイジェストはイメージインデックスのもの。イメージ ID は arm64 ビルドのものなので、組でプラットフォームを固定します、7.1）。ダイジェストは作り上げません。
 - `Runner` プロトコル: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`、`SolverFailure(kind, reason, detail)` を送出します。`DockerRunner` は `docker run --rm --name <case-name> -v <case>:/case -w /case <name@digest> ./Allrun` を `subprocess.run(..., timeout=remaining)` で実行します。`remaining = 140 s - (輪郭とメッシュで使った時間)`。タイムアウトでは `docker kill <case-name>` を実行し、`SolverFailure("timeout")` を送出します。ゼロでない終了、出力ファイルの欠落、非有限値は、`detail` にソルバーのログの最後の数行を入れた `SolverFailure` になります。イメージ内の正確な呼び出し（ユーザー ID、イメージのエントリーポイントがすでに環境を準備するか）は、スモーク実行のタスクで確認します（S5）。
 - ケースフォルダー: `bench-run/wind-tunnel/<16 桁の 16 進数のシード>/`。アダプターが作ります。`bench-run/` は git 管理外です。フォルダー名は試行のシードをラベルとしてだけ使います（Decision 3）。すでにあるフォルダーは上書きせず失敗です。成功後に削除し、失敗後は残し、`detail` に名前を入れます（10.5、10.6）。
@@ -169,11 +169,18 @@ flowchart TD
 
 ### 7. Picture (Req 9) in `adapter/picture.py`
 
-- 入力: `frames` 個の各時刻について、`grid_x * grid_y` 格子上でサンプリングした渦度 `omega_z` と、サンプラーが返さなかった点のマスク。
-- 写像: `index = round(255 * (clip(omega, -L, L) + L) / (2 L))` を 0..254 に制限します。`L` は `settings.toml` の `vorticity_limit`（`<not yet chosen>`。16 の角の点の実行の渦度の範囲から選び、その後は固定、9.5）。マスクされた点は添字 255。パレットは固定の 1 つの表: 255 エントリーの発散的なランプと、255 番目の中立的な灰色で、5 つの基準色の間の線形補間で `picture.py` が作ります。
-- フレームは、サンプリング格子から `width * height` に双線形フィルターで拡大したパレット画像で、すべて同じパレットを共有します。Pillow の GIF ライターで、フレームごとの固定の長さと無限ループで書きます。コメントもほかの拡張も書きません。`bench.pictures.check_picture` をテストでそのバイト列に対して走らせます。
-- 設定（9.4、`settings.toml [picture]`）: `frames = 36` フレーム、`0.5` 時間単位間隔で実行の最後の部分に並べるので、最初のフレームは `150 - 35 * 0.5 = 132.5` で、落ち着いた部分の中です（9.3）。`width = 640`、`height = 320`。サンプリング格子は 320 x 160。窓は x が [-2.5, 9.5]、y が [-3, 3]（幅と高さの比 2 対 1）。1 フレーム 100 ms。これらは 9.4 の範囲の中で、新しい spec なしに最初のセッションの後に変えられます。
-- ライブラリ: numpy と Pillow がアダプターの依存です（任意のグループはありません。どちらもすべての試行に必要）。matplotlib は使いません: パレット、マスク、スケールは数行で、作図ライブラリは軸、フォント、メタデータを持ち込み、9.2 が禁じています。
+PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body-lab` 設計 4）。ウィンドウも OpenGL も作図ライブラリも使いません。シートは配列から作ります。
+
+- 入力: 各フレームの時刻について、`cell_width * cell_height` 格子上でサンプリングした渦度 `omega_z` と、サンプラーが返さなかった点（ボディ）のマスク。
+- フレームの時刻（モデルの `settings.py` の純関数 `frame_times(settings)`。ケース生成と画像が同じ一覧を使うため）: k = 0..frames-1 について `t_k = end - (frames - 1 - k) * spacing`。最後のフレームは実行の終わりで、時刻は増えます。初期値では 145、146、…、150。設定の読み込みは `t_0 < average_from`（9.3）と `frames != rows * columns` を拒否します。
+- 色: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`（0..254 の整数）。`L` は `settings.toml` の `vorticity_limit`（初期値。32 回のゲートの実行の渦度の範囲から選び、その後は固定、9.5）。添字の色は、255 エントリーの RGB の固定の 1 つの表から取ります。黒でない青と赤、中央の白の 3 つの基準色の間を線形補間で `picture.py` が作る発散的なランプです。マスクされた点は、表にない固定の灰色 1 色です。表の出所は 1 つで、すべての試行で同じ表を使います（9.1）。
+- セル: サンプリング格子がそのままセルなので、リサイズはしません。セルは表を引いて作る `cell_height * cell_width * 3` の `uint8` 配列です。
+- シート: 隙間の色（黒。表にない）の配列に、セルを書き込みます。セル `k` は行 `k // columns`、列 `k % columns`（時間順、左から右、次に上から下）に置き、セルの間に `gap` ピクセル、外側にはなしです。大きさ: 幅 `columns * cell_width + (columns - 1) * gap`、高さ `rows * cell_height + (rows - 1) * gap`。提案の値では 1208 x 404。
+- 符号化: 配列を RGB のタプルの行にして `bench.pictures.encode_png` で符号化します。補助チャンクは書きません。同じ入力は同じバイト列になります。文字は描きません。`bench.pictures.check_picture` をテストでそのバイト列に対して走らせます。
+- 設定（9.4、`settings.toml [picture]`、**提案、ユーザーは設計の承認時に確認する**、Decision 16）: `rows = 2`、`columns = 3`、`frames = 6`、`spacing = 1.0`、`cell_width = 400`、`cell_height = 200`、`gap = 4`。窓は x が [-2.5, 9.5]、y が [-3, 3]（2 対 1、セルの形）。`vorticity_limit`。6 フレームを間隔 1.0 にする理由: ストローハル数約 0.17 での渦放出の 1 周期は約 6 時間単位なので、シートはほぼ 1 周期を覆います。振動しないボディはほぼ同じセルになります（9.11）。隙間の理由: 自由流の渦度はほぼ 0 で、表の中央の白で表されるので、隙間がないと 1 つのセルの右端と次のセルの左端がつながります。ユーザーが望むなら gap 0 も有効な設定です。
+- 読み取れること: この大きさのシートを Dr. Kiro のファイルツールが届け、各セルが読み取れることは、仮定せずに確かめます。合成シートではタスク 7.1-7.2、本物のシートではタスク 14.5 です（9.7、9.10）。大きさは設定なので、失敗には別の値で応えられますが、ユーザーの決定があるときだけです（9.8）。
+- ライブラリ: numpy だけ（アダプターの依存）と `bench.pictures`。Pillow は要りません: リサイズも GIF ライターもありません。matplotlib は使いません: 表、マスク、スケールは数行で、作図ライブラリは軸、フォント、メタデータを持ち込み、9.2 が禁じています。
+- ノートブック: ノートブックの動く画像（シートのフレームを順に見せる）は、両方のラボについて 1 回、`lab-notebook` spec で決めます。ここでは何も準備しません。
 
 ### 8. Failures (Req 8)
 
@@ -223,7 +230,7 @@ flowchart TD
 | `[run]` | `processes`, `timeout_s`, `decomposition` | 3、140、`simple (3 1 1)` |
 | `[image]` | `name`, `tag` | brief（ダイジェストとイメージ ID は `image-lock.toml`） |
 | `[patches]` | 5 つの名前 | 選んだもの。伝える集合の語はなし |
-| `[picture]` | `frames`, `spacing`, `width`, `height`, `grid_x`, `grid_y`, `window`, `frame_ms`, `vorticity_limit` | セクション 7。`vorticity_limit` は初期値で、極端な実行のタスクで観測した範囲から置き換えた後に固定する（9.5） |
+| `[picture]` | `rows`, `columns`, `frames`, `spacing`, `cell_width`, `cell_height`, `gap`, `window`, `vorticity_limit` | セクション 7（配置はユーザーが確認するまで提案、Decision 16）。`vorticity_limit` は初期値で、極端な実行のタスクで観測した範囲から置き換えた後に固定する（9.5） |
 
 そのほかの記録:
 
@@ -231,7 +238,7 @@ flowchart TD
 - `ForceSeries`: `t`、`fx`、`fy`。同じ長さの `numpy` 配列で、落ち着いた部分だけ、有限。
 - `SolverFailure(kind, reason, detail)`、`FailureKind`: `not_settled`、`incomplete`、`timeout`。
 - `SettleResult(ok, reason)`。
-- `environment.jsonl` の 1 行: `{image, digest, image_id, gmsh, pillow, numpy, platform}`。
+- `environment.jsonl` の 1 行: `{image, digest, image_id, gmsh, numpy, platform}`。
 - `circle-check.json`: セクション 10。
 - 力のファイル: 列は `time`、`(total_x total_y total_z)`、`(pressure ...)`、`(viscous ...)`。`#` で始まる行はコメント。読むのは total だけ。
 
@@ -319,17 +326,23 @@ For all declarations accepted by `check_declaration` (generated with knob texts)
 
 **Validates: Requirements 1.1, 2.1, 2.2, 2.3, 2.4**
 
-### Property 14: Picture mapping and file
+### Property 14: Picture sheet mapping and file
 
-For all vorticity fields and all limits `L`, the palette index is non-decreasing in the value, clipped to 0..254, and 255 only for masked points; the same field gives the same bytes; the GIF passes `bench.pictures.check_picture`, has 24 to 48 frames and a width between 480 and 800 with height half of it.
+For all vorticity fields, all limits `L` and all valid layout settings, the colour index is non-decreasing in the value and clipped to 0..254; a masked point has the fixed mask colour, which no index has; the sheet has the size `columns * cell_width + (columns - 1) * gap` by `rows * cell_height + (rows - 1) * gap`; cell `k` holds frame `k` (read back with a test-side decoder, so frame order is left to right and then top to bottom); the gap pixels have the gap colour; the same input gives the same bytes; the bytes pass `bench.pictures.check_picture` for `image/png` and hold no chunk other than the image data.
 
-**Validates: Requirements 9.1, 9.2, 9.4**
+**Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
 ### Property 15: Planted solver terms are found
 
 For all terms planted from each kind of solver source (an OpenFOAM keyword, a patch name, a function-object name, a script name), the scan finds the term in builder-level text and ignores it in Dr. Kiro-level text; an unreadable source file is an error.
 
 **Validates: Requirements 13.1, 13.2, 13.7**
+
+### Property 16: Frame times follow the settings
+
+For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from` that the loader accepts, the frame times are `frames = rows * columns` numbers in strictly increasing order, the last equals `end`, consecutive times differ by `spacing`, and the first is not before `average_from`; settings whose first frame would be before `average_from`, or with `frames != rows * columns`, are refused naming the key.
+
+**Validates: Requirements 9.3, 9.4**
 
 ## Error Handling
 
@@ -352,10 +365,10 @@ For all terms planted from each kind of solver source (an OpenFOAM keyword, a pa
 
 | Kind | Tests | Runs where |
 |---|---|---|
-| Properties 1-15 | `hypothesis`、各 1 つのテスト、`Feature: wind-tunnel, Property N` のタグ | Kiro Web とローカル |
+| Properties 1-16 | `hypothesis`、各 1 つのテスト、`Feature: wind-tunnel, Property N` のタグ | Kiro Web とローカル |
 | Examples | 宣言が `check_declaration` を通る。両ファクトリーが等しい宣言を与える。ノブの文が要件 3.2 と等しい。本物のファイルでの 13.8 の重なりチェック。レイノルズ数 100 での円柱の文献値が 1e-6 以内で 0.164335 で、帯が 0.1561 から 0.1726。`max_delta_t <= ESTIMATOR_MAX_DT`。レイノルズ数の上書きのたどり | Kiro Web とローカル |
 | Gmsh | ノブの範囲の角でのメッシャーが、5 つの名前つきグループを持つメッシュファイルを与える。`needs_gmsh` を付け、Gmsh が import できない場所では目に見える理由つきでスキップ（タスクがまず Kiro Web でこれを確かめる。`body-lab` が描画でそうしたように） | Gmsh が import できる場所 |
-| Slow (marker `slow`、既定では除外、Docker) | 円柱チェック（15）。同じ入力 2 回で同一の計測と画像（10.4）。16 の端のコーナーの実行と 16 の端に近い実行。`extreme-runs.json` に書き、17.6 の停止を伴う | ローカルの Mac のみ |
+| Slow (marker `slow`、既定では除外、Docker) | 円柱チェック（15）。同じ入力 2 回で同一の計測と画像（10.4）。本物のシートでのシート読み取りチェック（9.10、ビルダーが実行し、`spikes/sheet/results.md` に記録）。16 の端のコーナーの実行と 16 の端に近い実行。`extreme-runs.json` に書き、17.6 の停止を伴う | ローカルの Mac のみ |
 | Review | `form-knowledge-review.md`（12.3） | 読んで |
 
 通常のスイートは `FakeMesher` と `FakeRunner` を使います。`FakeRunner` は既知の正弦波から合成した `force.dat` と渦度ファイルを書くので、`run_trial` は Docker なしで端から端までテストされます。
@@ -370,19 +383,19 @@ For all terms planted from each kind of solver source (an OpenFOAM keyword, a pa
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
 | `failures.py` | 8.1-8.6 |
-| `picture.py` | 9.1-9.6 |
+| `picture.py`, `settings.py` の `frame_times` | 9.1-9.6, 9.10, 9.11 |
 | `foam_terms.py`, `scan_sources.toml` | 13 |
 | `circle_check.py`, `count_lines.py`, `numbers.md` | 15, 16 |
 | `form-knowledge-review.md` | 12 |
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
 | 極端なケースと端に近いケース、`extreme-runs.json`、停止 | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
-| Order of work (tasks): GIF gate first (9.9), hands-on steps last (18.3) | 9.7-9.9, 18 |
+| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3) | 9.7-9.10, 18 |
 
 ## What would make me stop and ask
 
 - S1. `lab-bench` のタスク 23-26 が終わっていない、またはそれらの後で body-lab の golden ファイルが違う（タスク 1.1 が確認する）。
-- S2. GIF チェック（`spikes/gif/results.md`）がない、または失敗（9.8、9.9）。
+- S2. シート読み取りチェック（`spikes/sheet/results.md`）がない、失敗、または本物のシートでエージェントがシートを説明できない（9.8-9.10）。
 - S3. 抽出器とノブの `description` 項目以外の `lab-bench` の変更（14.2）、または `lab-bench` spec との衝突。
 - S4. 円柱チェックを実行した後で変えなければならないメッシュまたはソルバーの設定（6.8）。5% の外の円柱チェック（15.7）。1 つの入力の 2 回の実行が違う（10.4）。140 s より遅い実行、または 900 s に収まらない 6 回の実行（8.7）。端のコーナーと端に近い 32 の実行のうち、タイムアウト、メッシュの失敗、失敗、または落ち着かないもの（17.2、17.6）。
 - S5. スモーク実行で確認できない OpenFOAM の綴り、イメージ内のコマンド、Docker のオプション（たとえば関数オブジェクトの時間窓、サンプラーの出力の配置、コンテナ内のユーザー ID）。
@@ -400,7 +413,7 @@ For all terms planted from each kind of solver source (an OpenFOAM keyword, a pa
 4. **環境チェックは構築時。スキャンには 2 つ目のファクトリー**（セクション 1）。
 5. **上下の境界は `slip`、2 次精度のスキーム、単純分割 (3 1 1)。** brief は固定していません。これらは最初の選択で、円柱チェックが判断します。チェックの後の変更にはユーザーが必要です。
 6. **渦度は実行の中でサンプリング。** 関数オブジェクトで。フィールドの出力も `reconstructPar` もなし。
-7. **画像は Pillow と numpy だけ。** 固定の 1 つのパレット。36 フレーム、640 x 320、1 フレーム 100 ms。
+7. **画像は numpy と `bench.pictures.encode_png` だけ。** 固定の 1 つの色の表。6 フレームの PNG シート 1 枚（配置は Decision 16）。
 8. **パッチ名は `inlet`、`outlet`、`lateral`、`obstacle`、`frontAndBack`。** どれも伝える集合の語ではない。
 9. **Docker マシンの CPU のチェック。** 7.3 に加えて。
 
@@ -408,9 +421,12 @@ For all terms planted from each kind of solver source (an OpenFOAM keyword, a pa
 11. **イメージのダイジェストとイメージ ID は `model/image-lock.toml` に置く。** ダイジェストのタスクが書く。`settings.toml` が、ローダーが拒否しなければならないプレースホルダーを持たないようにするため。
 12. **`min_edge` は 0.0。** 端に近い実行を計測するまで（要件 17.2、17.6）。ジオメトリはメッシャーの前では何も拒否しない。メッシャーとソルバーが何をするかが計測になる。端に近い距離（範囲の 0.001 と 0.01）はビルダーの提案である。
 13. **stop-list の提案**は、OpenFOAM のキーワードについて、書面の提案つきの停止である（要件 13.9）。ビルダーは先に自分の識別子を改名し、言い換える。
-14. **角度の符号。** 正の角度は先端側を +y の向きに動かす（流れが +x、+y が上のとき時計回り）。`geometry.py` に 1 回だけ書く。推定器は `model/` に置くので、アダプターのコードを止める GIF ゲート（要件 9.9）より前に書かれる。どちらもビルダーの選択で、要件 6.4 が記録する符号の規約以外は要件を変えない。
+14. **角度の符号。** 正の角度は先端側を +y の向きに動かす（流れが +x、+y が上のとき時計回り。プロトタイプと同じで、ユーザーが確認済み）。`geometry.py` に 1 回だけ書く。推定器は `model/` に置くので、アダプターのコードを止めるシート読み取りゲート（要件 9.9）より前に書かれる。
 15. **`splitter` の文の板の厚さは `settings.toml` から書式化する。** もう一度手で書かない。
+16. **画像シートの配置: 提案、ユーザーは設計の承認時に確認する。** PNG 1 枚、6 フレームを 2 行 3 列、各セル 400 x 200、フレームは t = 145、…、150（間隔 1.0、設定）、黒の固定の 4 ピクセルの隙間で、シートは 1208 x 404（隙間 0 なら 1200 x 400）。理由: セクション 7。サンプリング格子がセルと同じなので、リサイズはしない。Dr. Kiro への読み取りやすさは確かめる（9.7、9.10）のであって、主張しない。
+17. **Pillow なし。** GIF ライターとリサイズだけが使い道だった。シートは `bench.pictures.encode_png` で符号化する。
+18. **ノートブックの動く画像**は両方のラボについての `lab-notebook` の決定である（要件の Decision 25）。この設計は何も準備しない。
 
 ## Open questions
 
-タスクのために未解決のものはない。ここで未解決だった結果依存の 2 つの質問（ほぼ縮退したノブの値、OpenFOAM のキーワードの stop-list の語）は、停止つきの手続きになった: 要件 17.6 と要件 13.9、Decision 12 と 13。ユーザーに訂正してもらうために残る判断は 1 つで、計算領域をソルバー設定の一部として伝えないままにすること（要件の Decision 19）である。
+1 つが未解決だが、タスクの妨げにはならない: ユーザーはこの設計の承認時に、Decision 16 のシートの配置（提案）を確認する。結果依存の 2 つの質問（ほぼ縮退したノブの値、OpenFOAM のキーワードの stop-list の語）は、停止つきの手続きとして受け入れられた: 要件 17.6 と要件 13.9、Decision 12 と 13。計算領域は、ユーザーの決定どおり、伝えないままである。

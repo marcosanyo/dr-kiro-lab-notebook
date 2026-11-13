@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/requirements.md`](../../../.kiro/specs/wind-tunnel/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `5168a73b58132f5cb88ccb173f92c9d758d161c2ec0ff04e5eaa754c9e73a67b`
+> 原文 SHA-256: `6d9c165559b2078ce600dea9d04d1480c2ebb6e92d36256f11826e502bf013db`
 
 # Requirements Document
 
@@ -29,7 +29,7 @@
 - **落ち着いた部分（Settled part）**: 実行のうち、平均の開始時刻から終わりまでの部分で、計測はこの部分で行います。
 - **実行（Run）**: ソルバーの 1 回の実行で、1 試行です。
 - **落ち着いた実行（Settled run）**: 落ち着いた部分が落ち着き基準（要件 8.3）を満たす実行です。
-- **ケースフォルダー（Case folder）**: 1 回の実行のフォルダーで、メッシュ、ソルバーのファイル、出力、フレームが入ります。
+- **ケースフォルダー（Case folder）**: 1 回の実行のフォルダーで、メッシュ、ソルバーのファイル、出力、サンプリングした渦度が入ります。
 - **伝える集合（Told set）**: Dr. Kiro にシステムについて与える情報のすべてで、アダプターの宣言から作る 1 つのテキストです（要件 1）。
 - **比較用 Kiro（Comparison Kiro）**: このリポジトリのラボと無関係な Kiro で、伝える集合とまったく同じものだけを与えられ、実験をせずに、比較用の spec を書きます。後で使うもので、ここでは作りません。
 - **ノブの文（Knob text）**: 1 つのノブについて伝える定義です（要件 3.2）。`lab-bench` 要件 18 がノブに加える `description` 項目に入れます。ノブが何であるか、どの単位か、範囲の両端が何を意味するか、そのノブを定めるジオメトリの定義（ジオメトリの定義）を述べます。ノブが流れに何をするかは決して述べません。
@@ -38,7 +38,8 @@
 - **隠す集合（Hidden set）**: ソルバーかメッシュに属するため、Dr. Kiro に伝えないものです。ソルバー設定（計算領域、境界条件、時間刻み、実行の長さを含む）とメッシュです。ボディのジオメトリについてのそれ以外はすべて伝えます（Decisions の項目 19）。
 - **端に近いケース（Near-end case）**: 1 つのノブを範囲の一方の端から範囲の 0.001 または 0.01 の距離に置き、ほかの 3 つのノブを範囲の真ん中に置く実行です（要件 17.2）。
 - **円柱チェック（Circle check）**: レイノルズ数 100 の円柱で計測したストローハル数を、文献と比べる実行です（要件 15）。
-- **GIF チェック（GIF check）**: Dr. Kiro のファイルツールがアニメーション GIF を表示できることを、ユーザーが手で確かめるチェックです（要件 9）。
+- **画像シート（Picture sheet）**: 1 試行の 1 枚の PNG です。固定の時刻の渦度のフレームを、同じ大きさのセルに縮尺し、行に並べたもので、左から右、次に上から下へ、時間順に並びます（要件 9）。`body-lab` の画像と同じ形です。
+- **シート読み取りチェック（Sheet reading check）**: Dr. Kiro のファイルツールが画像シートを届け、各セルを読み取れることを、ビルダーが確かめるチェックです。最初は合成のテスト用シートで、後で本物のシートで行います（要件 9.7、9.10）。
 - そのほかの用語は `lab-bench` と `body-lab` のとおりです。
 
 ---
@@ -143,7 +144,7 @@
 1. THE ボディ SHALL be a rounded rectangle of height 1 and length `aspect`, centred on the origin of its own frame。
 2. THE 角 SHALL be rounded with a radius of `corner` times half of the shorter side of the rectangle, that is `corner` times min(1, `aspect`) divided by 2（プロトタイプの定義で、ユーザーが承認済み）。`aspect` が 1 以上では、これは `corner` かける半高さに等しいので、`corner` = 1 で両端は半円になり、`aspect` = 1 では円になる。円柱チェックはこれを必要とする。`aspect` が 1 未満では、半高さに対する割合だと長さの半分を超えて形が成り立たなくなる。「短い辺の半分」は [0.5, 3] のすべてで定義される。
 3. WHERE `splitter` is above 0、THE ボディ SHALL have a plate of thickness 0.08 and a length of `splitter` heights beyond the rearmost point of the rounded rectangle, on the line through the middle of the rectangle along its length, joined to the rectangle with no gap。WHERE `splitter` is 0、THE ボディ SHALL have no plate。
-4. THE ボディ、板を含めて、SHALL be rotated by `angle` degrees about the centre of the rectangle, in the sense that a positive angle moves the front end of the body (the end facing the oncoming flow, at -x before the turn) toward +y and the back end toward -y。これは +x が右、+y が上を向くとき時計回りの回転である。この向きはビルダーが、迎え角の正の向きとして通常のものを選んだ。プロトタイプの向きはこのリポジトリになく、これまでの結果はそれに依存しないため（Decisions の項目 19）。
+4. THE ボディ、板を含めて、SHALL be rotated by `angle` degrees about the centre of the rectangle, in the sense that a positive angle moves the front end of the body (the end facing the oncoming flow, at -x before the turn) toward +y and the back end toward -y。これは +x が右、+y が上を向くとき時計回りの回転である。この向きはプロトタイプと同じで、ユーザーが確認済み（Decisions の項目 19）。
 5. THE 板の厚さ（0.08）、板の取り付け方、回転の中心、正の角度の向き SHALL be written in `wind-tunnel/model/` and SHALL be told to Dr. Kiro, as the geometry definitions in the knob texts（要件 3.2）。ボディのジオメトリのそれ以外の固定値は SHALL NOT exist。IF the builder adds one、THEN ビルダー SHALL tell it in a knob text, with the user's approval of the changed text（要件 1.7）, or ask the user。
 6. THE 流れ SHALL be laminar, two-dimensional, at Reynolds number 150 for every normal trial, with the free-stream speed 1 and the height 1。
 7. THE レイノルズ数 SHALL be a builder-side parameter of the model in `wind-tunnel/model/`。It SHALL NOT be a knob, SHALL NOT be reachable from any `lab/` folder or from any input of a trial, and SHALL be set to a value other than 150 only by the circle check (Requirement 15)。
@@ -185,21 +186,23 @@
 
 ### Requirement 9: The picture
 
-**対象:** Dr. Kiro（画像を開く）、ビルダー（作り方）、ユーザー（手作業のチェック）。
+**対象:** Dr. Kiro（画像を開く）、ビルダー（作り方と確認）。
 
-**User Story:** Dr. Kiro として、流れが動くのを見たい。ノートブックの読者として、それが動いてほしい。
+**User Story:** Dr. Kiro として、流れがどう発展するかを、読み取れる 1 枚の画像で見たい。ノートブックの読者として、流れを時間順に示す画像がほしい。
 
 #### Acceptance Criteria
 
-1. THE アダプター SHALL give each trial one animated GIF (`image/gif`), made from frames of the flow's vorticity, with a colour scale that is the same in every trial, so that two trials can be compared by eye。
-2. THE 画像 SHALL show the body and its near wake, SHALL carry no axes, ticks, labels, legends, text or metadata, and SHALL pass the bench's picture check (`lab-bench` design 4, Requirement 15.9)。
-3. THE フレーム SHALL be taken near the end of the run, from the settled part。
-4. THE 画像 SHALL have 24 to 48 frames, spaced evenly over the last part of the run, and a width of 480 to 800 pixels at a height of half the width。THE 設計 SHALL pick values inside these ranges and SHALL state them as adapter settings, so that they can change after the first session (as `body-lab` Requirement 4.3)。
-5. THE 色スケールの固定の限界値 SHALL be written in `wind-tunnel/model/`, not in `lab/`。
-6. THE 画像 SHALL NOT be described to Dr. Kiro beyond its kind (Requirement 1.2)。
-7. **前提条件:** BEFORE the wind-tunnel adapter is written、THE ユーザー SHALL run the GIF check: Dr. Kiro's file tool, in Kiro CLI, reads an animated GIF。THE 結果 SHALL be recorded in `spikes/gif/results.md` (a results file, as `spikes/mcp/results.md`), and the file SHALL be tracked in git。チェックは準備済み（Decisions の項目 16）。ユーザーは、偽ラボのエージェントをそのフォルダーから起動して実行する。
-8. IF the GIF check fails、THEN the builder SHALL stop and ask the user, and SHALL NOT switch the picture format itself (`rules.md`, Fail fast)。
-9. THE 後の `tasks.md` の、アダプターのコードを書く最初のタスク SHALL be a gate that reads the GIF check's result and stops if it is missing or failed。
+1. THE アダプター SHALL 試行ごとにちょうど 1 枚の画像、すなわち画像シートを返す: 1 枚の PNG（`image/png`）で、流れの渦度のフレームを同じ大きさのセルに縮尺して行に並べたもの。色スケールはすべての試行で同じで、2 つの試行を目で比べられる。これは `body-lab` の画像の形である。（以前のアニメーション GIF はやめた: GIF 読み取りチェックが失敗した。`spikes/gif/results.md`、Decisions の項目 23。）
+2. THE 画像 SHALL ボディとその近い後流を示し、軸、目盛り、ラベル、凡例、文字、メタデータを持たず、表示装置なしで作られ、`bench.pictures.encode_png` で符号化され、ベンチの画像チェックを通る（`lab-bench` 設計 4、要件 15.9）。
+3. THE フレーム SHALL 固定の間隔で、実行の終わりで終わるように、落ち着いた部分から取られ、時間順に、左から右、次に上から下へ並べられる。
+4. **提案、ユーザーは設計の承認時に確認する（Decisions の項目 24）:** THE シート SHALL 6 フレームを 2 行 3 列に持つ。各セルは 400 x 200 ピクセル。隣り合うセルは、色スケールにない固定の 1 色の 4 ピクセルの隙間で区切られ、外側のセルの外には隙間がない。したがってシートは 1208 x 404 ピクセルである。フレームの時刻は 145、146、…、150（間隔 1.0 時間単位、最後のフレームは実行の終わり）。フレーム数、配置、セルの大きさ、隙間、間隔は `wind-tunnel/model/settings.toml` の設定で、設定の読み込み時にまとめて検査される（フレーム数が行数 x 列数に等しいこと、最初のフレームの時刻が平均の開始時刻より前でないこと）。最初のセッションの後に値を変えることは、この要件の変更である。
+5. THE 色スケールの固定の限界値 SHALL `wind-tunnel/model/` に書かれ、`lab/` には書かれない。
+6. THE 画像 SHALL NOT be described to Dr. Kiro beyond its kind（要件 1.2）。ベンチは伝える行を宣言された種類から作る（"one picture (png file)"）。この spec は画像の順序や内容についての文を加えない。`lab-bench` は変わらないからである（Decisions の項目 23）。
+7. **前提条件、ビルダーが実行する:** BEFORE the wind-tunnel adapter is written、THE ビルダー SHALL 合成のテスト用シートでシート読み取りチェックを行う: 2 行 3 列の 6 セルの PNG で、各セルに固有の背景色、固有の位置の点、数字がある。`spikes/sheet/` のスクリプトがテスト用の入力として作る（結果ではなく、そう明記する）。ビルダーは偽ラボのエージェントを `bench-run/fake/lab` で `kiro-cli chat --no-interactive` により起動し、読む順に各セルの色、点の位置、数字を報告させ、質問、答え、判定を git で追跡される `spikes/sheet/results.md` に記録する。6 セルすべてが正しく報告されたとき合格である。
+8. IF 合成シートのシート読み取りチェックが失敗する、THEN THE ビルダー SHALL 止まってユーザーに確認し、画像の形式や配置を自分で切り替えない（`rules.md`、フェイルファスト）。
+9. THE 後の `tasks.md` の、アダプターのコードを書く最初のタスク SHALL 9.7 の結果を読み、ないとき、追跡されていないとき、失敗のとき止まるゲートである。
+10. WHEN 画像のレンダラーができた、THE ビルダー SHALL 本物のシート（円柱チェックまたは最初の試行から）でシート読み取りチェックを行い、各セルのどこに渦があるか、セルの間でパターンが変わるかをエージェントに尋ね、質問と答えを `spikes/sheet/results.md` に記録する。答えは記録するだけで、隠れた正解と照らして判定しない。IF エージェントがシートを説明できない（たとえばセルが 0 または 1 つと報告する）、THEN THE ビルダー SHALL 止まってユーザーに確認し、画像の形式や配置を自分で切り替えない。
+11. THE README SHALL 振動しないボディではシートのセルがほぼ同じになると述べ、振動するボディのセルがどう見えるかは述べない。
 
 ### Requirement 10: Determinism and case folders
 
@@ -328,8 +331,8 @@
 
 #### Acceptance Criteria
 
-1. THE ユーザーが必要な手順 are: the approval of these requirements, with the proposals; the GIF check (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3), including the sealing and the commit of `sessions/wind-tunnel/`; and reporting the connection time (Requirement 16.1)。
-2. THE GIF チェック SHALL be a gate before the adapter is written; it is the only such step before the end。THE ユーザー does it before "Run All Tasks" is started。
+1. THE ユーザーが必要な手順 are: 提案つきの要件の承認、24 回のセッションの開始と終了（要件 17.3）（封印の確認と `sessions/wind-tunnel/` のコミットを含む）、接続時間の報告（要件 16.1）。
+2. THE シート読み取りチェック（要件 9.7）SHALL be a gate before the adapter is written。ビルダー自身が実行するので、「Run All Tasks」の前にユーザーの手順はない。
 3. THE 後の `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the builder can run alone with "Run All Tasks"。
 4. THE Docker が必要な手順 SHALL run only on the local Kiro on the user's Mac (`handoff.md`); the builder SHALL NOT mark them done from Kiro Web。
 5. THE 結果に依存するこの spec の停止は、手作業の手順ではない。結果がそれを求めるときだけ起き、ビルダーは止まってユーザーに報告する: stop-list エントリーの提案（13.9）、端のケースと端に近いケースのゲート（17.6）、失敗した円柱チェック（15.7）、メッシュにできないジオメトリ（6.10）、上限より遅い実行（8.7）、`lab-bench` spec との衝突（14.2）。これらは `tasks.md` に停止条件として書かれ、サブエージェントが決めずに報告するようにする。
@@ -337,7 +340,7 @@
 
 ## Decisions
 
-項目 1-14 は、この要件を書く前にユーザーと決めたことです。ユーザーは、項目 10 に記した訂正と、項目 15 と 16 の承認つきで、この要件を承認しました。
+項目 1-14 は、この要件を書く前にユーザーと決めたことです。ユーザーは、項目 10 に記した訂正と、項目 15 と 16 の承認つきで、この要件を承認しました。項目 23-27 は GIF 読み取りチェックが失敗した後に加えました。
 
 1. **ジオメトリ。** プロトタイプの値で、ユーザーが確認済み: 高さ 1、長さ `aspect`、後ろに隙間なく付ける厚さ 0.08 の板、長さ `splitter` 高さ分、ボディ全体を長方形の中心まわりに `angle` だけ回転。固定値は `wind-tunnel/model/` だけに置く。`corner` のスケールは項目 15 で決定。
 2. **ストローハル数の推定。** 5% を分解できる方法。要件が精度を定め（要件 5）、設計が方法を選ぶ。
@@ -347,27 +350,30 @@
 6. **再現性。** 3 プロセスへの固定分割。同じ Mac、イメージ、入力なら同じ結果。マシンをまたぐ保証はしない。シードは使わない。
 7. **ケースフォルダー。** `bench-run/` の下。成功後は削除、失敗後はビルダーだけのために残す。
 8. **円柱チェック。** 円柱をレイノルズ数 100 で、ビルダー側のパラメーターで実行。低速のローカルテスト。結果は追跡されるファイルと README に。5% 以内で合格。文献の出典は項目 17 で決定。
-9. **画像。** 試行ごとに 1 つのアニメーション GIF、固定の色スケール、文字なし。フレーム数とサイズは項目 15 で決定。ユーザーの GIF チェックが通るまでアダプターは書かない。（ユーザーが PNG から変更した。）
+9. **画像。** 試行ごとに 1 つの画像、固定の色スケール、文字なし。項目 23 で置き換え: PNG の画像シート。フレーム数とサイズは項目 24。
 10. **Dr. Kiro に伝えること。** ノブの名前、範囲、ノブの文、各計測の意味、流れが 2 次元でレイノルズ数 150 であること。しきい値 0.01 は `shedding` の定義の一部として伝える。伝える集合は宣言された 1 つの集合で、1 つの文書として書き出せ、比較用 Kiro に与えるものである。**承認時のユーザーによる訂正:** Dr. Kiro には各ノブが何であるかを伝える。ボディの長さ、角の丸め、ボディの後ろの板の長さ、迎え角（長さ、角の丸め、後ろの板の長さ、迎え角）である。ノブが流れに何をするかは伝えない。理由: 風洞は、システムの作りについて何も隠されていなくても予測が外れることを示すためのものである。引き続き伝えないもの: ソルバー設定、メッシュ設定、画像の内容、形の知識。ノブの文は要件 3.2 にあり、ビルダーが、単位と範囲の両端の意味（"0 means there is no plate"）を含む定義として書いたもので、影響としては書かない。スキャンへの帰結は要件 13.3: 許可リストは宣言された名前だけで、ノブの文の語はほかのビルダーのテキストと同じようにスキャンされ、ソルバーとメッシュの識別子は禁止のままである。
 11. **形の知識なし。** どのラボのテキストにも置かない。自動ではなく、レビュー済みの一覧で確認する。
 12. **範囲。** アダプター、`model/`、ラボ、抽出器、円柱チェック、数値、そして `sessions/wind-tunnel/` に封印する最初の 24 回のセッション。そのセッションはユーザーが開始する。
 13. **README の数値。** 接続時間はこの要件の承認から最初のフルセッションの開始まで、自己申告。コード量はスクリプトで数える。どちらも `wind-tunnel/numbers.md` に。
 14. **目的。** ゴールの文は項目 15 で決定。
-15. **提案どおりに承認**（ユーザー、承認時）: `corner` は短い辺の半分に対する割合で、radius = `corner` x min(1, `aspect`) / 2、プロトタイプと同じ（要件 6.2）。落ち着き基準: 落ち着いた部分の後半を前半と比べ、平均 `cd` は 2% 以内、`cl_amp` は 10% 以内（下限 0.002）、揚力が振動するなら 5 周期以上（要件 8.3）。1 回の実行の実時間の上限 140 s（要件 8.7）。推定器の精度 1%（要件 5.3 と 5.4）。画像は 24〜48 フレーム、幅 480〜800 ピクセル、高さは幅の半分（要件 9.4）。ゴールの文 "Find the setting of the four knobs with the lowest cd among the settings where shedding is 0."（要件 11.2）。「laminar」と画像の説明は伝える集合に加えない（要件 1.7）。
-16. **GIF チェックは準備済み。** `spikes/gif/make_gif.py` が `spikes/gif/check.gif` を作る（12 フレーム。各フレームの背景色が違い、動く点とフレーム番号がある）。コピーが `bench-run/fake/lab/pictures/check.gif`（git 管理外）にある。閉じ込めとログの hook は `bench-run/fake/lab/.kiro/hooks/` にあり、hook ログはそのラボで動いていることを示すので、チェックの場所として有効である。ユーザーは、偽ラボのエージェントをそのフォルダーから起動して実行する。ゲートは残る（要件 9.7-9.9 と 18.2）: 結果が `spikes/gif/results.md` に入るまで、アダプターのコードは書かない。
+15. **提案どおりに承認**（ユーザー、承認時）: `corner` は短い辺の半分に対する割合で、radius = `corner` x min(1, `aspect`) / 2、プロトタイプと同じ（要件 6.2）。落ち着き基準: 落ち着いた部分の後半を前半と比べ、平均 `cd` は 2% 以内、`cl_amp` は 10% 以内（下限 0.002）、揚力が振動するなら 5 周期以上（要件 8.3）。1 回の実行の実時間の上限 140 s（要件 8.7）。推定器の精度 1%（要件 5.3 と 5.4）。（以前の 24〜48 フレーム、幅 480〜800 ピクセルの画像は、項目 23 と 24 で置き換え）。ゴールの文 "Find the setting of the four knobs with the lowest cd among the settings where shedding is 0."（要件 11.2）。「laminar」と画像の説明は伝える集合に加えない（要件 1.7）。
+16. **GIF チェックは準備され、失敗した。** `spikes/gif/make_gif.py` が `spikes/gif/check.gif`（12 フレーム）を作り、偽ラボでチェックを行った。失敗した（項目 23）。記録として `spikes/gif/` にファイルを残す。
 17. **円柱チェックの文献値、ビルダーが検証済み。** Williamson (1989)、式 (6)、レイノルズ数 100 で 0.164335（要件 15.4）。1988 年の関連論文は開けておらず、数値の出典にはしない。
 
 18. **ノブの記述: 選択肢 A**（ユーザー: "your recommendations are fine"）。`lab-bench` は各ノブに任意の `description` を得る（そちらの要件 18 とタスク 23-26）。要件 3.2 のノブの文はそこに入る。アダプターはそれらのタスクが終わるまで書かない。body-lab の宣言は変わらず、出力がバイト単位で同一であることをテストで示す。
-19. **ジオメトリの定義は伝える**（ユーザー: 隠すのはソルバーとメッシュだけ）。要件 3.2 のノブの文は次を述べる: 板の厚さは 0.08 ボディ高さ（プロトタイプの値で、ユーザーが先に確認済み）、隙間なく付け、長さはボディの最後端から数え、ボディの中央を通る線上にある。回転はボディの長さと高さの真ん中まわりで、板も一緒に回る。正の角度は先端側を +y の向きに動かし、流れは +x に沿う。**向きはビルダーの選択:** ユーザーは通常の迎え角の向き（先端が上がる）を求めたが、プロトタイプ自身の向きはこのリポジトリにない。今のところ何もそれに依存しない（範囲は 0 から 30 で、円柱チェックは 0 度）ので、止めて確認する必要はなかった。計算領域は隠す集合に残す。これらの文は定義で、要件 12 に照らして読み直した。
+19. **ジオメトリの定義は伝える**（ユーザー: 隠すのはソルバーとメッシュだけ）。要件 3.2 のノブの文は次を述べる: 板の厚さは 0.08 ボディ高さ（プロトタイプの値で、ユーザーが先に確認済み）、隙間なく付け、長さはボディの最後端から数え、ボディの中央を通る線上にある。回転はボディの長さと高さの真ん中まわりで、板も一緒に回る。正の角度は先端側を +y の向きに動かし、流れは +x に沿う。**向きはプロトタイプと同じ**（正の角度で先端が上がる）で、ユーザーが確認済み。計算領域は、ユーザーの決定どおり、隠す集合に残す。これらの文は定義で、要件 12 に照らして読み直した。
 20. **ブラインドスキャンの衝突**は要件 13.4 の順序で解決する（ビルダーが選んだものを改名、言い換え、それでも残れば確認）。stop list はユーザーの承認があるときだけ変える。
 21. **端に近いノブの値: 先に計測する。** 最初のセッションの前に、16 の端のコーナーの実行と 16 の端に近い実行（要件 17.2）を、ジオメトリでは何も拒否せずに行う。タイムアウト、メッシュの失敗、ソルバーの失敗、落ち着かない実行があれば、ビルダーは止まって数値を報告する（要件 17.6）。範囲と時間上限はビルダーは変えない。端に近い距離（範囲の 0.001 と 0.01）はビルダーの提案である。
 22. **OpenFOAM のキーワードの stop-list への追加**は、根拠つきで提案し、ユーザーが承認する。タスクの中の明示的な停止とする（要件 13.9）。
 
+23. **画像 = PNG の画像シート 1 枚**（ユーザーの決定、選択肢 1）。理由: GIF 読み取りチェックが失敗した（`spikes/gif/results.md`）。Dr. Kiro のファイルツールはアニメーション GIF の最初のフレームとファイルサイズのメタデータしか届けず、動きと 2〜12 番目のフレームは Dr. Kiro に届かない。シートはフレームを時間順に 1 枚の静止画に並べ、`body-lab` の画像と同じ形にする（`body-lab` 要件 4 と設計 4）。「試行ごとに 1 枚の画像」という契約と `lab-bench` は、`lab-bench` 要件 18（ノブの説明）を含めて変わらない。伝える集合は画像を種類だけで示し、それはベンチが書く（"one picture (png file)"）。時間順についての文は `lab-bench` の変更を要するので加えない。
+24. **シートの配置: 提案、ユーザーは設計の承認時に確認する。** 6 フレーム（プロトタイプと同じ）、2 行 3 列、左から右、次に上から下へ時間順。各セル 400 x 200 ピクセル（2 対 1、以前のフレームの形）。フレームは終わりで終わる間隔 1.0 時間単位（t = 145、…、150）。brief は「終わり近くのフレーム」としており、ストローハル数約 0.17 での渦放出の 1 周期は約 6 時間単位なので、間隔 1.0 の 6 フレームでほぼ 1 周期を覆う。セルの間に、固定の 1 色の 4 ピクセルの薄い隙間を加えるので、シートは 1208 x 404 ピクセルになる。隙間の理由: 自由流の渦度はほぼ 0 で、色スケールの中立色で表されるため、隙間がないと 1 つのセルの右端と次のセルの左端がつながり、1 つのセルの後流が次のセルに続くと読めてしまう。ユーザーが隙間なしを望むなら設定は 0 で、シートは 1200 x 400 になる。間隔は `wind-tunnel/model/settings.toml` の設定である。振動しないボディはほぼ同じセルになる。色スケールは試行をまたいで固定で、その上限は後で計測する値のまま、32 回のゲートから決める（要件 9.5、17.2）。**この大きさのシートが Dr. Kiro に読み取れることは主張しない:** シート読み取りチェック（要件 9.7、9.10）で確かめ、失敗すればビルダーは止まる。
+25. **ノートブックの動く画像**はここでは設計しない。ノートブックはシートのフレームを順に見せる。`body-lab` も同じシートの形なので、両方のラボについて 1 回、`lab-notebook` spec で決める。`docs/status.md` に、その spec の項目として載せる。
+26. **提案どおりに承認**（ユーザー）: 各範囲の 0.001 と 0.01 の端に近い値、32 回のゲート（要件 17.2、17.6）、stop-list の語を提案とユーザーの承認で扱うこと（要件 13.9）。もう未解決の質問ではない。
+27. **計算領域は伝えないまま**（ユーザーの決定）。正の角度の向きはプロトタイプと同じ（項目 19）。
+
 ## Open questions
 
-タスクを書くために未解決のものはない。次の 2 つは、結果に依存するため、事前に決めず、そのとき根拠つきで手続きとして決める（要件 13.9、17.6、18.5）:
+1 つが未解決だが、確認であり、タスクの妨げにはならない:
 
-1. OpenFOAM のキーワードのうち、あるとしてどれを stop list に入れるか。ビルダーが語とその出典の行を提案し、ユーザーが 1 語ずつ承認する。
-2. 端のコーナーや端に近い実行がタイムアウトする、メッシュにできない、落ち着かない場合にどうするか。ビルダーが数値を報告し、ユーザーがベンチのルール、範囲を狭める、リスクを受け入れる、から選ぶ。
-
-ユーザーに訂正してもらうための判断が 1 つ記録されている: 計算領域（前方 6 高さ、後方 18、上下 7）は、ソルバー設定の一部なので伝えないままである（Decisions の項目 19）。伝えたい場合は、ノブの文またはゴールに 1 文が加わり、要件 1.7 が適用される。
+1. 要件 9.4 と Decisions の項目 24 のシートの配置は提案である。ユーザーは設計の承認時に、確認するか変更する。

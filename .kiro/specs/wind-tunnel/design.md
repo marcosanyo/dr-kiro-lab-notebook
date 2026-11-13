@@ -12,8 +12,8 @@ adapter contract is `bench/src/bench/adapter.py` (`lab-bench` design 4), the mod
 
 One trial is one run of the solver. The adapter turns four numbers into a body outline, a mesh and an OpenFOAM
 case, runs the case once in a pinned Docker image under a wall-clock limit, reads the force history and the
-sampled vorticity, computes five measurements with pure functions, and returns the measurements and one animated
-GIF. Anything that goes wrong is a trial failure with a fixed public reason (Requirement 8), never a made-up value.
+sampled vorticity, computes five measurements with pure functions, and returns the measurements and one PNG picture
+sheet of vorticity frames in time order. Anything that goes wrong is a trial failure with a fixed public reason (Requirement 8), never a made-up value.
 
 The system is split in two projects so that the rule "the model is never visible from `lab/`" has one place to
 hold it:
@@ -21,7 +21,7 @@ hold it:
 - `wind-tunnel/model/` is the system: numbers, case templates, the outline, the Gmsh recipe, the parsers of solver
   output, and the pure functions that turn a force history into the five measurements and the settle criterion.
   It contains no bench code. (The estimators are here and not in the adapter so that they, like the geometry, are
-  written and tested before the GIF gate of Requirement 9.9, which stops adapter code only. Decision 14.)
+  written and tested before the sheet reading gate of Requirement 9.9, which stops adapter code only. Decision 14.)
 - `wind-tunnel/adapter/` plugs the system into the bench: the declaration, the run, the picture, the failure
   mapping, the circle check. It contains no solver number of its own.
 
@@ -31,7 +31,7 @@ Highlights of the choices (details below):
 |---|---|---|
 | Strouhal estimator | Least-squares sinusoid fit on a fine frequency grid, refined by golden-section search; no FFT | Resolves far below the bin width 1/70 (about 8% of 0.17), works on the uneven times of an adaptive time step (5.2) |
 | Output of the solver | Function objects write `force.dat` and sampled vorticity during the run; no field dumps, no reconstruction | Short run, small disk use, the forces and the picture come from the same run |
-| Picture | Pillow GIF with one fixed 256-colour palette; vorticity mapped to palette indices | Same colour scale in every trial by construction (9.1); no plotting library, no text, no metadata |
+| Picture | One PNG contact sheet: 6 vorticity frames in 2 rows of 3, a fixed colour ramp, numpy and `bench.pictures.encode_png`, no Pillow | Same colour scale in every trial by construction (9.1); Dr. Kiro's file tool delivers one still image (the GIF check failed); no plotting library, no text, no metadata; the form of `body-lab`'s picture |
 | Docker | `docker run` of the pinned image with a bind-mounted case folder; one script (`Allrun`) from `model/` | One command to time out and kill; the in-image commands are solver setup and live in `model/` (6.9) |
 | Environment check | At adapter construction; the scan uses a second factory that only builds the declaration | `bench-scan` must work without Docker (Kiro Web, publishing) |
 | Tests without Docker | A fake runner and a fake mesher behind two small protocols | Everything except the three slow checks runs in Kiro Web |
@@ -61,7 +61,7 @@ wind-tunnel/
       settle.py                   settle criterion (8.3)
     tests/
   adapter/                        uv project "wind-tunnel-adapter"
-    pyproject.toml                depends on lab-bench (path), wind-tunnel-model (path), numpy, pillow
+    pyproject.toml                depends on lab-bench (path), wind-tunnel-model (path), numpy
     scan_sources.toml             solver files and lab layout (13.5)
     src/wind_tunnel/
       declaration.py              knobs, measurements, told text, budget, goal (1, 3, 4, 11)
@@ -69,7 +69,7 @@ wind-tunnel/
       environment.py              Docker and image check, environment record (7)
       runner.py                   Runner protocol, DockerRunner (8.7, 10)
       failures.py                 failure kinds and fixed public reasons (8)
-      picture.py                  vorticity -> palette index -> GIF (9)
+      picture.py                  vorticity -> colour -> picture sheet PNG (9)
       circle_check.py             the circle check and its record (15)
       told_set.py                 export of the told set (2)
     tests/                        ordinary tests (no Docker)
@@ -94,7 +94,7 @@ flowchart TD
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
     I -->|not settled| F
-    I --> J[picture: GIF]
+    I --> J[picture: PNG sheet]
     J --> K[TrialResult]
     F --> L[keep case folder, detail to builder log only]
     K --> M[remove case folder]
@@ -113,7 +113,7 @@ flowchart TD
   where `.kiro/` is absent).
 - Measurements: `cd`, `cl_mean`, `cl_amp`, `strouhal`, `shedding`, unit `1`, kind `scalar`; `strouhal` has the
   not-measured outcome `not_shedding`.
-- `picture = "image/gif"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
+- `picture = "image/png"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
   "the settled part of the trial" and nothing about times (4.3). In the wording, "force" is used in the singular
   where the sentence allows, so that no word of the told set equals a term the solver files will give (13.8);
   the test of 13.8 decides, and what it cannot avoid goes the way of Requirements 13.4 and 13.9.
@@ -166,9 +166,7 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   `θ > 0`; the point `(a/2, 0)` goes below it. The sense is written once, in `geometry.py`, as the sign in this
   matrix; there is no `rotation_sense` setting that could disagree with the told text. The sense is told in the
   `angle` text (Requirement 3.2) and Property 3 pins it.
-  Why this sense: the user asked for the usual convention (front end up), and the prototype's own sense is not in
-  this repository; nothing computed so far depends on it (Decision 14 of this design, Decision 19 of the
-  requirements).
+  Why this sense: it is the prototype's, confirmed by the user (Decision 19 of the requirements).
 - Output: an ordered, closed list of primitives (`Line(p, q)`, `Arc(p, centre, q)`), each with exact endpoints.
 - `GeometryError` (with the knob values and the reason, builder side only) when a positive piece is shorter than
   `min_edge`, or when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10).
@@ -217,8 +215,8 @@ Contents of the templates (names are OpenFOAM's; values come from `settings.toml
 - The top and bottom boundaries are not specified by the brief ("walls 7 above and below"). This design takes
   `slip`; the circle check decides whether that is acceptable (Decision 5).
 - Sampled vorticity: function objects `vorticity` and a cloud `sets` sampler over a regular grid of
-  `grid_x * grid_y` points covering the picture window, written as raw text, from the first frame time to the end,
-  every `spacing` time units. The grid points are written into the case by `casegen` (they depend only on
+  `cell_width * cell_height` points covering the picture window, written as raw text, at the frame times
+  (`end - (frames - 1 - k) * spacing`, k = 0..frames-1: 145, 146, ..., 150). The grid points are written into the case by `casegen` (they depend only on
   settings). Points outside the fluid are not returned by the sampler; the picture reads that as the body mask.
   Both outputs land in the case's `postProcessing/`, which is the collated output of a parallel run, so
   `reconstructPar` is not needed. The exact spellings are confirmed in the smoke-run task (Stop condition S5).
@@ -259,7 +257,7 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   `mpirun` cannot start). Each failure raises `EnvironmentFailure` naming which of: Docker not reachable, image
   missing, digest different, too few CPUs; what was expected; what was found. No pull, no other tag (7.4).
 - It then appends one JSON line to `bench-run/wind-tunnel/environment.jsonl` (git-ignored, builder side): the image
-  name, the digest, the image id, the Gmsh version, the Pillow and numpy versions, the platform. No time, so that
+  name, the digest, the image id, the Gmsh version, the numpy version, the platform. No time, so that
   the file is a function of the environment (7.5). The sealed record does not carry it and `measured_by` does not
   mention it.
 - The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `settings.toml [image]` holds `name` and `tag`.
@@ -287,22 +285,45 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
 
 ### 7. Picture (Req 9) in `adapter/picture.py`
 
-- Input: for each of `frames` times, the sampled vorticity `omega_z` on the `grid_x * grid_y` grid, with a mask of
-  points the sampler did not return.
-- Mapping: `index = round(255 * (clip(omega, -L, L) + L) / (2 L))` clamped to 0..254, with `L` =
-  `vorticity_limit` from `settings.toml` (`<not yet chosen>`; chosen from the vorticity range of the 16 corner-point
-  runs, then fixed, 9.5); masked points get index 255. The palette is one fixed table: a diverging ramp of 255
-  entries and a neutral grey at 255, built by linear interpolation between five anchor colours in `picture.py`.
-- Frames are paletted images resized with bilinear filtering from the sampling grid to `width * height`, all
-  sharing the palette; written with Pillow's GIF writer with a fixed duration per frame and an endless loop. No
-  comment, no other extension is written; `bench.pictures.check_picture` is run on the bytes in the tests.
-- Settings (9.4, `settings.toml [picture]`): `frames = 36` frames spaced `0.5` time units apart over the last part
-  of the run, so the first frame is at `150 - 35 * 0.5 = 132.5`, inside the settled part (9.3); `width = 640`,
-  `height = 320`; sampling grid 320 by 160; window x in [-2.5, 9.5], y in [-3, 3] (width to height 2 to 1); 100 ms
-  per frame. These can change after the first session without a new spec, inside the ranges of 9.4.
-- Libraries: numpy and Pillow, in the adapter's dependencies (there is no optional group: both are needed for every
-  trial). matplotlib is not used: the palette, the mask and the scale are a few lines, and a plotting library would
-  bring axes, fonts and metadata that 9.2 forbids.
+One PNG picture sheet, the form of `body-lab`'s picture (`body-lab` design 4). No window, no OpenGL, no plotting
+library: the sheet is built from arrays.
+
+- Input: for each of the frame times, the sampled vorticity `omega_z` on the `cell_width * cell_height` grid, with a
+  mask of points the sampler did not return (the body).
+- Frame times (a pure function in the model's `settings.py`, `frame_times(settings)`, so that the case generator and the picture use one list): `t_k = end - (frames - 1 - k) * spacing`
+  for k = 0..frames-1, so the last frame is at the end of the run and the times increase. With the starting values
+  this is 145, 146, ..., 150. The settings loader refuses `t_0 < average_from` (9.3) and `frames != rows * columns`.
+- Colour: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`, an integer in 0..254, with `L` =
+  `vorticity_limit` from `settings.toml` (a starting value, chosen from the vorticity range of the 32 gate runs and
+  then fixed, 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
+  three anchor colours (a blue and a red that are not black, and white at the middle) built by linear interpolation
+  in `picture.py`. A masked point gets one fixed grey that is not in the table. The table has one source and the
+  same table is used in every trial (9.1).
+- Cell: the sampling grid is the cell, so no resampling is done. A cell is a `cell_height * cell_width * 3` array of
+  `uint8` made by indexing the table.
+- Sheet: an array of the gap colour (black, which is not in the table) with the cells copied in, cell `k` at row
+  `k // columns` and column `k % columns` (time order, left to right and then top to bottom), with `gap` pixels
+  between cells and none outside. Size: `columns * cell_width + (columns - 1) * gap` by
+  `rows * cell_height + (rows - 1) * gap`; with the proposed values 1208 by 404.
+- Encoding: the array is turned into rows of RGB tuples and encoded by `bench.pictures.encode_png`, which writes no
+  ancillary chunk; the same input gives the same bytes. No text is drawn. `bench.pictures.check_picture` is run on the
+  bytes in the tests.
+- Settings (9.4, `settings.toml [picture]`, **proposed, the user confirms at design approval**, Decision 16):
+  `rows = 2`, `columns = 3`, `frames = 6`, `spacing = 1.0`, `cell_width = 400`, `cell_height = 200`, `gap = 4`;
+  window x in [-2.5, 9.5], y in [-3, 3] (2 to 1, the shape of a cell); `vorticity_limit`.
+  Why six frames at 1.0: one shedding period at a Strouhal number of about 0.17 is about 6 time units, so the
+  sheet covers about one period. A body that does not shed gives nearly identical cells (9.11).
+  Why a gap: the vorticity of the free stream is near zero, shown as the white middle of the table, so without a gap
+  the right edge of one cell and the left edge of the next run together. A gap of 0 is a valid setting if the user
+  prefers it.
+- Legibility: whether Dr. Kiro's file tool delivers a sheet of this size so that each cell can be read is checked,
+  not assumed: on a synthetic sheet by tasks 7.1-7.2 and on a real sheet by task 14.5 (9.7, 9.10). The size is a
+  setting, so a failure can be answered with other values, but only by the user's decision (9.8).
+- Libraries: numpy only (a dependency of the adapter) and `bench.pictures`. Pillow is not needed: there is no
+  resizing and no GIF writer. matplotlib is not used: the table, the mask and the scale are a few lines, and a
+  plotting library would bring axes, fonts and metadata that 9.2 forbids.
+- Notebook: the moving picture in the notebook (the frames of a sheet shown in turn) is decided in the
+  `lab-notebook` spec, once for both labs. Nothing here prepares it.
 
 ### 8. Failures (Req 8)
 
@@ -373,7 +394,7 @@ key):
 | `[run]` | `processes`, `timeout_s`, `decomposition` | 3, 140, `simple (3 1 1)` |
 | `[image]` | `name`, `tag` | brief (the digest and the image id are in `image-lock.toml`) |
 | `[patches]` | five names | chosen, none a word of the told set |
-| `[picture]` | `frames`, `spacing`, `width`, `height`, `grid_x`, `grid_y`, `window`, `frame_ms`, `vorticity_limit` | section 7; `vorticity_limit` is a starting value, replaced from the observed range in the extreme-run task and then fixed (9.5) |
+| `[picture]` | `rows`, `columns`, `frames`, `spacing`, `cell_width`, `cell_height`, `gap`, `window`, `vorticity_limit` | section 7 (the layout is a proposal until the user confirms it, Decision 16); `vorticity_limit` is a starting value, replaced from the observed range in the extreme-run task and then fixed (9.5) |
 
 Other records:
 
@@ -381,7 +402,7 @@ Other records:
 - `ForceSeries`: `t`, `fx`, `fy` as `numpy` arrays of equal length, only the settled part, finite.
 - `SolverFailure(kind, reason, detail)`; `FailureKind`: `not_settled`, `incomplete`, `timeout`.
 - `SettleResult(ok, reason)`.
-- `environment.jsonl` line: `{image, digest, image_id, gmsh, pillow, numpy, platform}`.
+- `environment.jsonl` line: `{image, digest, image_id, gmsh, numpy, platform}`.
 - `circle-check.json`: section 10.
 - Force file: columns `time`, `(total_x total_y total_z)`, `(pressure ...)`, `(viscous ...)`; lines starting `#`
   are comments. Only the total is read.
@@ -497,13 +518,16 @@ file name, path, version or session value.
 
 **Validates: Requirements 1.1, 2.1, 2.2, 2.3, 2.4**
 
-### Property 14: Picture mapping and file
+### Property 14: Picture sheet mapping and file
 
-For all vorticity fields and all limits `L`, the palette index is non-decreasing in the value, clipped to 0..254, and
-255 only for masked points; the same field gives the same bytes; the GIF passes `bench.pictures.check_picture`, has
-24 to 48 frames and a width between 480 and 800 with height half of it.
+For all vorticity fields, all limits `L` and all valid layout settings, the colour index is non-decreasing in the
+value and clipped to 0..254; a masked point has the fixed mask colour, which no index has; the sheet has the size
+`columns * cell_width + (columns - 1) * gap` by `rows * cell_height + (rows - 1) * gap`; cell `k` holds frame `k`
+(read back with a test-side decoder, so frame order is left to right and then top to bottom); the gap pixels have the
+gap colour; the same input gives the same bytes; the bytes pass `bench.pictures.check_picture` for `image/png` and
+hold no chunk other than the image data.
 
-**Validates: Requirements 9.1, 9.2, 9.4**
+**Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
 ### Property 15: Planted solver terms are found
 
@@ -512,6 +536,15 @@ script name), the scan finds the term in builder-level text and ignores it in Dr
 source file is an error.
 
 **Validates: Requirements 13.1, 13.2, 13.7**
+
+### Property 16: Frame times follow the settings
+
+For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from` that the loader accepts, the frame
+times are `frames = rows * columns` numbers in strictly increasing order, the last equals `end`, consecutive times
+differ by `spacing`, and the first is not before `average_from`; settings whose first frame would be before
+`average_from`, or with `frames != rows * columns`, are refused naming the key.
+
+**Validates: Requirements 9.3, 9.4**
 
 ## Error Handling
 
@@ -537,10 +570,10 @@ tests and the reviewed list.
 
 | Kind | Tests | Runs where |
 |---|---|---|
-| Properties 1-15 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
+| Properties 1-16 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
 | Examples | the declaration passes `check_declaration`; both factories give equal declarations; knob texts equal Requirement 3.2; the 13.8 overlap check on the real files; the circle literature value at Reynolds 100 is 0.164335 within 1e-6 and the band is 0.1561 to 0.1726; `max_delta_t <= ESTIMATOR_MAX_DT`; the Reynolds-override walk | Kiro Web and local |
 | Gmsh | the mesher on the corners of the knob ranges gives a mesh file with the five named groups; marked `needs_gmsh`, skipped with a visible reason where Gmsh cannot be imported (the task checks this in Kiro Web first, as `body-lab` did for rendering) | where Gmsh imports |
-| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the stop of 17.6 | Local Mac only |
+| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the sheet reading check on a real sheet (9.10, run by the builder, recorded in `spikes/sheet/results.md`); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the stop of 17.6 | Local Mac only |
 | Review | `form-knowledge-review.md` (12.3) | By reading |
 
 The ordinary suite uses `FakeMesher` and `FakeRunner`, which writes a synthetic `force.dat` and vorticity files from
@@ -556,19 +589,19 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
 | `failures.py` | 8.1-8.6 |
-| `picture.py` | 9.1-9.6 |
+| `picture.py`, `frame_times` in `settings.py` | 9.1-9.6, 9.10, 9.11 |
 | `foam_terms.py`, `scan_sources.toml` | 13 |
 | `circle_check.py`, `count_lines.py`, `numbers.md` | 15, 16 |
 | `form-knowledge-review.md` | 12 |
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
 | Extreme and near-end runs, `extreme-runs.json`, and the stops | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
-| Order of work (tasks): GIF gate first (9.9), hands-on steps last (18.3) | 9.7-9.9, 18 |
+| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3) | 9.7-9.10, 18 |
 
 ## What would make me stop and ask
 
 - S1. `lab-bench` tasks 23-26 are not done, or a golden file of body-lab differs after them (task 1.1 checks).
-- S2. The GIF check (`spikes/gif/results.md`) is missing or failed (9.8, 9.9).
+- S2. The sheet reading check (`spikes/sheet/results.md`) is missing, failed, or, on a real sheet, the agent cannot describe the sheet (9.8-9.10).
 - S3. A change to `lab-bench` other than the extractors and the knob `description` field (14.2), or any conflict with
   the `lab-bench` spec.
 - S4. Mesh or solver settings that I must change after the circle check was run (6.8); a circle check outside 5%
@@ -601,7 +634,7 @@ Made by the builder in this design; none changes a requirement.
 5. **Top and bottom boundary: `slip`; second-order schemes; simple decomposition (3 1 1).** The brief does not
    fix them. They are the first choice, and the circle check judges them. A change after the check needs the user.
 6. **Vorticity sampled inside the run** by function objects; no field output and no `reconstructPar`.
-7. **Picture by Pillow and numpy only** with one fixed palette; 36 frames, 640 by 320, 100 ms per frame.
+7. **Picture by numpy and `bench.pictures.encode_png` only**, with one fixed colour table; one PNG sheet of 6 frames (the layout is Decision 16).
 8. **Patch names `inlet`, `outlet`, `lateral`, `obstacle`, `frontAndBack`**, none a word of the told set.
 9. **A check of the Docker machine's CPUs**, in addition to 7.3.
 
@@ -614,14 +647,20 @@ Made by the builder in this design; none changes a requirement.
 13. **Stop-list proposals** for OpenFOAM keywords are a stop with a written proposal (Requirement 13.9). The builder
     renames its own identifiers and rewords first.
 14. **Sign of the angle.** A positive angle moves the front end toward +y (clockwise with the flow along +x and +y
-    up), written once in `geometry.py`; the estimators sit in `model/` so that they are written before the GIF gate
-    that stops adapter code (Requirement 9.9). Both are the builder's choices; neither changes a requirement except
-    the sign convention, which Requirement 6.4 records.
+    up, as in the prototype, confirmed by the user), written once in `geometry.py`; the estimators sit in `model/` so
+    that they are written before the sheet reading gate that stops adapter code (Requirement 9.9).
 15. **The plate thickness in the `splitter` text is formatted from `settings.toml`**, not typed again.
+16. **Picture sheet layout: PROPOSED, the user confirms at design approval.** One PNG, 6 frames in 2 rows of 3, each
+    cell 400 by 200, frames at t = 145, ..., 150 (spacing 1.0, a setting), a fixed 4 pixel gap in black, so the sheet
+    is 1208 by 404 (1200 by 400 if the gap is 0). Reasons: section 7. The sampling grid equals the cell, so no
+    resampling is done. The legibility for Dr. Kiro is checked (9.7, 9.10), not claimed.
+17. **No Pillow.** The GIF writer and the resize were the only uses; `bench.pictures.encode_png` encodes the sheet.
+18. **The notebook's moving picture** is a `lab-notebook` decision for both labs (Decision 25 of the requirements);
+    nothing in this design prepares it.
 
 ## Open questions
 
-None is open for the tasks. The two results-dependent questions that were open here (the near-degenerate knob
-values, and the stop-list words for OpenFOAM keywords) became procedures with a stop: Requirement 17.6 and
-Requirement 13.9, Decisions 12 and 13. The one judgement left for the user to correct is the computational domain,
-which stays untold as part of the solver setup (requirements, Decision 19).
+One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)
+when approving this design. The two results-dependent questions (the near-degenerate knob values, and the stop-list
+words for OpenFOAM keywords) were accepted as procedures with a stop: Requirement 17.6 and Requirement 13.9,
+Decisions 12 and 13. The computational domain stays untold, the user's decision.

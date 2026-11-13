@@ -4,20 +4,26 @@
 
 Tasks for the second application, from `requirements.md` (Requirements 1-18) and `design.md`. They are run with
 "Run All Tasks" by an orchestrator that dispatches one sub-agent per task. The order is: the `lab-bench` amendment
-check, the model (Docker-free), the GIF gate, the adapter and declaration, the blind scan, the lab and the review
+check, the model (Docker-free), the sheet reading gate, the adapter and declaration, the blind scan, the lab and the review
 list, the Docker steps (local Mac only), the README facts, a checkpoint, and last, together, the steps that need the
 user.
 
 ## Notes for the user and for every sub-agent
 
-- **Before "Run All Tasks" is started, the user does the GIF check** (Requirement 9.7, 18.2) and records the
-  result in `spikes/gif/results.md` (tracked in git). It is the only hands-on step before the end. Task 7.1 reads
-  that file and stops if it is missing or says the check failed. A sub-agent never creates or edits that file.
+- **The picture is one PNG sheet** (Requirement 9, Decisions 23-24), because the GIF reading check failed
+  (`spikes/gif/results.md`). The layout (6 frames, 2 rows of 3, cells 400 by 200, gap 4, spacing 1.0) is a
+  proposal until the user confirms it at design approval; the tasks use the values from `settings.toml`.
+- **The sheet reading check is run by the builder, not by the user** (Requirement 9.7, 9.10, 18.2). Task 7.1 makes a
+  synthetic test sheet and asks Dr. Kiro's agent of the fake lab to read it, with `kiro-cli chat`; it needs Kiro CLI
+  and `bench-run/fake`, so it runs on the user's Mac, and Kiro Web stops there and reports. Task 7.2 is the gate: it
+  reads `spikes/sheet/results.md` and stops if the check is missing, not tracked or failed. Task 14.5 repeats the
+  check on a real sheet. No step of the user stands before "Run All Tasks".
 - **`lab-bench` tasks 23-26 must be done first** (the knob `description` field, `lab-bench` Requirement 18). They
   are in `.kiro/specs/lab-bench/tasks.md`, not here. Task 1.1 only checks them and stops if they are not done.
-- **Where to run.** Tasks 1.1-13.2 and 15.1 need no Docker and no display, and run in Kiro Web or locally. If Gmsh
-  cannot be installed or imported in Kiro Web, task 2.1 stops and reports (it does not skip Gmsh). Tasks marked
-  **[local Mac + Docker]** (14.1-14.4) cannot run in Kiro Web (`handoff.md`, Requirement 18.4): run "Run All Tasks"
+- **Where to run.** Tasks 1.1-13.2 and 15.1 need no Docker and no display, and run in Kiro Web or locally, except
+  task 7.1, which needs Kiro CLI and runs locally (once its result is committed, task 7.2 and the later tasks run
+  anywhere). If Gmsh cannot be installed or imported in Kiro Web, task 2.1 stops and reports (it does not skip
+  Gmsh). Tasks marked **[local Mac + Docker]** (14.1-14.5) cannot run in Kiro Web (`handoff.md`, Requirement 18.4): run "Run All Tasks"
   on the user's Mac for them, and never tick them from Kiro Web.
 - **Checks of a project** ("the checks of X") means: in `wind-tunnel/model/`, `wind-tunnel/adapter/` or `bench/`,
   `uv run pytest` (slow tests excluded by default), `uv run ruff check` and `uv run ruff format --check` pass; for
@@ -32,7 +38,7 @@ user.
   tolerance, stop list or told text (`rules.md` 2, 6). The stop conditions are: S1-S8 of the design, an unreadable
   or unconfirmable literature source or fit range for the circle check (task 14.2), a conflict with `lab-bench`
   (Requirement 14.2), an OpenFOAM or Docker detail that cannot be confirmed (S5), and the proposals of tasks 12.4
-  and 14.4.
+  and 14.4, and a failed sheet reading check (7.1) or a sheet that the agent cannot describe (14.5).
 - **Blind rules.** Nothing from `model/`, `adapter/`, `requirements.md` or `design.md` is copied into `lab/`
   (Requirement 12.6). Comments and names in the code follow Requirement 13.4: if a word of the told set collides
   with a derived solver term, rename what the builder chose, then reword, then ask.
@@ -62,16 +68,22 @@ user.
       or a wrong type, read nothing from the environment, and provide `with_reynolds(x)` (design 6, 14.2).
     - Values: the brief's values (Reynolds number 150, domain 6 / 18 / 7, end time 150, averaging from 80,
       Courant 0.8, 3 processes, 140 s), 0.08 plate thickness, `min_edge = 0.0`, `max_delta_t = 0.05`, patch names of
-      Decision 8, and picture settings of design 7. Mesh sizes, `initial_delta_t` and `vorticity_limit` are starting
+      Decision 8, and the picture settings of design 7 (the proposed layout, Decision 16). Mesh sizes, `initial_delta_t` and `vorticity_limit` are starting
       values with a comment naming the task that confirms them (4.1, 14.1, 14.4). Write no placeholder into the file.
-    - The loader checks `max_delta_t <= ESTIMATOR_MAX_DT` (0.05), defined in `settings.py`.
+    - The loader checks `max_delta_t <= ESTIMATOR_MAX_DT` (0.05), defined in `settings.py`, that `frames` equals
+      `rows * columns`, and that the first frame time is not before `average_from`. `settings.py` provides
+      `frame_times(settings)` (design 7).
     - Check that Gmsh imports (`uv run python -c "import gmsh"`). If it cannot be installed or imported, **stop and
       report**; do not drop Gmsh or switch the mesher.
     - Unit tests: the real file loads; a missing key, an extra key, a placeholder string, a wrong type and
-      `max_delta_t` above 0.05 are each refused naming the key; `with_reynolds` returns a copy and leaves the
-      original at 150.
+      `max_delta_t` above 0.05, `frames` not equal to `rows * columns` and a first frame before `average_from` are each
+      refused naming the key; `with_reynolds` returns a copy and leaves the original at 150; the real file gives the
+      frame times 145, 146, ..., 150.
     - Verified by: the checks of `model/`.
-    - _Requirements: 6.6-6.9, 7.2, 10.1, 14.1_
+    - _Requirements: 6.6-6.9, 7.2, 9.3, 9.4, 10.1, 14.1_
+  - [ ] 2.2 Write property test for the frame times
+    - **Property 16: Frame times follow the settings**
+    - **Validates: Requirements 9.3, 9.4**
 
 - [ ] 3. Geometry
   - [ ] 3.1 Write the outline of the body
@@ -165,23 +177,46 @@ user.
     - **Property 8: Settle criterion**
     - **Validates: Requirements 8.3**
 
-- [ ] 7. GIF gate
-  - [ ] 7.1 Check the user's GIF result before any adapter code
-    - Check that `spikes/gif/results.md` exists, is tracked in git (`git ls-files spikes/gif/results.md`), and
-      records that Dr. Kiro's file tool showed the animated GIF. This task only reads. If the file is missing, not
+- [ ] 7. Sheet reading gate
+  - [ ] 7.1 Run the sheet reading check on a synthetic sheet **[local Mac + Kiro CLI]**
+    - Write `spikes/sheet/make_sheet.py` (scratch area: nothing outside `spikes/` may use it at runtime; it may use
+      `bench.pictures.encode_png`). It writes `spikes/sheet/check-sheet.png`, a **synthetic test fixture, not a
+      result** (say so in the script and in `results.md`): 6 cells in 2 rows of 3, each cell 400 by 200 with 4 pixel
+      black gaps (the proposed layout, 1208 by 404), each with its own background colour, a dot at its own
+      position, and a number 1 to 6 drawn with a small bitmap font in the script (for this check only). The script
+      also prints the expected colour, dot position and number of each cell in reading order. Copy the PNG to
+      `bench-run/fake/lab/pictures/check-sheet.png` (git-ignored).
+    - Run it as on 2026-11-13 (`spikes/gif/results.md`): from `bench-run/fake/lab`, with
+      `BENCH_SESSION_CONFIG=<repo>/bench-run/fake/session.toml` and
+      `BENCH_HOOK_LOG=<repo>/bench-run/fake/hook-log.jsonl` exported, run `kiro-cli chat --agent fake-tester
+      --no-interactive --trust-workspace --trust-tools=fs_read "<question>"`. The question asks the agent to open
+      `pictures/check-sheet.png` and report, for each of the six cells in reading order (left to right, top to
+      bottom), the background colour, the position of the dot and the number. The question gives none of the
+      expected values. Run it once; if an answer is partly wrong, do not make the sheet easier and run again.
+    - Write `spikes/sheet/results.md` (tracked, by name): date, Kiro CLI version, the layout and size, the question,
+      the answers, the expected values from the script, the hook log lines for the read, and the verdict. **Pass:**
+      all six cells correct. **Fail:** **stop and ask** the user (in Japanese) with the answers; do not change the
+      picture format, the layout or the size.
+    - If `kiro-cli` or `bench-run/fake` is not available (for example in Kiro Web), **stop and report**; do not skip
+      the check.
+    - Verified by: `spikes/sheet/results.md` exists with the verdict "pass" and all six cells correct.
+    - _Requirements: 9.7, 9.8, 18.2_
+  - [ ] 7.2 Gate: read the result of the sheet reading check
+    - Check that `spikes/sheet/results.md` exists, is tracked in git (`git ls-files spikes/sheet/results.md`), and
+      records the verdict "pass" for the synthetic sheet. This task only reads. If the file is missing, not
       tracked, or says the check failed, **stop and report** which; do not create or edit the file, and do not
       switch the picture format (Requirement 9.8). Tasks 8.1 and later are not started.
-    - Verified by: the report quotes the line of the file that records the result.
+    - Verified by: the report quotes the line of the file that records the verdict.
     - _Requirements: 9.7, 9.8, 9.9, 18.2_
 
 - [ ] 8. Adapter project and declaration
   - [ ] 8.1 Create the adapter project and the declaration
     - `wind-tunnel/adapter/` as a `uv` project `wind-tunnel-adapter` (Python 3.12; dependencies `lab-bench` and
-      `wind-tunnel-model` by path, `numpy`, `pillow`; dev `pytest`, `hypothesis`, `ruff`; the `slow` marker
+      `wind-tunnel-model` by path, `numpy`; dev `pytest`, `hypothesis`, `ruff`; the `slow` marker
       excluded by default; the console scripts `wind-tunnel-told-set` and `wind-tunnel-circle-check`, whose modules
       are written by tasks 8.2 and 11.3). `declaration.py`: four `NumberKnob` with the ranges of Requirement 3.1
       and the texts of Requirement 3.2 in `description` (the thickness from the settings), the five measurements
-      with `not_shedding` for `strouhal`, `measured_by` (Requirement 4.2, 4.3), `image/gif`, budget 24, the goal of
+      with `not_shedding` for `strouhal`, `measured_by` (Requirement 4.2, 4.3), `image/png`, budget 24, the goal of
       Requirement 11.2; `scan_adapter()` (declaration only, no environment check).
     - Unit tests: the declaration passes `check_declaration`; the four knob texts equal Requirement 3.2 read from
       the spec file (skipped with a visible reason where `.kiro/` is absent); the number in the `splitter` text
@@ -210,16 +245,20 @@ user.
   - [ ] 9.2 Write property test for the failure mapping
     - **Property 9: Failure mapping**
     - **Validates: Requirements 8.1, 8.4, 8.5, 8.8**
-  - [ ] 9.3 Write the picture
-    - `picture.py` per design 7: vorticity to palette index with the fixed limit, one fixed 256-colour palette, mask
-      index 255, resize to the settings size, GIF written with Pillow with no comment or other extension.
-    - Unit tests: the GIF of a synthetic field passes `bench.pictures.check_picture`; frame count and size are
-      inside 24-48 and 480-800 by half; the same field gives the same bytes.
+  - [ ] 9.3 Write the picture sheet
+    - `picture.py` per design 7: vorticity to a colour index with the fixed limit, one fixed 255-entry colour table
+      and a fixed mask colour, a cell per frame (the sampling grid is the cell, no resizing), cells copied into an
+      array of the gap colour in time order (left to right, then top to bottom), rows of RGB tuples encoded with
+      `bench.pictures.encode_png`. numpy and `bench.pictures` only; no text is drawn.
+    - Unit tests: the sheet of a synthetic field passes `bench.pictures.check_picture` for `image/png`; its size is
+      1208 by 404 with the settings file; cell `k` equals the colours of frame `k` (a test-side decoder using
+      `zlib`); the gap pixels have the gap colour; the same field gives the same bytes; a field with a gap setting of
+      0 gives 1200 by 400.
     - Verified by: the checks of `adapter/`.
-    - _Requirements: 9.1-9.6_
+    - _Requirements: 9.1-9.5_
   - [ ] 9.4 Write property test for the picture
-    - **Property 14: Picture mapping and file**
-    - **Validates: Requirements 9.1, 9.2, 9.4**
+    - **Property 14: Picture sheet mapping and file**
+    - **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
 - [ ] 10. Environment and runner
   - [ ] 10.1 Write the environment check
@@ -341,7 +380,7 @@ user.
       it to confirm the spellings and options listed by task 5.1 (function-object time window, sampler layout,
       user id in the container) and the starting mesh sizes and `initial_delta_t`. If a detail cannot be confirmed,
       or one run exceeds 140 s, or six runs would not fit in 900 s, **stop and report** (S4, S5).
-    - Verified by: the run settles, measurements pass `check_result`, the GIF passes the picture check, and the
+    - Verified by: the run settles, measurements pass `check_result`, the sheet passes the picture check, and the
       report lists the time and what was confirmed or changed (changes here are allowed, before the circle check).
     - _Requirements: 7.1, 7.3, 8.7, 11.4_
   - [ ] 14.2 Run the circle check **[local Mac + Docker]**
@@ -371,12 +410,28 @@ user.
       these runs (the rule and the numbers in the report), then fix it (Requirement 9.5).
     - Verified by: `extreme-runs.json` lists 32 runs from the run, all settled; the limit is set from the data.
     - _Requirements: 9.5, 17.2, 17.6_
+  - [ ] 14.5 Run the sheet reading check on a real sheet **[local Mac + Docker + Kiro CLI]**
+    - Run one trial of the circle (`aspect` 1, `corner` 1, `splitter` 0, `angle` 0) through `WindAdapter` with the
+      fixed colour limit, and write the returned PNG to `bench-run/fake/lab/pictures/real-sheet.png` (git-ignored).
+      Check that it passes `bench.pictures.check_picture` and has the size of the settings.
+    - Run the agent of the fake lab as in task 7.1, one question: for each cell in reading order, where are the
+      vortices, and does the pattern change between the cells. The question does not say what a vortex looks like or
+      what to expect.
+    - Append the question, the answers, the sheet's size and SHA-256, and the date to `spikes/sheet/results.md`
+      (tracked, by name), as a recorded observation. The answers are not judged against a ground truth.
+    - **Stop and ask:** IF the agent cannot describe the sheet (it reports no cells, one cell, or only that it
+      cannot see the picture), **stop and report** the answers to the user (in Japanese). Do not change the picture
+      format, the layout or the size.
+    - Verified by: `spikes/sheet/results.md` holds the answers for the real sheet and the agent described the cells.
+    - _Requirements: 9.10_
 
 - [ ] 15. README facts
   - [ ] 15.1 Write `wind-tunnel/README.md` and fill `numbers.md` (code size)
     - Run `count_lines.py` to fill the code size. Write the README from recorded files only: how the application
       measures (the same meaning as `measured_by`), the budget and mode costs (Requirement 11.3), the time of one
-      run and of one experiment from task 14.1 (fits 900 s), the determinism limit (Requirement 10.3), the circle
+      run and of one experiment from task 14.1 (fits 900 s), the form of the picture (one PNG sheet of 6 frames in
+      2 rows of 3, in time order, and that a body that does not shed gives nearly identical cells, Requirement 9.11)
+      and the outcome of the sheet reading checks as recorded in `spikes/sheet/results.md`, the determinism limit (Requirement 10.3), the circle
       check values and difference from `circle-check.json`, the outcome of the extreme runs from
       `extreme-runs.json`, the statement that the reviewed list is a review and not a guarantee (Requirement 12.4),
       how to install and start a session (as `body-lab/README.md`: `uv tool install --editable './bench[frontend]'
@@ -384,13 +439,13 @@ user.
       connection time as `<not yet measured>` until the user reports it. The root `README.md` is not edited.
     - Verified by: every number in the README appears in a tracked result file; `bench-scan` on the README is not
       needed (it is not in `lab/`) but no solver identifier is copied into `lab/`.
-    - _Requirements: 4.7, 10.3, 11.4, 12.4, 15.6, 16.2, 16.4, 17.4_
+    - _Requirements: 4.7, 9.10, 9.11, 10.3, 11.4, 12.4, 15.6, 16.2, 16.4, 17.4_
 
 - [ ] 16. Checkpoint — **Stop and ask**
   - Run the checks of `model/`, `adapter/` and `bench/` (non-slow tests and ruff), `bench-scan` on `wind-tunnel/lab`
     and on the exported told text (`wind-tunnel-told-set --out` to a temporary file outside the repository),
     and `sh scripts/ja-check.sh`. Check that `form-knowledge-review.md` is filled and complete, that
-    `circle-check.json` and `extreme-runs.json` exist, and that `docs/status.md` names the next step.
+    `circle-check.json`, `extreme-runs.json` and `spikes/sheet/results.md` (both checks) exist, and that `docs/status.md` names the next step.
   - Report in Japanese what passed and what did not. This ends the part that "Run All Tasks" can do alone. Tasks
     17-19 need the user's hands.
   - _Requirements: 12.3, 13.7, 13.8, 17.1, 17.2_
@@ -448,22 +503,24 @@ These steps need the user (Requirement 18.1, 18.3). A sub-agent does not run the
   "waves": [
     { "id": 0, "tasks": ["1.1"] },
     { "id": 1, "tasks": ["2.1"] },
-    { "id": 2, "tasks": ["3.1", "5.1", "5.3", "6.1"] },
+    { "id": 2, "tasks": ["2.2", "3.1", "5.1", "5.3", "6.1"] },
     { "id": 3, "tasks": ["3.2", "3.3", "3.4", "4.1", "5.2", "5.4", "6.2", "6.3", "6.4", "6.5", "6.6"] },
     { "id": 4, "tasks": ["6.7", "7.1"] },
-    { "id": 5, "tasks": ["8.1"] },
-    { "id": 6, "tasks": ["8.2", "9.1", "9.3", "10.1", "10.2", "11.4", "12.1"] },
-    { "id": 7, "tasks": ["8.3", "9.2", "9.4", "11.1"] },
-    { "id": 8, "tasks": ["11.2", "11.3", "12.2"] },
-    { "id": 9, "tasks": ["12.3"] },
-    { "id": 10, "tasks": ["12.4"] },
-    { "id": 11, "tasks": ["13.1"] },
-    { "id": 12, "tasks": ["13.2"] },
-    { "id": 13, "tasks": ["14.1"] },
-    { "id": 14, "tasks": ["14.2"] },
-    { "id": 15, "tasks": ["14.3"] },
-    { "id": 16, "tasks": ["14.4"] },
-    { "id": 17, "tasks": ["15.1"] }
+    { "id": 5, "tasks": ["7.2"] },
+    { "id": 6, "tasks": ["8.1"] },
+    { "id": 7, "tasks": ["8.2", "9.1", "9.3", "10.1", "10.2", "11.4", "12.1"] },
+    { "id": 8, "tasks": ["8.3", "9.2", "9.4", "11.1"] },
+    { "id": 9, "tasks": ["11.2", "11.3", "12.2"] },
+    { "id": 10, "tasks": ["12.3"] },
+    { "id": 11, "tasks": ["12.4"] },
+    { "id": 12, "tasks": ["13.1"] },
+    { "id": 13, "tasks": ["13.2"] },
+    { "id": 14, "tasks": ["14.1"] },
+    { "id": 15, "tasks": ["14.2"] },
+    { "id": 16, "tasks": ["14.3"] },
+    { "id": 17, "tasks": ["14.4"] },
+    { "id": 18, "tasks": ["14.5"] },
+    { "id": 19, "tasks": ["15.1"] }
   ]
 }
 ```

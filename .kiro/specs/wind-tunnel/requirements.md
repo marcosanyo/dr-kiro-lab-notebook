@@ -42,7 +42,7 @@ operating the bench; "Dr. Kiro" is the experimenter agent.
   taken.
 - **Run**: one solver run, which is one trial.
 - **Settled run**: a run whose settled part meets the settle criterion (Requirement 8.3).
-- **Case folder**: the folder of one run: its mesh, solver files, output and frames.
+- **Case folder**: the folder of one run: its mesh, solver files, output and sampled vorticity.
 - **Told set**: the complete information Dr. Kiro is given about the system, as one text built from the adapter's
   declaration (Requirement 1).
 - **Comparison Kiro**: a Kiro unrelated to this repository's lab, given exactly the told set and no experiment, that
@@ -62,7 +62,11 @@ operating the bench; "Dr. Kiro" is the experimenter agent.
   range, and the other three knobs are at the middle of their ranges (Requirement 17.2).
 - **Circle check**: the run that compares the measured Strouhal number of a circle at Reynolds number 100 with the
   literature (Requirement 15).
-- **GIF check**: the user's manual check that Dr. Kiro's file tool shows an animated GIF (Requirement 9).
+- **Picture sheet**: the one PNG of a trial: the frames of the flow's vorticity at fixed times, scaled to equal
+  cells and laid out in rows, in time order from left to right and then from top to bottom (Requirement 9). It has
+  the same form as the picture of `body-lab`.
+- **Sheet reading check**: the check, run by the builder, that Dr. Kiro's file tool delivers a picture sheet so that
+  each cell can be read: first on a synthetic test sheet, later on a real one (Requirement 9.7, 9.10).
 - Other terms as in `lab-bench` and `body-lab`.
 
 ## Requirements
@@ -236,8 +240,7 @@ system and the solver values never reach a `lab/` folder.
 4. THE body, including the plate, SHALL be rotated by `angle` degrees about the centre of the rectangle, in the
    sense that a positive angle moves the front end of the body (the end facing the oncoming flow, at -x before the
    turn) toward +y and the back end toward -y. That is a clockwise turn when +x points to the right and +y points
-   up. THE sense was chosen by the builder as the usual sense of a positive angle of attack, because the prototype's
-   sense is not in this repository and no earlier result depends on it (Decisions, item 19).
+   up. THE sense is the prototype's, confirmed by the user (Decisions, item 19).
 5. THE plate thickness (0.08), how the plate is joined, the centre of the turn and the sense of a positive angle
    SHALL be written in `wind-tunnel/model/` and SHALL be told to Dr. Kiro, as the geometry definitions in the knob
    texts (Requirement 3.2). No other fixed value of the geometry of the body SHALL exist. IF the builder adds one,
@@ -318,30 +321,53 @@ produce a made-up value, so that every number in a record comes from a run that 
 
 ### Requirement 9: The picture
 
-**Concerns:** Dr. Kiro (it opens the picture), the builder (how it is made), and the user (a manual check).
+**Concerns:** Dr. Kiro (it opens the picture), the builder (how it is made and checked).
 
-**User Story:** As Dr. Kiro, I want to see the flow move; as a reader of the notebook, I want it to move.
+**User Story:** As Dr. Kiro, I want to see how the flow develops in one picture that I can read; as a reader of the
+notebook, I want a picture that shows the flow in time order.
 
 #### Acceptance criteria
 
-1. THE adapter SHALL give each trial one animated GIF (`image/gif`), made from frames of the flow's vorticity,
-   with a colour scale that is the same in every trial, so that two trials can be compared by eye.
+1. THE adapter SHALL give each trial exactly one picture, a picture sheet: one PNG (`image/png`) made from frames of
+   the flow's vorticity, scaled to cells of equal size and laid out in rows, with a colour scale that is the same in
+   every trial, so that two trials can be compared by eye. This is the form of the `body-lab` picture. (The animated
+   GIF of an earlier version is dropped: the GIF reading check failed, `spikes/gif/results.md`, Decisions item 23.)
 2. THE picture SHALL show the body and its near wake, SHALL carry no axes, ticks, labels, legends, text or
-   metadata, and SHALL pass the bench's picture check (`lab-bench` design 4, Requirement 15.9).
-3. THE frames SHALL be taken near the end of the run, from the settled part.
-4. THE picture SHALL have 24 to 48 frames, spaced evenly over the last part of the run, and a width
-   of 480 to 800 pixels at a height of half the width. THE design SHALL pick values inside these ranges and SHALL
-   state them as adapter settings, so that they can change after the first session (as `body-lab` Requirement 4.3).
+   metadata, SHALL be made without a display, SHALL be encoded with `bench.pictures.encode_png`, and SHALL pass the
+   bench's picture check (`lab-bench` design 4, Requirement 15.9).
+3. THE frames SHALL be taken at fixed spacing, ending at the end of the run, from the settled part, and SHALL be laid
+   out in time order, from left to right and then from top to bottom.
+4. **Proposed, the user confirms at design approval (Decisions, item 24):** THE sheet SHALL have 6 frames in 2 rows of
+   3; each cell SHALL be 400 by 200 pixels; adjacent cells SHALL be separated by a fixed gap of 4 pixels in one
+   fixed colour that is not on the colour scale, with no gap outside the outer cells, so that the sheet is 1208 by 404
+   pixels; the frames SHALL be at times 145, 146, ..., 150 (spacing 1.0 time units, the last frame at the end of the
+   run). THE frame count, the layout, the cell size, the gap and the spacing SHALL be settings in
+   `wind-tunnel/model/settings.toml` and SHALL be checked together when the settings are loaded (the number of
+   frames equals rows times columns, and the first frame time is not before the averaging start time). A change of
+   a value after the first session is a change of this requirement.
 5. THE colour scale's fixed limits SHALL be written in `wind-tunnel/model/`, not in `lab/`.
-6. THE picture SHALL NOT be described to Dr. Kiro beyond its kind (Requirement 1.2).
-7. **Precondition:** BEFORE the wind-tunnel adapter is written, THE user SHALL run the GIF check: Dr. Kiro's file
-   tool, in Kiro CLI, reads an animated GIF. THE result SHALL be recorded in `spikes/gif/results.md` (a results file, as
-   `spikes/mcp/results.md`), and the file SHALL be tracked in git. The check is prepared (Decisions, item 16): THE
-   user runs it with the agent of the fake lab, started from that folder.
-8. IF the GIF check fails, THEN the builder SHALL stop and ask the user, and SHALL NOT switch the picture format
-   itself (`rules.md`, Fail fast).
-9. THE first task of the later `tasks.md` that writes adapter code SHALL be a gate that reads the GIF check's
-   result and stops if it is missing or failed.
+6. THE picture SHALL NOT be described to Dr. Kiro beyond its kind (Requirement 1.2). The bench builds the told line
+   from the declared kind ("one picture (png file)"); this spec adds no sentence about the order or the content of
+   the picture, because `lab-bench` does not change (Decisions, item 23).
+7. **Precondition, run by the builder:** BEFORE the wind-tunnel adapter is written, THE builder SHALL run the sheet
+   reading check on a synthetic test sheet: a PNG of 6 cells in 2 rows of 3, each cell with its own background colour,
+   a dot at its own position and a number, made by a script in `spikes/sheet/` as a test fixture (it is not a
+   result, and it is labelled so). THE builder SHALL start the agent of the fake lab in `bench-run/fake/lab` with
+   `kiro-cli chat --no-interactive`, ask it to report, for each cell in reading order, the colour, the dot position
+   and the number, and record the question, the answers and the verdict in `spikes/sheet/results.md`, tracked in git.
+   The check passes when all six cells are reported correctly.
+8. IF the sheet reading check on the synthetic sheet fails, THEN the builder SHALL stop and ask the user, and SHALL
+   NOT switch the picture format or the layout itself (`rules.md`, Fail fast).
+9. THE first task of the later `tasks.md` that writes adapter code SHALL be a gate that reads the result of 9.7 and
+   stops if it is missing, not tracked or failed.
+10. WHEN the picture renderer exists, THE builder SHALL run the sheet reading check on a real rendered sheet (from the
+    circle check or a first trial), asking the agent where the vortices are in each cell and whether the pattern
+    changes between the cells. THE builder SHALL record the question and the answers in `spikes/sheet/results.md`.
+    The answers are recorded and not judged against a hidden ground truth. IF the agent cannot describe the sheet
+    (for example it reports no cells, or one cell), THEN the builder SHALL stop and ask the user and SHALL NOT switch
+    the picture format or the layout itself.
+11. THE README SHALL say that, for a body that does not shed, the cells of the sheet are nearly identical, and SHALL
+    NOT state what the cells of a shedding body look like.
 
 ### Requirement 10: Determinism and case folders
 
@@ -597,11 +623,11 @@ run in one go.
 
 #### Acceptance criteria
 
-1. THE steps that need the user are: the approval of these requirements, with the proposals; the GIF check
-   (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3), including the sealing and the
-   commit of `sessions/wind-tunnel/`; and reporting the connection time (Requirement 16.1).
-2. THE GIF check SHALL be a gate before the adapter is written; it is the only such step before the end. THE user
-   does it before "Run All Tasks" is started.
+1. THE steps that need the user are: the approval of these requirements, with the proposals; starting and finishing
+   the 24-run session (Requirement 17.3), including the sealing check and the commit of `sessions/wind-tunnel/`; and
+   reporting the connection time (Requirement 16.1).
+2. THE sheet reading check (Requirement 9.7) SHALL be a gate before the adapter is written. THE builder runs it
+   itself, so no step of the user stands before "Run All Tasks".
 3. THE later `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the
    builder can run alone with "Run All Tasks".
 4. THE steps that need Docker SHALL run only on the local Kiro on the user's Mac (`handoff.md`); the builder SHALL
@@ -615,7 +641,8 @@ run in one go.
 ## Decisions
 
 Items 1-14 were taken with the user before these requirements were written; the user approved the requirements
-with the correction recorded in item 10 and the approvals in items 15 and 16.
+with the correction recorded in item 10 and the approvals in items 15 and 16. Items 23-27 were added after the GIF
+reading check failed.
 
 1. **Geometry.** Prototype values, confirmed by the user: height 1, length `aspect`, plate thickness 0.08 attached to
    the rear with no gap, `splitter` heights long, whole body rotated by `angle` about the rectangle's centre. Fixed
@@ -633,8 +660,8 @@ with the correction recorded in item 10 and the approvals in items 15 and 16.
 7. **Case folders.** Under `bench-run/`, removed after success, kept after failure for the builder only.
 8. **Circle check.** Circle at Reynolds number 100 through a builder-side parameter; a slow local test; the result
    in a tracked file and the README; pass within 5%. The literature source is decided in item 17.
-9. **Picture.** One animated GIF per trial, fixed colour scale, no text. Frame count and size are decided in item 15. The
-   adapter is not written before the user's GIF check passes. (The user changed this from a PNG.)
+9. **Picture.** One picture per trial, fixed colour scale, no text. Replaced by item 23: a PNG picture sheet. Frame
+   count and size are in item 24.
 10. **What Dr. Kiro is told.** Knob names, ranges and knob texts, the meaning of each measurement, and that the
     flow is two-dimensional at Reynolds number 150. The threshold 0.01 is told as part of the definition of
     `shedding`. The told set is one declared set, exportable as one document, and is what the comparison Kiro is
@@ -656,16 +683,12 @@ with the correction recorded in item 10 and the approvals in items 15 and 16.
     radius = `corner` x min(1, `aspect`) / 2, as in the prototype (Requirement 6.2); the settle criterion: the
     second half of the settled part against the first half, mean `cd` within 2%, `cl_amp` within 10% with a floor of
     0.002, and at least 5 periods when the lift oscillates (Requirement 8.3); the wall-clock limit of 140 s per run
-    (Requirement 8.7); the estimator accuracy of 1% (Requirements 5.3 and 5.4); the picture of 24 to 48 frames,
-    480 to 800 pixels wide and half as high (Requirement 9.4); the goal sentence "Find the setting of the four
+    (Requirement 8.7); the estimator accuracy of 1% (Requirements 5.3 and 5.4); (the earlier picture of 24 to 48 frames,
+    480 to 800 pixels wide, is replaced by items 23 and 24); the goal sentence "Find the setting of the four
     knobs with the lowest cd among the settings where shedding is 0." (Requirement 11.2); "laminar" and a
     description of the picture are NOT added to the told set (Requirement 1.7).
-16. **GIF check prepared.** `spikes/gif/make_gif.py` makes `spikes/gif/check.gif` (12 frames, each with a different
-    background colour, a moving dot and the frame number). A copy is in `bench-run/fake/lab/pictures/check.gif`
-    (git-ignored). The confinement and logging hooks are present in `bench-run/fake/lab/.kiro/hooks/` and the hook
-    log shows them firing in that lab, so it is a valid place for the check. The user runs it with the fake lab's
-    agent started from that folder. The gate stays (Requirements 9.7-9.9 and 18.2): no adapter code is written
-    before the result is in `spikes/gif/results.md`.
+16. **GIF check prepared, then failed.** `spikes/gif/make_gif.py` made `spikes/gif/check.gif` (12 frames) and the
+    check was run in the fake lab. It failed (item 23). The files stay in `spikes/gif/` as the record.
 17. **Circle check literature value, verified by the builder.** Williamson (1989), equation (6), 0.164335 at
     Reynolds number 100 (Requirement 15.4). The 1988 companion paper was not opened and is not cited for numbers.
 
@@ -677,10 +700,9 @@ with the correction recorded in item 10 and the approvals in items 15 and 16.
     Requirement 3.2 now say: the plate is 0.08 body heights thick (the prototype's value, confirmed earlier by the
     user), joined with no gap, counted from the rearmost point of the body, on the line through the middle of the
     body; the turn is about the middle of the body's length and height, and the plate turns with it; a positive
-    angle moves the front end toward +y, with the flow along +x. **The sense is the builder's choice:** the user
-    asked for the usual angle-of-attack sense (front end up), and the prototype's own sense is not in this
-    repository. Nothing yet depends on it (the range is 0 to 30 and the circle check is at 0), so no stop was
-    needed. The computational domain stays in the hidden set. These sentences are definitions and were re-read
+    angle moves the front end toward +y, with the flow along +x. **The sense is the prototype's** (the front end
+    rises for a positive angle), confirmed by the user. The computational domain stays in the hidden set, as the
+    user decided. These sentences are definitions and were re-read
     against Requirement 12.
 20. **Blind-scan clashes** are resolved in the order of Requirement 13.4 (rename what the builder chose, reword,
     then ask); the stop list changes only with the user's approval.
@@ -691,16 +713,38 @@ with the correction recorded in item 10 and the approvals in items 15 and 16.
 22. **Stop-list additions for OpenFOAM keywords** are proposed with evidence and approved by the user, as an
     explicit stop in the tasks (Requirement 13.9).
 
+23. **Picture = one PNG picture sheet** (the user's decision, option 1). Reason: the GIF reading check failed
+    (`spikes/gif/results.md`): Dr. Kiro's file tool delivers only the first frame of an animated GIF and the file's
+    size metadata, so the motion and frames 2 to 12 do not reach Dr. Kiro. The sheet lays the frames out in time
+    order in one still image, in the same form as the `body-lab` picture (`body-lab` Requirement 4 and design 4). The
+    contract "one picture per trial" and `lab-bench` stay unchanged, including `lab-bench` Requirement 18 (knob
+    descriptions). The told set names the picture only by its kind, which the bench writes ("one picture (png
+    file)"); a sentence about the time order would need a `lab-bench` change and is not added.
+24. **Sheet layout: PROPOSED, the user confirms at design approval.** 6 frames (as in the prototype), 2 rows of 3, in
+    time order left to right and then top to bottom; each cell 400 by 200 pixels (2 to 1, the shape of the former
+    frame); frames at spacing 1.0 time units ending at the end of the run (t = 145, ..., 150). The brief says
+    "frames near the end", and one shedding period at a Strouhal number of about 0.17 is about 6 time units, so six
+    frames at spacing 1.0 cover about one period. A thin gap of 4 pixels in one fixed colour is added between the
+    cells, so the sheet is 1208 by 404 pixels. The reason for the gap: the vorticity of the free stream is near
+    zero, which the colour scale shows as its neutral colour, so without a gap the right edge of one cell and the
+    left edge of the next run together and the wake of one cell can be read as continuing in the next. If the user
+    prefers no gap, the setting is 0 and the sheet is 1200 by 400. The spacing is a setting in
+    `wind-tunnel/model/settings.toml`. A body that does not shed gives nearly identical cells. The colour scale is
+    fixed across trials; its upper limit stays a value to be measured later, from the 32-run gate (Requirement 9.5,
+    17.2). **The legibility of a sheet of this size for Dr. Kiro is not claimed:** it is checked by the sheet
+    reading check (Requirement 9.7, 9.10), and a failure stops the builder.
+25. **The notebook's moving picture** is not designed here. The notebook will show the frames of a sheet in turn.
+    That is decided once for both labs in the `lab-notebook` spec, because `body-lab` has the same sheet form. It is
+    an item for that spec in `docs/status.md`.
+26. **Accepted as proposed** (the user): the near-end values 0.001 and 0.01 of each range, the gate of the 32 runs
+    (Requirement 17.2, 17.6), and the handling of stop-list words by proposal and the user's approval (Requirement
+    13.9). They are no longer open questions.
+27. **The computational domain stays not told** (the user's decision). The sense of a positive angle is the
+    prototype's (item 19).
+
 ## Open questions
 
-None is open for writing the tasks. The following are settled by procedure, at the time and with evidence, and are
-not decided in advance (Requirements 13.9, 17.6 and 18.5):
+One item is open, and it is a confirmation, not a block for the tasks:
 
-1. Which OpenFOAM keywords, if any, go to the stop list. The builder proposes words with their source lines; the
-   user approves them one by one.
-2. What to do if a near-end or end-corner run hits the time limit, fails to mesh or does not settle. The builder
-   reports the numbers; the user chooses among a bench rule, a narrower range, or accepting the risk.
-
-One judgement is recorded for the user to correct: the computational domain (6 heights ahead, 18 behind, 7 above and
-below) stays untold because it is part of the solver setup (Decisions, item 19). If the user wants it told, the
-knob texts or the goal gain a sentence, and Requirement 1.7 applies.
+1. The sheet layout of Requirement 9.4 and Decisions item 24 is a proposal. The user confirms it, or changes it, at
+   the approval of the design.
