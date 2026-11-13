@@ -666,8 +666,9 @@ Run result, for `run_experiment` (keys are fixed here; values come from the core
 ## F8. The confinement hook (17.7-17.10)
 
 Runs before every tool call. Hook input is JSON on stdin with `tool_name` and `tool_input` (spike, Q2). Both
-hook scripts use only the standard library and run as `uv run --no-project python .kiro/hooks/<script>.py`, with
-the lab as the working folder, as the spike's hooks did (Python through `uv` only, `tech.md`).
+hook scripts use only the standard library and run as `uv run --no-project python -B .kiro/hooks/<script>.py`, with
+the lab as the working folder, as the spike's hooks did (Python through `uv` only, `tech.md`). `-B` stops Python from writing
+`__pycache__` into the lab: compiled files are not text, so the blind scan cannot read them.
 
 ```
 lab = the folder two levels above this script's folder (the script lives in <lab>/.kiro/hooks/)

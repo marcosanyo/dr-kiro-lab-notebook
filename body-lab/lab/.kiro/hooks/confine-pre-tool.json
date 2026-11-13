@@ -6,7 +6,7 @@
       "trigger": "PreToolUse",
       "action": {
         "type": "command",
-        "command": "uv run --no-project python .kiro/hooks/confine.py"
+        "command": "uv run --no-project python -B .kiro/hooks/confine.py"
       }
     }
   ]

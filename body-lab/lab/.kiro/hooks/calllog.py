@@ -1,6 +1,6 @@
 """The logging hook (Requirement 17.11, design F9). Copied into a lab's `.kiro/hooks/` by `bench-lab-hooks`.
 
-    uv run --no-project python .kiro/hooks/calllog.py pre|post
+    uv run --no-project python -B .kiro/hooks/calllog.py pre|post
 
 Appends one JSON line per tool call to the file named by BENCH_HOOK_LOG, which lies outside the lab. The
 log is for the builder and is never part of the session record. If the variable is missing or the line

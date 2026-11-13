@@ -6,7 +6,7 @@
       "trigger": "PostToolUse",
       "action": {
         "type": "command",
-        "command": "uv run --no-project python .kiro/hooks/calllog.py post"
+        "command": "uv run --no-project python -B .kiro/hooks/calllog.py post"
       }
     }
   ]
