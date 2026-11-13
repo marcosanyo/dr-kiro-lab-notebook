@@ -11,7 +11,7 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
   - `body-lab/adapter/` uv project; `sim.py`, `measure.py`, `settings.py` (design 2, 3).
   - _Requirements: 1, 2, 5.1_
 
-- [ ] 3. Picture and adapter
+- [x] 3. Picture and adapter
   - `picture.py`, `adapter.py`, `scan_sources.toml`; the four tests of design 7.
   - _Requirements: 3, 4, 5, 6.1_
 

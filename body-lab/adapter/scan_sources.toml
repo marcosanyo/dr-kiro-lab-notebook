@@ -1,0 +1,14 @@
+# Blind scan sources of body-lab (lab-bench design 11.1). Paths are relative to this file.
+adapter = "body_lab.adapter:BodyAdapter"
+
+[lab]
+path = "../lab"
+dr_kiro = ["experiments/**", ".kiro/specs/**"]
+
+[[source]]
+path = "../model/specimen_01.xml"
+extractor = "mjcf"
+
+[[source]]
+path = "../model/specimen_01.wiring.json"
+extractor = "wiring-json"

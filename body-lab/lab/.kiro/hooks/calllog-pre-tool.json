@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Log every call before it runs",
+      "trigger": "PreToolUse",
+      "action": {
+        "type": "command",
+        "command": "uv run --no-project python .kiro/hooks/calllog.py pre"
+      }
+    }
+  ]
+}
