@@ -19,7 +19,11 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
   - `body-lab/README.md` (how it measures, view size, running, limits); `bench-make-lab body-lab/lab`, committed.
   - _Requirements: 2.4, 5.2, 5.4_
 
-- [ ] 5. One Dr. Kiro session of 40 trials — **Stop and ask**
+- [x] 5. One Dr. Kiro session of 40 trials — **Stop and ask**
   - The user runs it on the Mac. Pass: sealed as `ended`; `bench-scan` on the lab and the sealed folder reports
     nothing; also the checks of dr-kiro task 5.
+  - Result of the first run (body-1, macOS, 2026-11-13): sealed as `ended` with 0 budget left, without any
+    continue line; `bench-verify` verified 117 entries; `bench-scan` on the lab and the sealed folder reported no
+    findings, after hooks were changed to run with `python -B` (a `.pyc` in the lab had stopped the scan); Dr.
+    Kiro named only `method` and `workflow` as its steering.
   - _Requirements: 6.2_

@@ -133,7 +133,7 @@ The empty table passes every snapshot and is refused only by `end_session` (`lab
 
 Copies the agent file and prompt into `.kiro/agents/`, the two steering files into `.kiro/steering/`, and runs
 the `bench-lab-hooks` installer. Overwrites those files only. It creates `experiments/` if missing and writes the
-lab's `.gitignore` (`experiments/`, `pictures/`).
+lab's `.gitignore` (`experiments/`, `pictures/`, `.kiro/specs/`).
 
 ### 7.2 `bench-new-session`
 

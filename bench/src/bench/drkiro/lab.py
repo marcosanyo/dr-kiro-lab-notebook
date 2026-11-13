@@ -26,7 +26,7 @@ TEMPLATES = {
     "design.md": ".kiro/specs/lab/design.md",
     "tasks.md": ".kiro/specs/lab/tasks.md",
 }
-GITIGNORE = "experiments/\npictures/\n"
+GITIGNORE = "experiments/\npictures/\n.kiro/specs/\n"
 
 
 def make_lab(lab: Path) -> list[Path]:
