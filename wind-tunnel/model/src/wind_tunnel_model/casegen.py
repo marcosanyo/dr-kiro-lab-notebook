@@ -2,8 +2,8 @@
 
 Every file under ``case/`` is a template. ``@NAME@`` is replaced by the value named ``NAME`` (a float or an
 integer by ``repr``, a string as it is). A file named ``*.in`` is written without that suffix. Files are
-written in sorted order with ``\\n`` endings, so equal inputs give identical bytes. A placeholder with no value, or one
-left after the substitution, is an error.
+written in sorted order with ``\\n`` endings, so equal inputs give identical bytes. A placeholder with no
+value, or one left after the substitution, is an error.
 """
 
 from __future__ import annotations
