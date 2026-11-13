@@ -156,18 +156,19 @@ def declaration_record(decl: Declaration) -> dict[str, Any]:
     knobs = []
     for k in decl.knobs:
         if isinstance(k, FunctionKnob):
-            knobs.append(
-                {
-                    "name": k.name,
-                    "kind": "function",
-                    "low": k.low,
-                    "high": k.high,
-                    "sample_times": list(k.sample_times),
-                    "trial_seconds": k.trial_seconds,
-                }
-            )
+            entry: dict[str, Any] = {
+                "name": k.name,
+                "kind": "function",
+                "low": k.low,
+                "high": k.high,
+                "sample_times": list(k.sample_times),
+                "trial_seconds": k.trial_seconds,
+            }
         else:
-            knobs.append({"name": k.name, "kind": "number", "low": k.low, "high": k.high})
+            entry = {"name": k.name, "kind": "number", "low": k.low, "high": k.high}
+        if k.description != "":
+            entry["description"] = k.description
+        knobs.append(entry)
     measurements = [
         {"name": m.name, "unit": m.unit, "kind": m.kind, "not_measured": list(m.not_measured)}
         for m in decl.measurements

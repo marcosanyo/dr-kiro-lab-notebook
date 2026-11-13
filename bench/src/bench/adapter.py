@@ -20,6 +20,8 @@ RESERVED_KNOB_NAMES = frozenset(
     {"t", "math", "PHASE", "MODE", "PARAMS", "SWEEP", "TRIALS", "abs", "min", "max", "len", "range"}
 )
 
+DESCRIPTION_MAX = 800
+
 
 @dataclass(frozen=True)
 class FunctionKnob:
@@ -30,6 +32,7 @@ class FunctionKnob:
     high: float
     sample_times: tuple[float, ...]
     trial_seconds: float
+    description: str = ""
 
 
 @dataclass(frozen=True)
@@ -39,6 +42,7 @@ class NumberKnob:
     name: str
     low: float
     high: float
+    description: str = ""
 
 
 Knob = FunctionKnob | NumberKnob
@@ -128,6 +132,22 @@ def _check_range(knob: Knob) -> None:
         raise DeclarationError(f"knob {knob.name!r}: range must be finite with low < high")
 
 
+def _check_description(knob: Knob) -> None:
+    text = knob.description
+    if not isinstance(text, str):
+        raise DeclarationError(f"knob {knob.name!r}: description must be text")
+    if not text.isprintable():
+        raise DeclarationError(
+            f"knob {knob.name!r}: description must not contain line breaks, tabs or other control characters"
+        )
+    if text != text.strip(" "):
+        raise DeclarationError(f"knob {knob.name!r}: description must not start or end with a space")
+    if len(text) > DESCRIPTION_MAX:
+        raise DeclarationError(
+            f"knob {knob.name!r}: description is {len(text)} characters, the limit is {DESCRIPTION_MAX}"
+        )
+
+
 def check_declaration(decl: Declaration) -> None:
     """Raise DeclarationError naming the first problem in an adapter's declaration."""
     if not isinstance(decl, Declaration):
@@ -142,6 +162,7 @@ def check_declaration(decl: Declaration) -> None:
             raise DeclarationError(f"knob must be FunctionKnob or NumberKnob, got {type(knob).__name__}")
         _check_name(knob.name, "knob", RESERVED_KNOB_NAMES)
         _check_range(knob)
+        _check_description(knob)
         if isinstance(knob, FunctionKnob):
             length = knob.trial_seconds
             if not _is_number(length) or not math.isfinite(length) or length <= 0:
