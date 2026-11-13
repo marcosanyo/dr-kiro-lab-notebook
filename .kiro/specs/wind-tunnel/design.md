@@ -1,8 +1,10 @@
 # Design: wind-tunnel
 
-Covers Requirements 1-18. Settings come from `wind-tunnel/model/settings.toml` and the case templates, read at load
-time; no value of the solver setup is written twice. Values that do not exist yet are visible placeholders in
-angle brackets, such as `<not yet recorded>`, and each has a task that fills it (`rules.md` 4, Honest). The
+Covers Requirements 1-18. Settings come from `wind-tunnel/model/settings.toml`, `wind-tunnel/model/image-lock.toml` and the case templates,
+read at load time; no value of the solver setup is written twice. Values that do not exist yet are visible placeholders in
+angle brackets, such as `<not yet recorded>`, and each has a task that fills it (`rules.md` 4, Honest). A value
+that is a starting choice and not a result (a mesh size, the first time step, the colour limit) is written as a
+number with a comment that says "starting value" and which task confirms it. The
 adapter contract is `bench/src/bench/adapter.py` (`lab-bench` design 4), the model of an adapter is
 `body-lab/adapter` (`body-lab` design 1-5).
 
@@ -17,9 +19,11 @@ The system is split in two projects so that the rule "the model is never visible
 hold it:
 
 - `wind-tunnel/model/` is the system: numbers, case templates, the outline, the Gmsh recipe, the parsers of solver
-  output. It contains no bench code.
-- `wind-tunnel/adapter/` plugs the system into the bench: the declaration, the run, the estimators, the settle
-  criterion, the picture, the failure mapping, the circle check. It contains no solver number of its own.
+  output, and the pure functions that turn a force history into the five measurements and the settle criterion.
+  It contains no bench code. (The estimators are here and not in the adapter so that they, like the geometry, are
+  written and tested before the GIF gate of Requirement 9.9, which stops adapter code only. Decision 14.)
+- `wind-tunnel/adapter/` plugs the system into the bench: the declaration, the run, the picture, the failure
+  mapping, the circle check. It contains no solver number of its own.
 
 Highlights of the choices (details below):
 
@@ -41,9 +45,11 @@ wind-tunnel/
   circle-check.json               written by the circle check (15.5)
   form-knowledge-review.md        the reviewed list (12.3)
   count_lines.py                  writes the code size into numbers.md (16.2)
+  extreme-runs.json               outcome and time of the 32 end-corner and near-end runs (17.6)
   model/                          uv project "wind-tunnel-model"; never visible from lab/
     pyproject.toml                depends on gmsh and numpy
     settings.toml                 every number of the solver setup (6.8, 6.9)
+    image-lock.toml               image digest and image id, written by the digest task (7.1)
     case/                         OpenFOAM templates (*.in, placeholders @NAME@) and Allrun
     src/wind_tunnel_model/
       settings.py                 load and validate settings.toml; the Reynolds-number override
@@ -51,6 +57,8 @@ wind-tunnel/
       mesh.py                     Gmsh recipe: outline -> mesh file
       casegen.py                  templates -> case folder (pure text)
       solver_output.py            parse force.dat and sampled-vorticity files
+      estimators.py               cd, cl_mean, cl_amp, strouhal, shedding (5)
+      settle.py                   settle criterion (8.3)
     tests/
   adapter/                        uv project "wind-tunnel-adapter"
     pyproject.toml                depends on lab-bench (path), wind-tunnel-model (path), numpy, pillow
@@ -60,8 +68,6 @@ wind-tunnel/
       adapter.py                  WindAdapter, scan_adapter, the run pipeline
       environment.py              Docker and image check, environment record (7)
       runner.py                   Runner protocol, DockerRunner (8.7, 10)
-      estimators.py               cd, cl_mean, cl_amp, strouhal, shedding (5)
-      settle.py                   settle criterion (8.3)
       failures.py                 failure kinds and fixed public reasons (8)
       picture.py                  vorticity -> palette index -> GIF (9)
       circle_check.py             the circle check and its record (15)
@@ -71,7 +77,8 @@ wind-tunnel/
   lab/                            made by bench-make-lab (14.3)
 ```
 
-The bench gets one new file, the scan extractors (section 9), and possibly the knob text field (Open question 1).
+The bench gets one new file, the scan extractors (section 9), and the knob `description` field (`lab-bench`
+Requirement 18 and tasks 23-26, which are done before the adapter is written).
 `body-lab` is not touched (14.4). `spikes/` is not used (14.5).
 
 ```mermaid
@@ -109,12 +116,25 @@ flowchart TD
 - `picture = "image/gif"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
   "the settled part of the trial" and nothing about times (4.3). In the wording, "force" is used in the singular
   where the sentence allows, so that no word of the told set equals a term the solver files will give (13.8);
-  the test of 13.8 decides.
-- **The contract has no place for a knob text** (Requirement 1.4, Open question 1). This design is written for
-  option (A): `NumberKnob` and `FunctionKnob` get a fourth field `meaning: str = ""`; `describe.declaration_text`
-  prints it after the knob name; `check_declaration` requires a `str`. `body-lab` keeps the empty default and its
-  text does not change. If the user answers (B) or (C), only `declaration.py` and the told-set export change: the
-  four texts move into `goal` or `measured_by`. No task that writes `declaration.py` starts before the answer.
+  the test of 13.8 decides, and what it cannot avoid goes the way of Requirements 13.4 and 13.9.
+- **The knob texts are carried in the `description` field** that `lab-bench` Requirement 18 adds to `NumberKnob`
+  (option A, Decision 18). The bench prints it in the tool descriptions on the knob's line and records it; nothing
+  else reads it. The texts are the four of Requirement 3.2, built in `declaration.py` from constants, except that
+  the plate thickness in the `splitter` text is formatted from `settings.body.thickness` (`f"{t:g}"`, 0.08), so
+  the number exists once. Each text is at most 800 characters (the longest is about 450) and has no line break.
+  The design of the wording, with the reason for each sentence:
+  - `aspect`, `corner`: unchanged from the approved texts.
+  - `splitter`: what the plate is and where it is (the back of the body, away from the oncoming flow); how the
+    length is counted (from the rearmost point of the body without the plate, which is well defined for every
+    `corner`, also when the back is a semicircle); that it lies along the line through the middle of the body
+    along its length; that it is joined with no gap; its thickness; the meaning of 0.
+  - `angle`: what the angle is; that the oncoming flow goes in +x (the same fact as in `measured_by`, repeated so
+    that the knob text is complete alone); the meaning of 0; the centre of the turn; that the plate turns with
+    the body; the sense of a positive angle in terms of +y and -y, which `measured_by` already uses for the lift.
+  - Every sentence is a definition. No sentence says what a knob does to the flow or to a measurement. The
+    reviewed list (Requirement 12) records this sentence by sentence.
+  - A test compares the four texts, with the thickness filled in, with Requirement 3.2 read from the spec file
+    (skipped with a visible reason where `.kiro/` is absent), so that spec and code cannot drift.
 - Two factories: `WindAdapter()` (checks the environment, section 6) and `scan_adapter()` (the same declaration, no
   `run_trial`, no check). `scan_sources.toml` names `scan_adapter` as its `adapter`. A test asserts that both give
   equal declarations. The scan therefore needs no Docker (13.5, 14.4).
@@ -133,17 +153,28 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   is above zero and omitted when it is exactly zero (`corner = 1` and the shorter side; at `a = 1` all four are
   omitted and the outline is four quarter arcs, a circle). Floating-point products of `corner` with powers of two
   make the exact-zero case exact.
-- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`settings.toml`) on the centre line, from
+- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`settings.toml`) on the centre line, told in the
+  `splitter` text, from
   `x = a/2 - t` (inside the body, so there is no gap whatever the rounding) to `x = a/2 + s`. The outline is the
   union: the rear straight piece (or arc) is cut where the plate's top and bottom edges cross it, found in closed
   form: `x_c = a/2` when `t/2 <= 1/2 - r` (for `a < 1` the rear is always straight, since `r <= 1/4`), else
   `x_c = a/2 - r + sqrt(r^2 - (t/2 - (1/2 - r))^2)`. The plate's inner overlap needs no outline of its own.
-- Rotation by `angle` degrees about the origin (the centre of the rectangle), sense fixed in `settings.toml`
-  (`rotation_sense = "counter-clockwise"` with the +x flow and +y up; not told, 6.5).
+- Rotation by `angle` degrees about the origin (the centre of the rectangle), with the sense of Requirement 6.4:
+  a positive angle `θ` moves the front end (-x before the turn) toward +y. With the flow along +x and +y up, that
+  is a clockwise turn, the usual sense of a positive angle of attack. As a matrix, `(x, y) -> (x cos θ + y sin θ,
+  -x sin θ + y cos θ)`. The point `(-a/2, 0)` goes to `(-(a/2) cos θ, (a/2) sin θ)`, which is above the axis for
+  `θ > 0`; the point `(a/2, 0)` goes below it. The sense is written once, in `geometry.py`, as the sign in this
+  matrix; there is no `rotation_sense` setting that could disagree with the told text. The sense is told in the
+  `angle` text (Requirement 3.2) and Property 3 pins it.
+  Why this sense: the user asked for the usual convention (front end up), and the prototype's own sense is not in
+  this repository; nothing computed so far depends on it (Decision 14 of this design, Decision 19 of the
+  requirements).
 - Output: an ordered, closed list of primitives (`Line(p, q)`, `Arc(p, centre, q)`), each with exact endpoints.
 - `GeometryError` (with the knob values and the reason, builder side only) when a positive piece is shorter than
-  `min_edge` (a setting, `<chosen in the mesh task>`), or when `x_c` is undefined. Pieces of length exactly zero
-  are not errors (Requirement 6.10). See Open question D1 for why this needs the user.
+  `min_edge`, or when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10).
+  `min_edge` is 0.0 in `settings.toml` until the user decides otherwise: the near-end cases of Requirement 17.2
+  must reach the mesher and the solver so that they can be measured, and a refusal in the geometry would hide the
+  result. With 0.0, only a negative or undefined piece is a `GeometryError`. Decision 12.
 
 ### 3. Mesh (Req 6.8, 7.2) in `wind_tunnel_model/mesh.py`
 
@@ -193,7 +224,7 @@ Contents of the templates (names are OpenFOAM's; values come from `settings.toml
   `reconstructPar` is not needed. The exact spellings are confirmed in the smoke-run task (Stop condition S5).
 - The in-image commands of `Allrun` are not a second copy of anything: they are solver setup (6.9).
 
-### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `adapter/estimators.py`, `settle.py`
+### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `model/estimators.py`, `settle.py`
 
 Inputs are the force history `(t, Fx, Fy)` of the settled part (`t >= average_from`), with uneven times. Constants:
 `ESTIMATOR_MAX_DT = 0.05`, the largest sample interval the 1% accuracy is shown for; `settings.toml` is checked to
@@ -231,9 +262,11 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   name, the digest, the image id, the Gmsh version, the Pillow and numpy versions, the platform. No time, so that
   the file is a function of the environment (7.5). The sealed record does not carry it and `measured_by` does not
   mention it.
-- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `settings.toml [image]` holds `name`, `tag`,
-  `digest = "<not yet recorded>"` and `image_id = "<not yet recorded>"`. The loader refuses a placeholder. A task
-  on the user's Mac records both with `docker image inspect` (the digest is that of the image index; the image id is
+- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `settings.toml [image]` holds `name` and `tag`.
+  The digest and the image id are in `model/image-lock.toml`, which does not exist until the digest task has run;
+  `WindAdapter` (not `scan_adapter`) fails with "image lock missing" while it is absent, so no placeholder is ever
+  loaded as a value and the Docker-free parts need no digest. A task
+  on the user's Mac writes both with `docker image inspect` (the digest is that of the image index; the image id is
   the one of the arm64 build, so the pair pins the platform, 7.1). No digest is invented.
 - `Runner` protocol: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`, raising `SolverFailure(kind,
   reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> -v <case>:/case -w /case <name@digest>
@@ -306,7 +339,7 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
   trouble is ordinary words that OpenFOAM uses as keywords (for example `type`, `value`, `method`, `default`,
   `none`, `time` and the word `default` in the image name). The order of resolution is fixed by Requirement 13.4:
   rename what the builder chose; reword; ask the user. The extractor output is listed for the user's review before
-  any stop-list entry is proposed (Open question D2).
+  any stop-list entry is proposed (Requirement 13.9, Decision 13).
 
 ### 10. Circle check and numbers (Req 15, 16)
 
@@ -333,14 +366,14 @@ key):
 | Section | Keys | Source of the value |
 |---|---|---|
 | `[flow]` | `reynolds`, `speed`, `height`, `depth`, `density` | 150 (brief), 1, 1, 1, 1 |
-| `[body]` | `thickness`, `min_edge`, `rotation_sense` | 0.08 (decisions), `<chosen in the mesh task>`, set |
+| `[body]` | `thickness`, `min_edge` | 0.08 (decisions), 0.0 (no refusal in the geometry until the user decides, Decision 12) |
 | `[domain]` | `ahead`, `behind`, `above_below` | 6, 18, 7 (brief) |
-| `[time]` | `end`, `average_from`, `max_co`, `max_delta_t`, `initial_delta_t` | 150, 80, 0.8 (brief), at most 0.05, `<chosen in the smoke-run task>` |
-| `[mesh]` | `size_body`, `size_far`, `size_wake`, `wake_length`, `algorithm`, `threads` | `<chosen in the mesh task>`, algorithm and threads set |
+| `[time]` | `end`, `average_from`, `max_co`, `max_delta_t`, `initial_delta_t` | 150, 80, 0.8 (brief), 0.05 (the estimator limit), a starting value confirmed by the smoke-run task |
+| `[mesh]` | `size_body`, `size_far`, `size_wake`, `wake_length`, `algorithm`, `threads` | starting values chosen in the mesh task from cell counts and confirmed by the smoke run; algorithm and threads set |
 | `[run]` | `processes`, `timeout_s`, `decomposition` | 3, 140, `simple (3 1 1)` |
-| `[image]` | `name`, `tag`, `digest`, `image_id` | brief; `<not yet recorded>` |
+| `[image]` | `name`, `tag` | brief (the digest and the image id are in `image-lock.toml`) |
 | `[patches]` | five names | chosen, none a word of the told set |
-| `[picture]` | `frames`, `spacing`, `width`, `height`, `grid_x`, `grid_y`, `window`, `frame_ms`, `vorticity_limit` | section 7; `<not yet chosen>` |
+| `[picture]` | `frames`, `spacing`, `width`, `height`, `grid_x`, `grid_y`, `window`, `frame_ms`, `vorticity_limit` | section 7; `vorticity_limit` is a starting value, replaced from the observed range in the extreme-run task and then fixed (9.5) |
 
 Other records:
 
@@ -379,11 +412,13 @@ outline is 1.
 
 ### Property 3: Plate and rotation
 
-For all knob values, the outline has a plate exactly when `splitter` > 0, the plate reaches `a/2 + splitter` before
-rotation, and the union has no gap; rotation by `angle` preserves every piece length and the distance of every
-endpoint from the origin, and `angle` 0 is the identity.
+For all knob values, the outline has a plate exactly when `splitter` > 0, the plate is `thickness` thick, reaches
+`a/2 + splitter` before rotation, and the union has no gap; rotation by `angle` preserves every piece length and the
+distance of every endpoint from the origin, `angle` 0 is the identity, and for `angle` > 0 the front end of the body
+(the point at `-a/2` on the centre line before rotation) has a positive y and the back end of the body without the
+plate (the point at `+a/2`) has a negative y, as the `angle` text tells.
 
-**Validates: Requirements 6.3, 6.4**
+**Validates: Requirements 3.6, 6.3, 6.4**
 
 ### Property 4: Strouhal accuracy
 
@@ -400,10 +435,11 @@ For all such signals, and for amplitude 0, `cl_amp` is within 1% of the amplitud
 
 **Validates: Requirements 5.4**
 
-### Property 6: Shedding flag and the not-measured outcome
+### Property 6: Shedding flag and the absent Strouhal number
 
-For all force series, `shedding` is 1 exactly when the estimated `cl_amp` is above 0.01; `strouhal` is the
-`not_shedding` outcome exactly when `shedding` is 0, and carries a number exactly when `shedding` is 1.
+For all force series, `shedding` is 1 exactly when the estimated `cl_amp` is above 0.01; the estimator gives no
+Strouhal number exactly when `shedding` is 0 and gives one exactly when `shedding` is 1. (The adapter turns the
+absent number into the `not_shedding` outcome, which Property 10 and an example test cover.)
 
 **Validates: Requirements 4.4, 4.5, 5.5**
 
@@ -504,7 +540,7 @@ tests and the reviewed list.
 | Properties 1-15 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
 | Examples | the declaration passes `check_declaration`; both factories give equal declarations; knob texts equal Requirement 3.2; the 13.8 overlap check on the real files; the circle literature value at Reynolds 100 is 0.164335 within 1e-6 and the band is 0.1561 to 0.1726; `max_delta_t <= ESTIMATOR_MAX_DT`; the Reynolds-override walk | Kiro Web and local |
 | Gmsh | the mesher on the corners of the knob ranges gives a mesh file with the five named groups; marked `needs_gmsh`, skipped with a visible reason where Gmsh cannot be imported (the task checks this in Kiro Web first, as `body-lab` did for rendering) | where Gmsh imports |
-| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the 16 extreme-value runs (17.2); near-degenerate `corner` and `splitter` runs (Open question D1) | Local Mac only |
+| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the stop of 17.6 | Local Mac only |
 | Review | `form-knowledge-review.md` (12.3) | By reading |
 
 The ordinary suite uses `FakeMesher` and `FakeRunner`, which writes a synthetic `force.dat` and vorticity files from
@@ -514,7 +550,7 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 
 | Part | Requirements |
 |---|---|
-| `declaration.py`, `told_set.py`, the knob text field | 1, 2, 3, 4.1-4.4, 11 |
+| `declaration.py`, `told_set.py`, the knob `description` field (`lab-bench` 18) | 1, 2, 3, 4.1-4.4, 11 |
 | `geometry.py` | 3.3, 6.1-6.5, 6.10 |
 | `mesh.py`, `casegen.py`, `model/case/`, `settings.toml` | 6.6-6.9, 9.5, 10.1 |
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
@@ -525,22 +561,26 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 | `circle_check.py`, `count_lines.py`, `numbers.md` | 15, 16 |
 | `form-knowledge-review.md` | 12 |
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
+| Extreme and near-end runs, `extreme-runs.json`, and the stops | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
 | Order of work (tasks): GIF gate first (9.9), hands-on steps last (18.3) | 9.7-9.9, 18 |
 
 ## What would make me stop and ask
 
-- S1. The user's answer to Open question 1 is not (A): the told knob texts need another place.
+- S1. `lab-bench` tasks 23-26 are not done, or a golden file of body-lab differs after them (task 1.1 checks).
 - S2. The GIF check (`spikes/gif/results.md`) is missing or failed (9.8, 9.9).
-- S3. A change to `lab-bench` other than the extractors and, with (A), the knob text field (14.2).
+- S3. A change to `lab-bench` other than the extractors and the knob `description` field (14.2), or any conflict with
+  the `lab-bench` spec.
 - S4. Mesh or solver settings that I must change after the circle check was run (6.8); a circle check outside 5%
   (15.7); two runs of one input that differ (10.4); a run slower than 140 s or six runs that do not fit in 900 s
-  (8.7); any of the 16 extreme-value runs that fails or does not settle (17.2).
+  (8.7); any of the 32 end-corner and near-end runs that times out, fails to mesh, fails or does not settle (17.2, 17.6).
 - S5. An OpenFOAM spelling, an in-image command or a Docker option that I cannot confirm in the smoke run (for
   example the function-object time window, the sampler output layout, the user id in the container).
 - S6. A derived term of the solver files that collides with the told set or with a builder text and cannot be
-  avoided by renaming or rewording: raised as a question, never added to the stop list (13.4).
-- S7. A near-degenerate `corner` or `splitter` that makes a run fail or exceed the limit (D1).
+  avoided by renaming or rewording: a proposal with evidence for the user, never added to the stop list before the
+  user approves it (13.4, 13.9).
+- S7. A near-end value of `corner` or `splitter` that makes a run fail or exceed the limit: report the numbers; the
+  user chooses a bench rule, a narrower range, or acceptance (17.6).
 - S8. Any wish to keep the picture or a number that the pre-check says is not allowed by the blind scan.
 
 ## Decisions
@@ -565,19 +605,23 @@ Made by the builder in this design; none changes a requirement.
 8. **Patch names `inlet`, `outlet`, `lateral`, `obstacle`, `frontAndBack`**, none a word of the told set.
 9. **A check of the Docker machine's CPUs**, in addition to 7.3.
 
+10. **Estimators and settle criterion live in `model/`** (Decision 14).
+11. **The image digest and image id are in `model/image-lock.toml`**, written by the digest task, so that
+    `settings.toml` never holds a placeholder that a loader must refuse.
+12. **`min_edge` is 0.0** until the near-end runs have been measured (Requirement 17.2, 17.6). The geometry then
+    refuses nothing before the mesher; whatever the mesher and the solver do is the measurement. The near-end
+    distances (0.001 and 0.01 of the range) are the builder's proposal.
+13. **Stop-list proposals** for OpenFOAM keywords are a stop with a written proposal (Requirement 13.9). The builder
+    renames its own identifiers and rewords first.
+14. **Sign of the angle.** A positive angle moves the front end toward +y (clockwise with the flow along +x and +y
+    up), written once in `geometry.py`; the estimators sit in `model/` so that they are written before the GIF gate
+    that stops adapter code (Requirement 9.9). Both are the builder's choices; neither changes a requirement except
+    the sign convention, which Requirement 6.4 records.
+15. **The plate thickness in the `splitter` text is formatted from `settings.toml`**, not typed again.
+
 ## Open questions
 
-For the user. Questions 1 and 2 are repeated from `requirements.md`.
-
-1. The place for the four knob texts (option A, B or C of the requirements). The design assumes (A).
-2. Whether the positive direction of `angle` and the plate thickness are told.
-- D1. A knob value very close to a boundary of its range makes an edge shorter than the mesh size: `corner` near 0
-  or near 1 (an arc or a straight piece of a few thousandths), `splitter` near 0 (a plate a few thousandths long).
-  The cell size then falls with it and the time step with the cell size, so a run may not finish in 140 s, and a
-  time-out stops the session. A knob value cannot be changed (3.4) and a lab-rule refusal needs a change in the
-  bench. Proposal: measure first (the slow near-degenerate runs), then ask with the numbers. The options will be: a
-  rule in the bench that refuses such values with a message in Dr. Kiro's terms (a `lab-bench` change), a narrower
-  declared range (a change of Requirement 3.1), or accepting the risk.
-- D2. The extractor will derive ordinary words (OpenFOAM keywords such as `type` and `value`). The stop-list
-  proposal needs the user's approval (`rules.md`), so it is a hands-on step before the first session, which
-  Requirement 18.1 does not list yet.
+None is open for the tasks. The two results-dependent questions that were open here (the near-degenerate knob
+values, and the stop-list words for OpenFOAM keywords) became procedures with a stop: Requirement 17.6 and
+Requirement 13.9, Decisions 12 and 13. The one judgement left for the user to correct is the computational domain,
+which stays untold as part of the solver setup (requirements, Decision 19).

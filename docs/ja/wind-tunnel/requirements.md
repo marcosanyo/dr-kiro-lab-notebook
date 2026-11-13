@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/requirements.md`](../../../.kiro/specs/wind-tunnel/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `9f731dad053633c59c85d8caf97802a8a06b9e44f89f71a6b2648c522f730b71`
+> 原文 SHA-256: `5168a73b58132f5cb88ccb173f92c9d758d161c2ec0ff04e5eaa754c9e73a67b`
 
 # Requirements Document
 
@@ -7,7 +7,7 @@
 
 2 番目のアプリケーションです。OpenFOAM による、ボディのまわりの 2 次元の流れで、数値のノブが 4 つあります。スケルトンが汎用であることを示します。同じベンチ、同じ Dr. Kiro、同じノートブックで、まったく別のシステムを扱います。アダプター契約（`lab-bench` 要件 2）を通じてベンチに接続され、すべてのラボと同じ Dr. Kiro（`dr-kiro`）を使います。
 
-出典: `docs/brief.md` のセクション 1-3 と 4.3、`body-lab/`（最初のアプリケーション。書き方と、Dr. Kiro に何を伝えるかの参考）、`lab-bench`（要件 2、5、7、15、17、設計 4、11、F3）、およびセッションで記録された回答（「Decisions」を参照）です。ステアリングはすべて適用されます。ユーザーはこの要件を、1 つの訂正つきで承認しました（Decisions の項目 10）。まだ決まっていないことは「Open questions」に挙げます。
+出典: `docs/brief.md` のセクション 1-3 と 4.3、`body-lab/`（最初のアプリケーション。書き方と、Dr. Kiro に何を伝えるかの参考）、`lab-bench`（要件 2、5、7、15、17、設計 4、11、F3）、およびセッションで記録された回答（「Decisions」を参照）です。ステアリングはすべて適用されます。ユーザーはこの要件を、1 つの訂正つきで承認し（Decisions の項目 10）、その後、未解決の質問に「your recommendations are fine」と答えました（Decisions の項目 18-22）。まだ決まっていないことは「Open questions」に挙げます。
 
 この spec の範囲: アダプター、`wind-tunnel/model/` のソルバー設定、`dr-kiro` のコマンドによる `lab/` フォルダーの作成、ソルバーファイル用のブラインドスキャン抽出器、円柱チェック、README 用の数値（接続時間とコード量）、そして 24 回の最初のフルセッション（`sessions/wind-tunnel/` に封印）です。
 
@@ -32,8 +32,11 @@
 - **ケースフォルダー（Case folder）**: 1 回の実行のフォルダーで、メッシュ、ソルバーのファイル、出力、フレームが入ります。
 - **伝える集合（Told set）**: Dr. Kiro にシステムについて与える情報のすべてで、アダプターの宣言から作る 1 つのテキストです（要件 1）。
 - **比較用 Kiro（Comparison Kiro）**: このリポジトリのラボと無関係な Kiro で、伝える集合とまったく同じものだけを与えられ、実験をせずに、比較用の spec を書きます。後で使うもので、ここでは作りません。
-- **ノブの文（Knob text）**: 1 つのノブについて伝える定義です（要件 3.2）。ノブが何であるか、どの単位か、範囲の両端が定義として何を意味するかを述べます。ノブが流れに何をするかは決して述べません。
-- **形の知識（Form knowledge）**: ボディの形やノブの値が流れや計測にどう影響するかについての、あらゆる記述です。ノブの文は形の知識ではありません。影響を述べた文は形の知識です。
+- **ノブの文（Knob text）**: 1 つのノブについて伝える定義です（要件 3.2）。`lab-bench` 要件 18 がノブに加える `description` 項目に入れます。ノブが何であるか、どの単位か、範囲の両端が何を意味するか、そのノブを定めるジオメトリの定義（ジオメトリの定義）を述べます。ノブが流れに何をするかは決して述べません。
+- **ジオメトリの定義（Geometry definition）**: ノブがボディの形や位置を取り決めとしてどう定めるかの記述です。板の厚さ、板の取り付け方、回転の中心、角度の符号が当たります。ジオメトリの定義は伝えます。形の知識ではありません。
+- **形の知識（Form knowledge）**: ボディの形やノブの値が流れや計測にどう影響するかについての、あらゆる記述です。ノブの文は、ジオメトリの定義も含めて、形の知識ではありません。影響を述べた文は形の知識です。
+- **隠す集合（Hidden set）**: ソルバーかメッシュに属するため、Dr. Kiro に伝えないものです。ソルバー設定（計算領域、境界条件、時間刻み、実行の長さを含む）とメッシュです。ボディのジオメトリについてのそれ以外はすべて伝えます（Decisions の項目 19）。
+- **端に近いケース（Near-end case）**: 1 つのノブを範囲の一方の端から範囲の 0.001 または 0.01 の距離に置き、ほかの 3 つのノブを範囲の真ん中に置く実行です（要件 17.2）。
 - **円柱チェック（Circle check）**: レイノルズ数 100 の円柱で計測したストローハル数を、文献と比べる実行です（要件 15）。
 - **GIF チェック（GIF check）**: Dr. Kiro のファイルツールがアニメーション GIF を表示できることを、ユーザーが手で確かめるチェックです（要件 9）。
 - そのほかの用語は `lab-bench` と `body-lab` のとおりです。
@@ -51,9 +54,9 @@
 #### Acceptance Criteria
 
 1. THE 伝える集合 SHALL be the text of the adapter's declaration as `lab-bench` builds it for Dr. Kiro (`lab-bench` design F3)、and SHALL be built from the adapter's own declaration, with no second copy。
-2. THE 伝える集合 SHALL contain exactly: 4 つのノブの名前、その範囲とノブの文（要件 3）、各計測の名前、単位、意味と `strouhal` の未計測結果（要件 4）、流れが 2 次元でありレイノルズ数が 150（高さと主流速度に基づく）であること、画像の種類、予算、ゴール（要件 11）。
-3. THE 伝える集合 SHALL NOT contain what any knob does to the flow or to a measurement、ソルバー設定、メッシュ設定、画像の内容、ジオメトリの固定値（要件 6.5）、および形の知識（要件 12）。
-4. THE アダプター SHALL carry the told set in the fields the declaration has。IF the existing fields cannot hold the told set, THEN ビルダー SHALL stop and ask the user whether `lab-bench` changes, and SHALL NOT add a second channel through which Dr. Kiro learns about the system。宣言にはノブの文のための項目がない（ノブは名前と範囲だけを持つ）ので、この場合が生じた。Open questions の項目 1 を参照。ユーザーが答えるまで、アダプターは SHALL NOT be written。
+2. THE 伝える集合 SHALL contain exactly: 4 つのノブの名前、その範囲とノブの文（その中のジオメトリの定義を含む。要件 3）、各計測の名前、単位、意味と `strouhal` の未計測結果（要件 4）、流れが 2 次元でありレイノルズ数が 150（高さと主流速度に基づく）であること、画像の種類、予算、ゴール（要件 11）。
+3. THE 伝える集合 SHALL NOT contain what any knob does to the flow or to a measurement、隠す集合のいかなる部分（ソルバー設定とメッシュ設定）、画像の内容、および形の知識（要件 12）。
+4. THE アダプター SHALL carry each knob text in the `description` field of its knob, which `lab-bench` Requirement 18 adds（ユーザーがこの選択肢を選んだ。Decisions の項目 18）、and the rest of the told set in the fields the declaration already has。THE アダプター SHALL NOT be written before `lab-bench` tasks 23-26 are done。IF a part of the told set cannot be carried in the fields the declaration has、THEN ビルダー SHALL stop and ask the user whether `lab-bench` changes, and SHALL NOT add a second channel through which Dr. Kiro learns about the system。
 5. THE ラボのビルダーファイル SHALL add nothing about the system to the told set（`dr-kiro` 要件 1.2）。
 6. THE 伝える集合 SHALL pass the blind scan at the builder level（要件 13）。
 7. WHEN the told set is to change（たとえば「laminar」や画像の説明を加える場合）、THE ビルダー SHALL change this requirement first, with the user's approval（Decisions の項目 10）。
@@ -80,15 +83,16 @@
 #### Acceptance Criteria
 
 1. THE アダプター SHALL declare exactly four number knobs, with these names and ranges (`docs/brief.md` section 1): `aspect` in [0.5, 3]; `corner` in [0, 1]; `splitter` in [0, 3]; `angle` in [0, 30] degrees。
-2. THE アダプター SHALL tell Dr. Kiro, for each knob, its knob text, and nothing else about the knob（要件 1.3）。THE ノブの文 are the following, and a change SHALL be made here first, with the user's approval:
+2. THE アダプター SHALL tell Dr. Kiro, for each knob, its knob text in the `description` of the knob, and nothing else about the knob（要件 1.3）。THE ノブの文 are the following, and a change SHALL be made here first, with the user's approval:
    - `aspect`: "The length of the body, in body heights. The height of the body is 1, so this is the length divided by the height."
    - `corner`: "The rounding of the body's corners: the radius of each corner arc, as a fraction of half of the body's shorter side. 0 gives square corners; 1 gives the largest radius that fits."
-   - `splitter`: "The length of the thin plate attached to the back of the body, the end facing away from the oncoming flow, in body heights. 0 means there is no plate."
-   - `angle`: "The angle of attack, in degrees: the angle between the body's length direction and the direction of the oncoming flow. 0 means the two directions are the same."
-   各文は、ノブが何であるかを述べ（ユーザーの言葉: 長さ、角の丸め、ボディの後ろの板の長さ、迎え角）、範囲の両端を定義する。どの文も、ノブが何をするかは述べない。
+   - `splitter`: "The length of the thin plate attached to the back of the body, the end facing away from the oncoming flow, in body heights. The length is counted from the rearmost point of the body without the plate. The plate lies along the line through the middle of the body along its length, is attached with no gap, and is 0.08 body heights thick. 0 means there is no plate."
+   - `angle`: "The angle of attack, in degrees: the angle between the body's length direction and the direction of the oncoming flow, which goes in the +x direction. 0 means the two directions are the same. The body is turned about its centre, the middle of its length and of its height, and the plate turns with it. A positive angle moves the front end of the body, the end facing the oncoming flow, toward +y, and the back end toward -y."
+   各文は、ノブが何であるかを述べ（ユーザーの言葉: 長さ、角の丸め、ボディの後ろの板の長さ、迎え角）、範囲の両端を定義し、Decisions の項目 19 のジオメトリの定義（板の厚さと取り付け方、回転の中心、角度の符号）を与える。どの文も、ノブが何をするかは述べない。`splitter` の文の数 0.08 は、`wind-tunnel/model/` の板の厚さ（要件 6.3）から文に書き込み、もう一度手で書かない。
 3. WHEN the bench passes computed inputs、THE アダプター SHALL accept every combination of values inside the four ranges, ends included, and SHALL build the body for it (Requirement 6) or fail with the reason (Requirement 8)。
 4. THE アダプター SHALL NOT clip, round or default a knob value; the bench has already refused values outside a range (`lab-bench` Requirement 4.6)。
 5. THE ノブの文 SHALL be reviewed against Requirement 12 in the reviewed list（要件 12.3）、and SHALL pass the blind scan at the builder level, including the check of Requirement 13.8。
+6. THE 角度の符号 SHALL be implemented once, in the geometry of `wind-tunnel/model/`（要件 6.4）、and a property test SHALL show that the geometry agrees with the `angle` text: for a positive angle the front end of the body moves toward +y and the back end toward -y。
 
 ### Requirement 4: Measurements
 
@@ -130,17 +134,17 @@
 
 ### Requirement 6: The body and the flow, in `model/`
 
-**対象:** ビルダー。Dr. Kiro にはこれを一切伝えない（要件 1.3）。
+**対象:** ビルダー。Dr. Kiro に伝えるのは 6.5 のジオメトリの定義だけで、残りは伝えない（要件 1.3）。
 
-**User Story:** ビルダーとして、ボディと流れを 1 か所に固定したい。Dr. Kiro が 1 つのシステムを調べることになり、値が `lab/` フォルダーに届かないようにするためである。
+**User Story:** ビルダーとして、ボディと流れを 1 か所に固定したい。Dr. Kiro が 1 つのシステムを調べることになり、ソルバーの値が `lab/` フォルダーに届かないようにするためである。
 
 #### Acceptance Criteria
 
 1. THE ボディ SHALL be a rounded rectangle of height 1 and length `aspect`, centred on the origin of its own frame。
 2. THE 角 SHALL be rounded with a radius of `corner` times half of the shorter side of the rectangle, that is `corner` times min(1, `aspect`) divided by 2（プロトタイプの定義で、ユーザーが承認済み）。`aspect` が 1 以上では、これは `corner` かける半高さに等しいので、`corner` = 1 で両端は半円になり、`aspect` = 1 では円になる。円柱チェックはこれを必要とする。`aspect` が 1 未満では、半高さに対する割合だと長さの半分を超えて形が成り立たなくなる。「短い辺の半分」は [0.5, 3] のすべてで定義される。
-3. WHERE `splitter` is above 0、THE ボディ SHALL have a plate of thickness 0.08 and length `splitter` heights, attached at the rear of the rectangle on its centre line with no gap。WHERE `splitter` is 0、THE ボディ SHALL have no plate。
-4. THE ボディ、板を含めて、SHALL be rotated by `angle` degrees about the centre of the rectangle。
-5. THE 正の角度の向き、およびジオメトリのそのほかの固定値（厚さ 0.08、板の取り付け位置）SHALL be written in `wind-tunnel/model/` and SHALL NOT be told to Dr. Kiro。
+3. WHERE `splitter` is above 0、THE ボディ SHALL have a plate of thickness 0.08 and a length of `splitter` heights beyond the rearmost point of the rounded rectangle, on the line through the middle of the rectangle along its length, joined to the rectangle with no gap。WHERE `splitter` is 0、THE ボディ SHALL have no plate。
+4. THE ボディ、板を含めて、SHALL be rotated by `angle` degrees about the centre of the rectangle, in the sense that a positive angle moves the front end of the body (the end facing the oncoming flow, at -x before the turn) toward +y and the back end toward -y。これは +x が右、+y が上を向くとき時計回りの回転である。この向きはビルダーが、迎え角の正の向きとして通常のものを選んだ。プロトタイプの向きはこのリポジトリになく、これまでの結果はそれに依存しないため（Decisions の項目 19）。
+5. THE 板の厚さ（0.08）、板の取り付け方、回転の中心、正の角度の向き SHALL be written in `wind-tunnel/model/` and SHALL be told to Dr. Kiro, as the geometry definitions in the knob texts（要件 3.2）。ボディのジオメトリのそれ以外の固定値は SHALL NOT exist。IF the builder adds one、THEN ビルダー SHALL tell it in a knob text, with the user's approval of the changed text（要件 1.7）, or ask the user。
 6. THE 流れ SHALL be laminar, two-dimensional, at Reynolds number 150 for every normal trial, with the free-stream speed 1 and the height 1。
 7. THE レイノルズ数 SHALL be a builder-side parameter of the model in `wind-tunnel/model/`。It SHALL NOT be a knob, SHALL NOT be reachable from any `lab/` folder or from any input of a trial, and SHALL be set to a value other than 150 only by the circle check (Requirement 15)。
 8. THE ソルバー設定 SHALL start from the values that worked in the prototype (`docs/brief.md` section 4.3): OpenFOAM v2412 `pimpleFoam`; mesh from Gmsh; laminar; domain with the inlet 6 heights ahead of the body, the outlet 18 behind, and the walls 7 above and below; run to time 150; forces averaged from time 80; frames taken near the end; an adaptive time step with a Courant limit of 0.8。THE 設計 SHALL decide what to keep and SHALL say what it changes and why; THE ビルダー SHALL ask the user before a change that alters the circle check。
@@ -237,7 +241,8 @@
 2. THE `dr-kiro` の共有ビルダーファイル are written for every application and SHALL stay as they are; THE それらの例 SHALL stay placeholders (`dr-kiro` Requirement 3.6)。
 3. THE ブラインドスキャン covers terms and paths only and SHALL NOT be taken as a check of this requirement。THE チェック SHALL be a **reviewed list**: a builder-side checklist, in a file under `wind-tunnel/` that is not in `lab/`, naming every text Dr. Kiro can read (each file of `lab/` that the builder wrote, the told set including each knob text, each `public_reason`), with a line per text saying "reviewed, no form knowledge" and who reviewed it。THE ビルダー SHALL fill it by reading, and the user MAY check it。
 4. THE チェックリスト is a review step in the later tasks。It is not automated and it is not a guarantee; THE README SHALL say so。
-5. THE この spec の要件と設計 SHALL NOT be copied into any lab text。WHERE a statement of this spec is needed in a lab text、THE ビルダー SHALL write it again from the told set, so that no form knowledge comes with it。
+5. ジオメトリの定義（板の厚さと取り付け方、回転の中心、正の角度の向き）は、ボディがどう作られ、どう置かれるかを述べるもので、流れが何をするかを述べるものではないので、形の知識ではない。THE レビュー済みの一覧（要件 12.3）SHALL carry, for each knob text, a line that says which sentences are geometry definitions, and SHALL record that no sentence states an effect。定義と影響が混じる文（たとえば、定義の後に何を「減らす」「増やす」かが続くもの）は SHALL be split, and the effect removed。
+6. THE この spec の要件と設計 SHALL NOT be copied into any lab text。WHERE a statement of this spec is needed in a lab text、THE ビルダー SHALL write it again from the told set, so that no form knowledge comes with it。
 
 ### Requirement 13: Blind scan for the solver files
 
@@ -250,11 +255,12 @@
 1. THE ベンチ SHALL provide a blind scan extractor for the solver files in `wind-tunnel/model/`, as `lab-bench` design 11.1 anticipates。It SHALL derive terms from: the keywords and the names (patches, fields, schemes, solvers, function objects, regions) in the OpenFOAM dictionaries and templates; the names in the mesh and geometry script; the digest-pinned image name; and the file names and stems of the source files。
 2. IF the extractor cannot read or parse a solver file、THEN it SHALL fail, naming the file and the problem, and SHALL NOT skip the file (`lab-bench` Requirement 15.7)。
 3. THE ブラインドスキャン SHALL remove the adapter's declared names (the four knob names, the five measurement names and the not-measured outcome name) and the stop list, and nothing else (`lab-bench` Requirement 15.3)。伝える集合の語は、ノブの文も含めて、除去されない: ノブの文は意図して伝えるものだが、スキャンはほかのビルダーレベルのテキストと同じに扱う。したがって、ノブが何であるかを伝えても、ソルバーやメッシュの識別子は開かれない。ソルバーファイルとメッシュスクリプトから導かれた語は、ノブの文にも、伝える集合のほかの部分にも、ほかのすべてのビルダーレベルのテキストにも、禁止のままである。
-4. IF an ordinary word that the extractor derives, such as a general name for a physical quantity, makes the scan fail on text that says nothing about the solver、THEN ビルダー SHALL first rename the identifier it chose itself, if the word is one, then reword the text, and SHALL ask the user before it changes the told set（要件 1.7）or proposes a stop-list entry, and SHALL NOT add the word itself (`rules.md`, Blind scan)。This SHALL be raised as a question to the user and not settled by the builder。
+4. IF an ordinary word that the extractor derives, such as a general name for a physical quantity, makes the scan fail on text that says nothing about the solver、THEN ビルダー SHALL first rename the identifier it chose itself, if the word is one, then reword the text, and SHALL ask the user before it changes the told set（要件 1.7）or proposes a stop-list entry, and SHALL NOT add the word itself (`rules.md`, Blind scan)。This SHALL be raised as a question to the user and not settled by the builder。ユーザーはこの順序を受け入れた（Decisions の項目 20）。
 5. `wind-tunnel/adapter/scan_sources.toml` SHALL name the solver files and the geometry script with their extractors, and the lab's layout, so that `bench-scan` covers the lab and every bench output。
 6. THE スキャン SHALL cover the picture by the picture check (`lab-bench` Requirement 15.9)。
 7. THE テスト SHALL check that a term planted from each kind of solver file (a dictionary keyword, a patch name, a function-object name, a geometry-script name) is found when planted in builder-level text, and ignored in Dr. Kiro-level text (`lab-bench` Requirement 16.7)。
 8. THE テスト SHALL check that no term derived from the solver files and the mesh script appears in the told set (the tool description text built from the declaration, with the knob texts), so that a collision between a word of the knob texts and an identifier of the solver is found when the identifier is written, and not at the first session。
+9. WHEN the derived terms of the real solver files make builder-level text fail after the builder has renamed its own identifiers and reworded the text (13.4)、THE ビルダー SHALL stop。It SHALL write a proposal for the user: for each word, the derived term, the file and line it comes from, the text and line that contains it, and why the word says nothing about the structure of the body。THE ユーザー approves or rejects each word。THE ビルダー SHALL NOT edit `.kiro/blind-scan/stop-list.txt` before the approval, and SHALL add only the approved words。IF no word remains after the renaming and rewording、THEN no proposal is made and no stop is needed。
 
 ### Requirement 14: The package and the lab
 
@@ -265,7 +271,7 @@
 #### Acceptance Criteria
 
 1. `wind-tunnel/adapter/` SHALL be its own `uv` project depending on `bench` (by path) and on Gmsh and the other packages the design names, locked in `uv.lock`; it SHALL need Python 3.12 through `uv` only (`tech.md`)。
-2. THE アダプター SHALL provide only what the adapter contract names (`docs/brief.md` section 1): its knobs, how to run one trial, what is measured, one picture, its goal and its budget。THE ベンチ SHALL NOT change for this application, except the extractor of Requirement 13 and, if the user answers (A) to Open question 1, the knob text field。IF another change to the bench is needed、THEN the builder SHALL stop and ask the user, because it is a change to the skeleton。
+2. THE アダプター SHALL provide only what the adapter contract names (`docs/brief.md` section 1): its knobs, how to run one trial, what is measured, one picture, its goal and its budget。THE ベンチ SHALL NOT change for this application, except the extractor of Requirement 13 and the knob description field (`lab-bench` Requirement 18, tasks 23-26, Decisions の項目 18)。IF another change to the bench is needed, or a change conflicts with the `lab-bench` spec、THEN the builder SHALL stop and ask the user, because it is a change to the skeleton。
 3. THE `wind-tunnel/lab/` フォルダー SHALL be made with `bench-make-lab`, SHALL hold nothing specific to the flow, and SHALL be tracked in git as `body-lab/lab/` is。
 4. `wind-tunnel` SHALL run on its own, without `body-lab` installed, and `body-lab` SHALL run without `wind-tunnel`。
 5. THE アダプター SHALL NOT import or call anything under `spikes/` (`structure.md`)。
@@ -308,10 +314,11 @@
 #### Acceptance Criteria
 
 1. THE 通常のテスト SHALL need no Docker and no display: the estimators (Requirement 5, with `hypothesis`), the geometry description for the corners of the knob ranges, the told set and its export (Requirement 2), the failure mapping (Requirement 8, with a fake solver that fails), the extractor (Requirement 13) and the contract check of a result。
-2. THE 低速のローカルテスト SHALL need Docker: the circle check, the identical-twice check (Requirement 10.4), and the run of every combination of the extreme values of the four knobs (16 runs)。IF any of the 16 does not settle or fails、THEN the builder SHALL report the combination to the user before the first full session, and SHALL NOT narrow a range or change the setup by itself。
-3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI。Pass: the record is sealed as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and on the sealed folder reports nothing。
+2. THE 低速のローカルテスト SHALL need Docker: the circle check, the identical-twice check (Requirement 10.4), the run of every combination of the extreme values of the four knobs (16 runs, the end-corner cases), and the near-end cases: for each knob, the values at 0.001 and at 0.01 of its range from each end of the range, with the other three knobs at the middle of their ranges (16 runs)。値は宣言された範囲から計算し、手で書かない。THE ジオメトリ SHALL NOT refuse any of these cases beforehand (the smallest piece length allowed in the geometry is zero until the user decides otherwise, Decisions の項目 21)、so that the measurement shows what the mesher and the solver do。
+3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of 17.6 has passed or the user has decided what to do about it。Pass: the record is sealed as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and on the sealed folder reports nothing。
 4. THE `wind-tunnel` の README SHALL report the circle check and the numbers of Requirement 16, as the brief's "done when" asks: the circle check within 5% of the literature value (with the difference), one full session of 24 runs completed, how long the application took to connect, and how much code it is。
 5. THE ビルダー SHALL NOT commit a session record that fails `bench-verify` or the blind scan。
+6. WHEN the 32 runs of 17.2 have been run、THE ビルダー SHALL write for each run, to the tracked file `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made, solver failed, time limit) and the wall-clock time, all from the run。IF any run hits the time limit, fails to mesh, fails, or does not settle、THEN the builder SHALL stop and report the knob values, the outcome and the times to the user。THE ビルダー SHALL NOT change a range, the time limit, the minimum piece length or the setup by itself, and SHALL NOT start the first full session。THE ユーザー decides among: a rule in the bench that refuses such values with a message in Dr. Kiro's terms (a `lab-bench` change), a narrower declared range (a change of Requirement 3.1), or accepting the risk。
 
 ### Requirement 18: Steps that need the user's hands
 
@@ -321,11 +328,11 @@
 
 #### Acceptance Criteria
 
-1. THE ユーザーが必要な手順 are: the approval of these requirements, with the proposals; the GIF check (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3); and reporting the connection time (Requirement 16.1)。
-2. THE GIF チェック SHALL be a gate before the adapter is written; it is the only such step before the end。
+1. THE ユーザーが必要な手順 are: the approval of these requirements, with the proposals; the GIF check (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3), including the sealing and the commit of `sessions/wind-tunnel/`; and reporting the connection time (Requirement 16.1)。
+2. THE GIF チェック SHALL be a gate before the adapter is written; it is the only such step before the end。THE ユーザー does it before "Run All Tasks" is started。
 3. THE 後の `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the builder can run alone with "Run All Tasks"。
 4. THE Docker が必要な手順 SHALL run only on the local Kiro on the user's Mac (`handoff.md`); the builder SHALL NOT mark them done from Kiro Web。
-
+5. THE 結果に依存するこの spec の停止は、手作業の手順ではない。結果がそれを求めるときだけ起き、ビルダーは止まってユーザーに報告する: stop-list エントリーの提案（13.9）、端のケースと端に近いケースのゲート（17.6）、失敗した円柱チェック（15.7）、メッシュにできないジオメトリ（6.10）、上限より遅い実行（8.7）、`lab-bench` spec との衝突（14.2）。これらは `tasks.md` に停止条件として書かれ、サブエージェントが決めずに報告するようにする。
 ---
 
 ## Decisions
@@ -350,9 +357,17 @@
 16. **GIF チェックは準備済み。** `spikes/gif/make_gif.py` が `spikes/gif/check.gif` を作る（12 フレーム。各フレームの背景色が違い、動く点とフレーム番号がある）。コピーが `bench-run/fake/lab/pictures/check.gif`（git 管理外）にある。閉じ込めとログの hook は `bench-run/fake/lab/.kiro/hooks/` にあり、hook ログはそのラボで動いていることを示すので、チェックの場所として有効である。ユーザーは、偽ラボのエージェントをそのフォルダーから起動して実行する。ゲートは残る（要件 9.7-9.9 と 18.2）: 結果が `spikes/gif/results.md` に入るまで、アダプターのコードは書かない。
 17. **円柱チェックの文献値、ビルダーが検証済み。** Williamson (1989)、式 (6)、レイノルズ数 100 で 0.164335（要件 15.4）。1988 年の関連論文は開けておらず、数値の出典にはしない。
 
+18. **ノブの記述: 選択肢 A**（ユーザー: "your recommendations are fine"）。`lab-bench` は各ノブに任意の `description` を得る（そちらの要件 18 とタスク 23-26）。要件 3.2 のノブの文はそこに入る。アダプターはそれらのタスクが終わるまで書かない。body-lab の宣言は変わらず、出力がバイト単位で同一であることをテストで示す。
+19. **ジオメトリの定義は伝える**（ユーザー: 隠すのはソルバーとメッシュだけ）。要件 3.2 のノブの文は次を述べる: 板の厚さは 0.08 ボディ高さ（プロトタイプの値で、ユーザーが先に確認済み）、隙間なく付け、長さはボディの最後端から数え、ボディの中央を通る線上にある。回転はボディの長さと高さの真ん中まわりで、板も一緒に回る。正の角度は先端側を +y の向きに動かし、流れは +x に沿う。**向きはビルダーの選択:** ユーザーは通常の迎え角の向き（先端が上がる）を求めたが、プロトタイプ自身の向きはこのリポジトリにない。今のところ何もそれに依存しない（範囲は 0 から 30 で、円柱チェックは 0 度）ので、止めて確認する必要はなかった。計算領域は隠す集合に残す。これらの文は定義で、要件 12 に照らして読み直した。
+20. **ブラインドスキャンの衝突**は要件 13.4 の順序で解決する（ビルダーが選んだものを改名、言い換え、それでも残れば確認）。stop list はユーザーの承認があるときだけ変える。
+21. **端に近いノブの値: 先に計測する。** 最初のセッションの前に、16 の端のコーナーの実行と 16 の端に近い実行（要件 17.2）を、ジオメトリでは何も拒否せずに行う。タイムアウト、メッシュの失敗、ソルバーの失敗、落ち着かない実行があれば、ビルダーは止まって数値を報告する（要件 17.6）。範囲と時間上限はビルダーは変えない。端に近い距離（範囲の 0.001 と 0.01）はビルダーの提案である。
+22. **OpenFOAM のキーワードの stop-list への追加**は、根拠つきで提案し、ユーザーが承認する。タスクの中の明示的な停止とする（要件 13.9）。
+
 ## Open questions
 
-訂正の後、ユーザーに確認すること:
+タスクを書くために未解決のものはない。次の 2 つは、結果に依存するため、事前に決めず、そのとき根拠つきで手続きとして決める（要件 13.9、17.6、18.5）:
 
-1. 宣言にはノブの文のための項目がない。伝えるノブの文（要件 3.2）には、ベンチがツールの説明を作る元になる 1 つの場所が要る。選択肢: (A) `lab-bench` の 2 つのノブ型に任意のテキスト項目を加える（`name`、`low`、`high` に 4 つ目の `meaning` を、空の既定値つきで足し、`body-lab` は変わらない）。`describe.py` がそれを出力する。スケルトンへの小さな変更で、テストも付く。(B) 4 つの文を `goal` のテキストに入れる。`lab-bench` はそのままだが、ゴールが入力の定義を運ぶことになる。(C) `measured_by` に入れる。(B) と同じ問題で、名前も合わない。ビルダーは (A) を勧める。要件 1.4 は、第 2 の経路を禁じ、ビルダーだけで決めることも禁じている。設計は (A) で書いてある。
-2. `angle` の正の向きと板の厚さ 0.08 はジオメトリの固定値で、これまでどおり伝えない（要件 6.5）。システムの作りを何も隠さないことが狙いなので、ユーザーは伝えたいかもしれない。向きがないと、ある `angle` での `cl_mean` の符号は、伝える集合からは予測できない。ユーザーが決めるまで、ビルダーは伝えないままにする。
+1. OpenFOAM のキーワードのうち、あるとしてどれを stop list に入れるか。ビルダーが語とその出典の行を提案し、ユーザーが 1 語ずつ承認する。
+2. 端のコーナーや端に近い実行がタイムアウトする、メッシュにできない、落ち着かない場合にどうするか。ビルダーが数値を報告し、ユーザーがベンチのルール、範囲を狭める、リスクを受け入れる、から選ぶ。
+
+ユーザーに訂正してもらうための判断が 1 つ記録されている: 計算領域（前方 6 高さ、後方 18、上下 7）は、ソルバー設定の一部なので伝えないままである（Decisions の項目 19）。伝えたい場合は、ノブの文またはゴールに 1 文が加わり、要件 1.7 が適用される。

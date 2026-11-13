@@ -10,7 +10,8 @@ lab (`dr-kiro`).
 Source: `docs/brief.md` sections 1-3 and 4.3, `body-lab/` (the first application, for style and for what it tells
 Dr. Kiro), `lab-bench` (Requirements 2, 5, 7, 15 and 17, design 4, 11 and F3), and the answers recorded in the
 session (see "Decisions"). All steering applies. The user approved these requirements, with one correction
-(Decisions, item 10). What is still open is listed under "Open questions".
+(Decisions, item 10), and then answered the open questions with "your recommendations are fine" (Decisions,
+items 18-22). What is still open is listed under "Open questions".
 
 Scope of this spec: the adapter, the solver setup in `wind-tunnel/model/`, the creation of the `lab/` folder with
 the `dr-kiro` command, the blind scan extractor for the solver files, the circle check, the numbers for the README
@@ -46,10 +47,19 @@ operating the bench; "Dr. Kiro" is the experimenter agent.
   declaration (Requirement 1).
 - **Comparison Kiro**: a Kiro unrelated to this repository's lab, given exactly the told set and no experiment, that
   writes a spec for comparison with Dr. Kiro's. It is used later; it is not built here.
-- **Knob text**: the told definition of one knob (Requirement 3.2): what the knob is, in what unit, and what the
-  ends of its range mean as a definition. It never says what the knob does to the flow.
+- **Knob text**: the told definition of one knob (Requirement 3.2), carried in the `description` field that
+  `lab-bench` Requirement 18 adds to a knob: what the knob is, in what unit, what the ends of its range mean, and
+  the geometry definitions that fix the knob (Geometry definition). It never says what the knob does to the flow.
+- **Geometry definition**: a statement of how a knob sets the shape or the position of the body, by convention: the
+  thickness of the plate, how the plate is attached, the centre of the turn, and the sign of the angle. A geometry
+  definition is told. It is not form knowledge.
 - **Form knowledge**: any statement of how the body's shape or knob values affect the flow or a measurement. A knob
-  text is not form knowledge; a statement of an effect is.
+  text, with its geometry definitions, is not form knowledge; a statement of an effect is.
+- **Hidden set**: what Dr. Kiro is not told because it belongs to the solver or the mesh: the solver setup (which
+  includes the computational domain, the boundary conditions, the time step and the run length) and the mesh.
+  Everything else about the geometry of the body is told (Decisions, item 19).
+- **Near-end case**: a run in which one knob is set at a distance of 0.001 or 0.01 of its range from one end of its
+  range, and the other three knobs are at the middle of their ranges (Requirement 17.2).
 - **Circle check**: the run that compares the measured Strouhal number of a circle at Reynolds number 100 with the
   literature (Requirement 15).
 - **GIF check**: the user's manual check that Dr. Kiro's file tool shows an animated GIF (Requirement 9).
@@ -69,18 +79,18 @@ be one set, so that a comparison Kiro can be given exactly the same.
 
 1. THE told set SHALL be the text of the adapter's declaration as `lab-bench` builds it for Dr. Kiro
    (`lab-bench` design F3), and SHALL be built from the adapter's own declaration, with no second copy.
-2. THE told set SHALL contain exactly: the four knob names with their ranges and their knob texts (Requirement 3);
-   the name, unit and meaning of each measurement and the not-measured outcome of `strouhal` (Requirement 4); that
-   the flow is two-dimensional and has Reynolds number 150, based on the height and the free-stream speed; the kind
-   of the picture; the budget; and the goal (Requirement 11).
-3. THE told set SHALL NOT contain what any knob does to the flow or to a measurement, the solver setup, the mesh
-   setup, the picture's content, the fixed values of the geometry (Requirement 6.5), or any form knowledge
-   (Requirement 12).
-4. THE adapter SHALL carry the told set in the fields the declaration has. IF the existing fields cannot hold the
-   told set, THEN the builder SHALL stop and ask the user whether `lab-bench` changes, and SHALL NOT add a second
-   channel through which Dr. Kiro learns about the system. The declaration has no field for a knob text (a knob
-   has a name and a range only), so this case has occurred: see Open questions, item 1. Until the user answers,
-   the adapter SHALL NOT be written.
+2. THE told set SHALL contain exactly: the four knob names with their ranges and their knob texts, including the
+   geometry definitions in them (Requirement 3); the name, unit and meaning of each measurement and the
+   not-measured outcome of `strouhal` (Requirement 4); that the flow is two-dimensional and has Reynolds number
+   150, based on the height and the free-stream speed; the kind of the picture; the budget; and the goal
+   (Requirement 11).
+3. THE told set SHALL NOT contain what any knob does to the flow or to a measurement, any part of the hidden set
+   (the solver setup and the mesh setup), the picture's content, or any form knowledge (Requirement 12).
+4. THE adapter SHALL carry each knob text in the `description` field of its knob, which `lab-bench` Requirement 18
+   adds (the user chose that option, Decisions, item 18), and the rest of the told set in the fields the
+   declaration already has. THE adapter SHALL NOT be written before `lab-bench` tasks 23-26 are done. IF a part of
+   the told set cannot be carried in the fields the declaration has, THEN the builder SHALL stop and ask the user
+   whether `lab-bench` changes, and SHALL NOT add a second channel through which Dr. Kiro learns about the system.
 5. THE builder files in the lab SHALL add nothing about the system to the told set (`dr-kiro` Requirement 1.2).
 6. THE told set SHALL pass the blind scan at the builder level (Requirement 13).
 7. WHEN the told set is to change (for example to add "laminar" or a description of the picture), THE builder SHALL
@@ -114,24 +124,35 @@ I can vary the system knowingly.
 
 1. THE adapter SHALL declare exactly four number knobs, with these names and ranges (`docs/brief.md` section 1):
    `aspect` in [0.5, 3]; `corner` in [0, 1]; `splitter` in [0, 3]; `angle` in [0, 30] degrees.
-2. THE adapter SHALL tell Dr. Kiro, for each knob, its knob text, and nothing else about the knob (Requirement
-   1.3). THE knob texts are the following, and a change SHALL be made here first, with the user's approval:
+2. THE adapter SHALL tell Dr. Kiro, for each knob, its knob text in the `description` of the knob, and nothing else
+   about the knob (Requirement 1.3). THE knob texts are the following, and a change SHALL be made here first, with
+   the user's approval:
    - `aspect`: "The length of the body, in body heights. The height of the body is 1, so this is the length divided
      by the height."
    - `corner`: "The rounding of the body's corners: the radius of each corner arc, as a fraction of half of the
      body's shorter side. 0 gives square corners; 1 gives the largest radius that fits."
    - `splitter`: "The length of the thin plate attached to the back of the body, the end facing away from the
-     oncoming flow, in body heights. 0 means there is no plate."
+     oncoming flow, in body heights. The length is counted from the rearmost point of the body without the plate.
+     The plate lies along the line through the middle of the body along its length, is attached with no gap, and
+     is 0.08 body heights thick. 0 means there is no plate."
    - `angle`: "The angle of attack, in degrees: the angle between the body's length direction and the direction of
-     the oncoming flow. 0 means the two directions are the same."
+     the oncoming flow, which goes in the +x direction. 0 means the two directions are the same. The body is turned
+     about its centre, the middle of its length and of its height, and the plate turns with it. A positive angle
+     moves the front end of the body, the end facing the oncoming flow, toward +y, and the back end toward -y."
    Each text says what the knob is (the user's wording: the length, the rounding of the corners, the length of the
-   plate behind the body, the angle of attack) and defines the ends of its range. None says what the knob does.
+   plate behind the body, the angle of attack), defines the ends of its range, and gives the geometry definitions
+   of Decisions, item 19: the thickness and the attachment of the plate, the centre of the turn, and the sign of
+   the angle. None says what the knob does. The number 0.08 in the `splitter` text SHALL be written into the text
+   from the plate thickness in `wind-tunnel/model/` (Requirement 6.3), not typed a second time.
 3. WHEN the bench passes computed inputs, THE adapter SHALL accept every combination of values inside the four
    ranges, ends included, and SHALL build the body for it (Requirement 6) or fail with the reason (Requirement 8).
 4. THE adapter SHALL NOT clip, round or default a knob value; the bench has already refused values outside a range
    (`lab-bench` Requirement 4.6).
 5. THE knob texts SHALL be reviewed against Requirement 12 in the reviewed list (Requirement 12.3), and SHALL pass
    the blind scan at the builder level, including the check of Requirement 13.8.
+6. THE sign of the angle SHALL be implemented once, in the geometry of `wind-tunnel/model/` (Requirement 6.4), and
+   a property test SHALL show that the geometry agrees with the `angle` text: for a positive angle the front end
+   of the body moves toward +y and the back end toward -y.
 
 ### Requirement 4: Measurements
 
@@ -196,10 +217,10 @@ without knowing how they were computed.
 
 ### Requirement 6: The body and the flow, in `model/`
 
-**Concerns:** the builder. Dr. Kiro is told none of this (Requirement 1.3).
+**Concerns:** the builder. Dr. Kiro is told only the geometry definitions of 6.5 and none of the rest (Requirement 1.3).
 
 **User Story:** As the builder, I want the body and the flow fixed in one place, so that Dr. Kiro studies one
-system and the values never reach a `lab/` folder.
+system and the solver values never reach a `lab/` folder.
 
 #### Acceptance criteria
 
@@ -209,12 +230,19 @@ system and the values never reach a `lab/` folder.
    of 1 or more this equals `corner` times the half-height, so `corner` = 1 gives semicircular ends and a circle at
    `aspect` = 1, which the circle check needs. For `aspect` below 1 a fraction of the half-height would exceed half
    of the length and the shape would be invalid; "half of the shorter side" is defined for all of [0.5, 3].
-3. WHERE `splitter` is above 0, THE body SHALL have a plate of thickness 0.08 and length `splitter` heights,
-   attached at the rear of the rectangle on its centre line with no gap. WHERE `splitter` is 0, THE body SHALL have
-   no plate.
-4. THE body, including the plate, SHALL be rotated by `angle` degrees about the centre of the rectangle.
-5. THE direction of a positive angle, and every other fixed value of the geometry (thickness 0.08, the plate's
-   attachment), SHALL be written in `wind-tunnel/model/` and SHALL NOT be told to Dr. Kiro.
+3. WHERE `splitter` is above 0, THE body SHALL have a plate of thickness 0.08 and a length of `splitter` heights
+   beyond the rearmost point of the rounded rectangle, on the line through the middle of the rectangle along its
+   length, joined to the rectangle with no gap. WHERE `splitter` is 0, THE body SHALL have no plate.
+4. THE body, including the plate, SHALL be rotated by `angle` degrees about the centre of the rectangle, in the
+   sense that a positive angle moves the front end of the body (the end facing the oncoming flow, at -x before the
+   turn) toward +y and the back end toward -y. That is a clockwise turn when +x points to the right and +y points
+   up. THE sense was chosen by the builder as the usual sense of a positive angle of attack, because the prototype's
+   sense is not in this repository and no earlier result depends on it (Decisions, item 19).
+5. THE plate thickness (0.08), how the plate is joined, the centre of the turn and the sense of a positive angle
+   SHALL be written in `wind-tunnel/model/` and SHALL be told to Dr. Kiro, as the geometry definitions in the knob
+   texts (Requirement 3.2). No other fixed value of the geometry of the body SHALL exist. IF the builder adds one,
+   THEN the builder SHALL tell it in a knob text, with the user's approval of the changed text (Requirement 1.7),
+   or ask the user.
 6. THE flow SHALL be laminar, two-dimensional, at Reynolds number 150 for every normal trial, with the free-stream
    speed 1 and the height 1.
 7. THE Reynolds number SHALL be a builder-side parameter of the model in `wind-tunnel/model/`. It SHALL NOT be a
@@ -388,7 +416,13 @@ rule in its discovered spec comes from its own experiments.
    reading, and the user MAY check it.
 4. THE checklist is a review step in the later tasks. It is not automated and it is not a guarantee; THE README
    SHALL say so.
-5. THE requirements and the design of this spec SHALL NOT be copied into any lab text. WHERE a statement of this
+5. A geometry definition (the thickness and the joining of the plate, the centre of the turn, the sense of a
+   positive angle) states how the body is built or placed and not what the flow does, so it is not form knowledge.
+   THE reviewed list (Requirement 12.3) SHALL carry, for each knob text, a line that says which sentences are
+   geometry definitions, and SHALL record that no sentence states an effect. A sentence that mixes a definition
+   with an effect (for example, a definition followed by what it "reduces" or "increases") SHALL be split, and the
+   effect removed.
+6. THE requirements and the design of this spec SHALL NOT be copied into any lab text. WHERE a statement of this
    spec is needed in a lab text, the builder SHALL write it again from the told set, so that no form knowledge
    comes with it.
 
@@ -417,7 +451,8 @@ nothing in a `lab/` folder or in a bench output reveals the solver.
    fail on text that says nothing about the solver, THEN the builder SHALL first rename the identifier it chose
    itself, if the word is one, then reword the text, and SHALL ask the user before it changes the told set
    (Requirement 1.7) or proposes a stop-list entry, and SHALL NOT add the word itself (`rules.md`, Blind scan).
-   This SHALL be raised as a question to the user and not settled by the builder.
+   This SHALL be raised as a question to the user and not settled by the builder. The user accepted this order
+   (Decisions, item 20).
 5. `wind-tunnel/adapter/scan_sources.toml` SHALL name the solver files and the geometry script with their
    extractors, and the lab's layout, so that `bench-scan` covers the lab and every bench output.
 6. THE scan SHALL cover the picture by the picture check (`lab-bench` Requirement 15.9).
@@ -428,6 +463,12 @@ nothing in a `lab/` folder or in a bench output reveals the solver.
    (the tool description text built from the declaration, with the knob texts), so that a collision between a
    word of the knob texts and an identifier of the solver is found when the identifier is written, and not at the
    first session.
+9. WHEN the derived terms of the real solver files make builder-level text fail after the builder has renamed its
+   own identifiers and reworded the text (13.4), THE builder SHALL stop. It SHALL write a proposal for the user:
+   for each word, the derived term, the file and line it comes from, the text and line that contains it, and why
+   the word says nothing about the structure of the body. THE user approves or rejects each word. THE builder SHALL
+   NOT edit `.kiro/blind-scan/stop-list.txt` before the approval, and SHALL add only the approved words. IF no word
+   remains after the renaming and rewording, THEN no proposal is made and no stop is needed.
 
 ### Requirement 14: The package and the lab
 
@@ -442,9 +483,9 @@ stays general and the connection time and size mean something.
    packages the design names, locked in `uv.lock`; it SHALL need Python 3.12 through `uv` only (`tech.md`).
 2. THE adapter SHALL provide only what the adapter contract names (`docs/brief.md` section 1): its knobs, how to run
    one trial, what is measured, one picture, its goal and its budget. THE bench SHALL NOT change for this
-   application, except the extractor of Requirement 13 and, if the user answers (A) to Open question 1, the knob text
-   field. IF another change to the bench is needed, THEN the builder
-   SHALL stop and ask the user, because it is a change to the skeleton.
+   application, except the extractor of Requirement 13 and the knob description field (`lab-bench` Requirement 18,
+   tasks 23-26, Decisions item 18). IF another change to the bench is needed, or a change conflicts with the
+   `lab-bench` spec, THEN the builder SHALL stop and ask the user, because it is a change to the skeleton.
 3. THE `wind-tunnel/lab/` folder SHALL be made with `bench-make-lab`, SHALL hold nothing specific to the flow, and
    SHALL be tracked in git as `body-lab/lab/` is.
 4. `wind-tunnel` SHALL run on its own, without `body-lab` installed, and `body-lab` SHALL run without
@@ -523,17 +564,29 @@ shown to work.
    geometry description for the corners of the knob ranges, the told set and its export (Requirement 2), the
    failure mapping (Requirement 8, with a fake solver that fails), the extractor (Requirement 13) and the
    contract check of a result.
-2. THE slow local tests SHALL need Docker: the circle check, the identical-twice check (Requirement 10.4), and the
-   run of every combination of the extreme values of the four knobs (16 runs). IF any of the 16 does not settle or
-   fails, THEN the builder SHALL report the combination to the user before the first full session, and SHALL NOT
-   narrow a range or change the setup by itself.
-3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI. Pass: the record is sealed
+2. THE slow local tests SHALL need Docker: the circle check, the identical-twice check (Requirement 10.4), the
+   run of every combination of the extreme values of the four knobs (16 runs, the end-corner cases), and the
+   near-end cases: for each knob, the values at 0.001 and at 0.01 of its range from each end of the range, with the
+   other three knobs at the middle of their ranges (16 runs). The values are computed from the declared ranges and
+   not typed. THE geometry SHALL NOT refuse any of these cases beforehand (the smallest piece length allowed in the
+   geometry is zero until the user decides otherwise, Decisions item 21), so that the measurement shows what the
+   mesher and the solver do.
+3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of
+   17.6 has passed or the user has decided what to do about it. Pass: the record is sealed
    as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and
    on the sealed folder reports nothing.
 4. THE README of `wind-tunnel` SHALL report the circle check and the numbers of Requirement 16, as the brief's
    "done when" asks: the circle check within 5% of the literature value (with the difference), one full session of 24
    runs completed, how long the application took to connect, and how much code it is.
 5. THE builder SHALL NOT commit a session record that fails `bench-verify` or the blind scan.
+6. WHEN the 32 runs of 17.2 have been run, THE builder SHALL write for each run, to the tracked file
+   `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made,
+   solver failed, time limit) and the wall-clock time, all from the run. IF any run hits the time limit, fails to
+   mesh, fails, or does not settle, THEN the builder SHALL stop and report the knob values, the outcome and the
+   times to the user. THE builder SHALL NOT change a range, the time limit, the minimum piece length or the setup
+   by itself, and SHALL NOT start the first full session. THE user decides among: a rule in the bench that refuses
+   such values with a message in Dr. Kiro's terms (a `lab-bench` change), a narrower declared range (a change of
+   Requirement 3.1), or accepting the risk.
 
 ### Requirement 18: Steps that need the user's hands
 
@@ -545,14 +598,19 @@ run in one go.
 #### Acceptance criteria
 
 1. THE steps that need the user are: the approval of these requirements, with the proposals; the GIF check
-   (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3); and reporting the connection time
-   (Requirement 16.1).
-2. THE GIF check SHALL be a gate before the adapter is written; it is the only such step before the end.
+   (Requirement 9.7); starting and finishing the 24-run session (Requirement 17.3), including the sealing and the
+   commit of `sessions/wind-tunnel/`; and reporting the connection time (Requirement 16.1).
+2. THE GIF check SHALL be a gate before the adapter is written; it is the only such step before the end. THE user
+   does it before "Run All Tasks" is started.
 3. THE later `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the
    builder can run alone with "Run All Tasks".
 4. THE steps that need Docker SHALL run only on the local Kiro on the user's Mac (`handoff.md`); the builder SHALL
    NOT mark them done from Kiro Web.
-
+5. THE stops of this spec that depend on a result are not hands-on steps. They happen only if the result calls
+   for them, and the builder then stops and reports to the user: the proposal of a stop-list entry (13.9), the
+   gate on the extreme and near-end runs (17.6), a failed circle check (15.7), a geometry that cannot be meshed
+   (6.10), a run slower than the limit (8.7), and a conflict with the `lab-bench` spec (14.2). They are written
+   in `tasks.md` as stop conditions, so that a sub-agent reports and does not decide.
 
 ## Decisions
 
@@ -611,18 +669,38 @@ with the correction recorded in item 10 and the approvals in items 15 and 16.
 17. **Circle check literature value, verified by the builder.** Williamson (1989), equation (6), 0.164335 at
     Reynolds number 100 (Requirement 15.4). The 1988 companion paper was not opened and is not cited for numbers.
 
+18. **Knob descriptions: option A** (the user: "your recommendations are fine"). `lab-bench` gains an optional
+    `description` for each knob (Requirement 18 there; tasks 23-26 there). The knob texts of Requirement 3.2 are
+    carried in it. The adapter is not written before those tasks are done. A body-lab declaration stays unchanged and
+    a test shows that its output is byte-identical.
+19. **Geometry definitions are told** (the user: only the solver and the mesh are hidden). The knob texts of
+    Requirement 3.2 now say: the plate is 0.08 body heights thick (the prototype's value, confirmed earlier by the
+    user), joined with no gap, counted from the rearmost point of the body, on the line through the middle of the
+    body; the turn is about the middle of the body's length and height, and the plate turns with it; a positive
+    angle moves the front end toward +y, with the flow along +x. **The sense is the builder's choice:** the user
+    asked for the usual angle-of-attack sense (front end up), and the prototype's own sense is not in this
+    repository. Nothing yet depends on it (the range is 0 to 30 and the circle check is at 0), so no stop was
+    needed. The computational domain stays in the hidden set. These sentences are definitions and were re-read
+    against Requirement 12.
+20. **Blind-scan clashes** are resolved in the order of Requirement 13.4 (rename what the builder chose, reword,
+    then ask); the stop list changes only with the user's approval.
+21. **Near-degenerate knob values: measure first.** The 16 end-corner runs and 16 near-end runs (Requirement 17.2)
+    are run before the first session, with no refusal in the geometry. Any time-out, mesh failure, solver failure or
+    unsettled run stops the builder, which reports the numbers (Requirement 17.6). The ranges and the time limit are
+    not changed by the builder. The near-end distances 0.001 and 0.01 of the range are the builder's proposal.
+22. **Stop-list additions for OpenFOAM keywords** are proposed with evidence and approved by the user, as an
+    explicit stop in the tasks (Requirement 13.9).
+
 ## Open questions
 
-For the user, after the correction:
+None is open for writing the tasks. The following are settled by procedure, at the time and with evidence, and are
+not decided in advance (Requirements 13.9, 17.6 and 18.5):
 
-1. The declaration has no field for a knob text. The told knob texts (Requirement 3.2) need one place that the
-   bench builds the tool descriptions from. Options: (A) add an optional text field to the two knob types of
-   `lab-bench` (the fields `name`, `low`, `high` get a fourth, `meaning`, with an empty default so `body-lab` is
-   unchanged), and print it in `describe.py`; this is a small change to the skeleton, with its tests. (B) put the
-   four texts into the `goal` text. This keeps `lab-bench` as it is, but the goal then carries the definitions of
-   the inputs. (C) put them into `measured_by`; this is the same problem with a wrong name. The builder recommends
-   (A). Requirement 1.4 forbids a second channel and forbids deciding this alone. The design is written for (A).
-2. The positive direction of `angle` and the plate thickness 0.08 are fixed values of the geometry and stay untold
-   (Requirement 6.5), as before. Because the aim is that nothing about the build is hidden, the user may want them
-   told. Without the direction, the sign of `cl_mean` at a given `angle` cannot be predicted from the told set.
-   The builder keeps them untold until the user decides.
+1. Which OpenFOAM keywords, if any, go to the stop list. The builder proposes words with their source lines; the
+   user approves them one by one.
+2. What to do if a near-end or end-corner run hits the time limit, fails to mesh or does not settle. The builder
+   reports the numbers; the user chooses among a bench rule, a narrower range, or accepting the risk.
+
+One judgement is recorded for the user to correct: the computational domain (6 heights ahead, 18 behind, 7 above and
+below) stays untold because it is part of the solver setup (Decisions, item 19). If the user wants it told, the
+knob texts or the goal gain a sentence, and Requirement 1.7 applies.

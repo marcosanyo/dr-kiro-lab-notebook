@@ -3,12 +3,13 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: 2026-11-13（ローカル）
+最終更新: 2026-11-13（ローカル）。`wind-tunnel` の要件・設計・タスクを更新し、`lab-bench` に要件 18（ノブの説明）とタスク 23-26 を追加した。
 
 ## 終わったこと
 
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
+- `wind-tunnel`: 要件・設計・タスクが書けた（実装は未着手）。
 - `body-lab`: タスク 1〜5 完了。最初のセッション `sessions/body-lab/body-1` は 40 試行で `ended` として封印され、
   ブラインドスキャンも検出なし。
 - body-1 で、Dr. Kiro が最後に埋めた `## Discovered spec` の表が封印された記録に入っていないと分かった
@@ -18,15 +19,11 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 ## 次の一手
 
-
-1. brief 5 の順番で `wind-tunnel`（brief 4.3）。あなた: `docs/requests/wind-tunnel.md` を `TEMPLATE.md` から作って埋める（任意）。
-2. Kiro: 要件の前に質問をまとめる。brief 4.3 に `[DECIDE]` はないが、決めることは多い
-   （Docker の使い方、メッシュの作り方、試行の長さ、画像の形式、circle check の手順）。
-3. Kiro: 要件・設計・タスクを書く → 実装 → circle check（Strouhal 数が文献値の 5% 以内）→ 24 試行のセッション。
-
-## 未解決の質問
-
-- なし。
+1. **あなた（Run All Tasks の前に）:** GIF チェックを行い、結果を `spikes/gif/results.md` に書いてコミットする（`bench-run/fake/lab` で fake-tester エージェントを起動して `pictures/check.gif` を開かせる）。`wind-tunnel` のタスク 7.1 がこのファイルを読み、なければ止まる。
+2. Kiro: `lab-bench` のタスク 23-26（ノブの `description` 項目。body-lab の golden ファイルが先）を実行する。`wind-tunnel` のタスク 1.1 がその完了を確認する。
+3. Kiro: `wind-tunnel/tasks.md` を Run All Tasks で実行する。タスク 1.1〜13.2 と 15.1 は Kiro Web でも動く。タスク 14.1〜14.4 は Docker が要るので Mac のみ。
+4. あなた（最後にまとめて）: タスク 17〜19（24 回のセッション、封印の確認とコミット、接続時間の自己申告）。
+- 途中で止まる可能性がある所（結果次第）: stop list の提案（タスク 12.4）、端のコーナー／端に近い 32 回の実行の報告（14.4）、円柱チェックの失敗（14.2）。
 
 ## 環境ごとの注意
 

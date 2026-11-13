@@ -819,3 +819,102 @@ the core; `BENCH_SESSION_CONFIG` reached the server and `BENCH_HOOK_LOG` the hoo
 lab and a write into `.kiro/hooks/` were refused by the hook without a prompt; `str_replace` carries `path` and
 worked in `.kiro/specs/`; the agent reported no steering in its context (its own report). Not checked:
 `grep_search` on `.kiro/hooks/` (expected to work, D6).
+
+---
+
+# Amendment: knob descriptions (Requirement 18)
+
+Added after tasks 1-22 were done, at the request of the `wind-tunnel` spec. Sections 1-14 and F1-F12 are not
+rewritten: where this part and an earlier section differ about a knob, this part is the current text. The
+dataclasses of section 4 gain one field each; nothing else in the contract changes.
+
+## A1. Contract (18.1, 18.2, 18.3)
+
+```python
+@dataclass(frozen=True)
+class FunctionKnob:  name; low; high; sample_times; trial_seconds; description: str = ""
+@dataclass(frozen=True)
+class NumberKnob:    name; low; high; description: str = ""
+```
+
+- The field is last and has a default, so every existing call (`FunctionKnob("c0", -1.0, 1.0, times, 5.0)`,
+  `NumberKnob("gain", 0.0, 3.0)`) keeps its meaning. The default is the empty text, which is not "a default for
+  missing data": it states that the knob has no description, and the declaration of body-lab says so on purpose by
+  not setting the field.
+- `check_declaration` gets one more check per knob, after the range check: the value is a `str`; it has no
+  character with `str.isprintable() == False` (this covers line breaks, tabs and other control characters); it has
+  no space at its start or end (`text == text.strip(" ")`); `len(text) <= DESCRIPTION_MAX` where
+  `DESCRIPTION_MAX = 800`. A failure raises `DeclarationError` naming the knob and which of the four it is.
+- 800 characters hold about five sentences. It is a bound on what is told per knob, chosen so that the tool
+  description stays readable. The longest wind-tunnel text is about 450 characters.
+- No other code reads the field: the experiment language, the hypotheses check and the conditions code do not
+  touch it (18.3). A test greps the source for `.description` outside the three places of A2 and A3.
+
+## A2. Told text (18.4, 18.5, 18.9)
+
+`describe.declaration_text` prints a knob's line as before, and appends ` ` plus the description when it is not
+empty. The existing endings stay: a function knob line ends with `.` after its sample times, a number knob line
+ends with `per trial.`. The description comes after that sentence:
+
+```
+- gain: a number in [0.0, 3.0] per trial. <description>
+```
+
+An empty description appends nothing, so the line is byte-identical to the one before this amendment (18.4). The
+description is on the knob's own line because it has no line break (A1). The export of the `wind-tunnel` spec
+(its Requirement 2) calls this function and nothing else.
+
+## A3. Record (18.6)
+
+`declaration_record` adds `"description": k.description` to a knob's dictionary only when
+`k.description != ""`. The canonical JSON sorts keys, so the position of the key does not matter. A record of an
+application with no description has no new key, so it is byte-identical to one made before (3.4, 18.8).
+
+## A4. Scans (18.7)
+
+- At startup, `bench-mcp` already scans the generated descriptions at the builder level (F3). The told text now
+  contains the knob descriptions, so they are scanned there with no code change. A test makes sure of it: a
+  description containing a derived term stops the server.
+- The sealed record is scanned at the builder level for bench-authored text (13.1). The declaration is recorded
+  with the author `bench`, so the description is covered. A test seals a session whose declaration has a
+  description containing a derived term and checks that sealing fails.
+- The allow list is built from names (knob names, measurement names, not-measured outcome names) and is not
+  extended (11.1).
+
+## A5. Body-lab does not change (18.8)
+
+The proof is two golden files made from the code before the change, then compared after it:
+
+- `body-lab/adapter/tests/golden/told_text.txt`: `declaration_text(BodyAdapter().declaration())`.
+- `body-lab/adapter/tests/golden/declaration_record.json`: `canonical_json(declaration_record(...))`.
+
+Task 23 writes them before any code of the amendment is touched, and commits them. A test in
+`body-lab/adapter/tests/` compares the current output with them byte for byte. The golden files belong to
+body-lab's tests and not to `bench/`, because no test in `bench/` reads body-lab (tasks.md, header). The fake
+application declares no description either; its existing tests are the same proof for the core, and a second pair
+of golden files in `bench/tests/fixtures/` covers it.
+
+## A6. Properties (Req 16 style, tagged `Feature: lab-bench, Property N`)
+
+| # | Property | Req |
+|---|---|---|
+| P21 | For all declarations with all descriptions empty, `declaration_text` equals the text of a reference renderer written in the test from the pre-amendment format. | 18.4, 18.8 |
+| P22 | For all declarations, each non-empty description appears exactly as declared on its own knob's line, and the line of a knob carries no other knob's description. | 18.4, 18.9 |
+| P23 | For all candidate description strings (any characters), `check_declaration` accepts exactly the strings that are text, printable, without a leading or trailing space, and at most 800 characters; it refuses all others, naming the knob. | 18.2 |
+| P24 | For all declarations, the recorded knob has a `description` key exactly when the description is not empty, and the record of a declaration with all descriptions empty equals the pre-amendment shape. | 18.6, 18.8 |
+
+## A7. Decisions (taken by the builder; the user chose option A in the wind-tunnel session)
+
+1. **Field name `description`, last, default empty**, for both knob kinds. The earlier proposal in `wind-tunnel`
+   called it `meaning`; `description` is the name in Requirement 18.
+2. **The key is absent in the record when empty**, so old records stay byte-identical (3.4) and body-lab's output
+   does not change.
+3. **800 characters, one line.** A text with line breaks would break the one-line-per-knob structure of the told
+   text. The limit is a bound, not a quality rule.
+4. **No interpretation by the bench.** A description is told, never checked, so it cannot become a second gate.
+
+## A8. What would make me stop and ask
+
+- The golden files differ from the output after the change (18.8): the amendment is not allowed to alter
+  body-lab. Stop and report the first differing line.
+- A code path other than A1-A3 needs to read a description.
