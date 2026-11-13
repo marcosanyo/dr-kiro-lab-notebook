@@ -1,0 +1,11 @@
+# Tasks
+
+- [x] E1: constant drive c0, c1, c2
+- [x] E2: constant drive c3, c4, c1=-1
+- [x] E3: single-channel sine
+- [x] E4: travelling wave, f=1/2
+- [x] E5: frequency sweep
+- [x] E6: phase sweep at 3 Hz
+- [ ] E7 test: new combinations of f and ph near the optimum
+- [ ] E8 test: c1 offset as steering to cancel yaw at ph=0.4/0.6
+- [ ] best: run predicted best point

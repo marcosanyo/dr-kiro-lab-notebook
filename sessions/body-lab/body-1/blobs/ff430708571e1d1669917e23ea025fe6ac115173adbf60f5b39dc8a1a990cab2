@@ -1,0 +1,35 @@
+# H7: Forward band holds for untried f and ph inside 2.5-3.5 Hz and ph 0.6-0.8
+import math
+
+PHASE = "test"
+MODE = "compare"
+PARAMS = ["f", "ph"]
+TRIALS = [
+    [2.5, 0.8],
+    [3.5, 0.8],
+    [3.0, 0.6],
+]
+
+
+def w(t, f, ph, i):
+    return math.sin(2 * math.pi * f * t - i * ph)
+
+
+def c0(t, f, ph):
+    return w(t, f, ph, 0)
+
+
+def c1(t, f, ph):
+    return w(t, f, ph, 1)
+
+
+def c2(t, f, ph):
+    return w(t, f, ph, 2)
+
+
+def c3(t, f, ph):
+    return w(t, f, ph, 3)
+
+
+def c4(t, f, ph):
+    return w(t, f, ph, 4)

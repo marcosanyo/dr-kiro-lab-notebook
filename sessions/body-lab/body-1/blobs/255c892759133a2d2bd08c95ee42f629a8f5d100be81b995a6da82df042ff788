@@ -1,0 +1,31 @@
+# H1: Constant drive on c0 or c1 moves the body
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["k"]
+TRIALS = [
+    [0],
+    [1],
+    [2],
+]
+
+
+def c0(t, k):
+    return 1.0 if k == 0 else 0.0
+
+
+def c1(t, k):
+    return 1.0 if k == 1 else 0.0
+
+
+def c2(t, k):
+    return 1.0 if k == 2 else 0.0
+
+
+def c3(t, k):
+    return 0.0
+
+
+def c4(t, k):
+    return 0.0

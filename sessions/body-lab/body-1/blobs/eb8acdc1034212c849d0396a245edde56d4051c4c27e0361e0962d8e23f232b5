@@ -1,0 +1,13 @@
+### H2: Constant drive on c3 moves the body forward
+
+WHEN c3 is held at 1 and all other channels at 0, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "inside"
+[prediction.when]
+k = 3
+```

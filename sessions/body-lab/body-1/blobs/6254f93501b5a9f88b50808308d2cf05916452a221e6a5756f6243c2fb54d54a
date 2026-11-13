@@ -1,0 +1,39 @@
+# H8: Forward travel peaks near 3.5-4 Hz with ph 0.8-1.0
+import math
+
+PHASE = "test"
+MODE = "sweep"
+PARAMS = ["f", "ph"]
+SWEEP = ["f", "ph"]
+TRIALS = [
+    [3.25, 0.8],
+    [3.75, 0.8],
+    [4.0, 0.8],
+    [3.5, 1.0],
+    [4.0, 1.0],
+    [4.5, 0.8],
+]
+
+
+def w(t, f, ph, i):
+    return math.sin(2 * math.pi * f * t - i * ph)
+
+
+def c0(t, f, ph):
+    return w(t, f, ph, 0)
+
+
+def c1(t, f, ph):
+    return w(t, f, ph, 1)
+
+
+def c2(t, f, ph):
+    return w(t, f, ph, 2)
+
+
+def c3(t, f, ph):
+    return w(t, f, ph, 3)
+
+
+def c4(t, f, ph):
+    return w(t, f, ph, 4)

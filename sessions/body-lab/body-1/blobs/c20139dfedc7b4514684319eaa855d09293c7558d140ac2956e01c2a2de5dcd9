@@ -1,0 +1,41 @@
+# H11: Combining ph=0.6 with b=-0.8 gives the best x
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "ph", "b"]
+TRIALS = [
+    [3.25, 0.6, -0.8],
+]
+
+
+def w(t, f, ph, i):
+    return math.sin(2 * math.pi * f * t - i * ph)
+
+
+def clip(v):
+    if v > 1.0:
+        return 1.0
+    if v < -1.0:
+        return -1.0
+    return v
+
+
+def c0(t, f, ph, b):
+    return w(t, f, ph, 0)
+
+
+def c1(t, f, ph, b):
+    return clip(w(t, f, ph, 1) + b)
+
+
+def c2(t, f, ph, b):
+    return w(t, f, ph, 2)
+
+
+def c3(t, f, ph, b):
+    return w(t, f, ph, 3)
+
+
+def c4(t, f, ph, b):
+    return w(t, f, ph, 4)

@@ -1,0 +1,39 @@
+# H6: Phase lag sets forward travel at 3 Hz
+import math
+
+PHASE = "rules"
+MODE = "sweep"
+PARAMS = ["f", "ph"]
+SWEEP = ["ph"]
+TRIALS = [
+    [3.0, -1.6],
+    [3.0, -0.8],
+    [3.0, 0.4],
+    [3.0, 0.8],
+    [3.0, 1.6],
+    [3.0, 2.4],
+]
+
+
+def w(t, f, ph, i):
+    return math.sin(2 * math.pi * f * t - i * ph)
+
+
+def c0(t, f, ph):
+    return w(t, f, ph, 0)
+
+
+def c1(t, f, ph):
+    return w(t, f, ph, 1)
+
+
+def c2(t, f, ph):
+    return w(t, f, ph, 2)
+
+
+def c3(t, f, ph):
+    return w(t, f, ph, 3)
+
+
+def c4(t, f, ph):
+    return w(t, f, ph, 4)

@@ -1,0 +1,35 @@
+### H10: Offset c1=-0.5 plus a smaller phase lag gives the largest x
+
+WHEN the travelling wave runs at f=3.25 Hz with c1 offset b=-0.5 and ph in [0.6, 0.7] (smaller ph adds counter-clockwise yaw that offsets the clockwise yaw of b), THE system SHALL move the body more than 0.45 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.45, 1.2]
+label = "new-combination"
+[prediction.when]
+f = 3.25
+ph = 0.6
+b = -0.5
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.45, 1.2]
+label = "new-combination"
+[prediction.when]
+f = 3.25
+ph = 0.7
+b = -0.5
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.45, 1.2]
+label = "outside"
+[prediction.when]
+f = 3.25
+ph = 0.8
+b = -0.8
+```

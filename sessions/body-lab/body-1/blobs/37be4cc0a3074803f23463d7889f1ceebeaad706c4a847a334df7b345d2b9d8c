@@ -1,0 +1,32 @@
+### H7: Forward band holds for untried f and ph inside 2.5-3.5 Hz and ph 0.6-0.8
+
+WHEN the travelling wave is driven at f in [2.5, 3.5] Hz with ph in [0.6, 0.8], THE system SHALL move the body between 0.12 and 0.4 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.12, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.5
+ph = 0.8
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.12, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 3.5
+ph = 0.8
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.12, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 3.0
+ph = 0.6
+```

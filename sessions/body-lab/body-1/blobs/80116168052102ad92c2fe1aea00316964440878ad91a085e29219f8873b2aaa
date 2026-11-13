@@ -1,0 +1,16 @@
+# Design
+
+## Current beliefs
+
+- Body: small articulated body (looks like a base with an arm/legs) seen from above; moves only a few cm without coordinated drive.
+- Constant drive (E1, E2): c0, c2, c3, c4 at ±1 give only a settling transient (<4 cm, <3 deg). c1 constant gives a steady yaw: c1=+1 ~ +39 deg/5 s with x -0.23; c1=-1 ~ -35 deg with x +0.11. c1 acts like a turning/creeping channel.
+- Single-channel 1 Hz sine (E3): no net travel; c3 sine adds yaw drift (+30 deg).
+- Travelling wave c_i = sin(2 pi f t - i ph) on all five channels (E4-E6):
+  - Frequency (ph=1.2): no travel at 0.5-1 Hz, forward 0.16-0.21 m at 3-4 Hz, near zero at >=6 Hz (low-pass: body can't follow).
+  - Phase (f=3): forward travel for ph in roughly 0.4-1.2; best straight run at ph=0.8 (x=0.23, heading -1 deg). ph=0.4 gives x=0.28 but a strong left turn (+67 deg, y=0.31). Negative or large ph -> little x.
+  - Yaw drift decreases with ph: +67 (0.4), -1 (0.8), -15 (1.2).
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|

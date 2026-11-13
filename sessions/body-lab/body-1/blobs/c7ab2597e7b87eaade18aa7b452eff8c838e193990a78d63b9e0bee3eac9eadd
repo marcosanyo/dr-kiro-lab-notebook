@@ -1,0 +1,23 @@
+### H8: Forward travel peaks near 3.5-4 Hz with ph 0.8-1.0
+
+WHEN the travelling wave is driven at f=4 Hz with ph=0.8, THE system SHALL move the body between 0.15 and 0.45 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.15, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 4.0
+ph = 0.8
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.15, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 3.5
+ph = 1.0
+```
