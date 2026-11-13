@@ -1,0 +1,35 @@
+# H3: Oscillating a single channel produces net x travel
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["k", "f"]
+TRIALS = [
+    [0, 1.0],
+    [2, 1.0],
+    [3, 1.0],
+]
+
+
+def s(t, f):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c0(t, k, f):
+    return s(t, f) if k == 0 else 0.0
+
+
+def c1(t, k, f):
+    return 0.0
+
+
+def c2(t, k, f):
+    return s(t, f) if k == 2 else 0.0
+
+
+def c3(t, k, f):
+    return s(t, f) if k == 3 else 0.0
+
+
+def c4(t, k, f):
+    return s(t, f) if k == 4 else 0.0

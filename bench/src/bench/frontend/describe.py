@@ -39,6 +39,8 @@ def declaration_text(decl: Declaration) -> str:
         f"Each trial also gives one picture ({_EXTENSIONS[decl.picture]} file). "
         f"The budget is {decl.budget} trials."
     )
+    lines.append(f"How it is measured: {decl.measured_by}")
+    lines.append(f"Goal (for the best point): {decl.goal}")
     return "\n".join(lines)
 
 

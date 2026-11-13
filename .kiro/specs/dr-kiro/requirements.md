@@ -118,7 +118,8 @@ so that no session starts from a half-reset lab.
    the picture files and the three lab spec files), write the templates, start the session with the core
    (`Session.start`), and write the session config outside the lab with `resume = true`, so that `bench-mcp`
    always reopens the session it was given.
-4. THE experiments and pictures folders of a lab SHALL be ignored by git. The templates stay tracked.
+4. Dr. Kiro's files in a lab (the experiments and pictures folders and `.kiro/specs/`) SHALL be ignored by git;
+   the sealed record holds them. The builder files and the templates (package data) stay tracked.
 
 ### Requirement 6: Running a session
 

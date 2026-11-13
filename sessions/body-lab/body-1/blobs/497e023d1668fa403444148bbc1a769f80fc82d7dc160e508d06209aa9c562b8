@@ -1,0 +1,39 @@
+# H5: Frequency of the travelling wave sets forward travel
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["f", "ph"]
+SWEEP = ["f"]
+TRIALS = [
+    [0.5, 1.2],
+    [3.0, 1.2],
+    [4.0, 1.2],
+    [6.0, 1.2],
+    [8.0, 1.2],
+    [12.0, 1.2],
+]
+
+
+def w(t, f, ph, i):
+    return math.sin(2 * math.pi * f * t - i * ph)
+
+
+def c0(t, f, ph):
+    return w(t, f, ph, 0)
+
+
+def c1(t, f, ph):
+    return w(t, f, ph, 1)
+
+
+def c2(t, f, ph):
+    return w(t, f, ph, 2)
+
+
+def c3(t, f, ph):
+    return w(t, f, ph, 3)
+
+
+def c4(t, f, ph):
+    return w(t, f, ph, 4)

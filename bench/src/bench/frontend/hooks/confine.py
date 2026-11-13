@@ -1,7 +1,7 @@
 """The confinement hook (Requirements 17.7-17.10, design F8). Copied into a lab's `.kiro/hooks/` by `bench-
 lab-hooks`, and run before every tool call:
 
-    uv run --no-project python .kiro/hooks/confine.py
+    uv run --no-project python -B .kiro/hooks/confine.py
 
 It refuses, with exit code 2, every call that reads or writes a path outside the lab, every write into a
 protected folder of the lab's `.kiro`, and every call it cannot read or classify. Refusals are logged with

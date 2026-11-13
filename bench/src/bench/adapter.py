@@ -61,6 +61,8 @@ class Declaration:
     picture: PictureKind
     budget: int
     fake: bool
+    goal: str
+    measured_by: str
 
 
 ComputedInputs = Mapping[str, float | tuple[float, ...]]
@@ -177,6 +179,10 @@ def check_declaration(decl: Declaration) -> None:
         raise DeclarationError(f"budget must be a positive int, got {decl.budget!r}")
     if not isinstance(decl.fake, bool):
         raise DeclarationError("fake must be a bool")
+    for name in ("goal", "measured_by"):
+        value = getattr(decl, name)
+        if not isinstance(value, str) or not value.strip():
+            raise DeclarationError(f"{name} must be non-empty text")
 
 
 def _finite(value: object) -> bool:

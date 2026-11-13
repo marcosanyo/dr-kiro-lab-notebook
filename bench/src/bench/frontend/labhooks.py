@@ -14,7 +14,7 @@ from pathlib import Path
 
 SOURCES = Path(__file__).resolve().parent / "hooks"
 SCRIPTS = ("confine.py", "calllog.py")
-RUN = "uv run --no-project python .kiro/hooks/"
+RUN = "uv run --no-project python -B .kiro/hooks/"
 HOOK_FILES = {
     "confine-pre-tool.json": ("Refuse calls outside the lab", "PreToolUse", "confine.py"),
     "calllog-pre-tool.json": ("Log every call before it runs", "PreToolUse", "calllog.py pre"),

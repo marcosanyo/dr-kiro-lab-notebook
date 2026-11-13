@@ -1,0 +1,35 @@
+### H9: A negative c1 offset steers the 3.25 Hz gait clockwise
+
+WHEN the travelling wave runs at f=3.25 Hz, ph=0.8 and c1 gets an added offset b<0 (clipped to [-1,1]), THE system SHALL turn less counter-clockwise than with b=0 (heading +32) while keeping x above 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-25.0, 25.0]
+label = "new-combination"
+[prediction.when]
+f = 3.25
+ph = 0.8
+b = -0.2
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.2, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 3.25
+ph = 0.8
+b = -0.2
+
+[[prediction]]
+id = "P3"
+measurement = "heading"
+range = [-90.0, 15.0]
+label = "outside"
+[prediction.when]
+f = 3.25
+ph = 0.8
+b = -0.5
+```

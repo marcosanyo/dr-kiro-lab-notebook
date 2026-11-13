@@ -12,8 +12,10 @@ Work through the phases in this order. Set `PHASE` in each experiment file to th
 2. **State rules** (`rules`): turn what you saw into rules a measurement could prove wrong.
 3. **Test the rules** (`test`): predict conditions never run, then run them. Label these predictions
    `new-combination` or `outside`.
-4. **Predict the best point** (`best`): use the rules to predict the inputs that give the best result, then run
-   them.
+4. **Predict the best point** (`best`): use the rules to predict the inputs that best meet the goal given in the
+   bench tools' descriptions, then run them.
+
+In the map, rules and test phases, study every measurement, not only the one the goal names.
 
 ## Budget
 

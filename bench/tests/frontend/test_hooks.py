@@ -91,7 +91,7 @@ def test_installed_copies_equal_the_sources_and_hook_files_are_v1(hooked: Lab) -
         assert body["version"] == "v1" and entry["trigger"] == trigger
         assert entry["action"] == {
             "type": "command",
-            "command": "uv run --no-project python .kiro/hooks/" + command,
+            "command": "uv run --no-project python -B .kiro/hooks/" + command,
         }
 
 

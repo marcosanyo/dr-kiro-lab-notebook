@@ -32,7 +32,7 @@ section 9.
     continue line, interactive and headless, and the steps for the fake session of task 5.
   - _Requirements: 6_
 
-- [ ] 5. Check Dr. Kiro in the first `body-lab` session (deferred)
+- [x] 5. Check Dr. Kiro in the first `body-lab` session (deferred)
   - Deferred by the user: no separate fake session. The first `body-lab` session in Kiro CLI checks the same
     points, and its `body-lab` task names this one.
   - Pass: the record ends with an `ended` seal; `bench-scan` on the sealed folder reports nothing; no steering
@@ -41,4 +41,8 @@ section 9.
   - If it fails, the session is stopped with `bench-stop` and a new one started after the fix; nothing else is
     judged here. A failure is reported, not worked around (`rules.md` 2).
   - The steps for a fake session stay in `bench/README.md` for a quick check after builder-file changes.
+  - Result of the first run (body-1, macOS, 2026-11-13): sealed as `ended` with 0 budget left, without any
+    continue line; `bench-verify` verified 117 entries; `bench-scan` on the lab and the sealed folder reported no
+    findings, after hooks were changed to run with `python -B` (a `.pyc` in the lab had stopped the scan); Dr.
+    Kiro named only `method` and `workflow` as its steering.
   - _Requirements: 7.4_

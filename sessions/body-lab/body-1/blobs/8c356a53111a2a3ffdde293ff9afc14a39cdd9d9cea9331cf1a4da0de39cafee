@@ -1,0 +1,50 @@
+# Requirements
+
+### H1: Constant drive on c0 or c1 moves the body
+
+WHEN c0 is held at 1 and all other channels at 0, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "inside"
+[prediction.when]
+k = 0
+```
+
+Parameter k = index of the channel driven at 1 (others 0).
+
+### H2: Constant drive on c3 moves the body forward
+
+WHEN c3 is held at 1 and all other channels at 0, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "inside"
+[prediction.when]
+k = 3
+```
+
+Trials: k=3 (c3=1), k=4 (c4=1), k=5 (c1=-1).
+
+### H3: Oscillating a single channel produces net x travel
+
+WHEN c0 alone is driven with a 1 Hz sine of amplitude 1, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+k = 0
+f = 1.0
+```
+
+Trials: k selects which channel (0, 2, 3) gets sin(2 pi f t); f=1.

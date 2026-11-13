@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/design.md`](../../../.kiro/specs/dr-kiro/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `d3a98c4d714f201a54e36de63cedb505ebbcdf18fd6e38d5569d276e0079b1a1`
+> 原文 SHA-256: `bbadf9cbaa05007e8c014efec849fcc96af07e513da4a6ec71e1573195de828b`
 
 # 設計: dr-kiro
 
@@ -102,7 +102,7 @@ tasks.md          # Tasks / - [ ] Map the system / - [ ] State rules / - [ ] Tes
 
 ### 7.1 `bench-make-lab <lab>`
 
-エージェントファイルとプロンプトを `.kiro/agents/` に、2 つのステアリングファイルを `.kiro/steering/` にコピーし、`bench-lab-hooks` のインストーラーを実行します。上書きするのはそれらのファイルだけです。`experiments/` がなければ作成し、ラボの `.gitignore`（`experiments/`、`pictures/`）を書きます。
+エージェントファイルとプロンプトを `.kiro/agents/` に、2 つのステアリングファイルを `.kiro/steering/` にコピーし、`bench-lab-hooks` のインストーラーを実行します。上書きするのはそれらのファイルだけです。`experiments/` がなければ作成し、ラボの `.gitignore`（`experiments/`、`pictures/`、`.kiro/specs/`）を書きます。
 
 ### 7.2 `bench-new-session`
 

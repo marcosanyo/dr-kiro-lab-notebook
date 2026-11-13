@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `7291e5839c6a7992f97f013c87a3885265bd25319a53c12ece17d9e74685427a`
+> 原文 SHA-256: `a946259f2d42c0fbca2d099aa0fe2620b3f4372f5835fc44f16197064fefc33a`
 
 # 設計: lab-bench（コア）
 
@@ -513,7 +513,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 
 ## F8. 閉じ込めフック (17.7-17.10)
 
-すべてのツール呼び出しの前に実行されます。フックの入力は、`tool_name` と `tool_input` を持つ stdin 上の JSON です（スパイク、Q2）。どちらのフックスクリプトも標準ライブラリだけを使い、スパイクのフックと同じように、ラボを作業フォルダーとして `uv run --no-project python .kiro/hooks/<script>.py` で実行します（Python は `uv` 経由でのみ使う、`tech.md`）。
+すべてのツール呼び出しの前に実行されます。フックの入力は、`tool_name` と `tool_input` を持つ stdin 上の JSON です（スパイク、Q2）。どちらのフックスクリプトも標準ライブラリだけを使い、スパイクのフックと同じように、ラボを作業フォルダーとして `uv run --no-project python -B .kiro/hooks/<script>.py` で実行します（Python は `uv` 経由でのみ使う、`tech.md`）。`-B` は、Python がラボに `__pycache__` を書かないようにします。コンパイル済みのファイルはテキストではないので、ブラインドスキャンが読めないためです。
 
 ```
 lab = the folder two levels above this script's folder (the script lives in <lab>/.kiro/hooks/)

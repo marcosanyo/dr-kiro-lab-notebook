@@ -1,0 +1,14 @@
+### H3: Oscillating a single channel produces net x travel
+
+WHEN c0 alone is driven with a 1 Hz sine of amplitude 1, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+k = 0
+f = 1.0
+```

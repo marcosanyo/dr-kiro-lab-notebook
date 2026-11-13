@@ -63,6 +63,8 @@ def test_descriptions_come_from_the_declaration(lab: Lab) -> None:
     assert (
         "drive" in run and "gain" in run and "[0.0, 3.0]" in run and "lost" in run and "budget is 12" in run
     )
+    assert "Goal (for the best point): Make distance as large as possible." in run
+    assert "How it is measured: Computed by the fake application" in run
 
 
 def test_run_result_has_measurements_paths_and_no_image(lab: Lab) -> None:

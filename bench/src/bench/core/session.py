@@ -178,6 +178,8 @@ def declaration_record(decl: Declaration) -> dict[str, Any]:
         "picture": decl.picture,
         "budget": decl.budget,
         "fake": decl.fake,
+        "goal": decl.goal,
+        "measured_by": decl.measured_by,
     }
 
 

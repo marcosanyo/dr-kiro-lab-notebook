@@ -18,6 +18,8 @@ DECL = Declaration(
     picture="image/png",
     budget=10,
     fake=True,
+    goal="g",
+    measured_by="m",
 )
 
 HEAD = 'import math\nPHASE = "map"\nMODE = "compare"\nPARAMS = ["a"]\nTRIALS = [[0.5]]\n'

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/body-lab/tasks.md`](../../../.kiro/specs/body-lab/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `06bfbc910e282c16447517fe6e59c143d708bc23c7b5e30e592fef0e9be228d1`
+> 原文 SHA-256: `283b3c6a16bcdee840e59015b12341f5bb319f0cbda4124c79aa5a524d19ab49`
 
 # タスク: body-lab
 
@@ -21,6 +21,7 @@
   - `body-lab/README.md`（計測のしかた、視野の大きさ、実行方法、制限）。`bench-make-lab body-lab/lab` を実行し、コミットする。
   - _要件: 2.4, 5.2, 5.4_
 
-- **5. 40 試行の Dr. Kiro セッション 1 回** — **Stop and ask（止めて確認）** — 未着手
+- **5. 40 試行の Dr. Kiro セッション 1 回** — **Stop and ask（止めて確認）** — 完了
   - ユーザーが Mac で実行する。合格: `ended` として封印され、ラボと封印済みフォルダーに対する `bench-scan` が何も報告しないこと。あわせて dr-kiro のタスク 5 の確認も行う。
+  - 最初の実行の結果（body-1、macOS、2026-11-13）: 再開の一文なしで、予算の残り 0 で `ended` として封印された。`bench-verify` は 117 件を検証した。ラボと封印済みフォルダーに対する `bench-scan` は、フックを `python -B` で起動するよう変えた後に、検出なしと報告した（ラボ内の `.pyc` がスキャンを止めていた）。Dr. Kiro が挙げたステアリングは `method` と `workflow` だけだった。
   - _要件: 6.2_

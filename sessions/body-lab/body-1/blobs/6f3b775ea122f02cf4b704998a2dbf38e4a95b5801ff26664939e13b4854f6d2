@@ -1,0 +1,17 @@
+# Requirements
+
+### H1: Constant drive on c0 or c1 moves the body
+
+WHEN c0 is held at 1 and all other channels at 0, THE system SHALL move the body by more than 0.05 m in x.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "inside"
+[prediction.when]
+k = 0
+```
+
+Parameter k = index of the channel driven at 1 (others 0).
