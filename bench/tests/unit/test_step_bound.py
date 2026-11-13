@@ -18,6 +18,8 @@ DECL = Declaration(
     picture="image/png",
     budget=40,
     fake=True,
+    goal="g",
+    measured_by="m",
 )
 FIXTURES = sorted((Path(__file__).resolve().parent.parent / "fixtures" / "step_bound").glob("*.py"))
 

@@ -45,6 +45,8 @@ def declaration(budget: int = BUDGET) -> Declaration:
         picture="image/png",
         budget=budget,
         fake=True,
+        goal="Make distance as large as possible.",
+        measured_by="Computed by the fake application from its inputs; these numbers are not results.",
     )
 
 

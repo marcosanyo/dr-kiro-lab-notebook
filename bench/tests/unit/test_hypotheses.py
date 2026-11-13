@@ -11,6 +11,8 @@ DECL = Declaration(
     picture="image/png",
     budget=10,
     fake=True,
+    goal="g",
+    measured_by="m",
 )
 FILE = "requirements.md"
 

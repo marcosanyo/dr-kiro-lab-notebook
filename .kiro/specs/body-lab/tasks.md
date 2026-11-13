@@ -2,7 +2,7 @@
 
 Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
 
-- [ ] 1. Bench: `goal` and `measured_by`
+- [x] 1. Bench: `goal` and `measured_by`
   - Add both fields to `Declaration` and `check_declaration`, to the fake application, and to the tool
     descriptions (`describe.py`); update the dr-kiro `workflow.md` (study every measurement in phases 1-3).
   - _Requirements: lab-bench 2.1, dr-kiro 3.3_

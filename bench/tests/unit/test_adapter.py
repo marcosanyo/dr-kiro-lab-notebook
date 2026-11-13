@@ -38,6 +38,8 @@ def decl(**changes: object) -> Declaration:
         picture="image/png",
         budget=10,
         fake=True,
+        goal="g",
+        measured_by="m",
     )
     return dataclasses.replace(base, **changes)  # type: ignore[arg-type]
 
@@ -76,6 +78,8 @@ def test_valid_declaration() -> None:
         {"picture": "image/jpeg"},
         {"budget": 0},
         {"budget": True},
+        {"goal": ""},
+        {"measured_by": "  "},
     ],
 )
 def test_declaration_problems(changes: dict[str, object]) -> None:
