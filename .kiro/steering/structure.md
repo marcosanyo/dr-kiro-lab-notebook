@@ -19,6 +19,8 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 /bench-run/        builder-side files of a running session (session config, hook log); git-ignored
 /docs/brief.md     the brief
 /docs/ja/          Japanese reference translations of the specs (see japanese-translations.md)
+/docs/status.md    the current step and open questions, for handing over between sessions (handoff.md)
+/docs/requests/    the user's requests for specs, from TEMPLATE.md (handoff.md)
 /scripts/          repository scripts (ja-check.sh)
 /spikes/           scratch area, not part of the product
 ```
