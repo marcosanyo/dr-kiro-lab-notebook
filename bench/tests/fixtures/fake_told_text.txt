@@ -1,0 +1,10 @@
+The system has these inputs (knobs):
+- drive: a function of time t, values in [-1.0, 1.0]; one trial lasts 1.0 s; 11 samples from t = 0.0 s to t = 1.0 s, every 0.1 s.
+- gain: a number in [0.0, 3.0] per trial.
+Each trial measures:
+- distance (one number, unit 1).
+- turn (one number, unit 1); it can instead be not measured: lost.
+- trace (a series of numbers, unit 1).
+Each trial also gives one picture (png file). The budget is 12 trials.
+How it is measured: Computed by the fake application from its inputs; these numbers are not results.
+Goal (for the best point): Make distance as large as possible.

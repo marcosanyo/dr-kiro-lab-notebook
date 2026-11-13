@@ -225,3 +225,52 @@ def test_encode_png_is_deterministic_and_plain() -> None:
     pixels = [[(10, 20, 30)] * 3] * 2
     assert encode_png(pixels) == encode_png(pixels)
     assert zlib.decompress(encode_png(pixels)[33 + 8 : -12 - 4])[:1] == b"\x00"
+
+
+# Knob descriptions (Requirement 18, design A1 and A3).
+
+
+def _with_description(text: object) -> Declaration:
+    return decl(knobs=(NumberKnob("gain", 0.0, 3.0, text),))  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        (7, "text"),
+        ("two\nlines", "control"),
+        ("a\ttab", "control"),
+        (" leading", "start or end"),
+        ("trailing ", "start or end"),
+        ("x" * 801, "limit is 800"),
+    ],
+)
+def test_description_refusals_name_the_knob(text: object, reason: str) -> None:
+    for knob in (NumberKnob("gain", 0.0, 3.0, text), FunctionKnob("drive", -1, 1, (0.0, 1.0), 1.0, text)):  # type: ignore[arg-type]
+        with pytest.raises(DeclarationError) as error:
+            check_declaration(decl(knobs=(knob,)))
+        assert repr(knob.name) in str(error.value)
+        assert reason in str(error.value)
+
+
+def test_description_accepted() -> None:
+    check_declaration(_with_description("Width over height of the body."))
+    check_declaration(_with_description("x" * 800))
+    check_declaration(_with_description(""))
+
+
+def test_description_key_in_record() -> None:
+    from bench.core.session import declaration_record
+
+    plain = declaration_record(decl())
+    assert all("description" not in k for k in plain["knobs"])
+    told = declaration_record(
+        decl(
+            knobs=(
+                FunctionKnob("drive", -1.0, 1.0, (0.0, 1.0), 1.0, "Drive."),
+                NumberKnob("gain", 0.0, 3.0),
+            )
+        )
+    )
+    assert told["knobs"][0]["description"] == "Drive."
+    assert "description" not in told["knobs"][1]

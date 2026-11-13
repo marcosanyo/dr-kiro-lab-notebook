@@ -26,3 +26,5 @@ spikes/mcp/*
 !spikes/mcp/results.md
 # Builder-side files of a running session (never in a lab)
 bench-run/
+# Task tool state (generated)
+.kiro/specs/*/tasks.meta.json

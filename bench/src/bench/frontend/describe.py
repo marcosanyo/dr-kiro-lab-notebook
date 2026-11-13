@@ -22,12 +22,15 @@ def declaration_text(decl: Declaration) -> str:
     lines = ["The system has these inputs (knobs):"]
     for knob in decl.knobs:
         if isinstance(knob, FunctionKnob):
-            lines.append(
+            line = (
                 f"- {knob.name}: a function of time t, values in [{knob.low!r}, {knob.high!r}]; "
                 f"one trial lasts {knob.trial_seconds!r} s; {_times(knob.sample_times)}."
             )
         else:
-            lines.append(f"- {knob.name}: a number in [{knob.low!r}, {knob.high!r}] per trial.")
+            line = f"- {knob.name}: a number in [{knob.low!r}, {knob.high!r}] per trial."
+        if knob.description != "":
+            line += " " + knob.description
+        lines.append(line)
     lines.append("Each trial measures:")
     for m in decl.measurements:
         kind = "one number" if m.kind == "scalar" else "a series of numbers"

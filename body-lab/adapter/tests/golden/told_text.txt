@@ -1,0 +1,16 @@
+The system has these inputs (knobs):
+- c0: a function of time t, values in [-1.0, 1.0]; one trial lasts 5.0 s; 250 samples from t = 0.0 s to t = 4.98 s, every 0.02 s.
+- c1: a function of time t, values in [-1.0, 1.0]; one trial lasts 5.0 s; 250 samples from t = 0.0 s to t = 4.98 s, every 0.02 s.
+- c2: a function of time t, values in [-1.0, 1.0]; one trial lasts 5.0 s; 250 samples from t = 0.0 s to t = 4.98 s, every 0.02 s.
+- c3: a function of time t, values in [-1.0, 1.0]; one trial lasts 5.0 s; 250 samples from t = 0.0 s to t = 4.98 s, every 0.02 s.
+- c4: a function of time t, values in [-1.0, 1.0]; one trial lasts 5.0 s; 250 samples from t = 0.0 s to t = 4.98 s, every 0.02 s.
+Each trial measures:
+- x (one number, unit m); it can instead be not measured: lost.
+- y (one number, unit m); it can instead be not measured: lost.
+- heading (one number, unit deg); it can instead be not measured: lost.
+- track_x (a series of numbers, unit m); it can instead be not measured: lost.
+- track_y (a series of numbers, unit m); it can instead be not measured: lost.
+- track_heading (a series of numbers, unit deg); it can instead be not measured: lost.
+Each trial also gives one picture (png file). The budget is 40 trials.
+How it is measured: Computed from the simulator's pose, as the quantities a camera straight above could measure; not measured from a camera image. The camera sees a floor area of 2.59 m by 1.46 m. x, y and heading are relative to the start of each trial: x in the direction the body faces at the start, y to its left, heading counter-clockwise seen from above, in (-180, 180]. At the start the body is at x = 0, y = 0, and the view spans x from -0.84 to 1.74 m and y from -0.73 to 0.73 m. A value is lost when the camera could not see the tracked point.
+Goal (for the best point): Move the body as far as possible in the direction it faces at the start: maximise x.
