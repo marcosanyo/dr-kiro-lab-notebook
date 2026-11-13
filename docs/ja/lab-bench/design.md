@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `a4820dbdbb5f86ecd0d362de55ab2b3268a6ee68e6ba2b7e6cd55025064aed23`
+> 原文 SHA-256: `7291e5839c6a7992f97f013c87a3885265bd25319a53c12ece17d9e74685427a`
 
 # 設計: lab-bench（コア）
 
@@ -109,7 +109,7 @@ class NumberKnob:    name: str; low: float; high: float
 class Measurement:   name: str; unit: str; kind: Literal["scalar", "series"]; not_measured: tuple[str, ...]
 @dataclass(frozen=True)
 class Declaration:   knobs: tuple[Knob, ...]; measurements: tuple[Measurement, ...]
-                     picture: PictureKind; budget: int; fake: bool
+                     picture: PictureKind; budget: int; fake: bool; goal: str; measured_by: str
 
 class Adapter(Protocol):
     def declaration(self) -> Declaration: ...
@@ -463,7 +463,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 | `end_session` | なし | `Session.end` |
 
 - `start` も `stop` もありません (17.2)。`get_budget` や `get_result` のツールもありません。Requirement 17.2 が挙げるのは 4 つの操作であり、残りの予算は実行のたびに返されるからです (7.6)。
-- 説明は `describe.py` で `Adapter.declaration()` から組み立てます。内容は、ノブ名と範囲、関数ノブのサンプル時刻、試行の長さ、計測名と単位、未計測結果の名前、画像の種類、予算です。宣言が唯一の情報源であり (2.2)、同期を保たなければならない 2 つ目のコピーはありません。Dr. Kiro のステアリングがツールの説明を参照するか、宣言を繰り返すかは、`dr-kiro` 仕様が決めます。
+- 説明は `describe.py` で `Adapter.declaration()` から組み立てます。内容は、ノブ名と範囲、関数ノブのサンプル時刻、試行の長さ、計測名と単位、未計測結果の名前、画像の種類、予算、目標と計測の方法（`goal`、`measured_by`。空でないテキストで、説明の他の部分とともにビルダーレベルでスキャンされます）です。宣言が唯一の情報源であり (2.2)、同期を保たなければならない 2 つ目のコピーはありません。Dr. Kiro のステアリングがツールの説明を参照するか、宣言を繰り返すかは、`dr-kiro` 仕様が決めます。
 - 起動時に `bench-mcp` は、生成した説明をコアのスキャン（`bench.scan`）でビルダーレベルでスキャンします。検出があれば、サーバーは 0 以外の終了コードで停止し、検出内容を stderr に出力します。ここでは他のブラインド確認は追加しません。コアのスキャンがすでに記録とすべての結果を対象にしているからです (Requirement 15)。
 
 ## F4. 結果の表示 (17.3)

@@ -97,7 +97,9 @@ Short sections, each a few bullets:
 
 - **Four phases**, with their `PHASE` values: map the system (`map`), state rules (`rules`), test the rules by
   predicting conditions never run (`test`), use the rules to predict the best point (`best`). One line on the aim of
-  each. A test or best prediction should be labelled `new-combination` or `outside`.
+  each. A test or best prediction should be labelled `new-combination` or `outside`. In map, rules and test,
+  study every measurement, not only the one the goal names; the goal (in the tool descriptions) is used in the
+  best phase.
 - **Budget.** Every trial uses one unit. Keep enough for the test and best phases. No numbers.
 - **After each verdict.** Update `design.md` with what you now believe and why, and tick or add tasks in
   `tasks.md`.
