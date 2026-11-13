@@ -219,3 +219,44 @@ one place where the MCP SDK is imported.
     table from the `end` snapshot of the sealed folder.
   - `sessions/body-lab/body-1` is not changed; it stays as sealed, without a table (design Decision 6).
   - _Requirements: 10.4, 10.5, 11.1, 12.6, 13.2, 16.2, 16.3_
+
+## Amendment: knob descriptions (Requirement 18)
+
+Added for the `wind-tunnel` spec, which depends on these tasks: its adapter is not written before tasks 23-26 are
+done (`wind-tunnel` task 1.1 checks it). Order matters: task 23 makes the golden files from the code as it is now,
+so it comes first. Design: "Amendment: knob descriptions" (A1-A8).
+
+- [ ] 23. Golden files of body-lab and the fake application, before any change
+  - Before touching `bench/src/bench/adapter.py`, `core/session.py` or `frontend/describe.py`, write
+    `body-lab/adapter/tests/golden/told_text.txt` and `declaration_record.json` from the current code (design A5),
+    and the same pair for the fake application in `bench/tests/fixtures/`. Add the comparison tests. Run
+    `sh bench/scripts/check.sh` and the body-lab adapter tests; they pass on the unchanged code. Commit the golden
+    files. Do not edit them afterwards.
+  - Verified by: the tests pass now, and `git log` shows the golden files committed before the change of task 24.
+  - _Requirements: 18.8_
+
+- [ ] 24. Contract field, declaration check and record
+  - Add `description: str = ""` last to `FunctionKnob` and `NumberKnob`; add `DESCRIPTION_MAX = 800` and the
+    check of design A1 to `check_declaration`; add the conditional key to `declaration_record` (design A3).
+  - Unit tests: each refusal of 18.2 names the knob; an accepted description; the key is absent when empty and
+    present when not; the golden tests of task 23 still pass.
+  - Property tests: P23 (check accepts exactly the valid strings) and P24 (key present exactly when not empty).
+  - _Requirements: 18.1, 18.2, 18.3, 18.6, 18.8_
+
+- [ ] 25. Told text
+  - `describe.declaration_text` appends the description on the knob's line (design A2); nothing else changes.
+  - Unit tests: a function knob and a number knob with a description; the description of one knob is not on
+    another's line; a test that `.description` is read only in `adapter.py`, `core/session.py` and
+    `frontend/describe.py`; the golden tests still pass.
+  - Property tests: P21 (empty descriptions give the pre-amendment text, with a reference renderer in the test)
+    and P22 (each description appears exactly on its own line).
+  - _Requirements: 18.3, 18.4, 18.5, 18.8, 18.9_
+
+- [ ] 26. Scans of descriptions, and the check that body-lab is unchanged
+  - Tests per design A4: a description with a derived term stops `bench-mcp` at startup; a session whose declaration
+    has such a description cannot be sealed; the allow list does not contain description words.
+  - Run the full session test of task 14 with one knob of a copy of the fake declaration carrying a description,
+    through start, seal, `bench-verify` and `bench-scan` on the sealed folder.
+  - Run `sh bench/scripts/check.sh` and the body-lab adapter tests (the golden comparison must pass byte for byte).
+    If a golden file differs, **stop and report** the first differing line (design A8); do not edit the golden file.
+  - _Requirements: 18.5, 18.7, 18.8_

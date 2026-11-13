@@ -16,6 +16,8 @@ The requirements are in two groups:
   blind scan, and the property-based tests. The core does not depend on the front end.
 - **Front end** (Requirement 17): how Dr. Kiro calls the bench, its permissions, how pictures reach it, and long
   and parallel runs. Decided after the MCP spike; its results are in `spikes/mcp/results.md`.
+- **Amendment** (Requirement 18): an optional description text for a knob. Added after Requirements 1-17 were
+  implemented, at the request of the `wind-tunnel` spec. It changes no existing requirement and no number.
 
 Each requirement says which Kiro it is about. "Dr. Kiro" is the experimenter agent. "The builder" is Kiro working
 in this repository, or a person operating the bench.
@@ -578,3 +580,52 @@ the front end writes or returns. Nothing in the core depends on this requirement
   verified; the `wind-tunnel` spec decides the picture format with the adapter.
 - Not tested in the spike: calls longer than 900 s, and a write outside the lab (the spike's write rule has the
   same patterns as the read rule that asked).
+
+---
+
+# Amendment
+
+### Requirement 18: Knob description (amendment)
+
+**Amendment.** Added after Requirements 1-17 were implemented and tested (tasks 1-22), at the request of the
+`wind-tunnel` spec (its Requirement 3.2 and Decision 18). No existing requirement is renumbered or reworded. This
+requirement adds one optional text to a knob, and so extends the list of what an adapter provides in
+Requirement 2.1 by that text.
+
+**User story:** As the builder of an application, I want a knob to carry a short description that is part of the
+declaration, so that Dr. Kiro is told what each input is (a definition, with its unit and the meaning of the ends of
+its range) in the one declared set, with no second channel. As the builder of body-lab, I want nothing to change
+for an application that gives no description.
+
+**Concerns:** the builder and the adapter author. Dr. Kiro sees the description only as part of the tool
+descriptions (Requirement 17.4).
+
+#### Acceptance criteria
+
+1. THE adapter contract SHALL let each knob, of either kind, carry a description: a text in the field
+   `description`, whose default is the empty text. The empty text means that the knob has no description.
+2. WHEN the bench checks a declaration, THE bench SHALL refuse it, naming the knob and the problem, if a
+   description is not text, contains a line break or any other control character, has a space or a tab at its start
+   or end, or is longer than 800 characters.
+3. THE bench SHALL NOT interpret a description. No gate, no check of an experiment file and no check of a
+   prediction SHALL depend on it.
+4. WHEN a knob has a description, THE front end SHALL print it in the tool descriptions on the line of that knob,
+   after the knob's range, with the same function that prints the rest of the declaration. WHILE a knob has no
+   description, THE front end SHALL print the line of that knob exactly as before this amendment.
+5. THE declaration SHALL remain the only source of what Dr. Kiro is told (Requirement 2.2). THE description SHALL be
+   part of the declaration and of the text that the front end builds from it (the told text), and an application
+   MAY export that text by calling the same function the front end uses.
+6. WHEN the bench records the declaration at session start, THE bench SHALL write the key `description` for a knob
+   whose description is not empty, and SHALL write no such key for a knob whose description is empty. So the
+   record of an application that gives no description is byte-identical to a record made before this amendment
+   (Requirement 3.4).
+7. THE bench SHALL scan every description at the builder level, with the rest of the tool descriptions, when the
+   front end starts (design F3), and SHALL scan the declaration in the record at the builder level when the session
+   is sealed (Requirement 13.1). THE words of a description SHALL NOT be added to the allow list; the allow list
+   stays the declared names (Requirement 15.3).
+8. WHERE an application declares no description, THE bench SHALL give a told text and a session record that are
+   byte-identical to those of the bench before this amendment. This holds for body-lab, which declares none, and
+   SHALL be shown by a test that compares body-lab's told text and its recorded declaration with files made from
+   the bench before the change.
+9. FOR ALL declarations, with and without descriptions, THE told text SHALL contain each non-empty description
+   exactly as declared, on the line of its own knob, and SHALL contain no description of another knob on that line.

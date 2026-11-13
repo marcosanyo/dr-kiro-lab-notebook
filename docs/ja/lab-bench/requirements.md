@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/requirements.md`](../../../.kiro/specs/lab-bench/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `5e0c088213c6d1bb9ce2b5adc3e72730976bd50dfe93ee1455c304b20777fab1`
+> 原文 SHA-256: `066602411b05601554adc0cc70a5ffc9ccb97685efca20f349a7b6da28605ee6`
 
 # 要件: lab-bench
 
@@ -13,6 +13,7 @@
 
 - **コア**（要件 1-16）: ゲート、記録、スナップショット、封印済みセッション記録、アダプター契約、ブラインドスキャン、プロパティベーステストです。コアはフロントエンドに依存しません。
 - **フロントエンド**（要件 17）: Dr. Kiro がベンチを呼び出す方法、Dr. Kiro の権限、画像が Dr. Kiro に届く方法、長時間の実行と並列の実行です。MCP スパイクの後に決定しました。スパイクの結果は `spikes/mcp/results.md` にあります。
+- **改訂**（要件 18）: ノブの任意の説明テキストです。要件 1-17 を実装した後に、`wind-tunnel` spec の求めで加えました。既存の要件も数値も変えません。
 
 各要件には、どの Kiro についての要件かが書かれています。「Dr. Kiro」は実験者のエージェントです。「ビルダー」は、このリポジトリで作業する Kiro、またはベンチを操作する人です。
 
@@ -332,3 +333,27 @@ MCP スパイク（`spikes/mcp/results.md`）の後にユーザーが決定し�
 
 - スパイクで開いたのは PNG だけです。Dr. Kiro のファイルツールが wind-tunnel の渦度アニメーションを表示できるかは検証していません。画像の形式は、`wind-tunnel` 仕様がアダプターとともに決めます。
 - スパイクでテストしていないこと: 900 s より長い呼び出し、およびラボ外への書き込み（スパイクの書き込みルールは、確認を求めた読み取りルールと同じパターンを持っています）。
+
+---
+
+# 改訂
+
+### 要件 18: ノブの説明（改訂）
+
+**改訂。** 要件 1-17 を実装しテストした後（タスク 1-22）、`wind-tunnel` spec の求め（その要件 3.2 と Decision 18）で加えました。既存の要件は番号の振り直しも書き換えもしません。この要件はノブに任意のテキストを 1 つ加え、したがって要件 2.1 のアダプターが提供するもののリストを、そのテキスト分だけ広げます。
+
+**ユーザーストーリー:** アプリケーションのビルダーとして、ノブが宣言の一部である短い説明を持てるようにしたい。Dr. Kiro が各入力が何であるか（定義、単位、範囲の両端の意味）を、第 2 の経路なしに、宣言された 1 つの集合の中で伝えられるようにするためである。body-lab のビルダーとして、説明を与えないアプリケーションでは何も変わらないようにしたい。
+
+**対象:** ビルダーとアダプターの作者。Dr. Kiro が説明を見るのは、ツールの説明の一部としてだけです（要件 17.4）。
+
+#### 受け入れ基準
+
+1. THE adapter contract SHALL let each knob, of either kind, carry a description: a text in the field `description`, whose default is the empty text。空のテキストは、そのノブに説明がないことを意味する。
+2. WHEN the bench checks a declaration、THE bench SHALL refuse it, naming the knob and the problem, if a description is not text, contains a line break or any other control character, has a space or a tab at its start or end, or is longer than 800 characters。
+3. THE bench SHALL NOT interpret a description。いかなるゲートも、実験ファイルの検査も、予測の検査も、それに依存してはならない。
+4. WHEN a knob has a description、THE front end SHALL print it in the tool descriptions on the line of that knob, after the knob's range, with the same function that prints the rest of the declaration。WHILE a knob has no description、THE front end SHALL print the line of that knob exactly as before this amendment。
+5. THE declaration SHALL remain the only source of what Dr. Kiro is told（要件 2.2）。THE description SHALL be part of the declaration and of the text that the front end builds from it (the told text)、and an application MAY export that text by calling the same function the front end uses。
+6. WHEN the bench records the declaration at session start、THE bench SHALL write the key `description` for a knob whose description is not empty, and SHALL write no such key for a knob whose description is empty。したがって、説明を与えないアプリケーションの記録は、この改訂より前に作られた記録とバイト単位で同一である（要件 3.4）。
+7. THE bench SHALL scan every description at the builder level, with the rest of the tool descriptions, when the front end starts (design F3), and SHALL scan the declaration in the record at the builder level when the session is sealed（要件 13.1）。THE words of a description SHALL NOT be added to the allow list; the allow list stays the declared names（要件 15.3）。
+8. WHERE an application declares no description、THE bench SHALL give a told text and a session record that are byte-identical to those of the bench before this amendment。これは説明を宣言しない body-lab について成り立ち、body-lab の伝えるテキストと記録された宣言を、変更前のベンチから作ったファイルと比べるテストで SHALL be shown。
+9. FOR ALL declarations, with and without descriptions, THE told text SHALL contain each non-empty description exactly as declared, on the line of its own knob, and SHALL contain no description of another knob on that line。
