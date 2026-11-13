@@ -7,7 +7,7 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
     descriptions (`describe.py`); update the dr-kiro `workflow.md` (study every measurement in phases 1-3).
   - _Requirements: lab-bench 2.1, dr-kiro 3.3_
 
-- [ ] 2. Simulation and measurer
+- [x] 2. Simulation and measurer
   - `body-lab/adapter/` uv project; `sim.py`, `measure.py`, `settings.py` (design 2, 3).
   - _Requirements: 1, 2, 5.1_
 

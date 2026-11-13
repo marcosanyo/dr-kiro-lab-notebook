@@ -1,0 +1,33 @@
+[project]
+name = "body-lab-adapter"
+version = "0.1.0"
+description = "body-lab: the legged body in MuJoCo as a bench application."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "lab-bench",
+    "mujoco",
+]
+
+[tool.uv.sources]
+lab-bench = { path = "../../bench", editable = true }
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "body_lab"
+
+[dependency-groups]
+dev = ["pytest>=9.2.0", "ruff>=0.17.4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "BLE", "SIM"]
