@@ -213,9 +213,12 @@ without knowing how they were computed.
 3. FOR ALL synthetic lift signals that are a sinusoid of known Strouhal number, in a range the design states and
    justifies, with any mean, any amplitude above 0.01 and the length and sampling interval of a settled part, THE
    `strouhal` estimator SHALL return a value within 1% of the known value.
-4. FOR ALL synthetic lift signals that are a sinusoid with a known amplitude and mean, THE `cl_amp` and `cl_mean`
-   estimators SHALL return values within 1% of the known amplitude (absolute 1e-6 when the amplitude
-   is 0) and the known mean.
+4. FOR ALL synthetic lift signals that are a sinusoid with a known amplitude and mean, THE `cl_amp` estimator SHALL
+   return a value within 1% of the known amplitude (absolute 1e-6 when the amplitude is 0), AND THE `cl_mean`
+   estimator SHALL return a value within 1% of the known mean plus amplitude / (pi * f * T), where f is the
+   frequency of the signal and T is the length of the settled part (absolute 1e-6 when the amplitude is 0 and the
+   mean is 0). The extra term is the largest shift that a leftover partial period causes, because the mean is taken
+   over the settled part and not over whole periods.
 5. FOR ALL synthetic signals, THE `shedding` value SHALL be 1 exactly when the estimated `cl_amp` is above 0.01.
 6. THE estimators SHALL give the same result for the same series (no randomness).
 
@@ -685,7 +688,7 @@ reading check failed.
     radius = `corner` x min(1, `aspect`) / 2, as in the prototype (Requirement 6.2); the settle criterion: the
     second half of the settled part against the first half, mean `cd` within 2%, `cl_amp` within 10% with a floor of
     0.002, and at least 5 periods when the lift oscillates (Requirement 8.3); the wall-clock limit of 140 s per run
-    (Requirement 8.7); the estimator accuracy of 1% (Requirements 5.3 and 5.4); (the earlier picture of 24 to 48 frames,
+    (Requirement 8.7); the estimator accuracy of 1% (Requirements 5.3 and 5.4; for `cl_mean` the bound of 5.4 adds amplitude / (pi * f * T)); (the earlier picture of 24 to 48 frames,
     480 to 800 pixels wide, is replaced by items 23 and 24); the goal sentence "Find the setting of the four
     knobs with the lowest cd among the settings where shedding is 0." (Requirement 11.2); "laminar" and a
     description of the picture are NOT added to the told set (Requirement 1.7).
@@ -743,6 +746,12 @@ reading check failed.
     13.9). They are no longer open questions.
 27. **The computational domain stays not told** (the user's decision). The sense of a positive angle is the
     prototype's (item 19).
+28. **Error bound of `cl_mean` (Requirement 5.4): option 1** (the user's decision, task 6.3). The estimator stays
+    unchanged: `cl_mean` is the time-weighted mean over the settled part (trapezoid rule), not over whole periods.
+    Reason: a window rarely holds a whole number of periods, so the leftover partial period shifts the mean by at
+    most `amplitude / (pi * f * T)` (`f` the signal frequency, `T` the length of the settled part), and the earlier
+    bound of 1% of the mean cannot hold for a mean near 0. The bound is now 1% of the known mean plus
+    `amplitude / (pi * f * T)`. The bound of `cl_amp` is unchanged.
 
 ## Open questions
 

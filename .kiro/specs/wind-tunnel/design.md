@@ -231,6 +231,9 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
 - `cd = mean(Fx) / q`, `cl = Fy / q`, `q = 0.5 * rho * speed^2 * height * depth` with the values 1 of `settings.toml`
   (4.2, 4.6). Means are time-weighted (trapezoid rule over the settled part divided by its length).
 - `cl_mean` is the time-weighted mean of `cl`; `cl_amp = (max(cl) - min(cl)) / 2` over the samples.
+  The mean is over the settled part, not over whole periods. A window rarely holds a whole number of periods, so
+  the leftover partial period shifts the mean by at most `amplitude / (pi * f * T)` (`f` the signal frequency, `T`
+  the length of the settled part). This is part of the bound of Requirement 5.4 (Decision 28 of the requirements).
 - `shedding = 1.0` when `cl_amp > 0.01`, else `0.0` (4.2).
 - `strouhal` (only when `shedding` is 1): remove nothing; for each frequency `f` on a grid from `5 / T` to `1.0`
   with step `1 / (10 T)` (`T` the length of the settled part), fit `a cos(2 pi f t) + b sin(2 pi f t) + c` by linear
@@ -242,7 +245,8 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   above 0.01")` for `strouhal` and does not run the estimator (4.4).
 - The accuracy range of Requirement 5.3: St in [0.08, 0.5]. The low end is the five-period rule (0.0714) with margin;
   the high end is at least twice any value expected for a bluff body, and at 0.5 and `ESTIMATOR_MAX_DT` there are 40
-  samples per period. The amplitude in 5.3/5.4 is in [0.011, 3] and the mean in [-3, 3].
+  samples per period. The amplitude in 5.3/5.4 is in [0.011, 3] and the mean in [-3, 3]. The bound of `cl_mean` in 5.4 is 1% of the mean
+  plus `amplitude / (pi * f * T)`.
 - Settle (8.3), `settled(t, cd, cl, shedding, st) -> SettleResult(ok, reason)`: split the settled part at its
   midpoint in time; `|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`;
   `|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`; when `shedding` is 1,
@@ -452,7 +456,8 @@ of St.
 ### Property 5: Amplitude and mean accuracy
 
 For all such signals, and for amplitude 0, `cl_amp` is within 1% of the amplitude (absolute 1e-6 at 0) and
-`cl_mean` is within 1% of the mean (absolute 1e-6 at 0).
+`cl_mean` is within 1% of the mean plus `amplitude / (pi * f * T)` (absolute 1e-6 when amplitude and mean are 0),
+with `f` the signal frequency and `T` the length of the settled part.
 
 **Validates: Requirements 5.4**
 
