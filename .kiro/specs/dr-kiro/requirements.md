@@ -79,7 +79,8 @@ the bench expects and spend my budget well.
    what to fix; a bench failure ends the session.
 3. THE workflow SHALL state the four phases in order (map the system, state rules, test the rules by predicting
    conditions never run, use the rules to predict the best point), what each phase is for, and the `PHASE` value
-   of each.
+   of each. In the first three phases Dr. Kiro SHALL keep studying every measurement, including those the goal
+   does not name; the goal (`lab-bench` 2.1) decides only the best point of the last phase.
 4. THE workflow SHALL tell Dr. Kiro to keep budget for the last two phases. It SHALL NOT give a budget split in
    numbers.
 5. THE workflow SHALL say that after each verdict Dr. Kiro updates `design.md` (what it now believes) and

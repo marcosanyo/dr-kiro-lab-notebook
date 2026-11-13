@@ -119,8 +119,10 @@ that a new application needs no change to the bench.
 1. THE bench SHALL accept an application through an adapter that provides only: its knobs (name, kind, and range;
    for function-of-time knobs also the trial length and the sample times, which follow from the control rate),
    how to run one trial, the names and
-   units of what is measured with the not-measured outcomes each measurement may have, one kind of picture, and
-   its budget in trials.
+   units of what is measured with the not-measured outcomes each measurement may have, one kind of picture, its
+   budget in trials, its goal (one sentence naming the measurement that the best point maximises or minimises),
+   and how its measurements are made (one short text; for example what a camera can see, and the size of its
+   view).
 2. THE bench SHALL treat the adapter's declaration as the complete description of the application that Dr. Kiro
    is told, and SHALL use it as the blind scan's allow list (Requirement 15).
 3. WHEN the bench runs a trial, THE bench SHALL pass the adapter only the computed inputs and the trial seed.

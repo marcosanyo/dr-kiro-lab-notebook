@@ -125,7 +125,7 @@ class NumberKnob:    name: str; low: float; high: float
 class Measurement:   name: str; unit: str; kind: Literal["scalar", "series"]; not_measured: tuple[str, ...]
 @dataclass(frozen=True)
 class Declaration:   knobs: tuple[Knob, ...]; measurements: tuple[Measurement, ...]
-                     picture: PictureKind; budget: int; fake: bool
+                     picture: PictureKind; budget: int; fake: bool; goal: str; measured_by: str
 
 class Adapter(Protocol):
     def declaration(self) -> Declaration: ...
@@ -586,8 +586,9 @@ rule of task 1 also bans `mcp` there. See D1.
 - No `start`, no `stop` (17.2). No `get_budget` or `get_result` tool: Requirement 17.2 lists four actions, and the
   remaining budget comes back with every run (7.6).
 - Descriptions are built in `describe.py` from `Adapter.declaration()`: knob names and ranges, the sample times of
-  function knobs, the trial length, measurement names and units, the not-measured outcome names, the picture kind
-  and the budget. The declaration is the only source (2.2); there is no second copy to keep in step. The
+  function knobs, the trial length, measurement names and units, the not-measured outcome names, the picture kind,
+  the budget, the goal and how the measurements are made (`goal`, `measured_by`; non-empty text, scanned at the
+  builder level with the rest of the descriptions). The declaration is the only source (2.2); there is no second copy to keep in step. The
   `dr-kiro` spec decides whether Dr. Kiro's steering points at the tool descriptions or repeats the declaration.
 - At startup `bench-mcp` scans the generated descriptions at the builder level with the core's scan
   (`bench.scan`). A finding stops the server with a non-zero exit and the finding on stderr. No other blind
