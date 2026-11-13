@@ -314,6 +314,11 @@ can replay the session.
    `requirements.md`, `design.md` and `tasks.md` as they are at that moment, linked to that record entry.
 2. IF a lab spec file is missing when a snapshot is due, THEN THE bench SHALL refuse the action, naming the file.
 3. THE bench SHALL NOT take a snapshot on a refusal.
+4. WHEN Dr. Kiro ends a session and the bench accepts it (Requirement 11.1), THE bench SHALL store a final copy of
+   the three spec files, taken from the same reading of the files that the `## Discovered spec` table check used,
+   before the seal entry.
+5. WHEN a session is sealed as stopped (Requirement 11.3, 11.4), THE bench SHALL NOT take a final copy of the spec
+   files. The last snapshot of a stopped session, if it has one, is the one from its last run or verdict.
 
 ### Requirement 11: Ending and stopping a session
 
@@ -324,7 +329,8 @@ a session that went wrong is preserved as it happened.
 
 1. WHEN Dr. Kiro ends a session, THE bench SHALL refuse if an experiment has no verdict or if the
    `## Discovered spec` table check fails (Requirement 12), naming the problem. Otherwise THE bench SHALL seal the
-   session as ended, recording the remaining budget.
+   session as ended, recording the remaining budget, after the final snapshot of the spec files (Requirement
+   10.4).
 2. WHEN the budget reaches zero, THE bench SHALL refuse further experiments and SHALL still accept verdicts and
    ending the session.
 3. WHEN a bench failure occurs, THE bench SHALL seal the session as stopped, with the failure and its reason,
@@ -360,6 +366,8 @@ the notebook can be traced and no rule claims more than its evidence.
 4. Rows with any status other than `rejected` SHALL leave "replaced by" empty.
 5. THE table SHALL have at least one row when the session ends. An empty table is allowed in every earlier state
    of `design.md`, including the snapshots taken during the session (Requirement 10).
+6. THE table recorded in the final snapshot (Requirement 10.4) SHALL be the table that passed the check, byte for
+   byte.
 
 ### Requirement 13: Sealed session record
 
@@ -376,7 +384,8 @@ that the notebook needs nothing else.
    budget, every registered hypothesis with its frozen part, every prediction with its condition class, Dr.
    Kiro's label and its outcome, every experiment file as written with its phase, parameters, computed inputs,
    seeds, measurements, not-measured outcomes and pictures, every verdict and verdict flag, every refusal and its
-   reason, every snapshot, the author of each piece of text, and the end reason.
+   reason, every snapshot, the final spec files of an ended session as checked at its end (Requirement 10.4),
+   including its `## Discovered spec` table, the author of each piece of text, and the end reason.
 3. THE bench SHALL seal the record with a SHA-256 hash chain over all entries and files, with no signing key.
 4. THE bench SHALL provide a check that recomputes the hash chain of a sealed record and fails, naming the first
    entry or file that does not match.
@@ -445,17 +454,17 @@ for actions nobody thought to try.
 1. THE bench SHALL have stateful property-based tests (`hypothesis`) that generate random sequences of bench
    actions with valid and invalid inputs against the fake application, including edits to Dr. Kiro's spec files
    between actions (inside and outside the frozen parts) and trials that return not-measured outcomes.
-2. THE tests SHALL check, after every action, at least: no experiment ran without a registered hypothesis; no
-   frozen part changed while actions were accepted; text appended after a prediction block never caused a
-   refusal; no trial ran twice with the same computed inputs; no experiment ran while an earlier one lacked a
-   verdict; the budget used equals the trials run and never exceeds the budget; every refusal left the state
-   unchanged except its own record entry; no value was recorded for a not-measured outcome; `supported` was never
-   recorded against a miss; a verdict flag was recorded exactly when Requirement 8.4 says; every run and verdict
-   has a snapshot; nothing returned to Dr. Kiro contains anything other than measurements, not-measured outcomes,
-   pictures, remaining budget, and refusal reasons in Dr. Kiro's terms.
+2. THE tests SHALL check, after every action, at least: no experiment ran without a registered hypothesis; no frozen
+   part changed while actions were accepted; text appended after a prediction block never caused a refusal; no trial
+   ran twice with the same computed inputs; no experiment ran while an earlier one lacked a verdict; the budget used
+   equals the trials run and never exceeds the budget; every refusal left the state unchanged except its own record
+   entry; no value was recorded for a not-measured outcome; `supported` was never recorded against a miss; a verdict
+   flag was recorded exactly when Requirement 8.4 says; every run, verdict and accepted end has a snapshot, and a
+   stopped session has no final one; nothing returned to Dr. Kiro contains anything other than measurements,
+   not-measured outcomes, pictures, remaining budget, and refusal reasons in Dr. Kiro's terms.
 3. THE tests SHALL check that ending a session is accepted exactly when the `## Discovered spec` table agrees with
    the record as Requirement 12 defines, including `validated` rows whose only hits are inside the tried range or
-   not comparable.
+   not comparable, and that the `design.md` in the final snapshot of an ended session passes the same check.
 4. THE tests SHALL check that a sealed record passes the hash check, and that changing any byte of it makes the
    check fail.
 5. THE tests SHALL check that the same seed and the same action sequence give the same sealed record.

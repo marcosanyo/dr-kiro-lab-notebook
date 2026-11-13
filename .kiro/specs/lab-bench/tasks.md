@@ -203,3 +203,19 @@ one place where the MCP SDK is imported.
   - Report what failed. A failure is not worked around (`rules.md` 2).
   - Results are recorded in design F12 (D11, D12, and the results paragraph).
   - _Requirements: 17.6-17.8, 17.11, 17.12_
+
+## Changes after the first session
+
+- [ ] 22. Final snapshot at `end`
+  - Core: `end()` reads the three lab spec files once, checks the table on the `design.md` it read, records a
+    `snapshot` entry with `"for": "end"` from those contents, then seals (design 6.2, 9.1, Decision 6). A missing
+    file refuses `end()`, naming it (10.2). `stop()` and a bench failure record no final snapshot (10.5).
+  - `Session.open` and the replayed state accept the `end` snapshot; the record contents (design 9.3) are
+    unchanged otherwise.
+  - Unit tests: an accepted `end()` records one `end` snapshot directly before the seal, whose `design.md` equals
+    the file that was checked; a refused `end()` records none; a missing spec file at `end()` is a refusal naming
+    it; `stop()` and a bench failure record none.
+  - Property tests: P11 as revised and P20 in the state machine; the full fake session test (task 14) reads the
+    table from the `end` snapshot of the sealed folder.
+  - `sessions/body-lab/body-1` is not changed; it stays as sealed, without a table (design Decision 6).
+  - _Requirements: 10.4, 10.5, 11.1, 12.6, 13.2, 16.2, 16.3_
