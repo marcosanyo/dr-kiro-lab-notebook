@@ -1,9 +1,9 @@
 """Gmsh recipe: body outline -> one-layer 3D mesh file that OpenFOAM reads as a 2D case (design 3).
 
 The domain is a rectangle around the centre of the body (the origin), with the body as a hole. The surface
-mesh is extruded one layer in z by ``flow.depth``, so the mid-plane is at ``z = depth / 2`` (the plane that the
-vorticity sampling uses). Mesh generation uses no random seed; the 2D algorithm and the thread count come from
-``settings.mesh``. The file is Gmsh format 2.2, ASCII, which is what ``gmshToFoam`` reads.
+mesh is extruded one layer in z by ``flow.depth``, so the mid-plane is at ``z = depth / 2`` (the plane
+that the vorticity sampling uses). Mesh generation uses no random seed; the 2D algorithm and the thread
+count come from ``settings.mesh``. The file is Gmsh format 2.2, ASCII, which is what ``gmshToFoam`` reads.
 """
 
 from __future__ import annotations
