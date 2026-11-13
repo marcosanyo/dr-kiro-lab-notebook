@@ -1,0 +1,63 @@
+# Settings of the wind-tunnel model. One reader: src/wind_tunnel_model/settings.py, which refuses a
+# missing, extra or placeholder key and a wrong type. Nothing here is read from the environment.
+
+[flow]
+reynolds = 150.0  # brief
+speed = 1.0
+height = 1.0
+depth = 1.0
+density = 1.0
+
+[body]
+thickness = 0.08  # Decision 8 of the design (plate thickness)
+min_edge = 0.0  # no refusal in the geometry until the user decides (Decision 12)
+
+[domain]
+ahead = 6.0  # brief, measured from the centre of the body
+behind = 18.0
+above_below = 7.0
+
+[time]
+end = 150.0  # brief
+average_from = 80.0  # brief
+max_co = 0.8  # brief
+max_delta_t = 0.05  # the estimator limit (ESTIMATOR_MAX_DT)
+initial_delta_t = 0.005  # STARTING VALUE, confirmed by task 14.1 (smoke run)
+
+[mesh]
+# STARTING VALUES, chosen in the mesh task (4.1) and confirmed by task 14.1; changing them after the circle
+# check needs the user (6.8).
+size_body = 0.02
+size_far = 0.5
+size_wake = 0.08
+wake_length = 12.0
+algorithm = 6  # Gmsh 2D algorithm: Frontal-Delaunay
+threads = 1
+
+[run]
+processes = 3
+timeout_s = 140.0
+decomposition = "simple (3 1 1)"
+
+[image]
+name = "opencfd/openfoam-default"
+tag = "2412"
+
+[patches]
+inlet = "inlet"
+outlet = "outlet"
+lateral = "lateral"
+obstacle = "obstacle"
+front_and_back = "frontAndBack"
+
+[picture]
+# The layout is a proposal until the user confirms it (Decision 16).
+rows = 2
+columns = 3
+frames = 6
+spacing = 1.0
+cell_width = 400
+cell_height = 200
+gap = 4
+window = [-2.5, 9.5, -3.0, 3.0]  # x_min, x_max, y_min, y_max
+vorticity_limit = 5.0  # STARTING VALUE, replaced from the observed range in task 14.4 and then fixed (9.5)
