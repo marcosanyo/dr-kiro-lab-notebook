@@ -16,6 +16,7 @@ module-name = "wind_tunnel_model"
 dev = ["hypothesis", "pytest", "ruff"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["needs_gmsh: builds a real mesh with Gmsh (skipped where Gmsh cannot be imported)"]
 addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
 pythonpath = ["tests"]
 [tool.ruff]
