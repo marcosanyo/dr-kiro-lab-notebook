@@ -513,7 +513,7 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 
 ## F8. 閉じ込めフック (17.7-17.10)
 
-すべてのツール呼び出しの前に実行されます。フックの入力は、`tool_name` と `tool_input` を持つ stdin 上の JSON です（スパイク、Q2）。どちらのフックスクリプトも標準ライブラリだけを使い、スパイクのフックと同じように、ラボを作業フォルダーとして `uv run --no-project python -B .kiro/hooks/<script>.py` で実行します（Python は `uv` 経由でのみ使う、`tech.md`）。
+すべてのツール呼び出しの前に実行されます。フックの入力は、`tool_name` と `tool_input` を持つ stdin 上の JSON です（スパイク、Q2）。どちらのフックスクリプトも標準ライブラリだけを使い、スパイクのフックと同じように、ラボを作業フォルダーとして `uv run --no-project python -B .kiro/hooks/<script>.py` で実行します（Python は `uv` 経由でのみ使う、`tech.md`）。`-B` は、Python がラボに `__pycache__` を書かないようにします。コンパイル済みのファイルはテキストではないので、ブラインドスキャンが読めないためです。
 
 ```
 lab = the folder two levels above this script's folder (the script lives in <lab>/.kiro/hooks/)
