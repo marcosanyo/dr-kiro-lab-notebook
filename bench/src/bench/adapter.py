@@ -106,6 +106,11 @@ class Adapter(Protocol):
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure: ...
 
 
+# Optional adapter method, not part of the Protocol: `builder_versions() -> dict[str, str]` returns plain
+# name: version pairs. The bench writes them to the builder-side log only (never to the sealed record).
+BUILDER_VERSIONS_METHOD = "builder_versions"
+
+
 class DeclarationError(ValueError):
     """The adapter's declaration breaks the contract."""
 
@@ -256,3 +261,16 @@ def check_failure(failure: TrialFailure) -> None:
         raise ResultError("trial failure has no public reason")
     if not isinstance(failure.detail, str):
         raise ResultError("trial failure detail must be a string")
+
+
+def builder_version_lines(adapter: object) -> list[str]:
+    """The `name: version` lines of an adapter's optional `builder_versions`; none without that method."""
+    method = getattr(adapter, BUILDER_VERSIONS_METHOD, None)
+    if method is None:
+        return []
+    pairs = method()
+    if not isinstance(pairs, Mapping) or not all(
+        isinstance(k, str) and k and isinstance(v, str) and v for k, v in pairs.items()
+    ):
+        raise DeclarationError("builder_versions must return a mapping of non-empty text to non-empty text")
+    return [f"{name}: {version}" for name, version in sorted(pairs.items())]

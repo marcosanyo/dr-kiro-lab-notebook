@@ -10,7 +10,6 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
-import mujoco
 from bench.adapter import Measurement, NotMeasured
 
 from body_lab.settings import Settings
@@ -76,7 +75,7 @@ class PoseMeasurer:
             "heading counter-clockwise seen from above, in (-180, 180]. "
             f"At the start the body is at x = 0, y = 0, and the view spans x from {behind - half_x:.2f} to "
             f"{behind + half_x:.2f} m and y from {-half_y:.2f} to {half_y:.2f} m. "
-            f"A value is lost when the camera could not see the tracked point. MuJoCo {mujoco.__version__}."
+            "A value is lost when the camera could not see the tracked point."
         )
 
     def visible(self, p: Pose) -> str | None:

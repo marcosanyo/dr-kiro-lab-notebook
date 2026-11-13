@@ -4,6 +4,7 @@ The declaration tells Dr. Kiro only the numbered channels, the timing, the measu
 the picture kind, the budget and the goal. The wiring stays inside `sim.py`.
 """
 
+import mujoco
 from bench.adapter import (
     ComputedInputs,
     Declaration,
@@ -48,6 +49,10 @@ class BodyAdapter:
 
     def declaration(self) -> Declaration:
         return self._declaration
+
+    def builder_versions(self) -> dict[str, str]:
+        """Builder-side only: library versions the bench records outside the sealed record."""
+        return {"mujoco": mujoco.__version__}
 
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
         commands = {}

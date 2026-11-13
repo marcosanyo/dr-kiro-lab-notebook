@@ -28,6 +28,7 @@ from bench.adapter import (
     ResultError,
     TrialFailure,
     TrialResult,
+    builder_version_lines,
     check_declaration,
     check_failure,
     check_result,
@@ -250,6 +251,12 @@ class Session:
         """Start a session (builder action). Ran(session), or Refused naming what is missing (1.3)."""
         try:
             decl, scanner = cls._check_config(config)
+            try:
+                version_lines = builder_version_lines(config.adapter)
+            except DeclarationError as error:
+                raise _refuse(
+                    f"cannot start: the adapter's builder versions are not valid ({error})"
+                ) from error
             folder = Path(config.state_dir) / config.session_id
             if folder.exists():
                 raise _refuse("cannot start: a session with this id already exists in the state folder")
@@ -271,6 +278,8 @@ class Session:
             },
         )
         store.builder_log(f"started session {config.session_id}")
+        for line in version_lines:
+            store.builder_log(f"version {line}")
         return Ran(session)
 
     @classmethod

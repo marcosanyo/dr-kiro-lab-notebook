@@ -81,7 +81,11 @@ continue lines you sent. If the session does not end on its own: quit Kiro CLI a
 ## Limits
 
 - The same inputs give the same results on the same machine. MuJoCo results can differ slightly between machines
-  and versions; the MuJoCo version is recorded in every session (the declaration's `measured_by`).
+  and versions. Dr. Kiro is not told the engine name or version. The bench records the MuJoCo version on the
+  builder side only, in `builder.log` in the session's state folder (`bench-run/body-lab/state/<session>/`); it is
+  not in the sealed record and not in any `lab/` folder.
+- `sessions/body-lab/body-1` is kept sealed and unchanged, with the old `measured_by` text that ended with the
+  engine name and version. Sessions started after the commit that removed it use the new text.
 - Measurements come from the simulator's pose, not from images (see above).
 - Servo targets move toward their command at no more than 600°/s and start at the joints' zero position before
   settling. The wheel channel sets a velocity, without a rate limit.

@@ -44,6 +44,39 @@ def test_start_records_the_declaration_and_seed(lab: Lab) -> None:
     assert start["body"]["declaration"]["fake"] is True
 
 
+class VersionedFake(FakeAdapter):
+    def builder_versions(self) -> dict[str, str]:
+        return {"engine": "9.8.7"}
+
+
+def test_builder_versions_go_to_builder_log_only(lab: Lab) -> None:
+    session = lab.start(adapter=VersionedFake())
+    assert "version engine: 9.8.7" in (session.store.folder / "builder.log").read_text()
+    assert "9.8.7" not in (session.store.folder / "log.jsonl").read_text()
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    session.verdict("E1", "supported", "held")
+    lab.write("design.md", DESIGN_START + "\n" + TABLE)
+    assert isinstance(session.end(), Ran)
+    assert session.sealed_path is not None
+    for path in session.sealed_path.rglob("*"):
+        if path.is_file():
+            assert b"9.8.7" not in path.read_bytes()
+
+
+def test_an_adapter_without_builder_versions_records_none(lab: Lab) -> None:
+    session = lab.start()
+    assert "version" not in (session.store.folder / "builder.log").read_text()
+
+
+def test_start_refuses_bad_builder_versions(lab: Lab) -> None:
+    class Bad(FakeAdapter):
+        def builder_versions(self) -> dict[str, str]:
+            return {"engine": ""}
+
+    refused(Session.start(replace(lab.config, adapter=Bad())), "builder versions")
+
+
 @pytest.mark.parametrize("field", ["seed", "lab_dir", "adapter", "stop_list", "experiments_dir"])
 def test_start_refuses_a_missing_field(lab: Lab, field: str) -> None:
     refused(Session.start(replace(lab.config, **{field: None})), f"{field} is missing")

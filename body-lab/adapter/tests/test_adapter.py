@@ -86,3 +86,19 @@ def test_declaration_matches_golden_files() -> None:
     decl = BodyAdapter().declaration()
     assert declaration_text(decl).encode("utf-8") == (golden / "told_text.txt").read_bytes()
     assert canonical_json(declaration_record(decl)) == (golden / "declaration_record.json").read_bytes()
+
+
+def test_goldens_were_changed_only_to_drop_the_engine() -> None:
+    """The told text and declaration record name neither the engine nor a version (tasks 27)."""
+    from bench.core.session import declaration_record
+    from bench.frontend.describe import declaration_text
+    from bench.record.canonical import canonical_json
+
+    decl = BodyAdapter().declaration()
+    for text in (declaration_text(decl), canonical_json(declaration_record(decl)).decode("utf-8")):
+        assert "mujoco" not in text.lower()
+        assert mujoco.__version__ not in text
+
+
+def test_builder_versions_name_the_engine_version() -> None:
+    assert BodyAdapter().builder_versions() == {"mujoco": mujoco.__version__}
