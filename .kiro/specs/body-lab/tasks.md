@@ -15,7 +15,7 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
   - `picture.py`, `adapter.py`, `scan_sources.toml`; the four tests of design 7.
   - _Requirements: 3, 4, 5, 6.1_
 
-- [ ] 4. README and lab
+- [x] 4. README and lab
   - `body-lab/README.md` (how it measures, view size, running, limits); `bench-make-lab body-lab/lab`, committed.
   - _Requirements: 2.4, 5.2, 5.4_
 
