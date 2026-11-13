@@ -18,6 +18,8 @@ user's Mac (everything runs). Git is the shared state. `docs/status.md` carries 
    results of manual checks, and notes go into git.
 2. Update `docs/status.md`: what was done, the next step, open questions, and anything learned that applies to
    one environment only. Keep it short; history lives in git and in each spec's tasks and decisions.
+3. At the end of a Run all, commit `tasks.md` and the matching `docs/ja` translation together, each added by
+   name, and pass `scripts/ja-check.sh` before reporting. The translation is not updated during the run.
 
 ## Division of work
 
