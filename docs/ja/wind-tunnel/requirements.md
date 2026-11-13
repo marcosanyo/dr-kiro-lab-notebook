@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/requirements.md`](../../../.kiro/specs/wind-tunnel/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `6d9c165559b2078ce600dea9d04d1480c2ebb6e92d36256f11826e502bf013db`
+> 原文 SHA-256: `e57f50d9fe44e8520b34e2cd6476e31300715480aa52e6deb5420603f7bbe85e`
 
 # Requirements Document
 
@@ -242,7 +242,7 @@
 
 1. NO sentence in a `lab/` folder (the agent, its steering, the templates, the examples), in a bench message about the system, in the told set, in a failure's `public_reason`, or in the picture SHALL state or imply how the body's shape or a knob value affects the flow or a measurement。This includes, as examples only, any statement that a part of the body changes whether the flow sheds, that rounding changes the drag, or that a long body behaves in a certain way。THE ノブの文（要件 3.2）はノブが何であるかを述べるもので、形の知識ではない。ノブが何をするかを述べた文は、どこにあっても形の知識である。
 2. THE `dr-kiro` の共有ビルダーファイル are written for every application and SHALL stay as they are; THE それらの例 SHALL stay placeholders (`dr-kiro` Requirement 3.6)。
-3. THE ブラインドスキャン covers terms and paths only and SHALL NOT be taken as a check of this requirement。THE チェック SHALL be a **reviewed list**: a builder-side checklist, in a file under `wind-tunnel/` that is not in `lab/`, naming every text Dr. Kiro can read (each file of `lab/` that the builder wrote, the told set including each knob text, each `public_reason`), with a line per text saying "reviewed, no form knowledge" and who reviewed it。THE ビルダー SHALL fill it by reading, and the user MAY check it。
+3. THE ブラインドスキャン covers terms and paths only and SHALL NOT be taken as a check of this requirement。THE チェック SHALL be a **reviewed list**: a builder-side checklist, in a file under `wind-tunnel/` that is not in `lab/`, naming every text Dr. Kiro can read (each file of `lab/` that the builder wrote, the told set including each knob text, each `public_reason`), with a line per text saying "reviewed, no form knowledge" and who reviewed it。THE ビルダー SHALL fill it by reading, and the user MAY check it。THE レビュー済み一覧 SHALL also carry a line saying that the body-lab told text (the declaration sentences, `measured_by`, the errors) is reviewed by a person for sentences that name the engine, a library or a version, including sentences filled in at run time。これには自動チェックを加えない。
 4. THE チェックリスト is a review step in the later tasks。It is not automated and it is not a guarantee; THE README SHALL say so。
 5. ジオメトリの定義（板の厚さと取り付け方、回転の中心、正の角度の向き）は、ボディがどう作られ、どう置かれるかを述べるもので、流れが何をするかを述べるものではないので、形の知識ではない。THE レビュー済みの一覧（要件 12.3）SHALL carry, for each knob text, a line that says which sentences are geometry definitions, and SHALL record that no sentence states an effect。定義と影響が混じる文（たとえば、定義の後に何を「減らす」「増やす」かが続くもの）は SHALL be split, and the effect removed。
 6. THE この spec の要件と設計 SHALL NOT be copied into any lab text。WHERE a statement of this spec is needed in a lab text、THE ビルダー SHALL write it again from the told set, so that no form knowledge comes with it。

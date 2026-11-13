@@ -439,7 +439,9 @@ rule in its discovered spec comes from its own experiments.
    every text Dr. Kiro can read (each file of `lab/` that the builder wrote, the told set including each knob text,
    each `public_reason`),
    with a line per text saying "reviewed, no form knowledge" and who reviewed it. THE builder SHALL fill it by
-   reading, and the user MAY check it.
+   reading, and the user MAY check it. THE reviewed list SHALL also carry a line saying that the body-lab told
+   text (the declaration sentences, `measured_by`, the errors) is reviewed by a person for sentences that name the
+   engine, a library or a version, including sentences filled in at run time. No automatic check is added for it.
 4. THE checklist is a review step in the later tasks. It is not automated and it is not a guarantee; THE README
    SHALL say so.
 5. A geometry definition (the thickness and the joining of the plate, the centre of the turn, the sense of a
