@@ -260,3 +260,36 @@ so it comes first. Design: "Amendment: knob descriptions" (A1-A8).
   - Run `sh bench/scripts/check.sh` and the body-lab adapter tests (the golden comparison must pass byte for byte).
     If a golden file differs, **stop and report** the first differing line (design A8); do not edit the golden file.
   - _Requirements: 18.5, 18.7, 18.8_
+
+## Amendment: no library name or version in the told text
+Found after the first body-lab session (`body-1`): the body-lab `measured_by` text ended with the engine name and its
+version, taken at run time. `rules.md` 1 forbids library versions in anything Dr. Kiro sees, and the blind scan has no
+kind for them. Decided by the user: remove the engine name and version from the text; keep the version on the builder
+side; add no scan kind; check such sentences by the reviewed list of `wind-tunnel` Requirement 12.3. `body-1` stays
+sealed and unchanged.
+- [x] 27. Remove the engine name and version from the body-lab text; record the version on the builder side
+  - `body-lab/adapter/src/body_lab/measure.py`: `measured_by` ends after "could not see the tracked point." with no
+    engine name and no version. Check that no other text Dr. Kiro sees (told text, errors, picture, lab files)
+    names the engine.
+  - Builder-side record: at session start the bench writes the engine version (and, later, the wind-tunnel image
+    digest and Gmsh version, `wind-tunnel` Requirement 7.5) to the builder-side state of the session (the
+    `STATE_ONLY` area under `bench-run/<app>/state/<session>/`), never to the sealed record or any `lab/` folder.
+    Use an optional adapter method that returns plain `name: version` pairs; an adapter without it records nothing.
+    If this needs more than that, stop and report.
+  - Tests: the told text and the declaration record of body-lab contain neither the engine name nor a version; the
+    builder-side file has the version; the sealed folder does not; `bench-scan` passes on a fresh fake session.
+  - Golden files: this changes `body-lab/adapter/tests/golden/told_text.txt` and `declaration_record.json` (and
+    only these). Update them, and make this one commit with the code change, with the reason in the message
+    (the golden files were made in task 23 on purpose; this change is approved by the user).
+  - `body-lab/README.md`: say that `body-1` is kept sealed with the old text, that sessions after this commit use
+    the new text, and that the version is recorded on the builder side.
+  - Run `sh bench/scripts/check.sh` and the body-lab adapter tests.
+  - _Requirements: 18.8 (golden files change by decision of the user)_
+- [x] 28. Reviewed list: add the body-lab told text
+  - In `.kiro/specs/wind-tunnel/requirements.md`, Requirement 12.3 (the reviewed list of sentences Dr. Kiro reads),
+    add one line: the body-lab told text (declaration sentences, `measured_by`, errors) is reviewed by a person for
+    sentences that name the engine, a library or a version, including sentences filled in at run time. No
+    automatic check is added.
+  - Update the Japanese translation under `docs/ja/wind-tunnel/` as `japanese-translations.md` requires. Run
+    `sh scripts/ja-check.sh` if it applies.
+  - _Requirements: wind-tunnel 12.3_
