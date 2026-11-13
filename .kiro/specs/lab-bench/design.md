@@ -83,7 +83,7 @@ class Session:
     def register(self, hypothesis_id: str) -> Outcome: ...          # Req 6
     def run(self, experiment_path: str) -> Outcome: ...             # Req 4, 5, 7
     def verdict(self, experiment_id: str, verdict: str, words: str) -> Outcome: ...  # Req 8
-    def end(self) -> Outcome: ...                                   # Req 11.1, 12
+    def end(self) -> Outcome: ...                                   # Req 10.4, 11.1, 12
     def stop(self, reason: str) -> Outcome: ...                     # Req 11.4, builder only
     def fail(self, action: str, public: str, detail: str) -> BenchFailure: ...  # Req 11.3, builder side only
 ```
@@ -210,7 +210,8 @@ Notes and results appended here are free text (6.7).
 
 - It must be the last level-2 section of `design.md`, and nothing but whitespace may follow the table (12.1).
 - The table is checked only by `end()`. At that point it needs at least one row (12.5). During the session it may
-  be empty or missing; snapshots copy `design.md` as it is and never check it.
+  be empty or missing; snapshots copy `design.md` as it is and never check it. The final snapshot of an accepted
+  `end()` holds the `design.md` that passed the check (10.4, 12.6); it is where the notebook reads the table.
 - Lists are comma-separated ids. Empty cells are allowed only for "predictions" and "replaced by".
 - The status check in 12.3 is a pure function `check_row(row, record) -> list[Problem]`, tested directly and in
   the state machine.
@@ -244,10 +245,13 @@ if a file changes while trials run.
   (6.5), classify (6.4), record frozen copy and hash.
 - `verdict(eid, v, words)`: open, frozen check, experiment exists without a verdict (8.2), value valid, the
   `supported` check (8.3), spec files readable, record verdict, flag (8.4) and snapshot (10.1).
-- `end()`: open, frozen check, no experiment without a verdict, table check (12), then seal as `ended` (11.1).
-- `stop(reason)`: seals as `stopped` without the table check (11.4). Available to the builder only; the front end
-  does not expose it to Dr. Kiro.
-- A bench failure in any action seals the session as `stopped` with the public reason (11.3).
+- `end()`: open, frozen check, no experiment without a verdict, the three lab spec files readable and read once
+  (10.2), table check on the `design.md` just read (12), record the final snapshot of those contents with
+  `"for": "end"` (10.4), then seal as `ended` (11.1). A refused `end()` records no snapshot (10.3).
+- `stop(reason)`: seals as `stopped` without the table check and without a final snapshot (11.4, 10.5). Available
+  to the builder only; the front end does not expose it to Dr. Kiro.
+- A bench failure in any action seals the session as `stopped` with the public reason and without a final
+  snapshot (11.3, 10.5).
 - At zero budget, `run` refuses at step 9; `verdict` and `end` still work (11.2).
 
 ### 6.3 Ids and seeds
@@ -373,6 +377,9 @@ Verdict flag (8.4) uses the current outcomes of all predictions of the hypothesi
 
 - Entry: `{"seq": n, "kind": ..., "body": {...}, "prev": <hash>, "hash": <hash>}`. Kinds: `start`, `register`,
   `refusal`, `experiment`, `trial`, `outcome`, `verdict`, `flag`, `snapshot`, `failure`, `seal`.
+- A `snapshot` entry holds `for` (`experiment`, `verdict` or `end`), the experiment id for the first two, and a
+  blob reference for each of the three spec files. A sealed `ended` record has exactly one `end` snapshot, directly
+  before its `seal` entry; a `stopped` record has none (10.4, 10.5).
 - Every text field is `{"author": "bench" | "dr-kiro", "text": ...}`; messages are lists of spans with authors.
   Blob references carry the author of the blob's content (9.5).
 - `hash = SHA-256(prev + canonical JSON of the entry without "hash")`. The first `prev` is 64 zeros. Blobs are
@@ -491,7 +498,7 @@ Invariants after every step:
 | P8 | No value is recorded for a not-measured outcome. | 2.5 |
 | P9 | `supported` was never recorded against a miss. | 8.3 |
 | P10 | A flag exists exactly when 8.4 says. | 8.4 |
-| P11 | Every run and verdict has a snapshot; no refusal has one. | 10 |
+| P11 | Every run, verdict and accepted `end` has a snapshot; no refusal and no stop has one. | 10 |
 | P12 | Everything returned to Dr. Kiro is measurements, not-measured outcomes, pictures, budget, or message spans. | 7.6 |
 | P13 | `end` is accepted exactly when the table agrees with the record (including validated rows whose only hits are inside or not comparable). | 12, 16.3 |
 | P14 | State replayed from the log (`Session.open`) equals the live state. | 9, 13 |
@@ -500,6 +507,7 @@ Invariants after every step:
 | P17 | Random programs with forbidden nodes are refused; no evaluation exceeds the step bound or raises a Python error. | 4 |
 | P18 | Planted derived terms are found at builder level and ignored at Dr. Kiro level; paths, file names and credentials are found at both. | 15 |
 | P19 | A refusal quoting Dr. Kiro's text with a derived term stays a refusal; the same term in bench wording is a bench failure. | 15.8 |
+| P20 | The `design.md` in the `end` snapshot of an ended record passes the table check against that record. | 10.4, 12.6, 16.3 |
 
 ## 14. What would make me stop and ask
 
@@ -525,6 +533,11 @@ Approved by the user before the tasks were written.
 5. **`observed`** means no cited prediction missed; hits of any class, not-run and not-checkable predictions are
    allowed (Requirement 12.3, revised at the task 12 checkpoint). Under-claiming is fine; over-claiming is
    refused.
+6. **Final snapshot at `end`.** Added after the first body-lab session (`sessions/body-lab/body-1`), whose filled
+   table reached no record entry: Dr. Kiro fills the table after its last verdict, and snapshots were taken only at
+   runs and verdicts. An accepted `end()` now records the files it checked (Requirement 10.4, 12.6). A stopped
+   session gets no final snapshot (10.5), by the user's decision. `body-1` stays as sealed, without a table; how
+   the notebook shows that is decided in the `lab-notebook` spec.
 
 ---
 
