@@ -54,3 +54,17 @@ def test_model_file_has_made_up_names() -> None:
     model = Path(__file__).resolve().parents[2] / "src" / "bench" / "fake" / "model" / "fake_model.json"
     names = json.loads(model.read_text())["names"]
     assert "zorblat" in names and "gain" in names
+
+
+def test_declaration_matches_golden_files() -> None:
+    """lab-bench design A5, Requirement 18.8: the fake application's told text and recorded declaration are
+    byte for byte what they were before the knob description amendment. The golden files are never edited."""
+    from bench.core.session import declaration_record
+    from bench.frontend.describe import declaration_text
+    from bench.record.canonical import canonical_json
+
+    fixtures = Path(__file__).resolve().parents[1] / "fixtures"
+    decl = FakeAdapter().declaration()
+    assert declaration_text(decl).encode("utf-8") == (fixtures / "fake_told_text.txt").read_bytes()
+    record = (fixtures / "fake_declaration_record.json").read_bytes()
+    assert canonical_json(declaration_record(decl)) == record

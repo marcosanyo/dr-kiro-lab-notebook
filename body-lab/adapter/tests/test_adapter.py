@@ -73,3 +73,16 @@ def test_declaration_is_blind() -> None:
     scanner = Scanner([load_app(SOURCES)], load_stop_list(STOP_LIST), local_paths=local_paths(STOP_LIST))
     text = " ".join([decl.goal, decl.measured_by, *(m.name for m in decl.measurements)])
     assert scanner.scan_text(text, "builder", "declaration") == []
+
+
+def test_declaration_matches_golden_files() -> None:
+    """lab-bench design A5, Requirement 18.8: the told text and the recorded declaration are byte for byte
+    what they were before the knob description amendment. The golden files are never edited."""
+    from bench.core.session import declaration_record
+    from bench.frontend.describe import declaration_text
+    from bench.record.canonical import canonical_json
+
+    golden = Path(__file__).resolve().parent / "golden"
+    decl = BodyAdapter().declaration()
+    assert declaration_text(decl).encode("utf-8") == (golden / "told_text.txt").read_bytes()
+    assert canonical_json(declaration_record(decl)) == (golden / "declaration_record.json").read_bytes()
