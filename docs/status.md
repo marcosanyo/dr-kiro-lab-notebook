@@ -7,7 +7,7 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 ## 終わったこと
 
-- `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜21 完了。
+- `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
 - `body-lab`: タスク 1〜5 完了。最初のセッション `sessions/body-lab/body-1` は 40 試行で `ended` として封印され、
   ブラインドスキャンも検出なし。
@@ -18,12 +18,11 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 ## 次の一手
 
-1. Kiro（ローカル）: `lab-bench` タスク 22（`end` での最後のスナップショット）を実装する。風洞のセッションの前に必要。
 
-2. その後、brief 5 の順番で `wind-tunnel`（brief 4.3）。あなた: `docs/requests/wind-tunnel.md` を `TEMPLATE.md` から作って埋める（任意）。
-3. Kiro: 要件の前に質問をまとめる。brief 4.3 に `[DECIDE]` はないが、決めることは多い
+1. brief 5 の順番で `wind-tunnel`（brief 4.3）。あなた: `docs/requests/wind-tunnel.md` を `TEMPLATE.md` から作って埋める（任意）。
+2. Kiro: 要件の前に質問をまとめる。brief 4.3 に `[DECIDE]` はないが、決めることは多い
    （Docker の使い方、メッシュの作り方、試行の長さ、画像の形式、circle check の手順）。
-4. Kiro: 要件・設計・タスクを書く → 実装 → circle check（Strouhal 数が文献値の 5% 以内）→ 24 試行のセッション。
+3. Kiro: 要件・設計・タスクを書く → 実装 → circle check（Strouhal 数が文献値の 5% 以内）→ 24 試行のセッション。
 
 ## 未解決の質問
 

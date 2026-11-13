@@ -11,6 +11,7 @@ from bench.core.outcome import Ran
 from bench.core.session import Accepted, RunResult, Session
 from bench.record import chain
 from bench.scan import scan
+from bench.specfiles.discovered import check_table
 from labkit import DESIGN_START, FAKE_SOURCES, STOP_LIST, Lab, exp_file, hyp_block
 
 
@@ -122,7 +123,7 @@ def test_full_session(lab: Lab) -> None:
     entries = chain.verify(session.sealed_path, sealed=True)
     by_kind = Counter(e["kind"] for e in entries)
     assert by_kind["register"] == 4 and by_kind["experiment"] == 4 and by_kind["trial"] == 11
-    assert by_kind["verdict"] == 4 and by_kind["snapshot"] == 8 and by_kind["refusal"] == 0
+    assert by_kind["verdict"] == 4 and by_kind["snapshot"] == 9 and by_kind["refusal"] == 0
     assert by_kind["flag"] == 0
     assert [e["body"]["phase"] for e in entries if e["kind"] == "experiment"] == [
         "map",
@@ -165,6 +166,12 @@ def test_full_session(lab: Lab) -> None:
     }
     assert all(e["body"]["fake"] is True for e in entries if e["kind"] == "trial")
     assert entries[-1]["body"]["end"] == "ended"
+    # The table is read from the final snapshot of the sealed record (Requirement 10.4, 12.6).
+    final = entries[-2]
+    assert final["kind"] == "snapshot" and final["body"]["for"] == "end"
+    final_design = (session.sealed_path / "blobs" / final["body"]["files"]["design"]["blob"]).read_text()
+    assert final_design == DESIGN_START + TABLE
+    assert check_table(final_design, session.evidence(), "design.md") == []
 
     # The commands on the sealed folder.
     assert chain.main([str(session.sealed_path)]) == 0

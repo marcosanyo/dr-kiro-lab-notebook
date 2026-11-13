@@ -8,7 +8,7 @@ from bench.core.outcome import BenchFailure, Quote, Ran, Refused
 from bench.core.session import SEAL_FAILED, WITHHELD, Accepted, RunResult, Session
 from bench.fake.adapter import FAIL_AT_GAIN, RAISE_AT_GAIN, FakeAdapter
 from bench.record.chain import verify
-from labkit import DESIGN_START, Lab, exp_file, hyp_block
+from labkit import DESIGN_START, SPEC_DIR, Lab, exp_file, hyp_block
 
 STATEMENT = "WHEN amp rises, THE distance SHALL rise."
 P_HALF = {"id": "P1", "range": [0.4, 0.6], "when": {"amp": 0.5, "gain": 1.0}}
@@ -229,6 +229,66 @@ def test_end_seals_and_verifies(lab: Lab) -> None:
     entries = verify(session.sealed_path, sealed=True)
     assert entries[-1]["body"]["end"] == "ended"
     refused(session.run("experiments/e1.py"), "the session has ended")
+
+
+def blob_text(session: Session, reference: dict) -> str:
+    return (session.store.folder / "blobs" / reference["blob"]).read_text(encoding="utf-8")
+
+
+def test_accepted_end_records_one_final_snapshot_of_the_checked_files(lab: Lab) -> None:
+    session = lab.start()
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    session.verdict("E1", "supported", "held")
+    before = session.state.snapshots
+    final_design = DESIGN_START + "\n" + TABLE
+    lab.write("design.md", final_design)
+    assert isinstance(session.end(), Ran)
+    entries = verify(session.sealed_path, sealed=True)
+    assert [e["kind"] for e in entries[-2:]] == ["snapshot", "seal"]
+    final = entries[-2]["body"]
+    assert final["for"] == "end" and "experiment" not in final
+    assert sum(1 for e in entries if e["kind"] == "snapshot" and e["body"]["for"] == "end") == 1
+    assert session.state.snapshots == before + 1
+    assert blob_text(session, final["files"]["design"]) == final_design
+    assert blob_text(session, final["files"]["requirements"]) == lab.read("requirements.md")
+    assert blob_text(session, final["files"]["tasks"]) == lab.read("tasks.md")
+
+
+def test_refused_end_records_no_snapshot(lab: Lab) -> None:
+    session = lab.start()
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    refused(session.end(), "E1 needs a verdict")
+    session.verdict("E1", "supported", "held")
+    before = (session.state.snapshots, len(session.store.entries))
+    refused(session.end(), "has no table")
+    after = (session.state.snapshots, len(session.store.entries))
+    assert after[0] == before[0] and after[1] == before[1] + 1  # only its own refusal entry
+    assert kinds(session)[-1] == "refusal"
+
+
+def test_end_with_a_missing_spec_file_is_refused_naming_it(lab: Lab) -> None:
+    session = lab.start()
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    session.verdict("E1", "supported", "held")
+    lab.write("design.md", DESIGN_START + "\n" + TABLE)
+    (lab.lab / SPEC_DIR / "tasks.md").unlink()
+    before = session.state.snapshots
+    refused(session.end(), "tasks.md is missing")
+    assert session.state.snapshots == before and session.state.sealed is None
+
+
+def test_stop_records_no_final_snapshot(lab: Lab) -> None:
+    session = lab.start()
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    before = session.state.snapshots
+    assert isinstance(session.stop("the builder stopped the test"), Ran)
+    assert session.state.snapshots == before
+    assert kinds(session)[-2:] == ["snapshot", "seal"]
+    assert not any(e["kind"] == "snapshot" and e["body"]["for"] == "end" for e in session.store.entries)
 
 
 def test_snapshots_accept_an_empty_or_missing_table(lab: Lab) -> None:

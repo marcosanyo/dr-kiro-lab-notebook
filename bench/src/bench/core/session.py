@@ -328,12 +328,15 @@ class Session:
     def _read_specs(self) -> tuple[str, str, str]:
         return (self._read_spec(0), self._read_spec(1), self._read_spec(2))
 
-    def _snapshot(self, texts: tuple[str, str, str], for_kind: str, experiment: str) -> None:
+    def _snapshot(self, texts: tuple[str, str, str], for_kind: str, experiment: str | None = None) -> None:
         files = {
             key: self.store.put_blob(text.encode("utf-8"), "dr-kiro", "text/markdown")
             for key, text in zip(SPEC_FILE_KEYS, texts, strict=True)
         }
-        self._append("snapshot", {"for": for_kind, "experiment": experiment, "files": files})
+        body: dict[str, Any] = {"for": for_kind, "files": files}
+        if experiment is not None:
+            body["experiment"] = experiment
+        self._append("snapshot", body)
 
     # Gates shared by actions
 
@@ -692,8 +695,9 @@ class Session:
         self._check_frozen()
         if self.state.pending is not None:
             raise _refuse(f"{self.state.pending} needs a verdict before the session can end")
+        specs = self._read_specs()
         file = self.config.spec_files[1]
-        problems = check_table(self._read_spec(1), self.evidence(), file)
+        problems = check_table(specs[1], self.evidence(), file)
         if problems:
             spans: list[Span] = [BenchText("the discovered spec table does not agree with the record: ")]
             for index, problem in enumerate(problems):
@@ -701,6 +705,7 @@ class Session:
                     spans.append(BenchText("; "))
                 spans += list(problem.spans)
             raise RefusalError(Message(tuple(spans)))
+        self._snapshot(specs, "end")
         sealed = self._seal("ended", "Dr. Kiro ended the session")
         if isinstance(sealed, BenchFailure):
             return sealed
