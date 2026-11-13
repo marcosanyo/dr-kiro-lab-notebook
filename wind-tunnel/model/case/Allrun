@@ -1,0 +1,8 @@
+#!/bin/bash
+# Runs inside the pinned image, in the case folder (a bind mount).
+. /usr/lib/openfoam/openfoam@IMAGE_TAG@/etc/bashrc
+set -e
+gmshToFoam @MESH_FILE@
+changeDictionary
+decomposePar
+mpirun -np @PROCESSES@ pimpleFoam -parallel

@@ -1,0 +1,36 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (@SPEED@ 0 0);
+
+boundaryField
+{
+    @PATCH_INLET@
+    {
+        type    fixedValue;
+        value   uniform (@SPEED@ 0 0);
+    }
+    @PATCH_OUTLET@
+    {
+        type    zeroGradient;
+    }
+    @PATCH_LATERAL@
+    {
+        type    slip;
+    }
+    @PATCH_OBSTACLE@
+    {
+        type    noSlip;
+    }
+    @PATCH_FRONT_AND_BACK@
+    {
+        type    empty;
+    }
+}

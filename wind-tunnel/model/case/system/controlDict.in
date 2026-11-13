@@ -1,0 +1,30 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+
+application     pimpleFoam;
+
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         @END@;
+
+deltaT          @INITIAL_DELTA_T@;
+adjustTimeStep  yes;
+maxCo           @MAX_CO@;
+maxDeltaT       @MAX_DELTA_T@;
+
+// No field output: the run writes only what the function objects write.
+writeControl    timeStep;
+writeInterval   1000000000;
+writeFormat     ascii;
+runTimeModifiable no;
+
+functions
+{
+    #include "functions"
+}
