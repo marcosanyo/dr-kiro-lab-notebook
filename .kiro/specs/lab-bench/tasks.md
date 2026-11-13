@@ -206,7 +206,7 @@ one place where the MCP SDK is imported.
 
 ## Changes after the first session
 
-- [ ] 22. Final snapshot at `end`
+- [x] 22. Final snapshot at `end`
   - Core: `end()` reads the three lab spec files once, checks the table on the `design.md` it read, records a
     `snapshot` entry with `"for": "end"` from those contents, then seals (design 6.2, 9.1, Decision 6). A missing
     file refuses `end()`, naming it (10.2). `stop()` and a bench failure record no final snapshot (10.5).

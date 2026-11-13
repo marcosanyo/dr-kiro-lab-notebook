@@ -5,8 +5,8 @@ the spec files between actions (inside and outside frozen parts), refused experi
 outcomes, adapter failures, paths outside the lab, and quotes of Dr. Kiro's text that contain derived terms.
 
 A small reference model predicts the outcome of every action (Ran, Refused or BenchFailure) from first
-principles: it does not call the bench's own checks. Invariants P1-P14 are checked after every step against
-the record; P16 replays the whole script in a fresh lab and compares the record byte for byte.
+principles: it does not call the bench's own checks. Invariants P1-P14 and P20 are checked after every step
+against the record; P16 replays the whole script in a fresh lab and compares the record byte for byte.
 """
 
 import copy
@@ -61,6 +61,7 @@ class Model:
     pending: str | None = None
     remaining: int = BUDGET
     sealed: bool = False
+    final_design: str | None = None  # the design.md of an accepted end
 
     @property
     def broken(self) -> bool:
@@ -397,6 +398,7 @@ class SessionMachine(RuleBasedStateMachine):
             return
         self.expect(outcome, Ran)  # P13
         m.sealed = True
+        m.final_design = DESIGN_START + table
         assert self.session.sealed_path is not None
 
     @precondition(
@@ -438,6 +440,7 @@ class SessionMachine(RuleBasedStateMachine):
             return
         self.expect(outcome, Ran)
         m.sealed = True
+        m.final_design = DESIGN_START + table
         assert self.session.sealed_path is not None
 
     @rule(term=st.booleans(), chance=st.integers(min_value=0, max_value=15))
@@ -532,11 +535,27 @@ class SessionMachine(RuleBasedStateMachine):
                     x["kind"] == "snapshot" and x["body"]["for"] == "verdict" for x in following
                 )  # P11
             elif kind == "refusal":
-                assert entries[i + 1]["kind"] != "snapshot" if i + 1 < len(entries) else True  # P11
+                # P11: only the final snapshot of an accepted end may follow a refusal directly.
+                following_entry = entries[i + 1] if i + 1 < len(entries) else None
+                assert (
+                    following_entry is None
+                    or following_entry["kind"] != "snapshot"
+                    or (following_entry["body"]["for"] == "end")
+                )
         assert trials == state.trials_run and state.remaining == BUDGET - trials >= 0  # P6
         assert state.remaining == m.remaining
         assert (state.sealed is not None) == m.sealed
         assert state.snapshots == sum(1 for e in entries if e["kind"] == "snapshot")
+        # P11 and P20: an accepted end has exactly one final snapshot, directly before its seal, holding the
+        # design.md that passed the check; a stop or a bench failure has none.
+        final = [i for i, e in enumerate(entries) if e["kind"] == "snapshot" and e["body"]["for"] == "end"]
+        assert all("experiment" not in entries[i]["body"] for i in final)
+        if entries[-1]["kind"] == "seal" and entries[-1]["body"]["end"] == "ended":
+            assert final == [len(entries) - 2]
+            blob = entries[-2]["body"]["files"]["design"]["blob"]
+            assert (self.session.store.folder / "blobs" / blob).read_text() == m.final_design  # P20
+        else:
+            assert final == []
         # P2: while any action was accepted, every frozen part matched (the model refuses when broken).
         assert set(state.hypotheses) == set(m.registered)
 
