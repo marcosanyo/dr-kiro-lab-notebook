@@ -50,8 +50,9 @@ from wind_tunnel.runner import (
     RunOutput,
     SolverFailure,
     create_case_folder,
+    empty_trash,
+    move_to_trash,
     prune_case_folder,
-    remove_case_folder,
 )
 
 CASE_BASE = environment.RECORD_PATH.parent
@@ -90,8 +91,13 @@ class WindAdapter:
         return self._declaration
 
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
-        """One trial. The seed is not used: the same inputs give the same result (10.2)."""
+        """One trial. The seed is not used: the same inputs give the same result (10.2).
+
+        The trash of the run before is deleted first, before the clock of the time limit starts (8.7). The
+        limit then covers the mesh, the solver and everything after it up to and including the picture."""
+        empty_trash(self._case_base)
         start = self._clock()
+        deadline = start + self._settings.run.timeout_s
         knobs = self._validate(inputs)
         settings = self._settings
 
@@ -108,24 +114,37 @@ class WindAdapter:
             return self._failure_with_case(FailureKind.INCOMPLETE, f"mesh: {error}", knobs, case_dir, "")
 
         try:
-            output = self._runner.run(case_dir, start + settings.run.timeout_s)
+            output = self._runner.run(case_dir, deadline)
         except SolverFailure as failure:
             return self._failure_with_case(failure.kind, failure.reason, knobs, case_dir, failure.detail)
 
+        problem: tuple[FailureKind, str] | None = None
+        outcome: TrialResult | str | None = None
         try:
             outcome = self._evaluate(output, settings)
         except SolverOutputError as error:
-            return self._failure_with_case(
-                FailureKind.INCOMPLETE, f"solver output: {error}", knobs, case_dir, ""
-            )
+            problem = (FailureKind.INCOMPLETE, f"solver output: {error}")
         except EstimatorError as error:
+            problem = (FailureKind.INCOMPLETE, f"estimators: {error}")
+        # The limit also covers the work after the solver. A run that passes it anywhere in that part is a
+        # time-out, whatever the part found (8.7).
+        over = self._clock() - deadline
+        if over >= 0:
+            found = problem[1] if problem else outcome if isinstance(outcome, str) else "a result"
             return self._failure_with_case(
-                FailureKind.INCOMPLETE, f"estimators: {error}", knobs, case_dir, ""
+                FailureKind.TIMEOUT,
+                f"the limit of {settings.run.timeout_s!r} s was over by {over!r} s when the work after the "
+                f"solver ended (the part found: {found})",
+                knobs,
+                case_dir,
+                "",
             )
+        if problem is not None:
+            return self._failure_with_case(*problem, knobs, case_dir, "")
         if isinstance(outcome, str):
             return self._failure_with_case(FailureKind.NOT_SETTLED, outcome, knobs, case_dir, "")
 
-        remove_case_folder(case_dir)
+        move_to_trash(case_dir)
         return outcome
 
     def _validate(self, inputs: ComputedInputs) -> dict[str, float]:

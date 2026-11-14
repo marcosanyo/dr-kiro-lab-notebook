@@ -1,0 +1,120 @@
+{
+  "name": "run16",
+  "knobs": {
+    "aspect": 3.0,
+    "corner": 1.0,
+    "splitter": 3.0,
+    "angle": 30.0
+  },
+  "trials": [
+    {
+      "seed": 1,
+      "outcome": "result",
+      "run_trial_s": 74.82690520899996,
+      "stages_s": {
+        "empty_trash": 2.287500001330045e-05,
+        "outline": 4.108400025870651e-05,
+        "render_case": 0.03318745900014619,
+        "mesh": 0.20790754100016784,
+        "solver_container": 73.51390324999966,
+        "parse_force_file": 0.02494066600002043,
+        "measure": 0.13371520800001235,
+        "settled": 0.00011691599956975551,
+        "parse_vorticity_file": 0.5689257080007337,
+        "picture_sheet": 0.34357437500011656,
+        "move_to_trash": 0.00029949999998279964
+      }
+    },
+    {
+      "seed": 2,
+      "outcome": "result",
+      "run_trial_s": 86.87970399999995,
+      "stages_s": {
+        "empty_trash": 0.006703042000026471,
+        "outline": 3.4500000310799805e-05,
+        "render_case": 0.03877491699995517,
+        "mesh": 0.1729668330003733,
+        "solver_container": 85.5705023749997,
+        "parse_force_file": 0.02951325000003635,
+        "measure": 0.14264425000010306,
+        "settled": 0.0002094589999614982,
+        "parse_vorticity_file": 0.5863417079999635,
+        "picture_sheet": 0.331241541000054,
+        "move_to_trash": 0.00031099999978323467
+      }
+    },
+    {
+      "seed": 3,
+      "outcome": "result",
+      "run_trial_s": 85.9172450420001,
+      "stages_s": {
+        "empty_trash": 0.0076979579998806,
+        "outline": 5.987499980619759e-05,
+        "render_case": 0.04111291600020195,
+        "mesh": 0.19654487500019968,
+        "solver_container": 84.68600712500029,
+        "parse_force_file": 0.0258988750001663,
+        "measure": 0.1190564590001486,
+        "settled": 0.00011383299988665385,
+        "parse_vorticity_file": 0.5343894580000779,
+        "picture_sheet": 0.30567624999957843,
+        "move_to_trash": 0.0002430829999866546
+      }
+    },
+    {
+      "seed": 4,
+      "outcome": "result",
+      "run_trial_s": 82.26642674999994,
+      "stages_s": {
+        "empty_trash": 0.00635408300013296,
+        "outline": 4.01669999519072e-05,
+        "render_case": 0.039338874999884865,
+        "mesh": 0.16384483299998465,
+        "solver_container": 81.077979917,
+        "parse_force_file": 0.027486208000027545,
+        "measure": 0.11082108300024629,
+        "settled": 9.516599993730779e-05,
+        "parse_vorticity_file": 0.5343709589992613,
+        "picture_sheet": 0.3055672919999779,
+        "move_to_trash": 0.0002117919998454454
+      }
+    },
+    {
+      "seed": 5,
+      "outcome": "result",
+      "run_trial_s": 90.08180195800014,
+      "stages_s": {
+        "empty_trash": 0.006631000000197673,
+        "outline": 2.937499994004611e-05,
+        "render_case": 0.03636408400006985,
+        "mesh": 0.1618451660001483,
+        "solver_container": 88.6922884579999,
+        "parse_force_file": 0.03182500000002619,
+        "measure": 0.17665424999995594,
+        "settled": 0.00016379099997720914,
+        "parse_vorticity_file": 0.6616583739996713,
+        "picture_sheet": 0.31360991700012164,
+        "move_to_trash": 0.0002942080000138958
+      }
+    },
+    {
+      "seed": 6,
+      "outcome": "result",
+      "run_trial_s": 87.21281358299984,
+      "stages_s": {
+        "empty_trash": 0.005745124999975815,
+        "outline": 4.104100025870139e-05,
+        "render_case": 0.07441204100041432,
+        "mesh": 0.18161929200005034,
+        "solver_container": 85.92369312499977,
+        "parse_force_file": 0.028937999999925523,
+        "measure": 0.1347335830000702,
+        "settled": 0.00012041700028930791,
+        "parse_vorticity_file": 0.5396760849998827,
+        "picture_sheet": 0.3230973329996232,
+        "move_to_trash": 0.00032074999990072683
+      }
+    }
+  ],
+  "total_s": 507.18489654199993
+}

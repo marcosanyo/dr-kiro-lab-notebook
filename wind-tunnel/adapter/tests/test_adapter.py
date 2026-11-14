@@ -54,7 +54,7 @@ def test_declaration_is_the_declared_one(settings, tmp_path):
     check_declaration(adapter.declaration())
 
 
-def test_settled_run_passes_check_result_and_removes_the_case(settings, tmp_path):
+def test_settled_run_passes_check_result_and_moves_the_case_to_the_trash(settings, tmp_path):
     adapter, runner = make(settings, tmp_path)
     result = adapter.run_trial(KNOBS, 7)
     assert isinstance(result, TrialResult)
@@ -64,6 +64,7 @@ def test_settled_run_passes_check_result_and_removes_the_case(settings, tmp_path
     assert result.values["cd"] == pytest.approx(1.2, rel=1e-6)
     assert result.values["cl_amp"] == pytest.approx(0.4, rel=0.01)
     assert not (tmp_path / "cases" / "0000000000000007").exists()
+    assert (tmp_path / "cases" / "trash" / "0000000000000007").is_dir()  # deleted before the next trial
     (case_dir, deadline) = runner.calls[0]
     assert case_dir.name == "0000000000000007"
 
@@ -182,6 +183,73 @@ def test_deadline_is_the_limit_from_the_start(settings, tmp_path):
     adapter._clock = lambda: 1000.0
     adapter.run_trial(KNOBS, 9)
     assert runner.calls[0][1] == 1000.0 + settings.run.timeout_s
+
+
+class SteppedClock:
+    """A clock that returns the given times one by one, then stays at the last."""
+
+    def __init__(self, *times):
+        self.times = list(times)
+        self.calls = 0
+
+    def __call__(self):
+        self.calls += 1
+        return self.times.pop(0) if len(self.times) > 1 else self.times[0]
+
+
+def test_deadline_is_checked_after_the_solver_too(settings, tmp_path):
+    """The clock reads: start, then (after the solver and everything up to the picture) past the limit."""
+    adapter, _ = make(settings, tmp_path)
+    adapter._clock = SteppedClock(0.0, settings.run.timeout_s + 0.5)
+    result = adapter.run_trial(KNOBS, 12)
+    assert_failure(result, FailureKind.TIMEOUT, tmp_path, 12)
+    assert "after the solver" in result.detail
+    assert not (tmp_path / "cases" / "trash").exists()  # a failed run is pruned and kept, not trashed
+
+
+def test_a_run_just_inside_the_limit_is_a_result(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path)
+    adapter._clock = SteppedClock(0.0, settings.run.timeout_s - 0.001)
+    assert isinstance(adapter.run_trial(KNOBS, 13), TrialResult)
+
+
+def test_a_late_run_that_also_did_not_settle_is_a_timeout(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path, FakeRunner(settings, drift=0.05))
+    adapter._clock = SteppedClock(0.0, settings.run.timeout_s + 1.0)
+    result = adapter.run_trial(KNOBS, 14)
+    assert_failure(result, FailureKind.TIMEOUT, tmp_path, 14)
+    assert "cd rule" in result.detail  # what the part found is kept on the builder side
+
+
+def test_the_trash_is_deleted_before_the_clock_starts_and_the_next_trial_does_not_see_it(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path)
+    assert isinstance(adapter.run_trial(KNOBS, 1), TrialResult)
+    trash = tmp_path / "cases" / "trash"
+    assert (trash / "0000000000000001").is_dir()
+    seen = []
+
+    def clock():
+        seen.append(trash.exists())
+        return 0.0
+
+    adapter._clock = clock
+    assert isinstance(adapter.run_trial(KNOBS, 2), TrialResult)
+    assert seen[0] is False  # the first reading of the clock comes after the deletion
+    assert not (trash / "0000000000000001").exists()
+    assert (trash / "0000000000000002").is_dir()  # at most the last success is in the trash
+
+
+def test_trash_that_cannot_be_deleted_stops_the_next_trial_loudly(settings, tmp_path, monkeypatch):
+    adapter, runner = make(settings, tmp_path)
+    assert isinstance(adapter.run_trial(KNOBS, 1), TrialResult)
+
+    def refuse(base):
+        raise PermissionError("cannot delete the trash")
+
+    monkeypatch.setattr(adapter_module, "empty_trash", refuse)
+    with pytest.raises(PermissionError):
+        adapter.run_trial(KNOBS, 2)
+    assert len(runner.calls) == 1
 
 
 @pytest.mark.parametrize(

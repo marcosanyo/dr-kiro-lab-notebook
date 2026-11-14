@@ -16,7 +16,7 @@ def test_same_input_twice_is_identical(tmp_path):
     """Needs Docker and the solver image; run by task 14.3 on the local Mac."""
     from wind_tunnel.adapter import WindAdapter
 
-    adapter = WindAdapter()
+    adapter = WindAdapter(case_base=tmp_path)
     outcomes = []
     for _ in range(2):
         start = time.monotonic()

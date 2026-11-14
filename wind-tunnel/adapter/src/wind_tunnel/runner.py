@@ -25,6 +25,7 @@ FORCE_GLOB = "postProcessing/forces/*/force.dat"
 SAMPLE_GLOB = "postProcessing/vorticityFrames/*/*.xy"
 SEED_LIMIT = 1 << 64
 MESH_NAME = "case.msh"
+TRASH_NAME = "trash"
 # What a failed run's case folder keeps (user decision: design Decision 20, requirements Decision 31):
 # the log, the settings, the mesh file and the force file. Everything else (processor folders, time
 # directories, sampled output, the mesh folder) goes.
@@ -79,9 +80,27 @@ def create_case_folder(base: Path | str, seed: int) -> Path:
     return path
 
 
-def remove_case_folder(path: Path | str) -> None:
-    """Remove the case folder of a run that succeeded (10.6). A failed run is pruned instead."""
-    shutil.rmtree(path)
+def move_to_trash(path: Path | str) -> Path:
+    """Move the case folder of a run that succeeded into `<base>/trash/`, where `<base>` is the folder that
+    holds it (10.6). It is a rename inside one file system, so its time does not depend on the folder size.
+    The deletion is `empty_trash`, called before the next trial starts. A name that is already in the trash
+    is an error, never overwritten. A failed run is pruned instead."""
+    source = Path(path)
+    trash = source.parent / TRASH_NAME
+    trash.mkdir(exist_ok=True)
+    target = trash / source.name
+    if target.exists():
+        raise FileExistsError(f"the trash already holds {target}")
+    source.rename(target)
+    return target
+
+
+def empty_trash(base: Path | str) -> None:
+    """Delete `<base>/trash/` with everything in it. A folder that cannot be deleted raises: nothing is
+    skipped and nothing is left half-deleted without an error. No trash is not an error: nothing was moved."""
+    trash = Path(base) / TRASH_NAME
+    if trash.exists():
+        shutil.rmtree(trash)
 
 
 def prune_case_folder(path: Path | str) -> None:

@@ -10,8 +10,9 @@ from wind_tunnel.runner import (
     SolverFailure,
     case_folder_name,
     create_case_folder,
+    empty_trash,
+    move_to_trash,
     prune_case_folder,
-    remove_case_folder,
 )
 
 IMAGE = "example/image@sha256:" + "0" * 64
@@ -127,11 +128,46 @@ def test_case_folder_is_named_by_the_seed_and_never_overwritten(tmp_path):
         create_case_folder(base, 255)
 
 
-def test_case_folder_removed_on_success(tmp_path):
+def test_case_folder_of_a_success_is_moved_to_the_trash_and_deleted_later(tmp_path):
     folder = create_case_folder(tmp_path, 1)
     (folder / "a.txt").write_text("x")
-    remove_case_folder(folder)
+    target = move_to_trash(folder)
     assert not folder.exists()
+    assert target == tmp_path / "trash" / folder.name
+    assert (target / "a.txt").read_text() == "x"  # moved, not deleted
+    empty_trash(tmp_path)
+    assert not (tmp_path / "trash").exists()
+    assert tmp_path.is_dir()
+
+
+def test_empty_trash_without_trash_is_not_an_error(tmp_path):
+    empty_trash(tmp_path)
+    empty_trash(tmp_path / "absent")
+
+
+def test_a_name_already_in_the_trash_is_an_error_and_nothing_is_overwritten(tmp_path):
+    first = create_case_folder(tmp_path, 1)
+    (first / "a.txt").write_text("first")
+    move_to_trash(first)
+    second = create_case_folder(tmp_path, 1)
+    (second / "a.txt").write_text("second")
+    with pytest.raises(FileExistsError):
+        move_to_trash(second)
+    assert (tmp_path / "trash" / second.name / "a.txt").read_text() == "first"
+    assert (second / "a.txt").read_text() == "second"
+
+
+def test_a_trash_that_cannot_be_deleted_raises(tmp_path, monkeypatch):
+    folder = create_case_folder(tmp_path, 1)
+    move_to_trash(folder)
+
+    def refuse(path):
+        raise PermissionError("cannot delete")
+
+    monkeypatch.setattr("wind_tunnel.runner.shutil.rmtree", refuse)
+    with pytest.raises(PermissionError):
+        empty_trash(tmp_path)
+    assert (tmp_path / "trash" / folder.name).is_dir()
 
 
 def write(path, text="x"):
