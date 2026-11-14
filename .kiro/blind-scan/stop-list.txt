@@ -48,3 +48,18 @@ move
 turn
 value
 forces
+# wind-tunnel lab: the user approved these words in task 13.1 ("settings" was already listed; they are general words that say nothing about the
+# structure of the body).
+name
+none
+run
+raw
+field
+keep
+p
+functions
+include
+method
+replace
+behind
+points

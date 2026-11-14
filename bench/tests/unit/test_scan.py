@@ -267,6 +267,9 @@ def test_repository_stop_list_loads() -> None:
         # wind-tunnel, approved by the user in task 12.4
         + ("body", "flow", "height", "depth", "speed", "density", "gap", "picture", "settings", "time", "end")
         + ("number", "arc", "line", "point", "move", "turn", "value", "forces")
+        # wind-tunnel lab, approved by the user in task 13.1 ("settings" was already listed)
+        + ("name", "none", "run", "raw", "field", "keep", "p", "functions", "include", "method", "replace")
+        + ("behind", "points")
     )
 
 
