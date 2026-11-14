@@ -88,16 +88,16 @@ flowchart TD
     B --> C[mesh: Mesher]
     C -->|MeshError| F
     C --> D[case folder: casegen.py]
-    D --> E[Runner: Allrun in the pinned image, 140 s limit]
+    D --> E[Runner: Allrun in the pinned image, inside the 140 s limit]
     E -->|SolverFailure / timeout| F
     E --> G[force.dat + sampled vorticity]
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
     I -->|not settled| F
     I --> J[picture: PNG sheet]
-    J --> K[TrialResult]
+    J --> K[TrialResult, if the clock is still inside 140 s; else timeout]
     F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
-    K --> M[remove case folder]
+    K --> M[case folder renamed into trash/; deleted at the start of the next trial]
 ```
 
 ## Components and Interfaces
@@ -209,7 +209,7 @@ Contents of the templates (names are OpenFOAM's; values come from `constants.tom
 | `system/decomposeParDict.in` | 3 subdomains, method `simple`, counts (3 1 1), fixed text (10.1) |
 | `system/changeDictionaryDict.in` | sets `frontAndBack` to `empty` after `gmshToFoam` |
 | `0/U.in`, `0/p.in` | inlet speed `(speed 0 0)`; `lateral` with `slip`; `obstacle` with `noSlip`; outlet pressure 0 |
-| `system/monitors.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below) |
+| `system/monitors.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below); the vorticity field is computed for the sampler and never written to disk (Decision 22) |
 | `Allrun` | `set -e`; `gmshToFoam`, `changeDictionary`, `decomposePar`, `mpirun -np 3 pimpleFoam -parallel` |
 
 - The top and bottom boundaries are not specified by the brief ("walls 7 above and below"). This design takes
@@ -273,13 +273,18 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
 - `Runner` protocol: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`, raising `SolverFailure(kind,
   reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest>
   /case/Allrun` through `subprocess.run(..., timeout=remaining)`. `remaining = 140 s - (time already used by outline
-  and mesh)`. On timeout it runs `docker kill <case-name>` and raises `SolverFailure("timeout")`. A non-zero exit,
+  and mesh)`. The limit covers everything up to and including the picture: after the solver step the adapter checks
+  the clock again (parse, estimators, settle, vorticity parse, picture), and a run that is at or past the limit then
+  is a `timeout` failure whatever that part found (Decision 21). On timeout it runs `docker kill <case-name>` and raises `SolverFailure("timeout")`. A non-zero exit,
   a missing output file or a non-finite value raises `SolverFailure` with the solver's last log lines in `detail`.
   The exact in-image invocation (user id, whether the image's entry point already prepares the environment) is
   confirmed in the smoke-run task (S5).
 - Case folder: `bench-run/wind-tunnel/<seed as 16 hex digits>/`, made by the adapter; `bench-run/` is git-ignored.
   The folder name uses the trial seed only as a label (Decision 3); an existing folder is a failure, not
-  overwritten. Removed after success. After a failure it is pruned to the log (`solver.log`), the settings (the text
+  overwritten. After success it is renamed at once into `bench-run/wind-tunnel/trash/` (a rename inside one file
+  system, independent of the folder size) and deleted by `empty_trash` at the start of the next `run_trial`, before the
+  clock starts (Decision 21). A trash that cannot be deleted raises and stops the session; a name already in the
+  trash is an error. After a failure it is pruned to the log (`solver.log`), the settings (the text
   files of `system/`, `constant/` and `0/`, without `polyMesh`), the mesh file (`case.msh`) and the force file
   (`postProcessing/forces/**/force.dat`), and named in `detail` (10.5, 10.6, Decision 20). If pruning fails, the
   exception is not caught and the session stops.
@@ -683,6 +688,23 @@ Made by the builder in this design; none changes a requirement.
     file and the force file; processor folders, time directories, sampled output and the mesh folder are deleted
     by `prune_case_folder`, called on every failure path that has a case folder. Reason: a kept failed case folder
     was 4.6 to 8.3 GB. Pruning that fails raises and stops the session (no fallback). Requirements Decision 31.
+21. **The 140 s limit covers mesh, solver and post-processing; the deletion is outside it** (the user's decision, task
+    14.4). `run_trial` checks the deadline again after the work that follows the solver. A successful run's case
+    folder is renamed into `trash/` and deleted at the start of the next trial, before the clock starts. Reason: the
+    measured deletion of a 5 GB folder took about 15 s, which would count against the 6 runs of one 900 s call
+    (Requirement 8.7). Choice: the deletion happens in the next trial's own call, so no background process exists and
+    a failure to delete is raised in the foreground. The trash holds at most one folder, because it is emptied before
+    each trial. The last run's folder stays in the trash until the next trial; with the reduced output (Decision 22)
+    it is about 54 MB. Requirements Decision 32.
+22. **The solver output is reduced to what the adapter reads** (the user's decision, option 3(b), task 14.4). The
+    vorticity function object was given `writeFields no`, which is not a keyword of that object and was ignored: the
+    field was written to a time folder of each processor at every step (about 12 400 files and 1.6 GB per processor).
+    It now has `writeControl none`: computed for the sampler, not written. The force file and the sampled vorticity
+    (80 000 points per frame, 6 frames) are unchanged. Measured, circle at Reynolds 150: 4.90 GB to 54 MB per run, no
+    `processor*` folders left. Shown, not claimed: for the circle and for `aspect=1.5, corner=0.5, splitter=1.0,
+    angle=10.0` (seed 0, same machine and image digest) the five measurements, the picture bytes and the force file
+    hash are byte-identical before and after (`spikes/timing/reference-before.json`, `reference-after.json`,
+    `reference.py compare`). Requirements Decision 33.
 
 ## Open questions
 

@@ -314,7 +314,10 @@ produce a made-up value, so that every number in a record comes from a run that 
    and goes to the builder-side log only (`rules.md`, Blind).
 5. THE failure's `public_reason` SHALL NOT state which knob values caused it (Requirement 12).
 6. THE adapter SHALL write nothing about a failure into any `lab/` folder.
-7. THE wall-clock limit of one run, including making the mesh, SHALL be 140 s. The prototype's run
+7. THE wall-clock limit of one run SHALL be 140 s. It covers making the mesh, the solver and the work after the
+   solver (parsing, estimators, settle criterion, vorticity parse and the picture), up to and including the picture; a
+   run that passes it anywhere in that part SHALL be a time-out. It does NOT cover the deletion of a successful run's
+   case folder, which SHALL happen outside the runs (Requirement 10.6). The prototype's run
    took about 1.5 minutes (90 s) on 3 processes. One experiment has at most 6 runs (`lab-bench` Requirement 5.1),
    and the front end's longest tested call is 900 s (`lab-bench` Requirement 17.18), so 6 times 140 s is 840 s,
    inside the call. IF the design's measured run time makes 140 s too short, or makes 6 runs not fit in 900 s, THEN
@@ -393,7 +396,11 @@ a failed run kept for me alone.
    NOT weaken the statement without asking.
 5. THE adapter SHALL make each case folder under `bench-run/` (git-ignored), with a name that identifies the
    session and the trial and never a `lab/` folder.
-6. WHEN a run succeeds, THE adapter SHALL remove its case folder. WHEN a run fails, THE adapter SHALL keep the case
+6. WHEN a run succeeds, THE adapter SHALL move its case folder at once into a trash folder inside `bench-run/` and
+   SHALL delete the trash before the next run starts its clock (Decisions, item 32). IF the trash cannot be deleted, THEN
+   the adapter SHALL raise and SHALL NOT continue. THE solver SHALL write only what the adapter reads (the force file
+   and the sampled vorticity), so that a case folder is far smaller than the 5 GB of the first runs (Decisions, item
+   33). WHEN a run fails, THE adapter SHALL keep the case
    folder, for the builder only, and SHALL name it in the `detail` of the failure. THE kept folder SHALL hold only
    the solver log, the settings (the text files of `system/`, `constant/` and `0/`, without `polyMesh`), the mesh
    file and the force file; everything else SHALL be deleted (Decisions, item 31). IF the folder cannot be
@@ -775,6 +782,14 @@ reading check failed.
 31. **A failed run's case folder is pruned** (the user's decision, task 14.4). It keeps only the log, the settings,
     the mesh file and the force file (Requirement 10.6). Reason: a kept failed case folder was 4.6 to 8.3 GB.
     Design Decision 20.
+32. **The limit covers mesh, solver and post-processing; the deletion is deferred** (the user's decision, task 14.4).
+    Reason: deleting a 5 GB case folder took about 15 s. The folder of a successful run is renamed into `trash/` and
+    deleted at the start of the next trial, before its clock. Measured: 6 runs of the slowest input (run 16: 3, 1, 3, 30)
+    took 507 s in total including the rename and the deletion of the trash (75 to 90 s each), inside 900 s.
+    Design Decision 21.
+33. **The solver output is reduced** (the user's decision, option 3(b), task 14.4): 4.90 GB to 54 MB per run for the
+    circle, with identical measurements, picture and force file on the two reference inputs, same machine and image
+    digest (Requirement 10.3). Design Decision 22.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:
