@@ -1,6 +1,6 @@
 # Design: wind-tunnel
 
-Covers Requirements 1-18. Settings come from `wind-tunnel/model/settings.toml`, `wind-tunnel/model/image-lock.toml` and the case templates,
+Covers Requirements 1-18. Settings come from `wind-tunnel/model/constants.toml`, `wind-tunnel/model/image-lock.toml` and the case templates,
 read at load time; no value of the solver setup is written twice. Values that do not exist yet are visible placeholders in
 angle brackets, such as `<not yet recorded>`, and each has a task that fills it (`rules.md` 4, Honest). A value
 that is a starting choice and not a result (a mesh size, the first time step, the colour limit) is written as a
@@ -48,11 +48,11 @@ wind-tunnel/
   extreme-runs.json               outcome and time of the 32 end-corner and near-end runs (17.6)
   model/                          uv project "wind-tunnel-model"; never visible from lab/
     pyproject.toml                depends on gmsh and numpy
-    settings.toml                 every number of the solver setup (6.8, 6.9)
+    constants.toml                 every number of the solver setup (6.8, 6.9)
     image-lock.toml               image digest and image id, written by the digest task (7.1)
     case/                         OpenFOAM templates (*.in, placeholders @NAME@) and Allrun
     src/wind_tunnel_model/
-      settings.py                 load and validate settings.toml; the Reynolds-number override
+      settings.py                 load and validate constants.toml; the Reynolds-number override
       geometry.py                 outline of the body from the four knobs (pure)
       mesh.py                     Gmsh recipe: outline -> mesh file
       casegen.py                  templates -> case folder (pure text)
@@ -153,7 +153,7 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   is above zero and omitted when it is exactly zero (`corner = 1` and the shorter side; at `a = 1` all four are
   omitted and the outline is four quarter arcs, a circle). Floating-point products of `corner` with powers of two
   make the exact-zero case exact.
-- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`settings.toml`) on the centre line, told in the
+- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`constants.toml`) on the centre line, told in the
   `splitter` text, from
   `x = a/2 - t` (inside the body, so there is no gap whatever the rounding) to `x = a/2 + s`. The outline is the
   union: the rear straight piece (or arc) is cut where the plate's top and bottom edges cross it, found in closed
@@ -170,7 +170,7 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
 - Output: an ordered, closed list of primitives (`Line(p, q)`, `Arc(p, centre, q)`), each with exact endpoints.
 - `GeometryError` (with the knob values and the reason, builder side only) when a positive piece is shorter than
   `min_edge`, or when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10).
-  `min_edge` is 0.0 in `settings.toml` until the user decides otherwise: the near-end cases of Requirement 17.2
+  `min_edge` is 0.0 in `constants.toml` until the user decides otherwise: the near-end cases of Requirement 17.2
   must reach the mesher and the solver so that they can be measured, and a refusal in the geometry would hide the
   result. With 0.0, only a negative or undefined piece is a `GeometryError`. Decision 12.
 
@@ -178,16 +178,16 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
 
 - Gmsh Python API, built-in kernel: points, lines and `addCircleArc` from the outline; the outer rectangle with the
   domain of 6.8 (inlet 6 heights ahead of the body's centre, outlet 18 behind, 7 above and below, measured from
-  the centre; the same values as `settings.toml [domain]`); one plane surface with the body as a hole.
+  the centre; the same values as `constants.toml [domain]`); one plane surface with the body as a hole.
 - Size field: a distance-and-threshold field from the body curves (`size_body` near, growing to `size_far`) and a
   box field over the near wake (`size_wake`). Sizes are `<chosen in the mesh task, before the circle check is
   run>`; changing them afterwards is a change that may alter the circle check and needs the user (6.8).
-- Extruded one layer in z by `depth` (`settings.toml`, the unit of a force per unit depth, 1) so that OpenFOAM sees
+- Extruded one layer in z by `depth` (`constants.toml`, the unit of a force per unit depth, 1) so that OpenFOAM sees
   a 2D case; physical groups give the patches `inlet`, `outlet`, `lateral` (top and bottom), `obstacle` and
-  `frontAndBack`. The names are in `settings.toml [patches]` and used by both the recipe and the templates. They are
+  `frontAndBack`. The names are in `constants.toml [patches]` and used by both the recipe and the templates. They are
   chosen so that none is a word of the told set (13.8).
 - Written as a Gmsh `.msh` file in the case folder. Mesh generation uses no random seed; Gmsh's algorithm choice and
-  the thread count (1) are set explicitly in `settings.toml` (10.2).
+  the thread count (1) are set explicitly in `constants.toml` (10.2).
 - Interface `Mesher.build(outline, settings, dest) -> None`, raising `MeshError(reason)`. `GmshMesher` is the real
   one; `FakeMesher` writes a fixed small file for tests.
 
@@ -198,7 +198,7 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
 placeholder value, or a placeholder left over after substitution, is an error. Two calls with equal inputs write
 identical bytes (10.2).
 
-Contents of the templates (names are OpenFOAM's; values come from `settings.toml`):
+Contents of the templates (names are OpenFOAM's; values come from `constants.toml`):
 
 | File | Holds |
 |---|---|
@@ -209,7 +209,7 @@ Contents of the templates (names are OpenFOAM's; values come from `settings.toml
 | `system/decomposeParDict.in` | 3 subdomains, method `simple`, counts (3 1 1), fixed text (10.1) |
 | `system/changeDictionaryDict.in` | sets `frontAndBack` to `empty` after `gmshToFoam` |
 | `0/U.in`, `0/p.in` | inlet speed `(speed 0 0)`; `lateral` with `slip`; `obstacle` with `noSlip`; outlet pressure 0 |
-| `system/functions.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below) |
+| `system/monitors.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below) |
 | `Allrun` | `set -e`; `gmshToFoam`, `changeDictionary`, `decomposePar`, `mpirun -np 3 pimpleFoam -parallel` |
 
 - The top and bottom boundaries are not specified by the brief ("walls 7 above and below"). This design takes
@@ -225,10 +225,10 @@ Contents of the templates (names are OpenFOAM's; values come from `settings.toml
 ### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `model/estimators.py`, `settle.py`
 
 Inputs are the force history `(t, Fx, Fy)` of the settled part (`t >= average_from`), with uneven times. Constants:
-`ESTIMATOR_MAX_DT = 0.05`, the largest sample interval the 1% accuracy is shown for; `settings.toml` is checked to
+`ESTIMATOR_MAX_DT = 0.05`, the largest sample interval the 1% accuracy is shown for; `constants.toml` is checked to
 have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
 
-- `cd = mean(Fx) / q`, `cl = Fy / q`, `q = 0.5 * rho * speed^2 * height * depth` with the values 1 of `settings.toml`
+- `cd = mean(Fx) / q`, `cl = Fy / q`, `q = 0.5 * rho * speed^2 * height * depth` with the values 1 of `constants.toml`
   (4.2, 4.6). Means are time-weighted (trapezoid rule over the settled part divided by its length).
 - `cl_mean` is the time-weighted mean of `cl`; `cl_amp = (max(cl) - min(cl)) / 2` over the samples.
   The mean is over the settled part, not over whole periods. A window rarely holds a whole number of periods, so
@@ -264,7 +264,7 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   name, the digest, the image id, the Gmsh version, the numpy version, the platform. No time, so that
   the file is a function of the environment (7.5). The sealed record does not carry it and `measured_by` does not
   mention it.
-- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `settings.toml [image]` holds `name` and `tag`.
+- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `constants.toml [image]` holds `name` and `tag`.
   The digest and the image id are in `model/image-lock.toml`, which does not exist until the digest task has run;
   `WindAdapter` (not `scan_adapter`) fails with "image lock missing" while it is absent, so no placeholder is ever
   loaded as a value and the Docker-free parts need no digest. A task
@@ -298,7 +298,7 @@ library: the sheet is built from arrays.
   for k = 0..frames-1, so the last frame is at the end of the run and the times increase. With the starting values
   this is 145, 146, ..., 150. The settings loader refuses `t_0 < average_from` (9.3) and `frames != rows * columns`.
 - Colour: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`, an integer in 0..254, with `L` =
-  `vorticity_limit` from `settings.toml` (a starting value, chosen from the vorticity range of the 32 gate runs and
+  `vorticity_limit` from `constants.toml` (a starting value, chosen from the vorticity range of the 32 gate runs and
   then fixed, 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
   three anchor colours (a blue and a red that are not black, and white at the middle) built by linear interpolation
   in `picture.py`. A masked point gets one fixed grey that is not in the table. The table has one source and the
@@ -312,7 +312,7 @@ library: the sheet is built from arrays.
 - Encoding: the array is turned into rows of RGB tuples and encoded by `bench.pictures.encode_png`, which writes no
   ancillary chunk; the same input gives the same bytes. No text is drawn. `bench.pictures.check_picture` is run on the
   bytes in the tests.
-- Settings (9.4, `settings.toml [picture]`, **proposed, the user confirms at design approval**, Decision 16):
+- Settings (9.4, `constants.toml [picture]`, **proposed, the user confirms at design approval**, Decision 16):
   `rows = 2`, `columns = 3`, `frames = 6`, `spacing = 1.0`, `cell_width = 400`, `cell_height = 200`, `gap = 4`;
   window x in [-2.5, 9.5], y in [-3, 3] (2 to 1, the shape of a cell); `vorticity_limit`.
   Why six frames at 1.0: one shedding period at a Strouhal number of about 0.17 is about 6 time units, so the
@@ -351,7 +351,7 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
 |---|---|---|
 | `openfoam-dict` | each `case/**/*.in` | every entry keyword, every sub-dictionary name, every bare word that is a value (scheme, solver, boundary-type and function-object names); numbers, the switch words `yes no on off true false` and the `FoamFile` header block are syntax and are left out |
 | `shell-words` | `case/Allrun` | the command names |
-| `toml-names` | `settings.toml` | keys, and string values that look like names (patch names, image name and tag) |
+| `toml-names` | `constants.toml` | keys, and string values that look like names (patch names, image name and tag) |
 | `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | names of functions, classes and module-level constants; no string literals |
 
 - Every extractor drops, by two fixed rules and no other filter (Decisions item 29): the Python reserved words
@@ -388,7 +388,7 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
 
 ## Data Models
 
-`settings.toml` (model; every row has one reader, `settings.py`, which fails on a missing, extra or placeholder
+`constants.toml` (model; every row has one reader, `settings.py`, which fails on a missing, extra or placeholder
 key):
 
 | Section | Keys | Source of the value |
@@ -564,7 +564,7 @@ differ by `spacing`, and the first is not before `average_from`; settings whose 
 | 140 s exceeded | container killed, `TrialFailure` `timeout` | same |
 | Settle criterion fails | `TrialFailure` `not_settled` | same |
 | Result breaks the contract | bench failure by `check_result` | Builder |
-| Placeholder left in `settings.toml`, missing key | error at load | Builder |
+| Placeholder left in `constants.toml`, missing key | error at load | Builder |
 | Programming error in the adapter | exception, a bench failure with a fixed text | Builder |
 
 A `TrialFailure` stops the session (`lab-bench` 2.7 and 11.3); none of these is retried or repaired.
@@ -593,7 +593,7 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 |---|---|
 | `declaration.py`, `told_set.py`, the knob `description` field (`lab-bench` 18) | 1, 2, 3, 4.1-4.4, 11 |
 | `geometry.py` | 3.3, 6.1-6.5, 6.10 |
-| `mesh.py`, `casegen.py`, `model/case/`, `settings.toml` | 6.6-6.9, 9.5, 10.1 |
+| `mesh.py`, `casegen.py`, `model/case/`, `constants.toml` | 6.6-6.9, 9.5, 10.1 |
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
 | `failures.py` | 8.1-8.6 |
@@ -648,7 +648,7 @@ Made by the builder in this design; none changes a requirement.
 
 10. **Estimators and settle criterion live in `model/`** (Decision 14).
 11. **The image digest and image id are in `model/image-lock.toml`**, written by the digest task, so that
-    `settings.toml` never holds a placeholder that a loader must refuse.
+    `constants.toml` never holds a placeholder that a loader must refuse.
 12. **`min_edge` is 0.0** until the near-end runs have been measured (Requirement 17.2, 17.6). The geometry then
     refuses nothing before the mesher; whatever the mesher and the solver do is the measurement. The near-end
     distances (0.001 and 0.01 of the range) are the builder's proposal.
@@ -657,7 +657,7 @@ Made by the builder in this design; none changes a requirement.
 14. **Sign of the angle.** A positive angle moves the front end toward +y (clockwise with the flow along +x and +y
     up, as in the prototype, confirmed by the user), written once in `geometry.py`; the estimators sit in `model/` so
     that they are written before the sheet reading gate that stops adapter code (Requirement 9.9).
-15. **The plate thickness in the `splitter` text is formatted from `settings.toml`**, not typed again.
+15. **The plate thickness in the `splitter` text is formatted from `constants.toml`**, not typed again.
 16. **Picture sheet layout: PROPOSED, the user confirms at design approval.** One PNG, 6 frames in 2 rows of 3, each
     cell 400 by 200, frames at t = 145, ..., 150 (spacing 1.0, a setting), a fixed 4 pixel gap in black, so the sheet
     is 1208 by 404 (1200 by 400 if the gap is 0). Reasons: section 7. The sampling grid equals the cell, so no

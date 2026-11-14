@@ -16,7 +16,7 @@ from wind_tunnel_model.casegen import MESH_FILE
 from wind_tunnel_model.geometry import Arc, Line, Outline
 from wind_tunnel_model.settings import Settings
 
-# Shape of the size fields. The three sizes and the wake length are in settings.toml [mesh]; these two
+# Shape of the size fields. The three sizes and the wake length are in constants.toml [mesh]; these two
 # extents are part of the recipe. STARTING VALUES, confirmed by task 14.1 together with the sizes.
 BODY_TRANSITION = 1.5  # distance from the body over which the size grows from size_body to size_far
 WAKE_HALF_WIDTH = 2.0  # the wake box spans y in [-WAKE_HALF_WIDTH, WAKE_HALF_WIDTH]

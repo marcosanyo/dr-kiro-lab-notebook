@@ -14,7 +14,7 @@ REAL = SETTINGS_PATH.read_text()
 
 
 def load_text(tmp_path, text):
-    path = tmp_path / "settings.toml"
+    path = tmp_path / "constants.toml"
     path.write_text(text)
     return Settings.load(path)
 

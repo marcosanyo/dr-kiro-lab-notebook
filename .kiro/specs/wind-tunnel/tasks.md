@@ -12,7 +12,7 @@ user.
 
 - **The picture is one PNG sheet** (Requirement 9, Decisions 23-24), because the GIF reading check failed
   (`spikes/gif/results.md`). The layout (6 frames, 2 rows of 3, cells 400 by 200, gap 4, spacing 1.0) is a
-  proposal until the user confirms it at design approval; the tasks use the values from `settings.toml`.
+  proposal until the user confirms it at design approval; the tasks use the values from `constants.toml`.
 - **The sheet reading check is run by the builder, not by the user** (Requirement 9.7, 9.10, 18.2). Task 7.1 makes a
   synthetic test sheet and asks Dr. Kiro's agent of the fake lab to read it, with `kiro-cli chat`; it needs Kiro CLI
   and `bench-run/fake`, so it runs on the user's Mac, and Kiro Web stops there and reports. Task 7.2 is the gate: it
@@ -43,7 +43,7 @@ user.
   (Requirement 12.6). Comments and names in the code follow Requirement 13.4: if a word of the told set collides
   with a derived solver term, rename what the builder chose, then reword, then ask.
 - **No invented numbers.** Every number that is a result comes from a recorded run. Starting values of settings are
-  marked as such in `settings.toml` and confirmed by a named task. Placeholders are `<not yet measured>`.
+  marked as such in `constants.toml` and confirmed by a named task. Placeholders are `<not yet measured>`.
 - **Commits.** Commit only the files the task changed, each added by name, with no co-author line. The root
   `README.md`, `docs/brief.md`, `body-lab/model/` and `.kiro/blind-scan/stop-list.txt` are not edited by any task.
 - **Translations.** This file and every changed English spec has a Japanese reference translation in `docs/ja/`;
@@ -63,7 +63,7 @@ user.
 - [ ] 2. Model project and settings
   - [ ] 2.1 Create `wind-tunnel/model/` as a `uv` project with its settings
     - `pyproject.toml` (project `wind-tunnel-model`, Python 3.12, dependencies `gmsh` and `numpy`, dev
-      dependencies `pytest`, `hypothesis`, `ruff`), `settings.toml` with every key of the Data Models table of the
+      dependencies `pytest`, `hypothesis`, `ruff`), `constants.toml` with every key of the Data Models table of the
       design, and `src/wind_tunnel_model/settings.py`: load, validate, refuse a missing, extra or placeholder key
       or a wrong type, read nothing from the environment, and provide `with_reynolds(x)` (design 6, 14.2).
     - Values: the brief's values (Reynolds number 150, domain 6 / 18 / 7, end time 150, averaging from 80,
@@ -406,7 +406,7 @@ user.
     - **Stop and ask:** IF any run hits the time limit, fails to mesh, fails, or does not settle, **stop and
       report** the knob values, outcomes and times to the user (in Japanese), with the three options of Requirement
       17.6. Do not change a range, the time limit, `min_edge` or the setup, and do not go on.
-    - Only if all 32 runs settle: set `vorticity_limit` in `settings.toml` from the vorticity range observed in
+    - Only if all 32 runs settle: set `vorticity_limit` in `constants.toml` from the vorticity range observed in
       these runs (the rule and the numbers in the report), then fix it (Requirement 9.5).
     - Verified by: `extreme-runs.json` lists 32 runs from the run, all settled; the limit is set from the data.
     - _Requirements: 9.5, 17.2, 17.6_

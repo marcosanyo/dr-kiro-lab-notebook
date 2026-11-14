@@ -345,7 +345,7 @@ notebook, I want a picture that shows the flow in time order.
    fixed colour that is not on the colour scale, with no gap outside the outer cells, so that the sheet is 1208 by 404
    pixels; the frames SHALL be at times 145, 146, ..., 150 (spacing 1.0 time units, the last frame at the end of the
    run). THE frame count, the layout, the cell size, the gap and the spacing SHALL be settings in
-   `wind-tunnel/model/settings.toml` and SHALL be checked together when the settings are loaded (the number of
+   `wind-tunnel/model/constants.toml` and SHALL be checked together when the settings are loaded (the number of
    frames equals rows times columns, and the first frame time is not before the averaging start time). A change of
    a value after the first session is a change of this requirement.
 5. THE colour scale's fixed limits SHALL be written in `wind-tunnel/model/`, not in `lab/`.
@@ -737,7 +737,7 @@ reading check failed.
     zero, which the colour scale shows as its neutral colour, so without a gap the right edge of one cell and the
     left edge of the next run together and the wake of one cell can be read as continuing in the next. If the user
     prefers no gap, the setting is 0 and the sheet is 1200 by 400. The spacing is a setting in
-    `wind-tunnel/model/settings.toml`. A body that does not shed gives nearly identical cells. The colour scale is
+    `wind-tunnel/model/constants.toml`. A body that does not shed gives nearly identical cells. The colour scale is
     fixed across trials; its upper limit stays a value to be measured later, from the 32-run gate (Requirement 9.5,
     17.2). **The legibility of a sheet of this size for Dr. Kiro is not claimed:** it is checked by the sheet
     reading check (Requirement 9.7, 9.10), and a failure stops the builder.
@@ -762,6 +762,13 @@ reading check failed.
     the Python built-in names (`dir(builtins)`) and names of one character, using the standard library lists. No
     other filter is added and the stop list is not changed (Requirement 13.1, design 9).
 
+30. **Two builder-chosen file names renamed, task 13.1** (user policy: the builder decides when a finding is only a
+    builder-chosen name). The blind scan of `wind-tunnel/lab` reported the file-name stems `settings` and
+    `functions`, which the stop list does not cover, because the same words appear in the lab text
+    (`.kiro/settings/**`, the protected folders, the method text). `wind-tunnel/model/settings.toml` is now
+    `wind-tunnel/model/constants.toml` and `wind-tunnel/model/case/system/functions.in` is now `monitors.in`, with
+    `#include "monitors"` in `controlDict.in`. Both names were the builder's choice; OpenFOAM does not require them.
+    The scanner, the lab text and the stop-list rules are unchanged.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

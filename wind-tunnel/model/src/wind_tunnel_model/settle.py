@@ -1,7 +1,7 @@
 """The settle criterion (Requirement 8.3, design section 5).
 
 A pure function of the coefficient histories of the settled part. Times are in units of height / speed and
-``st`` is in the same units (both are 1 in ``settings.toml``), so the number of periods is ``st * T``.
+``st`` is in the same units (both are 1 in ``constants.toml``), so the number of periods is ``st * T``.
 Comparisons are written without division. The reason names the failed rule (builder side only).
 """
 

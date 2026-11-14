@@ -23,7 +23,7 @@ extractor = "openfoam-dict"
 path = "../model/case/system/decomposeParDict.in"
 extractor = "openfoam-dict"
 [[source]]
-path = "../model/case/system/functions.in"
+path = "../model/case/system/monitors.in"
 extractor = "openfoam-dict"
 [[source]]
 path = "../model/case/system/fvSchemes.in"
@@ -35,7 +35,7 @@ extractor = "openfoam-dict"
 path = "../model/case/Allrun"
 extractor = "shell-words"
 [[source]]
-path = "../model/settings.toml"
+path = "../model/constants.toml"
 extractor = "toml-names"
 [[source]]
 path = "../model/src/wind_tunnel_model/geometry.py"

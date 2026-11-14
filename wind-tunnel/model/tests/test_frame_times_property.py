@@ -19,7 +19,7 @@ def with_lines(**lines):
 
 
 def load(tmp_path, **lines):
-    path = tmp_path / "settings.toml"
+    path = tmp_path / "constants.toml"
     path.write_text(with_lines(**lines))
     return Settings.load(path)
 

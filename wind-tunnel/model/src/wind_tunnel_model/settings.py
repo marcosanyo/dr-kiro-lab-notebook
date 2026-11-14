@@ -1,4 +1,4 @@
-"""Load and validate ``settings.toml``. The only reader of that file.
+"""Load and validate ``constants.toml``. The only reader of that file.
 
 Fails with ``SettingsError`` naming the key on a missing, extra or placeholder key, a wrong type, or a
 value that breaks one of the cross-checks. Reads nothing from the environment.
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ESTIMATOR_MAX_DT = 0.05
-SETTINGS_PATH = Path(__file__).resolve().parents[2] / "settings.toml"
+SETTINGS_PATH = Path(__file__).resolve().parents[2] / "constants.toml"
 
 _PLACEHOLDER = re.compile(r"^\s*$|^<.*>$|^(todo|tbd|fixme|changeme|placeholder)$", re.IGNORECASE)
 
