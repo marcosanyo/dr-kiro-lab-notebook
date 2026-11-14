@@ -262,7 +262,12 @@ def test_missing_sources_fail(tmp_path: Path) -> None:
 
 
 def test_repository_stop_list_loads() -> None:
-    assert load_stop_list(STOP_LIST) == ("bone", "grid", "hide", "metal", "rubber", "floor", "top")
+    assert load_stop_list(STOP_LIST) == (
+        ("bone", "grid", "hide", "metal", "rubber", "floor", "top")
+        # wind-tunnel, approved by the user in task 12.4
+        + ("body", "flow", "height", "depth", "speed", "density", "gap", "picture", "settings", "time", "end")
+        + ("number", "arc", "line", "point", "move", "turn", "value", "forces")
+    )
 
 
 def test_fake_sources_and_command(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

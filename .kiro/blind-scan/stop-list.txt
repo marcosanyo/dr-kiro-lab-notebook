@@ -25,3 +25,26 @@ rubber
 # body-lab: other names
 floor
 top
+
+# wind-tunnel: the user approved these 19 derived terms in task 12.4 (2026-11-14, see wind-tunnel/blind-scan-findings.md).
+# They are general words and say nothing about the structure of the body. The derived terms Arc, Line, Point, move
+# and _turn are stored in the scan's token form (arc, line, point, move, turn).
+body
+flow
+height
+depth
+speed
+density
+gap
+picture
+settings
+time
+end
+number
+arc
+line
+point
+move
+turn
+value
+forces
