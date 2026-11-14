@@ -1,6 +1,10 @@
 # Blind scan sources of wind-tunnel (wind-tunnel design 9, Requirement 13.5). Paths are relative to this file.
-# The [lab] section is added by task 13.1, which creates wind-tunnel/lab/ (the scan refuses a missing lab folder).
 adapter = "wind_tunnel.declaration:scan_adapter"
+
+[lab]
+path = "../lab"
+dr_kiro = ["experiments/**", ".kiro/specs/**"]
+
 [[source]]
 path = "../model/case/0/U.in"
 extractor = "openfoam-dict"
