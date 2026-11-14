@@ -1,0 +1,126 @@
+{
+  "name": "circle150",
+  "knobs": {
+    "aspect": 1.0,
+    "corner": 1.0,
+    "splitter": 0.0,
+    "angle": 0.0
+  },
+  "outcome": "TrialResult",
+  "total_run_trial_s": 123.63458758406341,
+  "stages_s": {
+    "outline": 2.6834080927073956e-05,
+    "render_case": 0.034830500022508204,
+    "mesh": 0.3756245420081541,
+    "runner.run_total": 105.16341783397365,
+    "docker_run_call": 105.12038970901631,
+    "force_parse": 0.03500795806758106,
+    "estimators(measure)": 0.12432699999772012,
+    "settle": 0.00037445896305143833,
+    "vorticity_parse": 0.6178374568698928,
+    "picture": 0.30492983292788267,
+    "remove_case_folder": 15.133989667054266,
+    "prune_case_folder": 0
+  },
+  "solver_log": {
+    "steps": 12575,
+    "last_simulated_time": 150.0,
+    "last_step_execution_time_s": 102.96,
+    "last_step_clock_time_s": 103.0,
+    "first_step_clock_time_s": 2.0
+  },
+  "extra": {
+    "min_free_bytes": 5376806912,
+    "case_folder_bytes_before_removal": 4897681408
+  },
+  "events": [
+    [
+      "outline",
+      0.0,
+      0.0
+    ],
+    [
+      "render_case",
+      0.0,
+      0.035
+    ],
+    [
+      "mesh",
+      0.035,
+      0.411
+    ],
+    [
+      "docker.run",
+      0.411,
+      105.531
+    ],
+    [
+      "runner.run",
+      0.411,
+      105.574
+    ],
+    [
+      "parse_force_file",
+      105.574,
+      105.609
+    ],
+    [
+      "measure",
+      105.612,
+      105.736
+    ],
+    [
+      "settled",
+      105.736,
+      105.736
+    ],
+    [
+      "parse_vorticity_file",
+      105.736,
+      105.845
+    ],
+    [
+      "parse_vorticity_file",
+      105.845,
+      105.951
+    ],
+    [
+      "parse_vorticity_file",
+      105.951,
+      106.055
+    ],
+    [
+      "parse_vorticity_file",
+      106.055,
+      106.155
+    ],
+    [
+      "parse_vorticity_file",
+      106.155,
+      106.254
+    ],
+    [
+      "parse_vorticity_file",
+      106.254,
+      106.354
+    ],
+    [
+      "picture_sheet",
+      106.354,
+      106.659
+    ],
+    [
+      "remove_case_folder",
+      108.501,
+      123.635
+    ]
+  ],
+  "first_event_after_start_s": 1.5874975360929966e-05,
+  "values": {
+    "cd": 1.410365639653,
+    "cl_mean": -0.004803186839115194,
+    "cl_amp": 0.5608987999999999,
+    "strouhal": 0.1882614706277389,
+    "shedding": 1.0
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "name": "run16a",
+  "knobs": {
+    "aspect": 3.0,
+    "corner": 1.0,
+    "splitter": 3.0,
+    "angle": 30.0
+  },
+  "outcome": "TrialFailure",
+  "total_run_trial_s": 161.1440238330979,
+  "stages_s": {
+    "outline": 3.470794763416052e-05,
+    "render_case": 0.03748366702347994,
+    "mesh": 0.3346075830049813,
+    "runner.run_total": 140.3144698330434,
+    "docker_run_call": 139.65631820901763,
+    "force_parse": 0,
+    "estimators(measure)": 0,
+    "settle": 0,
+    "vorticity_parse": 0,
+    "picture": 0,
+    "remove_case_folder": 0,
+    "prune_case_folder": 20.45231754204724
+  },
+  "solver_log": {
+    "steps": 14614,
+    "last_simulated_time": 139.491,
+    "last_step_execution_time_s": 138.19,
+    "last_step_clock_time_s": 139.0,
+    "note": "read from the kept (pruned) log after the run"
+  },
+  "extra": {
+    "min_free_bytes": 3969175552
+  },
+  "events": [
+    [
+      "outline",
+      0.0,
+      0.0
+    ],
+    [
+      "render_case",
+      0.0,
+      0.038
+    ],
+    [
+      "mesh",
+      0.038,
+      0.372
+    ],
+    [
+      "docker.run",
+      0.372,
+      140.029
+    ],
+    [
+      "docker.kill",
+      140.119,
+      140.668
+    ],
+    [
+      "runner.run",
+      0.372,
+      140.687
+    ],
+    [
+      "prune_case_folder",
+      140.687,
+      161.139
+    ]
+  ],
+  "first_event_after_start_s": 1.6375095583498478e-05,
+  "public_reason": "the trial took too long"
+}
