@@ -54,6 +54,10 @@ for title, prefix in (
     ("Part A", "A"),
     ("Part B1 (angle)", "B1"),
     ("Part B2 (corner)", "B2"),
+    ("Part C1 (end corners at angle 15 and 0)", "C1"),
+    ("Part C2 (near-end angles)", "C2"),
+    ("Part B3 (splitter)", "B3"),
+    ("Part R (repeats of identical inputs)", "R"),
 ):
     print(f"### {title}\n")
     extra = " old survey |" if prefix == "A" else ""
