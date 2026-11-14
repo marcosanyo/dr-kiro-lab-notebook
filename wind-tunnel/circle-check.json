@@ -1,0 +1,15 @@
+{
+  "reynolds": 100.0,
+  "measured": 0.17140823710600314,
+  "literature": 0.164335,
+  "constants": {
+    "A": -3.3265,
+    "B": 0.1816,
+    "C": 0.00016
+  },
+  "source": "C. H. K. Williamson, \"Oblique and parallel modes of vortex shedding in the wake of a circular cylinder at low Reynolds numbers\", J. Fluid Mech. 206, 579-627 (1989), equation (6): St = A/Re + B + C*Re, a least-squares fit to the parallel-shedding data",
+  "difference_percent": 4.304157425991501,
+  "image_digest": "sha256:1ba02114b1c025c370f2e269a07677c16c9bea8d990fcd75ac8378aff9d41b50",
+  "passed": true,
+  "reason": null
+}
