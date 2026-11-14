@@ -35,3 +35,4 @@ If `docs/requests/<spec>.md` exists, read it first: it is the user's request for
 
 Reports and questions to the user are in Japanese (`rules.md` 5). Code, commits, specs and steering are in English.
 `docs/status.md` and `docs/requests/` are written in Japanese for the user.
+When running Run all, every dispatch prompt to a sub-agent must say "write the final report in Japanese; code, commits and specs stay in English", and the orchestrator's own progress reports to the user are in Japanese.
