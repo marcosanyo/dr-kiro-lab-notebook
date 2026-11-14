@@ -12,9 +12,13 @@ from wind_tunnel_model.solver_output import picture_grid
 
 def force_file_text(t, fx, fy) -> str:
     """Force file text with a header and zero pressure and viscous parts (only the total is read)."""
-    lines = ["# Force", "# CofR : (0 0 0)", "# Time  total  pressure  viscous"]
+    lines = [
+        "# Force",
+        "# CofR : (0 0 0)",
+        "# Time total_x total_y total_z pressure_x pressure_y pressure_z viscous_x viscous_y viscous_z",
+    ]
     for ti, xi, yi in zip(t, fx, fy, strict=True):
-        lines.append(f"{ti!r} ({xi!r} {yi!r} 0) (0 0 0) (0 0 0)")
+        lines.append(f"{ti!r} {xi!r} {yi!r} 0 0 0 0 0 0 0")
     return "\n".join(lines) + "\n"
 
 

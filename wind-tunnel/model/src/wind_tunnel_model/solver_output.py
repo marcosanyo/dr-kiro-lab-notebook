@@ -77,10 +77,10 @@ def parse_force_file(path: Path | str) -> ForceSeries:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        tokens = line.replace("(", " ").replace(")", " ").split()
-        if len(tokens) != 10 or line.count("(") != 3 or line.count(")") != 3:
+        tokens = line.split()
+        if len(tokens) != 10:
             raise SolverOutputError(
-                f"{path}:{line_no}: expected time and three vectors of three numbers, found {line!r}"
+                f"{path}:{line_no}: expected the time and nine force numbers, found {line!r}"
             )
         values = [_number(path, line_no, token) for token in tokens]
         if rows and values[0] <= rows[-1][0]:

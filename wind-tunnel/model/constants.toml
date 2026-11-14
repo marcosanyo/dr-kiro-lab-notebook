@@ -22,14 +22,14 @@ end = 150.0  # brief
 average_from = 80.0  # brief
 max_co = 0.8  # brief
 max_delta_t = 0.05  # the estimator limit (ESTIMATOR_MAX_DT)
-initial_delta_t = 0.005  # STARTING VALUE, confirmed by task 14.1 (smoke run)
+initial_delta_t = 0.005  # confirmed by task 14.1: the first steps stay at Courant 0.4 to 0.8, the step then adapts
 
 [mesh]
-# STARTING VALUES, chosen in the mesh task (4.1) and confirmed by task 14.1; changing them after the circle
-# check needs the user (6.8).
-size_body = 0.02
+# Chosen in the mesh task (4.1) and set by task 14.1 so that one run fits in 140 s on the arm64 image (0.02 and
+# 0.08 took 310 s); changing them after the circle check needs the user (6.8).
+size_body = 0.04
 size_far = 0.5
-size_wake = 0.08
+size_wake = 0.16
 wake_length = 12.0
 algorithm = 6  # Gmsh 2D algorithm: Frontal-Delaunay
 threads = 1

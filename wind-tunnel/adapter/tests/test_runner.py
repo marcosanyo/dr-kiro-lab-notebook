@@ -50,12 +50,13 @@ def test_command_line(tmp_path):
         write_outputs(tmp_path)
         return subprocess.CompletedProcess(args, 0, stdout="done\n")
 
-    runner, process = runner_with(ok)
+    process = FakeProcess(ok)
+    runner = DockerRunner(IMAGE, process=process, clock=lambda: 0.0, user=501, group=20)
     output = runner.run(tmp_path, 140.0)
     args, kwargs = process.calls[0]
     assert args == [
-        "docker", "run", "--rm", "--name", f"wind-tunnel-{tmp_path.name}",
-        "-v", f"{tmp_path}:/case", "-w", "/case", IMAGE, "./Allrun",
+        "docker", "run", "--rm", "--name", f"wind-tunnel-{tmp_path.name}", "--user", "501:20",
+        "-v", f"{tmp_path}:/case", IMAGE, "/case/Allrun",
     ]  # fmt: skip
     assert kwargs["timeout"] == 140.0
     assert output.force_file.name == "force.dat"

@@ -22,10 +22,7 @@ def picture():
 def test_sample_force_file(tmp_path):
     path = tmp_path / "force.dat"
     path.write_text(
-        "# Force\n# Time total pressure viscous\n"
-        "0.1 (1.5 -2 0) (1 -2 0) (0.5 0 0)\n"
-        "\n"
-        "0.2 (2.5 3 0) (2 3 0) (0.5 0 0)\n"
+        "# Force\n# Time total pressure viscous\n0.1 1.5 -2 0 1 -2 0 0.5 0 0\n\n0.2 2.5 3 0 2 3 0 0.5 0 0\n"
     )
     series = parse_force_file(path)
     assert series.t.tolist() == [0.1, 0.2]
@@ -42,7 +39,7 @@ def test_force_file_round_trip_with_writer(tmp_path):
 @pytest.mark.parametrize("bad", ["nan", "inf", "-inf"])
 def test_force_file_non_finite_is_refused(tmp_path, bad):
     path = tmp_path / "force.dat"
-    path.write_text(f"0.1 (1 2 0) (0 0 0) (0 0 0)\n0.2 ({bad} 2 0) (0 0 0) (0 0 0)\n")
+    path.write_text(f"0.1 1 2 0 0 0 0 0 0 0\n0.2 {bad} 2 0 0 0 0 0 0 0\n")
     with pytest.raises(SolverOutputError, match=r"force\.dat:2.*non-finite"):
         parse_force_file(path)
 
@@ -69,14 +66,14 @@ def test_force_file_unreadable_is_refused(tmp_path):
 @pytest.mark.parametrize("second", ["0.1", "0.05"])
 def test_force_file_times_must_increase(tmp_path, second):
     path = tmp_path / "force.dat"
-    path.write_text(f"0.1 (1 2 0) (0 0 0) (0 0 0)\n{second} (1 2 0) (0 0 0) (0 0 0)\n")
+    path.write_text(f"0.1 1 2 0 0 0 0 0 0 0\n{second} 1 2 0 0 0 0 0 0 0\n")
     with pytest.raises(SolverOutputError, match=r"force\.dat:2.*does not increase"):
         parse_force_file(path)
 
 
 def test_force_file_wrong_columns_is_refused(tmp_path):
     path = tmp_path / "force.dat"
-    path.write_text("0.1 (1 2 0) (0 0 0)\n")
+    path.write_text("0.1 1 2 0 0 0 0\n")
     with pytest.raises(SolverOutputError, match=r"force\.dat:1"):
         parse_force_file(path)
 

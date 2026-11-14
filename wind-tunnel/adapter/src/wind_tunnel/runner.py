@@ -5,9 +5,10 @@ the 140 s limit. A timeout, an abnormal exit or a missing output raises `SolverF
 retried, repaired or filled in (8.2). Everything here is builder side: the detail of a failure never
 reaches Dr. Kiro.
 
-The in-image invocation and the output file locations are confirmed in the smoke-run task (design 6, S5).
+The in-image invocation and the output file locations were confirmed in task 14.1 (design 6, S5).
 """
 
+import os
 import shutil
 import subprocess
 import time
@@ -82,7 +83,12 @@ def _as_text(value: str | bytes | None) -> str:
 
 
 class DockerRunner:
-    """Runs `./Allrun` of a case folder in the image `image` (`name@digest`)."""
+    """Runs `/case/Allrun` of a case folder in the image `image` (`name@digest`), as the user of this process.
+
+    The entry point of the image starts every command in the home directory, whatever `-w` says, so the
+    command is an absolute path and `Allrun` changes into `/case` itself. The solver runs as the calling user
+    because `mpirun` refuses to run as root and the image prepares a user name for any other user id.
+    """
 
     def __init__(
         self,
@@ -90,12 +96,16 @@ class DockerRunner:
         *,
         process: ProcessFunction = subprocess.run,
         clock: Callable[[], float] = time.monotonic,
+        user: int | None = None,
+        group: int | None = None,
     ):
         if "@sha256:" not in image:
             raise ValueError(f"the image must be given as name@digest, got {image!r}")
         self._image = image
         self._process = process
         self._clock = clock
+        self._user = os.getuid() if user is None else user
+        self._group = os.getgid() if group is None else group
 
     def container_name(self, case_dir: Path) -> str:
         return f"wind-tunnel-{case_dir.name}"
@@ -107,12 +117,12 @@ class DockerRunner:
             "--rm",
             "--name",
             self.container_name(case_dir),
+            "--user",
+            f"{self._user}:{self._group}",
             "-v",
             f"{case_dir}:/case",
-            "-w",
-            "/case",
             self._image,
-            "./Allrun",
+            "/case/Allrun",
         ]
 
     def run(self, case_dir: Path, deadline: float) -> RunOutput:

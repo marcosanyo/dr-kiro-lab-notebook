@@ -30,7 +30,7 @@ Highlights of the choices (details below):
 | Topic | Choice | Why |
 |---|---|---|
 | Strouhal estimator | Least-squares sinusoid fit on a fine frequency grid, refined by golden-section search; no FFT | Resolves far below the bin width 1/70 (about 8% of 0.17), works on the uneven times of an adaptive time step (5.2) |
-| Output of the solver | Function objects write `force.dat` and sampled vorticity during the run; no field dumps, no reconstruction | Short run, small disk use, the forces and the picture come from the same run |
+| Output of the solver | Function objects write `force.dat` and sampled vorticity during the run; no field dumps that are read (the solver keeps only its newest time folder), no reconstruction | Short run, small disk use, the forces and the picture come from the same run |
 | Picture | One PNG contact sheet: 6 vorticity frames in 2 rows of 3, a fixed colour ramp, numpy and `bench.pictures.encode_png`, no Pillow | Same colour scale in every trial by construction (9.1); Dr. Kiro's file tool delivers one still image (the GIF check failed); no plotting library, no text, no metadata; the form of `body-lab`'s picture |
 | Docker | `docker run` of the pinned image with a bind-mounted case folder; one script (`Allrun`) from `model/` | One command to time out and kill; the in-image commands are solver setup and live in `model/` (6.9) |
 | Environment check | At adapter construction; the scan uses a second factory that only builds the declaration | `bench-scan` must work without Docker (Kiro Web, publishing) |
@@ -203,7 +203,7 @@ Contents of the templates (names are OpenFOAM's; values come from `constants.tom
 | File | Holds |
 |---|---|
 | `constant/transportProperties.in` | `nu = speed * height / reynolds` |
-| `constant/momentumTransport.in` | laminar |
+| `constant/turbulenceProperties.in` | laminar |
 | `system/controlDict.in` | `pimpleFoam`, end time 150, adaptive step with `maxCo` 0.8 and `maxDeltaT` (at most 0.05, section 5), no field output, function objects below |
 | `system/fvSchemes.in`, `fvSolution.in` | second-order time and convection schemes (`backward`, `linearUpwind`), pressure-velocity coupling with one outer corrector; choices to be confirmed by the circle check |
 | `system/decomposeParDict.in` | 3 subdomains, method `simple`, counts (3 1 1), fixed text (10.1) |
@@ -271,8 +271,8 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   on the user's Mac writes both with `docker image inspect` (the digest is that of the image index; the image id is
   the one of the arm64 build, so the pair pins the platform, 7.1). No digest is invented.
 - `Runner` protocol: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`, raising `SolverFailure(kind,
-  reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> -v <case>:/case -w /case <name@digest>
-  ./Allrun` through `subprocess.run(..., timeout=remaining)`. `remaining = 140 s - (time already used by outline
+  reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest>
+  /case/Allrun` through `subprocess.run(..., timeout=remaining)`. `remaining = 140 s - (time already used by outline
   and mesh)`. On timeout it runs `docker kill <case-name>` and raises `SolverFailure("timeout")`. A non-zero exit,
   a missing output file or a non-finite value raises `SolverFailure` with the solver's last log lines in `detail`.
   The exact in-image invocation (user id, whether the image's entry point already prepares the environment) is
@@ -411,8 +411,9 @@ Other records:
 - `SettleResult(ok, reason)`.
 - `environment.jsonl` line: `{image, digest, image_id, gmsh, numpy, platform}`.
 - `circle-check.json`: section 10.
-- Force file: columns `time`, `(total_x total_y total_z)`, `(pressure ...)`, `(viscous ...)`; lines starting `#`
-  are comments. Only the total is read.
+- Force file: ten plain numbers per line without parentheses: `time`, `total_x total_y total_z`, `pressure_x pressure_y
+  pressure_z`, `viscous_x viscous_y viscous_z` (confirmed in task 14.1); lines starting `#` are comments. Only
+  the total is read.
 
 ## Correctness Properties
 
@@ -665,6 +666,16 @@ Made by the builder in this design; none changes a requirement.
 17. **No Pillow.** The GIF writer and the resize were the only uses; `bench.pictures.encode_png` encodes the sheet.
 18. **The notebook's moving picture** is a `lab-notebook` decision for both labs (Decision 25 of the requirements);
     nothing in this design prepares it.
+19. **Spellings confirmed or changed in task 14.1 (smoke run, image `opencfd/openfoam-default:2412`, arm64).**
+    The image entry point starts every command in the home directory and ignores `-w`, and `mpirun` refuses to
+    run as root. The command is therefore `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case
+    <name@digest> /case/Allrun`, and `Allrun` begins with `cd /case`. The constant-folder file is
+    `turbulenceProperties` (v2412 does not read `momentumTransport`). The force file has ten plain numbers per line
+    without parentheses. The solver writes at every frame spacing (`adjustableRunTime`, `purgeWrite 1`) so that
+    the sampler's frames fall exactly on 145 to 150; without it the first frame was written at 144.997. The
+    starting mesh sizes were too slow (310 s for one run at `size_body` 0.02, `size_wake` 0.08); they are now 0.04
+    and 0.16 (one circle run, 102 s). The circle check of task 14.2 has not yet been run, so this is allowed
+    (Requirement 6.8).
 
 ## Open questions
 

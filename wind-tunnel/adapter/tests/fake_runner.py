@@ -89,9 +89,12 @@ class FakeRunner:
         t = self.dt * np.arange(1, count + 1)
         cd = self.cd + self.drift * (t - settings.time.average_from)
         cl = self.cl_mean + self.amp * np.sin(2 * np.pi * self.st * t)
-        lines = ["# Force", "# Time total pressure viscous"]
+        lines = [
+            "# Force",
+            "# Time total_x total_y total_z pressure_x pressure_y pressure_z viscous_x viscous_y viscous_z",
+        ]
         for ti, xi, yi in zip(t, cd * q, cl * q, strict=True):
-            lines.append(f"{float(ti)!r} ({float(xi)!r} {float(yi)!r} 0) (0 0 0) (0 0 0)")
+            lines.append(f"{float(ti)!r} {float(xi)!r} {float(yi)!r} 0 0 0 0 0 0 0")
         force = case_dir / "postProcessing" / "forces" / "0" / "force.dat"
         force.parent.mkdir(parents=True)
         force.write_text("\n".join(lines) + "\n", encoding="utf-8")

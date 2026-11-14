@@ -12,7 +12,7 @@ extractor = "openfoam-dict"
 path = "../model/case/0/p.in"
 extractor = "openfoam-dict"
 [[source]]
-path = "../model/case/constant/momentumTransport.in"
+path = "../model/case/constant/turbulenceProperties.in"
 extractor = "openfoam-dict"
 [[source]]
 path = "../model/case/constant/transportProperties.in"
