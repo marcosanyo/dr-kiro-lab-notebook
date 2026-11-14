@@ -2,9 +2,11 @@
 
 The values are computed from the declared ranges. The runs go one at a time. After every run its record is
 appended to a progress file, so a crash loses nothing and a second start skips the runs already recorded
-without changing any value. `wind-tunnel/extreme-runs.json` is written from the progress file only when
-all 32 runs are recorded and settled. The first run that does not settle is recorded and stops the test
-(Requirement 17.6); nothing is retried, and no range, limit or setup is changed here.
+without changing any value. `wind-tunnel/extreme-runs.json` is written from the progress file when all 32
+runs are recorded. This is a survey (the user's decision for task 14.4, option A): a run that does not settle,
+hits the time limit, fails to mesh or fails is recorded and the survey goes on (Requirement 17.6 is answered
+in the report). Nothing is retried, and no range, limit or setup is changed here. A bench failure other than
+these outcomes, or an unreachable Docker, raises and stops the test.
 """
 
 import itertools
@@ -139,7 +141,7 @@ def write_result(records: list[dict], settings: Settings) -> None:
 
 
 @pytest.mark.slow
-def test_extreme_runs_all_settle():
+def test_extreme_runs_survey():
     """Needs Docker and the solver image; run by task 14.4 on the local Mac. One run at a time, resumable."""
     knobs = declared_knobs()
     cases = all_cases(knobs)
@@ -174,16 +176,19 @@ def test_extreme_runs_all_settle():
                 record["vorticity"] = adapter.frame_stats
             else:
                 record["detail"] = result.detail
+                # The adapter keeps the case folder of a run that did not settle, under a name that depends
+                # only on the seed. Move it aside (nothing is deleted) so that the next run can be made.
+                kept = REPO / "bench-run" / "wind-tunnel" / f"{SEED:016x}"
+                if kept.exists():
+                    kept.rename(kept.with_name("extreme-kept-" + key.replace(":", "-").replace("/", "-")))
             append_progress(record)
             done[key] = record
             print(f"{index + 1}/32 {key} {record['outcome']} {elapsed:.1f} s", flush=True)
-        # Requirement 17.6: the first run that does not settle stops everything.
-        assert record["outcome"] == SETTLED, f"{key}: {record['outcome']} ({record['wall_clock_s']:.1f} s)"
 
     records = [done[f"{c['group']}:{c['label']}"] for c in cases]
     assert len(records) == 32
     public = [
-        {k: r[k] for k in ("group", "label", "knobs", "outcome", "wall_clock_s", "vorticity")}
+        {k: r[k] for k in ("group", "label", "knobs", "outcome", "wall_clock_s", "vorticity") if k in r}
         for r in records
     ]
     write_result(public, adapter._settings)
