@@ -1,0 +1,40 @@
+[project]
+name = "wind-tunnel-adapter"
+version = "0.1.0"
+description = "wind-tunnel: the 2D flow around a body in OpenFOAM as a bench application."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "lab-bench",
+    "wind-tunnel-model",
+    "numpy",
+]
+
+[project.scripts]
+wind-tunnel-told-set = "wind_tunnel.told_set:main"
+wind-tunnel-circle-check = "wind_tunnel.circle_check:main"
+
+[tool.uv.sources]
+lab-bench = { path = "../../bench", editable = true }
+wind-tunnel-model = { path = "../model", editable = true }
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "wind_tunnel"
+
+[dependency-groups]
+dev = ["pytest>=9.2.0", "hypothesis", "ruff>=0.17.4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: needs Docker and the solver image; run on the local Mac only"]
+addopts = ["--strict-markers", "-ra", "--import-mode=importlib", "-m", "not slow"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "BLE", "SIM"]
