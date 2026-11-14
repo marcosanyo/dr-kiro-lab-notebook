@@ -40,8 +40,8 @@ def test_findings_file_records_none():
 
 def test_scanner_derives_terms_from_every_kind_of_solver_file():
     terms = {name for name in _scanner().terms.values()}
-    # a dictionary keyword, a patch name, a function-object library and a geometry-script name
-    assert {"deltaT", "inlet", "fieldFunctionObjects", "Box"} <= terms
+    # a dictionary keyword, a patch name, a function-object library and a geometry-script class name
+    assert {"deltaT", "inlet", "fieldFunctionObjects", "GeometryError"} <= terms
 
 
 def test_public_reasons_contain_no_derived_term():

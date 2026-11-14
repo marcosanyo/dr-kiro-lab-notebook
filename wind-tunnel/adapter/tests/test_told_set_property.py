@@ -3,6 +3,7 @@
 Feature: wind-tunnel, Property 13.
 """
 
+import keyword
 import re
 import tempfile
 from pathlib import Path
@@ -32,7 +33,8 @@ _DESCRIPTION = st.one_of(st.just(""), _TEXT).map(lambda s: s[:DESCRIPTION_MAX].s
 _NAMES = st.lists(
     st.from_regex(r"[a-z][a-z0-9_]{0,8}", fullmatch=True)
     .filter(lambda n: n not in {"t", "abs", "min", "max", "len"})
-    .filter(lambda n: n not in {"math", "range"} and not n.isupper()),
+    .filter(lambda n: n not in {"math", "range"} and not n.isupper())
+    .filter(lambda n: not keyword.iskeyword(n) and n not in keyword.softkwlist),
     min_size=1,
     max_size=8,
     unique=True,

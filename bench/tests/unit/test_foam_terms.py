@@ -123,10 +123,30 @@ def test_python_names(tmp_path):
         "        return 'two words'\n"
     )
     found = names("python-names", tmp_path, text, "geometry.py")
-    for expected in ("build_outline", "SurfaceMaker", "make_surface", "GRID_LAYERS", "outlineGroup"):
+    for expected in ("build_outline", "SurfaceMaker", "make_surface", "GRID_LAYERS"):
         assert expected in found
     assert "__all__" not in found and "two words" not in found
+    assert "outlineGroup" not in found  # string literals are not taken (task 13.1)
     assert "corner" not in found  # parameters are not listed in the design
+
+
+def test_python_takes_no_string_literals(tmp_path):
+    text = "LABELS = ('alphaLabel', 'betaLabel')\ndef make():\n    return 'gammaLabel'\n"
+    assert names("python-names", tmp_path, text, "geometry.py") == ["make", "LABELS"]
+
+
+def test_every_extractor_drops_reserved_built_in_and_one_character_names(tmp_path):
+    texts = {
+        "openfoam-dict": "keepName { type None; set 1; a b; value True; }",
+        "shell-words": "keepName\nset\ntype\nx\nlist\n",
+        "toml-names": 'keepName = "None"\ntype = "x"\nset = 1\nq = 2\n',
+        "python-names": "def keepName(): pass\ndef type(): pass\nx = 1\nset = 2\nmatch = 3\n",
+    }
+    for extractor, text in texts.items():
+        found = names(extractor, tmp_path, text)
+        assert "keepName" in found, extractor
+        for dropped in ("None", "True", "type", "set", "list", "match", "a", "b", "x", "q"):
+            assert dropped not in found, (extractor, dropped)
 
 
 def test_python_unparsable_file(tmp_path):

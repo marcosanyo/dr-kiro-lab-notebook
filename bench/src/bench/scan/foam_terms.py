@@ -8,6 +8,8 @@ that holds no name at all, is a `ScanError` naming the file and the problem; no 
 """
 
 import ast
+import builtins
+import keyword
 import re
 import shlex
 import tomllib
@@ -41,8 +43,17 @@ def _unique(names: list[str]) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+# Fixed rule for every extractor (task 13.1, user decision): drop Python reserved words, Python built-in
+# names and names of one character. The lists come from the standard library.
+_DROPPED = frozenset(keyword.kwlist) | frozenset(keyword.softkwlist) | frozenset(dir(builtins))
+
+
+def _kept(name: str) -> bool:
+    return len(name) > 1 and name not in _DROPPED
+
+
 def _checked(path: Path, names: list[str]) -> list[str]:
-    names = _unique(names)
+    names = _unique([name for name in names if _kept(name)])
     if not names:
         raise _fail(path, "no names found in the file")
     return names
@@ -267,8 +278,6 @@ def extract_python_names(path: Path) -> list[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
             names.append(node.name)
-        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and _looks_like_name(node.value):
-            names.append(_name_from_value(node.value))
     for statement in tree.body:
         targets: list[ast.expr] = []
         if isinstance(statement, ast.Assign):

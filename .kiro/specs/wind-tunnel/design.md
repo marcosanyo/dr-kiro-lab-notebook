@@ -352,8 +352,11 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
 | `openfoam-dict` | each `case/**/*.in` | every entry keyword, every sub-dictionary name, every bare word that is a value (scheme, solver, boundary-type and function-object names); numbers, the switch words `yes no on off true false` and the `FoamFile` header block are syntax and are left out |
 | `shell-words` | `case/Allrun` | the command names |
 | `toml-names` | `settings.toml` | keys, and string values that look like names (patch names, image name and tag) |
-| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | names of functions, classes and module-level constants; string literals that look like names |
+| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | names of functions, classes and module-level constants; no string literals |
 
+- Every extractor drops, by two fixed rules and no other filter (Decisions item 29): the Python reserved words
+  (`keyword.kwlist`, `keyword.softkwlist`), the Python built-in names (`dir(builtins)`), and names of one character.
+  The lists are the standard library's.
 - A file that cannot be read or parsed is a `ScanError` naming file and problem (13.2). Template placeholders
   `@NAME@` are read as the bare word `NAME`.
 - Source file names and stems go into the terms by the existing code (11.1 of `lab-bench`).

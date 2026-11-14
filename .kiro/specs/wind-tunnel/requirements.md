@@ -469,7 +469,10 @@ nothing in a `lab/` folder or in a bench output reveals the solver.
 1. THE bench SHALL provide a blind scan extractor for the solver files in `wind-tunnel/model/`, as `lab-bench`
    design 11.1 anticipates. It SHALL derive terms from: the keywords and the names (patches, fields, schemes,
    solvers, function objects, regions) in the OpenFOAM dictionaries and templates; the names in the mesh and
-   geometry script; the digest-pinned image name; and the file names and stems of the source files.
+   geometry script; the digest-pinned image name; and the file names and stems of the source files. THE `python-names` extractor SHALL take only the names of
+   functions, classes and module-level constants, and no string literal. EVERY extractor SHALL drop the Python
+   reserved words (`keyword.kwlist`, `keyword.softkwlist`), the Python built-in names (`dir(builtins)`) and names
+   of one character, and SHALL apply no other filter (Decisions, item 29).
 2. IF the extractor cannot read or parse a solver file, THEN it SHALL fail, naming the file and the problem, and
    SHALL NOT skip the file (`lab-bench` Requirement 15.7).
 3. THE blind scan SHALL remove the adapter's declared names (the four knob names, the five measurement names and
@@ -752,6 +755,12 @@ reading check failed.
     most `amplitude / (pi * f * T)` (`f` the signal frequency, `T` the length of the settled part), and the earlier
     bound of 1% of the mean cannot hold for a mean near 0. The bound is now 1% of the known mean plus
     `amplitude / (pi * f * T)`. The bound of `cl_amp` is unchanged.
+29. **Extractor rules, task 13.1: option 1** (the user's decision). The blind scan of `wind-tunnel/lab` reported 115
+    findings of generic words. The extractors are narrowed by two fixed rules and no judgement about common
+    strings: (a) `python-names` takes only the names of functions, classes and module-level constants, and no
+    string literal; (b) every extractor drops the Python reserved words (`keyword.kwlist`, `keyword.softkwlist`),
+    the Python built-in names (`dir(builtins)`) and names of one character, using the standard library lists. No
+    other filter is added and the stop list is not changed (Requirement 13.1, design 9).
 
 ## Open questions
 
