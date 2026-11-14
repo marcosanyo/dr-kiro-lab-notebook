@@ -15,7 +15,10 @@ vorticity
     type            vorticity;
     libs            (fieldFunctionObjects);
     field           U;
-    writeFields     no;
+    // The field is computed at every step for the sampler below and is never written to disk (`writeFields`
+    // is not a keyword of this function object and was ignored: the field went to a time folder at every
+    // step, about 1.6 GB per processor in one run).
+    writeControl    none;
 }
 
 vorticityFrames
