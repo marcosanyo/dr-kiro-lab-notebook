@@ -26,6 +26,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from bench.adapter import Declaration
+from bench.scan.foam_terms import (
+    extract_openfoam_dict,
+    extract_python_names,
+    extract_shell_words,
+    extract_toml_names,
+)
 
 
 class ScanError(Exception):
@@ -83,6 +89,10 @@ EXTRACTORS: dict[str, Callable[[Path], list[str]]] = {
     "mjcf": extract_mjcf,
     "wiring-json": extract_wiring_json,
     "fake-json": extract_fake_json,
+    "openfoam-dict": extract_openfoam_dict,
+    "shell-words": extract_shell_words,
+    "toml-names": extract_toml_names,
+    "python-names": extract_python_names,
 }
 
 
