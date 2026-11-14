@@ -394,7 +394,10 @@ a failed run kept for me alone.
 5. THE adapter SHALL make each case folder under `bench-run/` (git-ignored), with a name that identifies the
    session and the trial and never a `lab/` folder.
 6. WHEN a run succeeds, THE adapter SHALL remove its case folder. WHEN a run fails, THE adapter SHALL keep the case
-   folder, for the builder only, and SHALL name it in the `detail` of the failure.
+   folder, for the builder only, and SHALL name it in the `detail` of the failure. THE kept folder SHALL hold only
+   the solver log, the settings (the text files of `system/`, `constant/` and `0/`, without `polyMesh`), the mesh
+   file and the force file; everything else SHALL be deleted (Decisions, item 31). IF the folder cannot be
+   pruned, THEN the adapter SHALL raise and SHALL NOT continue.
 
 ### Requirement 11: Goal, budget and modes
 
@@ -665,7 +668,7 @@ reading check failed.
    fast when the image is wrong.
 6. **Reproducibility.** A fixed decomposition into 3 processes; the same Mac, image and input give the same
    result; no guarantee across machines. The seed is not used.
-7. **Case folders.** Under `bench-run/`, removed after success, kept after failure for the builder only.
+7. **Case folders.** Under `bench-run/`, removed after success, kept after failure for the builder only, pruned to the log, settings, mesh file and force file (item 31).
 8. **Circle check.** Circle at Reynolds number 100 through a builder-side parameter; a slow local test; the result
    in a tracked file and the README; pass within 5%. The literature source is decided in item 17.
 9. **Picture.** One picture per trial, fixed colour scale, no text. Replaced by item 23: a PNG picture sheet. Frame
@@ -769,6 +772,9 @@ reading check failed.
     `wind-tunnel/model/constants.toml` and `wind-tunnel/model/case/system/functions.in` is now `monitors.in`, with
     `#include "monitors"` in `controlDict.in`. Both names were the builder's choice; OpenFOAM does not require them.
     The scanner, the lab text and the stop-list rules are unchanged.
+31. **A failed run's case folder is pruned** (the user's decision, task 14.4). It keeps only the log, the settings,
+    the mesh file and the force file (Requirement 10.6). Reason: a kept failed case folder was 4.6 to 8.3 GB.
+    Design Decision 20.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

@@ -10,6 +10,7 @@ from wind_tunnel.runner import (
     SolverFailure,
     case_folder_name,
     create_case_folder,
+    prune_case_folder,
     remove_case_folder,
 )
 
@@ -131,6 +132,75 @@ def test_case_folder_removed_on_success(tmp_path):
     (folder / "a.txt").write_text("x")
     remove_case_folder(folder)
     assert not folder.exists()
+
+
+def write(path, text="x"):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+
+
+def fake_failed_case(root):
+    """A case folder as a failed run leaves it: what is kept, and what is not."""
+    kept = [
+        root / "solver.log",
+        root / "case.msh",
+        root / "system" / "controlDict",
+        root / "system" / "fvSchemes",
+        root / "constant" / "transportProperties",
+        root / "0" / "U",
+        root / "0" / "p",
+        root / "postProcessing" / "forces" / "0" / "force.dat",
+    ]
+    removed = [
+        root / "processor0" / "0.5" / "U",
+        root / "processor1" / "constant" / "polyMesh" / "points",
+        root / "constant" / "polyMesh" / "points",
+        root / "constant" / "polyMesh" / "boundary",
+        root / "postProcessing" / "vorticityFrames" / "145" / "grid_vorticity.xy",
+        root / "postProcessing" / "forces" / "0" / "other.dat",
+        root / "postProcessing" / "probes" / "0" / "p",
+        root / "12" / "U",
+        root / "stray.txt",
+        root / "system" / "nested" / "extra",
+    ]
+    for path in kept + removed:
+        write(path)
+    return kept, removed
+
+
+def test_prune_keeps_only_log_settings_mesh_file_and_force_file(tmp_path):
+    root = create_case_folder(tmp_path, 2)
+    kept, removed = fake_failed_case(root)
+    prune_case_folder(root)
+    assert sorted(p for p in root.rglob("*") if p.is_file()) == sorted(kept)
+    assert all(not path.exists() for path in removed)
+    assert not (root / "constant" / "polyMesh").exists()
+    assert not (root / "processor0").exists()
+
+
+def test_prune_twice_changes_nothing(tmp_path):
+    root = create_case_folder(tmp_path, 2)
+    kept, _ = fake_failed_case(root)
+    prune_case_folder(root)
+    prune_case_folder(root)
+    assert sorted(p for p in root.rglob("*") if p.is_file()) == sorted(kept)
+
+
+def test_prune_of_a_missing_folder_is_loud(tmp_path):
+    with pytest.raises(NotADirectoryError):
+        prune_case_folder(tmp_path / "absent")
+
+
+def test_prune_failure_is_loud(tmp_path, monkeypatch):
+    root = create_case_folder(tmp_path, 2)
+    fake_failed_case(root)
+
+    def refuse(path, *args, **kwargs):
+        raise PermissionError(f"cannot remove {path}")
+
+    monkeypatch.setattr("wind_tunnel.runner.shutil.rmtree", refuse)
+    with pytest.raises(PermissionError):
+        prune_case_folder(root)
 
 
 @pytest.mark.parametrize("seed", [-1, 2**64, 1.5, True])

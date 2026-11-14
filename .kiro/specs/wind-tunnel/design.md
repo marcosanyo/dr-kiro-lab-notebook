@@ -96,7 +96,7 @@ flowchart TD
     I -->|not settled| F
     I --> J[picture: PNG sheet]
     J --> K[TrialResult]
-    F --> L[keep case folder, detail to builder log only]
+    F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
     K --> M[remove case folder]
 ```
 
@@ -279,7 +279,10 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   confirmed in the smoke-run task (S5).
 - Case folder: `bench-run/wind-tunnel/<seed as 16 hex digits>/`, made by the adapter; `bench-run/` is git-ignored.
   The folder name uses the trial seed only as a label (Decision 3); an existing folder is a failure, not
-  overwritten. Removed after success, kept after failure, named in `detail` (10.5, 10.6).
+  overwritten. Removed after success. After a failure it is pruned to the log (`solver.log`), the settings (the text
+  files of `system/`, `constant/` and `0/`, without `polyMesh`), the mesh file (`case.msh`) and the force file
+  (`postProcessing/forces/**/force.dat`), and named in `detail` (10.5, 10.6, Decision 20). If pruning fails, the
+  exception is not caught and the session stops.
 - `run_trial(inputs, seed)`: check that `inputs` has exactly the four names and finite numbers inside the ranges
   (otherwise `ValueError`, which the bench turns into a bench failure; nothing is clipped, 3.4); then the flow of
   the diagram above. Unexpected exceptions are not caught.
@@ -676,6 +679,10 @@ Made by the builder in this design; none changes a requirement.
     starting mesh sizes were too slow (310 s for one run at `size_body` 0.02, `size_wake` 0.08); they are now 0.04
     and 0.16 (one circle run, 102 s). The circle check of task 14.2 has not yet been run, so this is allowed
     (Requirement 6.8).
+20. **A failed run's case folder is pruned** (the user's decision). It keeps only the log, the settings, the mesh
+    file and the force file; processor folders, time directories, sampled output and the mesh folder are deleted
+    by `prune_case_folder`, called on every failure path that has a case folder. Reason: a kept failed case folder
+    was 4.6 to 8.3 GB. Pruning that fails raises and stops the session (no fallback). Requirements Decision 31.
 
 ## Open questions
 

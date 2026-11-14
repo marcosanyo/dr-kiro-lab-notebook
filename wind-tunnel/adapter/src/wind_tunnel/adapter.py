@@ -50,6 +50,7 @@ from wind_tunnel.runner import (
     RunOutput,
     SolverFailure,
     create_case_folder,
+    prune_case_folder,
     remove_case_folder,
 )
 
@@ -104,21 +105,25 @@ class WindAdapter:
         try:
             self._mesher.build(body, settings, case_dir)
         except MeshError as error:
-            return trial_failure(FailureKind.INCOMPLETE, f"mesh: {error}", knobs, case_dir, "")
+            return self._failure_with_case(FailureKind.INCOMPLETE, f"mesh: {error}", knobs, case_dir, "")
 
         try:
             output = self._runner.run(case_dir, start + settings.run.timeout_s)
         except SolverFailure as failure:
-            return trial_failure(failure.kind, failure.reason, knobs, case_dir, failure.detail)
+            return self._failure_with_case(failure.kind, failure.reason, knobs, case_dir, failure.detail)
 
         try:
             outcome = self._evaluate(output, settings)
         except SolverOutputError as error:
-            return trial_failure(FailureKind.INCOMPLETE, f"solver output: {error}", knobs, case_dir, "")
+            return self._failure_with_case(
+                FailureKind.INCOMPLETE, f"solver output: {error}", knobs, case_dir, ""
+            )
         except EstimatorError as error:
-            return trial_failure(FailureKind.INCOMPLETE, f"estimators: {error}", knobs, case_dir, "")
+            return self._failure_with_case(
+                FailureKind.INCOMPLETE, f"estimators: {error}", knobs, case_dir, ""
+            )
         if isinstance(outcome, str):
-            return trial_failure(FailureKind.NOT_SETTLED, outcome, knobs, case_dir, "")
+            return self._failure_with_case(FailureKind.NOT_SETTLED, outcome, knobs, case_dir, "")
 
         remove_case_folder(case_dir)
         return outcome
@@ -143,6 +148,14 @@ class WindAdapter:
         self, kind: FailureKind, cause: str, knobs: Mapping[str, float]
     ) -> TrialFailure:
         return trial_failure(kind, cause, knobs, "none made", "")
+
+    def _failure_with_case(
+        self, kind: FailureKind, cause: str, knobs: Mapping[str, float], case_dir: Path, detail: str
+    ) -> TrialFailure:
+        """A failed run keeps only its log, settings, mesh file and force file (10.6). A folder that cannot be
+        pruned raises: the exception is not caught, so the session stops with the reason."""
+        prune_case_folder(case_dir)
+        return trial_failure(kind, cause, knobs, case_dir, detail)
 
     def _evaluate(self, output: RunOutput, settings: Settings) -> TrialResult | str:
         """Parse, measure, settle, draw. A string is the reason a run did not settle."""

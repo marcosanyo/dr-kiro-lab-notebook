@@ -24,6 +24,18 @@ LOG_TAIL_LINES = 40
 FORCE_GLOB = "postProcessing/forces/*/force.dat"
 SAMPLE_GLOB = "postProcessing/vorticityFrames/*/*.xy"
 SEED_LIMIT = 1 << 64
+MESH_NAME = "case.msh"
+# What a failed run's case folder keeps (user decision: design Decision 20, requirements Decision 31):
+# the log, the settings, the mesh file and the force file. Everything else (processor folders, time
+# directories, sampled output, the mesh folder) goes.
+KEPT_FILE_PATTERNS = (
+    LOG_NAME,
+    MESH_NAME,
+    "system/*",
+    "constant/*",
+    "0/*",
+    "postProcessing/forces/**/force.dat",
+)
 
 
 class SolverFailure(Exception):
@@ -68,8 +80,36 @@ def create_case_folder(base: Path | str, seed: int) -> Path:
 
 
 def remove_case_folder(path: Path | str) -> None:
-    """Remove the case folder of a run that succeeded (10.6). A failed run keeps its folder."""
+    """Remove the case folder of a run that succeeded (10.6). A failed run is pruned instead."""
     shutil.rmtree(path)
+
+
+def prune_case_folder(path: Path | str) -> None:
+    """Shrink the case folder of a failed run to its log, settings, mesh file and force file (10.6).
+    The settings are the files directly in `system/`, `constant/` and `0/`. Anything else is deleted. A folder
+    that cannot be pruned raises: nothing is skipped and nothing is left half-pruned without an error.
+    """
+    root = Path(path)
+    if not root.is_dir():
+        raise NotADirectoryError(f"the case folder to prune does not exist: {root}")
+    keep: set[Path] = set()
+    for pattern in KEPT_FILE_PATTERNS:
+        keep.update(p for p in root.glob(pattern) if p.is_file() and not p.is_symlink())
+    parents = {parent for file in keep for parent in file.parents}
+    _prune(root, keep, parents)
+
+
+def _prune(directory: Path, keep: set[Path], parents: set[Path]) -> None:
+    for entry in sorted(directory.iterdir()):
+        if entry in keep:
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            if entry in parents:
+                _prune(entry, keep, parents)
+            else:
+                shutil.rmtree(entry)
+        else:
+            entry.unlink()
 
 
 def _tail(text: str) -> str:

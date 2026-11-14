@@ -142,6 +142,41 @@ def test_force_history_that_stops_early_is_incomplete(settings, tmp_path):
     assert_failure(adapter.run_trial(KNOBS, 8), FailureKind.INCOMPLETE, tmp_path, 8)
 
 
+def test_failed_run_keeps_only_log_settings_mesh_file_and_force_file(settings, tmp_path):
+    class Leaves(FakeRunner):
+        def run(self, case_dir, deadline):
+            for name in ("processor0/0.5/U", "constant/polyMesh/points", "12/U", "solver.log"):
+                (case_dir / name).parent.mkdir(parents=True, exist_ok=True)
+                (case_dir / name).write_text("x")
+            return super().run(case_dir, deadline)
+
+    adapter, _ = make(settings, tmp_path, Leaves(settings, drift=0.05))
+    result = adapter.run_trial(KNOBS, 10)
+    assert_failure(result, FailureKind.NOT_SETTLED, tmp_path, 10)
+    case = tmp_path / "cases" / "000000000000000a"
+    files = {str(p.relative_to(case)) for p in case.rglob("*") if p.is_file()}
+    assert "solver.log" in files
+    assert "postProcessing/forces/0/force.dat" in files
+    assert not (case / "processor0").exists()
+    assert not (case / "constant" / "polyMesh").exists()
+    assert not (case / "12").exists()
+    assert not (case / "postProcessing" / "vorticityFrames").exists()
+    for name in files:
+        assert name in ("solver.log", "case.msh", "postProcessing/forces/0/force.dat") or name.startswith(
+            ("system/", "constant/", "0/")
+        )
+
+
+def test_prune_failure_stops_the_run_loudly(settings, tmp_path, monkeypatch):
+    def refuse(path):
+        raise PermissionError("cannot prune")
+
+    monkeypatch.setattr(adapter_module, "prune_case_folder", refuse)
+    adapter, _ = make(settings, tmp_path, FakeRunner(settings, drift=0.05))
+    with pytest.raises(PermissionError):
+        adapter.run_trial(KNOBS, 11)
+
+
 def test_deadline_is_the_limit_from_the_start(settings, tmp_path):
     adapter, runner = make(settings, tmp_path)
     adapter._clock = lambda: 1000.0
