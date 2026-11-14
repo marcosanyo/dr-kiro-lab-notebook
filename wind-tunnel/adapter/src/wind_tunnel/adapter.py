@@ -1,0 +1,197 @@
+"""The wind-tunnel adapter and its run pipeline (wind-tunnel Requirements 3, 4, 8, 10; design 6).
+
+`WindAdapter.run_trial` follows the flow of the design: validate the four inputs, outline, case, mesh, run,
+parse, estimators, settle, picture. Every expected failure of a stage becomes a `TrialFailure` with one of
+the three fixed public reasons; its detail (cause, knob values, case folder, log tail) is builder side only.
+Nothing is retried, repaired, clipped or defaulted, the trial seed is not used (10.2), and an exception that
+is not one of the named failures of a stage is not caught.
+
+One deviation from the order of the diagram, forced by the model: `render_case` needs an empty folder, so the
+case is written before the mesh file is added to it. Both happen before the solver runs, inside the same
+time limit.
+"""
+
+from __future__ import annotations
+
+import math
+import time
+from collections.abc import Callable, Mapping
+from pathlib import Path
+
+import numpy as np
+from bench.adapter import (
+    ComputedInputs,
+    Declaration,
+    NotMeasured,
+    NumberKnob,
+    Picture,
+    TrialFailure,
+    TrialResult,
+)
+from wind_tunnel_model.casegen import KNOB_NAMES, render_case
+from wind_tunnel_model.estimators import EstimatorError, dynamic_pressure, measure
+from wind_tunnel_model.geometry import GeometryError, outline
+from wind_tunnel_model.mesh import GmshMesher, Mesher, MeshError
+from wind_tunnel_model.settings import Settings, frame_times
+from wind_tunnel_model.settle import settled
+from wind_tunnel_model.solver_output import (
+    SolverOutputError,
+    parse_force_file,
+    parse_vorticity_file,
+)
+
+from wind_tunnel import environment
+from wind_tunnel.declaration import build_declaration
+from wind_tunnel.failures import FailureKind, trial_failure
+from wind_tunnel.picture import picture_sheet
+from wind_tunnel.runner import (
+    DockerRunner,
+    Runner,
+    RunOutput,
+    SolverFailure,
+    create_case_folder,
+    remove_case_folder,
+)
+
+CASE_BASE = environment.RECORD_PATH.parent
+NOT_SHEDDING_REASON = "the lift does not oscillate: cl_amp is not above 0.01"
+# A sample folder is matched to a frame time when the two differ by less than this (time units).
+FRAME_TIME_TOLERANCE = 1e-6
+
+
+class WindAdapter:
+    """The wind tunnel as a bench application. The environment is checked when it is created (7.1, 7.3)."""
+
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        runner: Runner | None = None,
+        mesher: Mesher | None = None,
+        command: environment.CommandFunction = environment.run_command,
+        lock_path: Path | str | None = None,
+        record_path: Path | str | None = None,
+        case_base: Path | str | None = None,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._settings = settings or Settings.load()
+        environment.check(self._settings, command=command, lock_path=lock_path, record_path=record_path)
+        if runner is None:
+            lock = environment.load_lock(lock_path)
+            runner = DockerRunner(f"{self._settings.image.name}@{lock.digest}")
+        self._runner = runner
+        self._mesher = mesher if mesher is not None else GmshMesher()
+        self._case_base = Path(case_base) if case_base is not None else CASE_BASE
+        self._clock = clock
+        self._declaration = build_declaration(self._settings)
+
+    def declaration(self) -> Declaration:
+        return self._declaration
+
+    def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
+        """One trial. The seed is not used: the same inputs give the same result (10.2)."""
+        start = self._clock()
+        knobs = self._validate(inputs)
+        settings = self._settings
+
+        try:
+            body = outline(settings=settings, **knobs)
+        except GeometryError as error:
+            return self._failure_without_case(FailureKind.INCOMPLETE, f"geometry: {error}", knobs)
+
+        case_dir = create_case_folder(self._case_base, seed)
+        render_case(knobs, settings, case_dir)
+        try:
+            self._mesher.build(body, settings, case_dir)
+        except MeshError as error:
+            return trial_failure(FailureKind.INCOMPLETE, f"mesh: {error}", knobs, case_dir, "")
+
+        try:
+            output = self._runner.run(case_dir, start + settings.run.timeout_s)
+        except SolverFailure as failure:
+            return trial_failure(failure.kind, failure.reason, knobs, case_dir, failure.detail)
+
+        try:
+            outcome = self._evaluate(output, settings)
+        except SolverOutputError as error:
+            return trial_failure(FailureKind.INCOMPLETE, f"solver output: {error}", knobs, case_dir, "")
+        except EstimatorError as error:
+            return trial_failure(FailureKind.INCOMPLETE, f"estimators: {error}", knobs, case_dir, "")
+        if isinstance(outcome, str):
+            return trial_failure(FailureKind.NOT_SETTLED, outcome, knobs, case_dir, "")
+
+        remove_case_folder(case_dir)
+        return outcome
+
+    def _validate(self, inputs: ComputedInputs) -> dict[str, float]:
+        """Exactly the four names, finite numbers inside the ranges. Nothing is clipped or defaulted (3.4)."""
+        if not isinstance(inputs, Mapping) or set(inputs) != set(KNOB_NAMES):
+            found = sorted(inputs) if isinstance(inputs, Mapping) else type(inputs).__name__
+            raise ValueError(f"inputs: expected exactly {sorted(KNOB_NAMES)}, found {found}")
+        knobs: dict[str, float] = {}
+        for knob in self._declaration.knobs:
+            assert isinstance(knob, NumberKnob)
+            value = inputs[knob.name]
+            if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+                raise ValueError(f"inputs: {knob.name} must be a finite number, got {value!r}")
+            if not knob.low <= value <= knob.high:
+                raise ValueError(f"inputs: {knob.name}={value!r} is outside [{knob.low}, {knob.high}]")
+            knobs[knob.name] = float(value)
+        return knobs
+
+    def _failure_without_case(
+        self, kind: FailureKind, cause: str, knobs: Mapping[str, float]
+    ) -> TrialFailure:
+        return trial_failure(kind, cause, knobs, "none made", "")
+
+    def _evaluate(self, output: RunOutput, settings: Settings) -> TrialResult | str:
+        """Parse, measure, settle, draw. A string is the reason a run did not settle."""
+        force = parse_force_file(output.force_file)
+        if force.t[-1] < settings.time.end - settings.time.max_delta_t:
+            raise SolverOutputError(
+                f"{output.force_file}: the force history ends at {force.t[-1]!r}, "
+                f"before the end of the run at {settings.time.end!r}"
+            )
+        part = force.t >= settings.time.average_from
+        t, fx, fy = force.t[part], force.fx[part], force.fy[part]
+        measured = measure(t, fx, fy, settings.flow)
+        q = dynamic_pressure(settings.flow)
+        verdict = settled(t, fx / q, fy / q, measured.shedding, measured.strouhal)
+        if not verdict.ok:
+            return verdict.reason
+        frames = self._frames(output, settings)
+        sheet = picture_sheet(frames, settings.picture)
+        strouhal: float | NotMeasured = (
+            NotMeasured("not_shedding", NOT_SHEDDING_REASON)
+            if measured.strouhal is None
+            else float(measured.strouhal)
+        )
+        values = {
+            "cd": float(measured.cd),
+            "cl_mean": float(measured.cl_mean),
+            "cl_amp": float(measured.cl_amp),
+            "strouhal": strouhal,
+            "shedding": float(measured.shedding),
+        }
+        return TrialResult(values=values, picture=Picture(kind="image/png", data=sheet))
+
+    @staticmethod
+    def _frames(output: RunOutput, settings: Settings) -> list[tuple[np.ndarray, np.ndarray]]:
+        """The sampled vorticity of every frame, in time order; the sample folders must be the frame times."""
+        times = frame_times(settings)
+        files = output.sample_files
+        if len(files) != len(times):
+            raise SolverOutputError(f"expected {len(times)} sampled vorticity files, found {len(files)}")
+        frames = []
+        for path, expected in zip(files, times, strict=True):
+            try:
+                written = float(path.parent.name)
+            except ValueError as error:
+                raise SolverOutputError(f"{path}: the folder name is not a time") from error
+            if abs(written - expected) >= FRAME_TIME_TOLERANCE:
+                raise SolverOutputError(
+                    f"{path}: written at {written!r}, expected the frame time {expected!r}"
+                )
+            frame = parse_vorticity_file(path, settings.picture)
+            frames.append((frame.omega, frame.mask))
+        return frames
