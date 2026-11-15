@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/design.md`](../../../.kiro/specs/wind-tunnel/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `af8dc89c466ac9dd158bfc4b03d695a0c8d90f559dd98349fc2b1a10ce0d4a9c`
+> 原文 SHA-256: `80db22df7752aca74ccb0dc4ebbbe12c61fe1061848b6c56b5984281c1f947c8`
 # Design: wind-tunnel
 
 要件 1-18 を対象とします。設定は `wind-tunnel/model/constants.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
@@ -80,8 +80,7 @@ flowchart TD
     E --> G[force.dat + sampled vorticity]
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
-    I -->|not settled| F
-    I --> J[picture: PNG sheet]
+    I -->|settled: five values; not settled: five not_settled| J[picture: PNG sheet, same code for both]
     J --> K[TrialResult, if the clock is still inside 140 s; else timeout]
     F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
     K --> M[case folder renamed into trash/; deleted at the start of the next trial]
@@ -94,8 +93,8 @@ flowchart TD
 `declaration.py` は、要件 3.2 と 4.2 が与える定数と `measured_by`・ノブの文から、1 つの `Declaration` を作ります。
 
 - ノブ: `NumberKnob` が 4 つ。順序は `aspect`、`corner`、`splitter`、`angle` で、範囲は 3.1、ノブの文は 3.2 のとおり。文は `declaration.py` の定数です。テストはそれを要件 3.2 のテキストと比べます（spec ファイルがあるときはそこから読むので、両者はずれません。`.kiro/` がない場所では、目に見える理由つきでスキップ）。
-- 計測: `cd`、`cl_mean`、`cl_amp`、`strouhal`、`shedding`。単位は `1`、種類は `scalar`。`strouhal` は未計測結果 `not_shedding` を持ちます。
-- `picture = "image/png"`、`budget = 24`、`fake = False`、`goal` は 11.2、`measured_by` は 4.2。「落ち着いた部分」とだけ言い、時刻には触れません（4.3）。文面では、文が許す所で "force" を単数形で使い、伝える集合のどの語も、ソルバーファイルが与える語と等しくならないようにします（13.8）。決めるのは 13.8 のテストで、避けられないものは要件 13.4 と 13.9 の道をたどります。
+- 計測: `cd`、`cl_mean`、`cl_amp`、`strouhal`、`shedding`。単位は `1`、種類は `scalar`。`strouhal` は未計測結果 `not_shedding` と `not_settled` を持ち、ほかの 4 つは `not_settled` を持ちます（4.5、Decision 25）。`NOT_SETTLED = "not_settled"` は `declaration.py` の定数で、アダプターも使います。
+- `picture = "image/png"`、`budget = 24`、`fake = False`、`goal` は 11.2、`measured_by` は 4.2。「落ち着いた部分」とだけ言い、時刻には触れません（4.3）。最後に文が 1 つあります（4.5）: 流れが試行の中で落ち着かなかったとき、5 つのどれも計測されず、それぞれが未計測結果 `not_settled` になり、画像はそれでも返される（画像が何を示すかには触れない、要件 1.3）。これは、より長い試行なら落ち着くかどうかについて何も言わない。落ち着き規則の数は 1 つも入れません。文面では、文が許す所で "force" を単数形で使い、伝える集合のどの語も、ソルバーファイルが与える語と等しくならないようにします（13.8）。決めるのは 13.8 のテストで、避けられないものは要件 13.4 と 13.9 の道をたどります。
 - **ノブの文は `description` 項目に入れます。** これは `lab-bench` 要件 18 が `NumberKnob` に加えるものです（選択肢 A、Decision 18）。ベンチはそれをツールの説明のノブの行に出力して記録し、ほかは何も読みません。文は要件 3.2 の 4 つで、`declaration.py` で定数から作ります。ただし `splitter` の文の板の厚さは `settings.body.thickness` から書式化し（`f"{t:g}"`、0.08）、数が 1 か所にだけ存在するようにします。各文は 800 文字以下（最長で約 450）で、改行を含みません。文面の設計と、各文の理由:
   - `aspect`、`corner`: 承認済みの文から変更なし。
   - `splitter`: 板が何で、どこにあるか（ボディの後ろ、流れから遠い側）。長さの数え方（板なしのボディの最後端から。後ろが半円のときも含め、すべての `corner` で明確に定まる）。ボディの長さ方向の中央を通る線上にあること。隙間なく付くこと。厚さ。0 の意味。
@@ -159,11 +158,13 @@ flowchart TD
 - `strouhal`（`shedding` が 1 のときだけ）: 何も引かずに、`5 / T` から `1.0` までの周波数格子（刻み `1 / (10 T)`、`T` は落ち着いた部分の長さ）の各 `f` について、`a cos(2 pi f t) + b sin(2 pi f t) + c` を線形最小二乗でフィットして説明された分散を取り、最良の格子周波数を、隣り合う 2 つの格子刻みの中で、幅 1e-9 まで黄金分割探索で精密化します。`St = f * height / speed`。決定的で、乱数の出発点はありません。理由: `T = 70` では FFT の 1 ビンは `1/70 = 0.0143`、0.17 の 8%（5.2）。この推定器にはビンがありません。格子の開始 `5 / T` は、8.3 の 5 周期の規則を満たせる最低の周波数です。
 - `shedding` が 0 のとき、アダプターは `strouhal` に `NotMeasured("not_shedding", "the lift does not oscillate: cl_amp is not above 0.01")` を返し、推定器は走らせません（4.4）。
 - 要件 5.3 の精度の範囲: St は [0.08, 0.5]。下端は 5 周期の規則（0.0714）に余裕を持たせたもの。上端は、ボディが鈍い物体のとき予想される値の少なくとも 2 倍で、0.5 と `ESTIMATOR_MAX_DT` では 1 周期に 40 サンプルあります。5.3 と 5.4 の振幅は [0.011, 3]、平均は [-3, 3] です。5.4 の `cl_mean` の限界は、平均の 1% に `amplitude / (pi * f * T)` を足したものです。
-- 落ち着き（8.3）、`settled(t, cd, cl, shedding, st) -> SettleResult(ok, reason)`: 落ち着いた部分を時間の中点で分けます。`|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`。`|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`。`shedding` が 1 のとき、`st * speed / height * T >= 5`。比較は除算なしで書きます。理由には、失敗した基準を名指します（ビルダー側）。
+- 落ち着き（8.3）、`settled(t, cd, cl, shedding, st) -> SettleResult(ok, reason)`: 落ち着いた部分を時間の中点で分けます。`|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`。`|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`。`shedding` が 1 のとき、`st * speed / height * T >= 5`。比較は除算なしで書きます。理由は、失敗した基準を名指します。ただしアダプターはそれを使いません。結果にはそれを置く場所がないからです（Decision 25）。
+- 基準が失敗したとき、`run_trial` は、5 つの値がすべて `NotMeasured("not_settled", "the flow had not settled within the trial")`（`adapter.py` の定数 `NOT_SETTLED_REASON`、固定のテキスト、数なし）である `TrialResult` を返します。`shedding` が 0 のときでも、`strouhal` は `not_shedding` ではなく `not_settled` です。
 
 ### 6. Environment and run (Req 7, 8.7, 10)
 
 - `environment.check(settings)` は `WindAdapter.__init__` で走ります。Docker がなければ、最初の試行ではなくベンチサーバーの起動時に止まります。`docker version`、記録したダイジェストでのイメージの `docker image inspect`、Docker マシンの CPU 数の `docker info`（10.1 の 3 プロセス以上。さもないと `mpirun` が始められない）を実行します。失敗はそれぞれ `EnvironmentFailure` で、次のどれか、期待したもの、見つけたものを名指します: Docker に届かない、イメージがない、ダイジェストが違う、CPU が足りない。pull もほかのタグもしません（7.4）。
+- - **ケースのマウントのプローブ**（7.7、Decision 26）。CPU のチェックの後、`_probe_case_mount` を 3 回実行します: `<case base>/mount-probe-<12 桁の 16 進数>`（毎回新しいランダムな名前）を作り、`render_case` でそこにケースを描き出し、`DockerRunner.command(folder)[:-1] + ["test", "-x", "/case/Allrun"]` を同じ `CommandFunction` で実行し、フォルダーを `trash/` に移します。最後に `trash/` を空にします。終了コード 0 だけが合格です。そうでなければ `EnvironmentFailure("case mount probe", ...)` で、フォルダーと出力の最後の 3 行を入れ、フォルダーは残ります。`check` には `case_base` パラメーター（既定: 記録のフォルダー）があり、`WindAdapter` が渡します。エラーはベンチサーバーが起動する前の構築時に送出されるので、Dr. Kiro には見えません。
 - 次に、`bench-run/wind-tunnel/environment.jsonl`（git 管理外、ビルダー側）に JSON を 1 行追記します: イメージ名、ダイジェスト、イメージ ID、Gmsh のバージョン、numpy のバージョン、プラットフォーム。時刻は書かないので、ファイルは環境の関数になります（7.5）。封印された記録はこれを持たず、`measured_by` も触れません。
 - イメージ: `opencfd/openfoam-default:2412`。`name@digest` として実行します。`constants.toml [image]` は `name` と `tag` を持ちます。ダイジェストとイメージ ID は `model/image-lock.toml` にあり、ダイジェストのタスクが走るまで存在しません。それがない間、`WindAdapter`（`scan_adapter` ではない）は「image lock missing」で失敗するので、プレースホルダーが値として読み込まれることはなく、Docker なしの部分はダイジェストを必要としません。ユーザーの Mac 上のタスクが、`docker image inspect` で両方を書きます（ダイジェストはイメージインデックスのもの。イメージ ID は arm64 ビルドのものなので、組でプラットフォームを固定します、7.1）。ダイジェストは作り上げません。
 - `Runner` プロトコル: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`、`SolverFailure(kind, reason, detail)` を送出します。`DockerRunner` は `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest> /case/Allrun` を `subprocess.run(..., timeout=remaining)` で実行します。`remaining = 140 s - (輪郭とメッシュで使った時間)`。上限は画像までのすべてを含む: ソルバーの段階の後で、アダプターはもう一度時計を確かめ（解析、推定器、落ち着き、渦度の解析、画像）、そのときに上限に達しているか過ぎている実行は、その部分が何を見つけたかにかかわらず `timeout` の失敗である（Decision 21）。タイムアウトでは `docker kill <case-name>` を実行し、`SolverFailure("timeout")` を送出します。ゼロでない終了、出力ファイルの欠落、非有限値は、`detail` にソルバーのログの最後の数行を入れた `SolverFailure` になります。イメージ内の正確な呼び出し（ユーザー ID、イメージのエントリーポイントがすでに環境を準備するか）は、スモーク実行のタスクで確認します（S5）。
@@ -188,11 +189,10 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 
 ### 8. Failures (Req 8)
 
-`failures.py` が種類と、唯一の公開テキストを持ちます:
+`failures.py` が種類と、唯一の公開テキストを持ちます。種類は 2 つです。落ち着かない実行は失敗ではなく、結果です（4.5、Decision 25）ので、ここには種類がありません。
 
 | Kind | Cause (builder side) | `public_reason` |
 |---|---|---|
-| `not_settled` | 落ち着き基準を満たさない | "the trial did not settle" |
 | `incomplete` | 発散、非有限、異常終了、出力の欠落や読めない出力、ジオメトリまたはメッシュのエラー | "the trial could not be completed" |
 | `timeout` | 140 s の上限 | "the trial took too long" |
 
@@ -303,15 +303,15 @@ For all stationary synthetic series (constant `cd` with noise below 1%, sinusoid
 
 ### Property 9: Failure mapping
 
-For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout, not settled) and all knob values, the `TrialFailure` has one of the three fixed public reasons, the reason is the same for the same kind whatever the inputs, it has no term of a fixed list of solver words, and the `detail` holds the cause.
+For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout) and all knob values, the `TrialFailure` has one of the two fixed public reasons, the reason is the same for the same kind whatever the inputs, it has no term of a fixed list of solver words, and the `detail` holds the cause.
 
 **Validates: Requirements 8.1, 8.4, 8.5, 8.8**
 
 ### Property 10: Result contract and seed independence
 
-For all in-range knob values and two seeds, `run_trial` with the fake mesher and fake runner returns a result that passes `bench.adapter.check_result` for the declaration, and the two results are equal.
+For all in-range knob values and two seeds, `run_trial` with the fake mesher and fake runner returns a result that passes `bench.adapter.check_result` for the declaration, and the two results are equal. This holds for a run that settles and for a run that does not: in the second case all five values are `not_settled` and the picture is a PNG sheet.
 
-**Validates: Requirements 3.3, 3.4, 10.2, 17.1**
+**Validates: Requirements 3.3, 3.4, 4.5, 8.3, 10.2, 17.1**
 
 ### Property 11: Case generation is deterministic and complete
 
@@ -360,12 +360,12 @@ For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer 
 | ジオメトリまたはメッシュが作れない | `TrialFailure` `incomplete` | Dr. Kiro は固定の理由を見る。ビルダーはノブの値を見る |
 | ソルバーの異常終了、非有限値、出力の欠落 | `TrialFailure` `incomplete` | 同上 |
 | 140 s 超過 | コンテナを kill、`TrialFailure` `timeout` | 同上 |
-| 落ち着き基準を満たさない | `TrialFailure` `not_settled` | 同上 |
+| 落ち着き基準を満たさない | 失敗ではない: 5 つの計測すべてが `not_settled` の `TrialResult` と画像 | Dr. Kiro は結果を見る。それについての予測は `not-checkable` |
 | 結果が契約を破る | `check_result` によるベンチ障害 | ビルダー |
 | `constants.toml` にプレースホルダーが残る、キーがない | 読み込み時のエラー | ビルダー |
 | アダプターのプログラムエラー | 例外。固定のテキストのベンチ障害 | ビルダー |
 
-`TrialFailure` はセッションを止めます（`lab-bench` 2.7 と 11.3）。これらのどれも、再試行も修復もされません。
+`TrialFailure` はセッションを止めます（`lab-bench` 2.7 と 11.3）。これらのどれも、再試行も修復もされません。落ち着かない実行はセッションを止めません（Decision 25）。
 
 ## Testing Strategy
 
@@ -399,7 +399,8 @@ For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer 
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
 | 極端なケースと端に近いケース、`extreme-runs.json`、停止 | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
-| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3) | 9.7-9.10, 18 |
+| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3); the seal check and commit (task 18) are the builder's, after the user's session (Decision 39) | 9.7-9.10, 17.3, 18 |
+| Case mount probe in `environment.py` | 7.7 |
 
 ## What would make me stop and ask
 
@@ -443,6 +444,10 @@ For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer 
 23. **ジオメトリの外のコーナーのルール**（ユーザーの決定、タスク 14.4 ステージ 3b。要件の Decisions 34 と 35）。マージンのルールは、宣言した範囲の中での最悪の実時間 115 s で、angle の範囲は [0, 15]。単一の `min_edge` は `min_arc` = 0.0314（最も短いコーナーの弧）と `min_line` = 0.0025（ボディの最も短い直線の辺）に置き換わる。データ（`spikes/timing/extreme-v2-summary.md`）が 2 つの限界を 1 桁離しているためである。1 つの値では、高い側を必要より約 12 倍多く拒否するか、上限に達する弧を受け入れてしまう。どちらも板には適用しない。拒否は `wind_tunnel_model/input_rule.py` にある `aspect` と `corner` の純関数で、`WindAdapter.check_inputs`（実験のどの試行よりも前に、予算を使わずに）と、拒否された corner に対して送出する `run_trial` から、もう一度呼ばれる。選択: ジオメトリには置かない。ジオメトリはどんなノブの値でもボディを描くもので、ルールはこのマシンでのソルバーの限界だからである。メッセージは Dr. Kiro の言葉の 1 行である。範囲は 3 桁に内側へ丸められ、その範囲がテストされる。
 
 24. **色の上限は 5.0 に固定**（タスク 14.4、要件 9.5。要件の Decision 36）。事前に決めたルール: 32 のゲートケースのうち落ち着いた実行について、6 フレームでの渦度の絶対値の実行ごとの 99 パーセンタイルの最大値を、整数に切り上げる。落ち着いた 29 回の実行（32 ケースのうち 3 つはコーナーのルールで拒否された）は、最大 4.5979（aspect 3、corner 0、splitter 3、angle 15）を与えたので、L = 5。渦度の絶対値の実行ごとの最大値は最大 54.5 なので、ボディの近くのいくつかの点は色を飽和させるが、これは 99 パーセンタイルから決めた上限の意図したものである。
+
+25. **試行の中で落ち着かない流れは、失敗ではなく結果である**（ユーザーの決定。要件の Decision 37）。`not_settled` の失敗の種類は取り除かれ、`failures.py` の種類は 2 つになる。`_evaluate` では、落ち着きの判定を使う前に画像シートを描くので、コードの経路は同じである。判定が ok でないとき、5 つの値は `NotMeasured("not_settled", NOT_SETTLED_REASON)` になり（5 つすべての計測に宣言し、`strouhal` には `not_shedding` も残す）、ケースフォルダーは落ち着いた実行のものと同じく `trash/` に行く。時間切れのチェックはこれまでどおり先に来る: 遅れた実行は、何を見つけたかにかかわらず時間切れである。理由: 失敗はセッションを終わらせる。ランダムな 30 点のうち 2 点が落ち着かなかった。落ち着かないことは試料についての発見である。ベンチは未計測値についての予測をすでに `not-checkable` と判定する。`bench/` は変わらない（その契約チェックは 5 つの未計測値を受け入れる）。コスト: 落ち着きの規則が失敗したことはもうログに残らない。結果にはビルダー側の詳細の項目がないからである。
+26. **環境チェックにケースのマウントのプローブ**（要件の Decision 38）。理由: 計測パスの 5 回の実行がすぐに終了コード 127 で終わり、その再現（`spikes/timing/env-127.md`）で、削除した直後に同じフォルダー名をもう一度作ると、コンテナがマウントを見ないことが分かった（1000 回中 84 回）。新しい名前では 0 回（1000 回中）だった。セッションは新しい名前を使うので、ランナーはそのままにする。プローブも新しい名前を使い、障害を自分で起こさない。これはマウントがまったく見えない場合を捕まえる。コスト: 起動時に約 1 秒（コンテナの起動 3 回）。
+27. **`measured_by` は画像を説明しない**（要件の Decision 40）。落ち着かない流れについての文は、画像が返されることを述べ、何を示すかには触れない（要件 1.3）。
 
 ## Open questions
 

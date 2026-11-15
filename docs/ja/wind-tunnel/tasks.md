@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/tasks.md`](../../../.kiro/specs/wind-tunnel/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `1d85f104cfc3f66ce626dfbabc5d58b4465efe9a2944ff26918440bdf53c6b98`
+> 原文 SHA-256: `99ed7cddc668f7fbe70f84f2236fe8498ee60f6099a378f27dea3a1ec9bffdf2`
 # 実装計画: wind-tunnel
 
 ## Overview
@@ -259,16 +259,17 @@
   - 通ったものと通らなかったものを日本語で報告する。これで「Run All Tasks」が単独でできる部分が終わる。タスク 17-19 はユーザーの手が要る。
   - _要件: 12.3, 13.7, 13.8, 17.1, 17.2_
 
-## Hands-on steps (the user)
 
-これらのステップはユーザーが必要です（要件 18.1、18.3）。サブエージェントは実行せず、チェックも付けません。
+## Hands-on steps (the user), and the builder step between them
+
+タスク 17 と 19 はユーザーが必要です（要件 18.1、18.3）。タスク 18 はタスク 17 の後に続くビルダーのステップです: ユーザーがタスク 17 の完了を伝えた後に走ります（Decision 39）。サブエージェントは、それより前にはこれらのタスクを実行せず、チェックも付けません。
 
 - **17. ユーザーのステップ: Kiro CLI で 24 回のセッションを始めて終える** — 未着手
-  - Mac で: コマンドをインストールし、`bench-new-session` でセッションを作り（アプリケーション `wind-tunnel`、アダプター `wind_tunnel.adapter:WindAdapter`、シードとセッション ID はユーザーが選ぶ）、2 つの変数を export し、`wind-tunnel/lab/` から `kiro-cli chat --agent dr-kiro` で Dr. Kiro を起動する（手順は `wind-tunnel/README.md`）。`Begin the session.` と入力する。ターンが早く終わったら `Continue the session.`。合格: セッションが予算を使い切って（24 回）終わる、または Dr. Kiro 自身の `end_session` で終わる。
+  - ユーザーが自分で行い、画面を録画する（Decision 39）。Mac で: コマンドをインストールし、`bench-new-session` でセッションを作り（アプリケーション `wind-tunnel`、アダプター `wind_tunnel.adapter:WindAdapter`、シードとセッション ID はユーザーが選ぶ）、2 つの変数を export し、`wind-tunnel/lab/` から `kiro-cli chat --agent dr-kiro` で Dr. Kiro を起動する（手順は `wind-tunnel/README.md`）。`Begin the session.` と入力する。ターンが早く終わったら `Continue the session.`。合格: セッションが予算を使い切って（24 回）終わる、または Dr. Kiro 自身の `end_session` で終わる。
   - _要件: 17.3, 18.1_
 
-- **18. ユーザーのステップ: セッションの封印の確認とコミット** — 未着手
-  - `bench-verify sessions/wind-tunnel/<session-id>` と、`wind-tunnel/lab` および封印済みフォルダーへの `bench-scan` を走らせる。両方が通ったときだけ、`sessions/wind-tunnel/<session-id>/` を、作った環境で（`handoff.md`）名前を指定してコミットする。どちらかに失敗した記録はコミットしない（要件 17.5）。
+- **18. ビルダーのステップ（タスク 17 の後）: セッションの封印の確認とコミット** — 未着手
+  - ユーザーがタスク 17 の完了を伝えた後にだけ走らせる。`bench-verify sessions/wind-tunnel/<session-id>` と、`wind-tunnel/lab` および封印済みフォルダーへの `bench-scan` を走らせる。両方が通ったときだけ、`sessions/wind-tunnel/<session-id>/` を、作った環境で（`handoff.md`）名前を指定してコミットする。どちらかに失敗した記録はコミットしない（要件 17.5）。
   - _要件: 17.3, 17.5, 18.1_
 
 - **19. ユーザーのステップ: 接続時間を報告する** — 未着手

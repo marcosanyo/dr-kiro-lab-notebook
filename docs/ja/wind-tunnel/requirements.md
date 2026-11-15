@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/requirements.md`](../../../.kiro/specs/wind-tunnel/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `719c25d6d4b2c746a582e1a4183587be54582888405491a172910ca93795aa93`
+> 原文 SHA-256: `e69f2b2cc9ae500232f70e4bb05c74bbf0098c7211e7da2b47e981351c385c5d`
 
 # Requirements Document
 
@@ -28,7 +28,7 @@
 - **ソルバー設定（Solver setup）**: 流れを計算可能にし、Dr. Kiro には伝えないものすべてです。領域、境界条件、ソルバーとスキームの名前、時間刻み、メッシュ、実行の長さ、平均の窓、およびそれらを保持するファイルと名前です。
 - **落ち着いた部分（Settled part）**: 実行のうち、平均の開始時刻から終わりまでの部分で、計測はこの部分で行います。
 - **実行（Run）**: ソルバーの 1 回の実行で、1 試行です。
-- **落ち着いた実行（Settled run）**: 落ち着いた部分が落ち着き基準（要件 8.3）を満たす実行です。
+- **落ち着いた実行（Settled run）**: 落ち着いた部分が落ち着き基準（要件 8.3）を満たす実行です。満たさない実行は、失敗ではなく、5 つの計測すべてが `not_settled` の結果です（要件 4.5）。
 - **ケースフォルダー（Case folder）**: 1 回の実行のフォルダーで、メッシュ、ソルバーのファイル、出力、サンプリングした渦度が入ります。
 - **伝える集合（Told set）**: Dr. Kiro にシステムについて与える情報のすべてで、アダプターの宣言から作る 1 つのテキストです（要件 1）。
 - **比較用 Kiro（Comparison Kiro）**: このリポジトリのラボと無関係な Kiro で、伝える集合とまったく同じものだけを与えられ、実験をせずに、比較用の spec を書きます。後で使うもので、ここでは作りません。
@@ -55,7 +55,7 @@
 #### Acceptance Criteria
 
 1. THE 伝える集合 SHALL be the text of the adapter's declaration as `lab-bench` builds it for Dr. Kiro (`lab-bench` design F3)、and SHALL be built from the adapter's own declaration, with no second copy。
-2. THE 伝える集合 SHALL contain exactly: 4 つのノブの名前、その範囲とノブの文（その中のジオメトリの定義を含む。要件 3）、各計測の名前、単位、意味と `strouhal` の未計測結果（要件 4）、流れが 2 次元でありレイノルズ数が 150（高さと主流速度に基づく）であること、画像の種類、予算、ゴール（要件 11）。
+2. THE 伝える集合 SHALL contain exactly: 4 つのノブの名前、その範囲とノブの文（その中のジオメトリの定義を含む。要件 3）、各計測の名前、単位、意味、`strouhal` の未計測結果 `not_shedding`、および 5 つの計測すべての未計測結果 `not_settled` と要件 4.5 の文（要件 4）、流れが 2 次元でありレイノルズ数が 150（高さと主流速度に基づく）であること、画像の種類、予算、ゴール（要件 11）。
 3. THE 伝える集合 SHALL NOT contain what any knob does to the flow or to a measurement、隠す集合のいかなる部分（ソルバー設定とメッシュ設定）、画像の内容、および形の知識（要件 12）。
 4. THE アダプター SHALL carry each knob text in the `description` field of its knob, which `lab-bench` Requirement 18 adds（ユーザーがこの選択肢を選んだ。Decisions の項目 18）、and the rest of the told set in the fields the declaration already has。THE アダプター SHALL NOT be written before `lab-bench` tasks 23-26 are done。IF a part of the told set cannot be carried in the fields the declaration has、THEN ビルダー SHALL stop and ask the user whether `lab-bench` changes, and SHALL NOT add a second channel through which Dr. Kiro learns about the system。
 5. THE ラボのビルダーファイル SHALL add nothing about the system to the told set（`dr-kiro` 要件 1.2）。
@@ -114,7 +114,9 @@
    - `shedding` は、`cl_amp` が 0.01 を超えるとき 1、そうでないとき 0 である。
 3. THE しきい値 0.01 SHALL be told, because it is part of the definition of `shedding` and not part of the solver setup。THE 平均の開始時刻、実行の長さ、およびソルバー設定のそのほかの数 SHALL NOT be told; the text says only "the settled part of the trial"。
 4. THE アダプター SHALL declare for `strouhal` one not-measured outcome, named `not_shedding`, and SHALL return it, with the reason "the lift does not oscillate: cl_amp is not above 0.01", WHEN `shedding` is 0。THE アダプター SHALL NOT fill in a value of `strouhal` in that case (`lab-bench` Requirements 2.4 and 2.5)。
-5. THE アダプター SHALL declare no not-measured outcome for `cd`, `cl_mean`, `cl_amp` or `shedding`: a run that cannot give them is a bench failure (Requirement 8)。
+5. THE アダプター SHALL declare the not-measured outcome `not_settled` for all five measurements (`strouhal` has `not_shedding` as well), and SHALL return it for all five at once, with the one fixed reason "the flow had not settled within the trial", WHEN the settled part of the run does not meet the settle criterion (Requirement 8.3)。その実行は結果である: 予算の 1 試行を使い、記録が書かれ、画像シートが返され、それは落ち着いた実行と同じコードで作られる（要件 9）。THE reason SHALL hold no number of the settle criterion。`cd`、`cl_mean`、`cl_amp`、`shedding` の未計測結果は、これ以外の場合には返さない: ほかの理由でそれらを出せない実行は失敗である（要件 8）。決定 37。
+   - `not_settled` の計測についての予測は、ベンチが `not-checkable`（確認不能）と判定する（`lab-bench` Requirement 7.7）。的中でも外れでもない。
+   - THE `measured_by` の文 SHALL say, in Dr. Kiro's terms and without a number of the settle criterion, that when the flow has not settled within the trial the five measurements are not measured (outcome `not_settled`) and the picture is still returned, and that this says nothing about whether a longer trial would settle。The words "within the trial" SHALL be in the text。THE 文 SHALL say nothing about what the picture shows (Requirement 1.3)。（ユーザーは、画像が返されると述べる決定 37 を承認した。この文の最初の言い方は、画像が "still shows the flow" と述べており、これは画像の内容を伝えるもので、承認されていなかった。決定 40 で訂正した。）
 6. THE 基準長 SHALL be the height (1) and the free-stream speed SHALL be 1, so that the coefficients and the Strouhal number need no other reference。
 7. THE 各計測の意味 SHALL be the same in the `measured_by` text, in `wind-tunnel/README.md`, and in the code; a change SHALL be made in all three。
 
@@ -167,19 +169,20 @@
 4. IF Docker is not reachable, or the image is missing, or its digest does not equal the recorded digest、THEN the adapter SHALL fail, saying which of the three it is, what was expected and what was found, and SHALL NOT pull, substitute another image or tag, or continue。
 5. THE アダプター SHALL record the image digest and the Gmsh version on the builder side for every session。THE 宣言の `measured_by` SHALL NOT carry them, because Dr. Kiro is not told them; THE 設計 SHALL decide where the record is kept, and no text in the sealed session record SHALL fail the blind scan because of it。
 6. THE アダプター SHALL need Docker only for the solver。`body-lab` and the bench SHALL NOT need Docker。
+7. AFTER the checks of 7.3 and the CPU check, and before any trial, THE アダプター SHALL run a case mount probe: three times, with a fresh folder name each time, it SHALL render a small throw-away case folder in the case base, start one container with the same image, user mapping and mount as the runner, with the command `test -x /case/Allrun`, expect exit code 0, and move the folder to the trash。IF a probe does not exit 0、THEN the adapter SHALL fail with `EnvironmentFailure` named `case mount probe`, giving the expected result and the found output, and SHALL NOT retry or continue。プローブはソルバーを必要とせず、数秒かかる。失敗はビルダー側にだけ示される: Dr. Kiro が何かを見る前の、起動時にベンチサーバーを止める。決定 38。
 
 ### Requirement 8: Failures, settling and time limits
 
 **対象:** ビルダー（何が失敗か）、Dr. Kiro（何が見えるか）。
 
-**User Story:** ビルダーとして、失敗した実行や落ち着かなかった実行は、作り物の値を出さず、理由とともにセッションを止めたい。記録のすべての数が、落ち着いた実行から来ていることを保証するためである。
+**User Story:** ビルダーとして、失敗した実行は理由とともにセッションを止め、流れが落ち着かなかった実行は数を 1 つも含まない結果にしたい。作り物の値は決して出さない。記録のすべての数が、落ち着いた実行から来ていることを保証するためである。
 
 #### Acceptance Criteria
 
-1. IF a run ends with a non-finite value in any force, a diverged solution, an abnormal exit of the solver or the mesher, a missing or unreadable output, or the time limit of 8.7, or does not settle (8.3)、THEN the adapter SHALL return a trial failure (`lab-bench` design 4), and the bench failure rules apply (`lab-bench` Requirement 2.7 and 11.3): the session stops。
+1. IF a run ends with a non-finite value in any force, a diverged solution, an abnormal exit of the solver or the mesher, a missing or unreadable output, or the time limit of 8.7、THEN the adapter SHALL return a trial failure (`lab-bench` design 4), and the bench failure rules apply (`lab-bench` Requirement 2.7 and 11.3): the session stops。落ち着かない実行（8.3）はこの一覧に含まれない: それは要件 4.5 の結果である。
 2. THE アダプター SHALL NOT retry a failed run, change the time step, the mesh or the method, fill in a value, or return a partial result。
-3. A run SHALL count as settled WHEN, for the first and the second half of the settled part: the means of the drag coefficient differ by no more than 2% of the mean over the whole part; the values of `cl_amp` differ by no more than the larger of 10% of the value over the whole part and 0.002; and, WHEN `shedding` is 1, the settled part holds at least 5 full periods of the lift oscillation。
-4. THE 試行失敗の `public_reason` SHALL be one of a fixed small set of plain statements in Dr. Kiro's terms, such as "the trial did not settle" and "the trial could not be completed", and SHALL contain no solver, mesh, file, path, version or log text。THE `detail` SHALL hold the cause, the case folder and the solver's own message, and goes to the builder-side log only (`rules.md`, Blind)。
+3. A run SHALL count as settled WHEN, for the first and the second half of the settled part: the means of the drag coefficient differ by no more than 2% of the mean over the whole part; the values of `cl_amp` differ by no more than the larger of 10% of the value over the whole part and 0.002; and, WHEN `shedding` is 1, the settled part holds at least 5 full periods of the lift oscillation。A run for which this does not hold SHALL give the result of Requirement 4.5, not a failure。破れたルールは Dr. Kiro には伝えない。（結果にはそれを置く場所がないので、記録もしない。）
+4. THE 試行失敗の `public_reason` SHALL be one of a fixed small set of plain statements in Dr. Kiro's terms, that is "the trial could not be completed" and "the trial took too long", and SHALL contain no solver, mesh, file, path, version or log text。THE `detail` SHALL hold the cause, the case folder and the solver's own message, and goes to the builder-side log only (`rules.md`, Blind)。
 5. THE 失敗の `public_reason` SHALL NOT state which knob values caused it (Requirement 12)。
 6. THE アダプター SHALL write nothing about a failure into any `lab/` folder。
 7. THE wall-clock limit of one run SHALL be 140 s。上限が含むのは、メッシュの作成、ソルバー、ソルバーの後の作業（解析、推定器、落ち着き基準、渦度の解析、画像）で、画像まで含む。その部分のどこで超えても、実行は SHALL be a time-out。成功した実行のケースフォルダーの削除は含まず、それは実行の外で行う（要件 10.6）。The prototype's run took about 1.5 minutes (90 s) on 3 processes。One experiment has at most 6 runs (`lab-bench` Requirement 5.1), and the front end's longest tested call is 900 s (`lab-bench` Requirement 17.18), so 6 times 140 s is 840 s, inside the call。IF the design's measured run time makes 140 s too short, or makes 6 runs not fit in 900 s、THEN the builder SHALL stop and ask the user。The adapter SHALL NOT start runs in parallel on its own to make the call fit。
@@ -258,7 +261,7 @@
 
 1. THE ベンチ SHALL provide a blind scan extractor for the solver files in `wind-tunnel/model/`, as `lab-bench` design 11.1 anticipates。It SHALL derive terms from: the keywords and the names (patches, fields, schemes, solvers, function objects, regions) in the OpenFOAM dictionaries and templates; the names in the mesh and geometry script; the digest-pinned image name; and the file names and stems of the source files。THE `python-names` extractor SHALL take only the names of functions, classes and module-level constants, and no string literal。EVERY extractor SHALL drop the Python reserved words (`keyword.kwlist`, `keyword.softkwlist`), the Python built-in names (`dir(builtins)`) and names of one character, and SHALL apply no other filter（Decisions の項目 29）。
 2. IF the extractor cannot read or parse a solver file、THEN it SHALL fail, naming the file and the problem, and SHALL NOT skip the file (`lab-bench` Requirement 15.7)。
-3. THE ブラインドスキャン SHALL remove the adapter's declared names (the four knob names, the five measurement names and the not-measured outcome name) and the stop list, and nothing else (`lab-bench` Requirement 15.3)。伝える集合の語は、ノブの文も含めて、除去されない: ノブの文は意図して伝えるものだが、スキャンはほかのビルダーレベルのテキストと同じに扱う。したがって、ノブが何であるかを伝えても、ソルバーやメッシュの識別子は開かれない。ソルバーファイルとメッシュスクリプトから導かれた語は、ノブの文にも、伝える集合のほかの部分にも、ほかのすべてのビルダーレベルのテキストにも、禁止のままである。
+3. THE ブラインドスキャン SHALL remove the adapter's declared names (the four knob names, the five measurement names and the not-measured outcome names) and the stop list, and nothing else (`lab-bench` Requirement 15.3)。伝える集合の語は、ノブの文も含めて、除去されない: ノブの文は意図して伝えるものだが、スキャンはほかのビルダーレベルのテキストと同じに扱う。したがって、ノブが何であるかを伝えても、ソルバーやメッシュの識別子は開かれない。ソルバーファイルとメッシュスクリプトから導かれた語は、ノブの文にも、伝える集合のほかの部分にも、ほかのすべてのビルダーレベルのテキストにも、禁止のままである。
 4. IF an ordinary word that the extractor derives, such as a general name for a physical quantity, makes the scan fail on text that says nothing about the solver、THEN ビルダー SHALL first rename the identifier it chose itself, if the word is one, then reword the text, and SHALL ask the user before it changes the told set（要件 1.7）or proposes a stop-list entry, and SHALL NOT add the word itself (`rules.md`, Blind scan)。This SHALL be raised as a question to the user and not settled by the builder。ユーザーはこの順序を受け入れた（Decisions の項目 20）。
 5. `wind-tunnel/adapter/scan_sources.toml` SHALL name the solver files and the geometry script with their extractors, and the lab's layout, so that `bench-scan` covers the lab and every bench output。
 6. THE スキャン SHALL cover the picture by the picture check (`lab-bench` Requirement 15.9)。
@@ -319,10 +322,10 @@
 
 1. THE 通常のテスト SHALL need no Docker and no display: the estimators (Requirement 5, with `hypothesis`), the geometry description for the corners of the knob ranges, the told set and its export (Requirement 2), the failure mapping (Requirement 8, with a fake solver that fails), the extractor (Requirement 13) and the contract check of a result。
 2. THE 低速のローカルテスト SHALL need Docker: the circle check, the identical-twice check (Requirement 10.4), the run of every combination of the extreme values of the four knobs (16 runs, the end-corner cases), and the near-end cases: for each knob, the values at 0.001 and at 0.01 of its range from each end of the range, with the other three knobs at the middle of their ranges (16 runs)。値は宣言された範囲から計算し、手で書かない。THE corner rule of 要件 6.11 refuses the near-end corner values that are too close to 0 or 1 (before a run, through `check_inputs`); such a case is recorded as `refused` with the message and is not run。THE ジオメトリ SHALL NOT refuse any case。
-3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of 17.6 has passed or the user has decided what to do about it。Pass: the record is sealed as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and on the sealed folder reports nothing。
+3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of 17.6 has passed or the user has decided what to do about it。THE user はそれを自分で開始して終了し、画面を録画する。彼は実験者の役だけを務める（決定 39）。Pass: the record is sealed as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and on the sealed folder reports nothing。WHEN the user says that the session is done、THE ビルダー（ユーザーではない） SHALL run `bench-verify` and both scans, and SHALL commit the sealed folder only if all of them pass (17.5), in the environment where it was made (`handoff.md`)。
 4. THE `wind-tunnel` の README SHALL report the circle check and the numbers of Requirement 16, as the brief's "done when" asks: the circle check within 5% of the literature value (with the difference), one full session of 24 runs completed, how long the application took to connect, and how much code it is。
 5. THE ビルダー SHALL NOT commit a session record that fails `bench-verify` or the blind scan。
-6. WHEN the 32 cases of 17.2 have been handled、THE ビルダー SHALL write for each case, to the tracked file `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made, solver failed, time limit, refused) and, for a run, the wall-clock time, all from the run; a refused case has the message and no time。IF any run that was not refused hits the time limit, fails to mesh, fails, does not settle, or takes more than 115 s (the margin rule, Decision 34)、THEN the builder SHALL stop and report the knob values, the outcome and the times to the user。THE ビルダー SHALL NOT change a range, the time limit, the limits `min_arc` and `min_line`, or the setup by itself, and SHALL NOT start the first full session。THE ユーザー decides among: a rule that refuses such values with a message in Dr. Kiro's terms (要件 6.11, `lab-bench` 要件 19), a narrower declared range (a change of Requirement 3.1), or accepting the risk。
+6. WHEN the 32 cases of 17.2 have been handled、THE ビルダー SHALL write for each case, to the tracked file `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made, solver failed, time limit, refused; `did not settle` は、5 つの計測が `not_settled` である結果の実行で、要件 4.5、記録される結果名のままである) and, for a run, the wall-clock time, all from the run; a refused case has the message and no time。IF any run that was not refused hits the time limit, fails to mesh, fails, does not settle, or takes more than 115 s (the margin rule, Decision 34)、THEN the builder SHALL stop and report the knob values, the outcome and the times to the user。THE ビルダー SHALL NOT change a range, the time limit, the limits `min_arc` and `min_line`, or the setup by itself, and SHALL NOT start the first full session。THE ユーザー decides among: a rule that refuses such values with a message in Dr. Kiro's terms (要件 6.11, `lab-bench` 要件 19), a narrower declared range (a change of Requirement 3.1), or accepting the risk。
 
 ### Requirement 18: Steps that need the user's hands
 
@@ -332,7 +335,7 @@
 
 #### Acceptance Criteria
 
-1. THE ユーザーが必要な手順 are: 提案つきの要件の承認、24 回のセッションの開始と終了（要件 17.3）（封印の確認と `sessions/wind-tunnel/` のコミットを含む）、接続時間の報告（要件 16.1）。
+1. THE ユーザーが必要な手順 are: 提案つきの要件の承認、24 回のセッションの開始と終了（要件 17.3）で、ユーザーが画面に録画する、接続時間の報告（要件 16.1）。封印の確認と `sessions/wind-tunnel/` のコミットは、これに含まれない: ユーザーがセッションの終了を伝えた後に、ビルダーが行う（要件 17.3、決定 39）。
 2. THE シート読み取りチェック（要件 9.7）SHALL be a gate before the adapter is written。ビルダー自身が実行するので、「Run All Tasks」の前にユーザーの手順はない。
 3. THE 後の `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the builder can run alone with "Run All Tasks"。
 4. THE Docker が必要な手順 SHALL run only on the local Kiro on the user's Mac (`handoff.md`); the builder SHALL NOT mark them done from Kiro Web。
@@ -354,7 +357,7 @@
 9. **画像。** 試行ごとに 1 つの画像、固定の色スケール、文字なし。項目 23 で置き換え: PNG の画像シート。フレーム数とサイズは項目 24。
 10. **Dr. Kiro に伝えること。** ノブの名前、範囲、ノブの文、各計測の意味、流れが 2 次元でレイノルズ数 150 であること。しきい値 0.01 は `shedding` の定義の一部として伝える。伝える集合は宣言された 1 つの集合で、1 つの文書として書き出せ、比較用 Kiro に与えるものである。**承認時のユーザーによる訂正:** Dr. Kiro には各ノブが何であるかを伝える。ボディの長さ、角の丸め、ボディの後ろの板の長さ、迎え角（長さ、角の丸め、後ろの板の長さ、迎え角）である。ノブが流れに何をするかは伝えない。理由: 風洞は、システムの作りについて何も隠されていなくても予測が外れることを示すためのものである。引き続き伝えないもの: ソルバー設定、メッシュ設定、画像の内容、形の知識。ノブの文は要件 3.2 にあり、ビルダーが、単位と範囲の両端の意味（"0 means there is no plate"）を含む定義として書いたもので、影響としては書かない。スキャンへの帰結は要件 13.3: 許可リストは宣言された名前だけで、ノブの文の語はほかのビルダーのテキストと同じようにスキャンされ、ソルバーとメッシュの識別子は禁止のままである。
 11. **形の知識なし。** どのラボのテキストにも置かない。自動ではなく、レビュー済みの一覧で確認する。
-12. **範囲。** アダプター、`model/`、ラボ、抽出器、円柱チェック、数値、そして `sessions/wind-tunnel/` に封印する最初の 24 回のセッション。そのセッションはユーザーが開始する。
+12. **範囲。** アダプター、`model/`、ラボ、抽出器、円柱チェック、数値、そして `sessions/wind-tunnel/` に封印する最初の 24 回のセッション。そのセッションはユーザーが開始する（封印の確認とコミットはビルダーが行う。決定 39）。
 13. **README の数値。** 接続時間はこの要件の承認から最初のフルセッションの開始まで、自己申告。コード量はスクリプトで数える。どちらも `wind-tunnel/numbers.md` に。
 14. **目的。** ゴールの文は項目 15 で決定。
 15. **提案どおりに承認**（ユーザー、承認時）: `corner` は短い辺の半分に対する割合で、radius = `corner` x min(1, `aspect`) / 2、プロトタイプと同じ（要件 6.2）。落ち着き基準: 落ち着いた部分の後半を前半と比べ、平均 `cd` は 2% 以内、`cl_amp` は 10% 以内（下限 0.002）、揚力が振動するなら 5 周期以上（要件 8.3）。1 回の実行の実時間の上限 140 s（要件 8.7）。推定器の精度 1%（要件 5.3 と 5.4。`cl_mean` については 5.4 の限界に amplitude / (pi * f * T) が加わる）。（以前の 24〜48 フレーム、幅 480〜800 ピクセルの画像は、項目 23 と 24 で置き換え）。ゴールの文 "Find the setting of the four knobs with the lowest cd among the settings where shedding is 0."（要件 11.2）。「laminar」と画像の説明は伝える集合に加えない（要件 1.7）。
@@ -383,6 +386,12 @@
 35. **コーナーのルール: 2 つの限界、板は対象外、実行の前に拒否**（ユーザーの決定）。`constants.toml` の `min_edge` は、`min_arc` = 0.0314 と `min_line` = 0.0025 に置き換わる。データ（`extreme-v2-summary.md`、新しい設定）: 弧は 0.03142 から落ち着き（94.7 s と 78.7 s）、0.02749 では落ち着かず（123.3 s）、直線の辺は 0.0025 から落ち着き（111.6 s と 99.9 s）、0.002 で上限に達した。両方に 1 つの値を使うと、高い側を必要より約 12 倍多く拒否するか、上限に達する弧を受け入れてしまう。限界はボディの弧と直線の辺だけのものである: 板の長さ 0.001、0.01、0.1 は最大 62.7 s で落ち着いた。コーナー 0 または 1 は受け入れる。長さ 0 の部分は存在しないためである。拒否は実行の前に `check_inputs`（要件 6.11）を通して行うので予算は使われず、Dr. Kiro の言葉で受け入れられる範囲を伝える。ジオメトリはもうこのルールを持たない。設計の決定 23。
 
 36. **色の上限は 5.0 に固定**（タスク 14.4、要件 9.5）。実行の前に決めたルールによる: 要件 17.2 の 32 ケースのうち落ち着いた実行について、6 フレームでの渦度の絶対値の実行ごとの 99 パーセンタイルの最大値を、整数に切り上げる。結果: 落ち着いた実行 29 回、最大値 4.5979、したがって 5。設計の決定 24。
+
+37. **試行の中で落ち着かない流れは、失敗ではなく結果である**（ユーザーの決定、タスク 16 の後）。以前: `TrialFailure`（`not_settled`）であり、失敗はセッション全体を終わらせる（`lab-bench` 2.7、11.3）。理由: (a) 範囲内のランダムな 30 点のうち 2 点が落ち着かなかった（`spikes/timing/random-points.md`）ので、24 回のセッションは、器具の故障ではない理由でしばしば止まる。(b) 流れが落ち着かないことは試料についての発見であり、Dr. Kiro が使える。(c) ベンチは未計測値についての予測をすでに `not-checkable` と判定する（`lab-bench` Requirement 7.7）ので、`bench/` の変更は要らない（確認済み: 契約チェックは 5 つの未計測値の結果を受け入れる）。今: 実行は 1 試行を使い、その記録が書かれ、画像が返され、`cd`、`cl_mean`、`cl_amp`、`strouhal`、`shedding` はすべて `NotMeasured("not_settled", "the flow had not settled within the trial")` になる。140 s の上限とほかのすべての失敗は変わらない。変更: 1.2、4.5、8（ストーリー、8.1、8.3、8.4）、17.6（結果名は残る）、伝える文、用語集。設計の決定 25。
+
+38. **環境チェックにケースのマウントのプローブ**（タスク 16 の後）。計測パス（`spikes/timing/random-points.md`、抽選 11〜15）の 30 回のうち 5 回が、0.4〜0.5 s で "the solver run exited with code 127" とソルバーのログ `/case/Allrun: No such file or directory` で終わった。ファイルはコンテナの起動前に書かれているにもかかわらずである。いずれも、計測ドライバーがケースフォルダーの名前を変えて脇に置いた、失敗した実行の後だった。本番ではそのような実行は `incomplete`、つまり `TrialFailure` で、セッションは終わる（`lab-bench` 2.7、11.3）。ソルバーなしの再現の結果（`spikes/timing/env_127.py`、`spikes/timing/env-127.md`）: あるフォルダー名を、その名前のフォルダーを `trash/` に移して削除した直後にもう一度作ると、1000 個のコンテナのうち 84 個がマウントをまったく見なかった（ホスト上ではフォルダーが完全なのに、コンテナに `/case` がない）。フォルダーごとに新しい名前を使うと（本番のパターン: ベンチは試行ごとに別のシードを与え、シードがフォルダーに名前を付ける）、1000 回で失敗は 0 回だった。ドライバーの、同じ名前をもう一度作る脇への名前変更も 1000 回中 0 回だった。したがって、2 つの試行が 1 つのシードを得ない限り、本番パターンのセッションにはこの障害は起こり得ず、ランナーは変えない。Docker 内の原因は分かっていない。計測ドライバーはすべての実行に 1 つの固定名を使い、これは 5 回の障害に合うが、証明されてはいない。それらの実行の間隔（約 55 s）を再現していないためである。プローブ（要件 7.7）は、ランナーと同種のコンテナが新しいケースフォルダーを見ることを確かめる（たとえば Docker が共有しないベースフォルダーを）。この障害は名前の繰り返しを必要とするので、プローブはそれを見つけられなかっただろう。そこでプローブは毎回新しい名前を使い、障害を自分で起こさない。セッションでのこの種の障害は、これまでどおり `incomplete`、`TrialFailure` で、セッションが終わり、何も再試行されない（要件 8、`rules.md` 2）。設計の決定 26。
+39. **最初の完全なセッションの役割**（ユーザーの決定）。ユーザーはタスク 17 を自分で行う: Kiro CLI で 24 回のセッションを開始して終了し、画面を録画する。ビルダーは、ユーザーがタスク 17 の完了を伝えた後に、タスク 18（`bench-verify`、ラボと封印したフォルダーへの `bench-scan`、すべて通ったときだけ封印したフォルダーのコミット）を行う。タスク 19 はユーザーのままである。理由: (a) ユーザーが画面を録画するので、ビルダーのコマンドが邪魔にならずにセッションが進む。(b) 実験者の役（ユーザーが開始する Dr. Kiro）とビルダーの役（チェックとコミット）が分かれる。変更: 12、17.3、18.1、タスク 17 と 18（タスク 18 はビルダーの手順）、`README.md`。
+40. **画像は `measured_by` では説明しない**（決定 37 の訂正）。最初の言い方は、画像が "still shows the flow" と述べていた。これは画像が何を示すかを伝えるもので、要件 1.3 が許さず、ユーザーも承認していなかった。決定 37 の承認が覆ったのは、画像が返されることだった。今は、文は画像が返されることを述べ、何を示すかについては何も述べない。変更: 4.5、伝える文（`declaration.py`）、設計 4、宣言のテスト。設計の決定 27。
 
 ## Open questions
 
