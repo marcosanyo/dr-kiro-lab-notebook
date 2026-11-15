@@ -111,6 +111,13 @@ class Adapter(Protocol):
 BUILDER_VERSIONS_METHOD = "builder_versions"
 
 
+# Optional adapter method, not part of the Protocol (Requirement 19): `check_inputs(inputs) -> str | None`.
+# It is a pure function of the computed inputs of one trial, with no access to the solver. It returns None to
+# accept them, or one line of text in Dr. Kiro's terms to refuse them. An adapter without it refuses nothing.
+CHECK_INPUTS_METHOD = "check_inputs"
+INPUT_REFUSAL_MAX = 400
+
+
 class DeclarationError(ValueError):
     """The adapter's declaration breaks the contract."""
 
@@ -261,6 +268,32 @@ def check_failure(failure: TrialFailure) -> None:
         raise ResultError("trial failure has no public reason")
     if not isinstance(failure.detail, str):
         raise ResultError("trial failure detail must be a string")
+
+
+def check_input_refusal(text: object) -> str:
+    """Raise ResultError unless `text` is a usable refusal message: non-empty, one printable line, no space at
+    either end, at most INPUT_REFUSAL_MAX characters (Requirement 19.3)."""
+    if not isinstance(text, str) or not text:
+        raise ResultError(f"input check returned {text!r}, not None or a non-empty text")
+    if not text.isprintable():
+        raise ResultError("input check message contains line breaks, tabs or other control characters")
+    if text != text.strip(" "):
+        raise ResultError("input check message starts or ends with a space")
+    if len(text) > INPUT_REFUSAL_MAX:
+        raise ResultError(f"input check message is {len(text)} characters, the limit is {INPUT_REFUSAL_MAX}")
+    return text
+
+
+def input_refusal(adapter: object, inputs: ComputedInputs) -> str | None:
+    """The adapter's refusal of one trial's computed inputs, or None. An adapter without `check_inputs`
+    refuses nothing. An exception of the method is not caught here (Requirement 19.5)."""
+    method = getattr(adapter, CHECK_INPUTS_METHOD, None)
+    if method is None:
+        return None
+    text = method(inputs)
+    if text is None:
+        return None
+    return check_input_refusal(text)
 
 
 def builder_version_lines(adapter: object) -> list[str]:
