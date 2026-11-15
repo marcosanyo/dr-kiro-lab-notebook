@@ -907,6 +907,26 @@ reading check failed.
     and the user had not approved it: the approval of Decision 37 covered that the picture is returned. Now the
     sentence says that the picture is still returned, and nothing about what it shows. Changed: 4.5, the told text
     (`declaration.py`), design 4, the tests of the declaration. Design Decision 27.
+41. **Gmsh must not need the main thread** (found by the first real session, `wt-001`, which failed at 20:46 on
+    2026-11-15). The MCP front end runs `run_trial` in a worker thread. `gmsh.initialize()` installs a SIGINT
+    handler by default, and Python allows that in the main thread only, so the first trial raised `ValueError`
+    and the session stopped. Every earlier check called the adapter from the main thread. Now the mesher calls
+    `gmsh.initialize(interruptible=False)` (Gmsh 4.15.2). The mesh bytes are the same as before (checked for three
+    inputs, the old and the new call in one script), so the earlier runs and the same-input-twice test stay valid.
+    A test builds a mesh in a worker thread and compares its bytes with the main-thread build. No other
+    main-thread-only call (signal handlers and the like) exists in `model/` or `adapter/`. Changed: 6 (mesher),
+    `mesh.py`, `test_mesh.py`. Design Decision 28.
+42. **Two common words on the stop list, and a rehearsal of the whole session** (found by `wt-001`, same
+    failure). The sealing of the failed session stopped on the blind scan of the record: `application` (the key
+    of the start entry, and an OpenFOAM keyword) and `image` (the media type `image/png`, and a section of
+    `constants.toml`) are derived terms. Under the user's standing policy for common words, both were added to
+    `.kiro/blind-scan/stop-list.txt`: they say nothing about the structure of the body. The rules of the scan are
+    unchanged. To find any further surprise before a real session, `wind-tunnel/rehearse_session.py` drives the
+    real `bench-mcp` over stdio with the real adapter and Docker, in a new folder under
+    `bench-run/wind-tunnel/rehearsal/`: one hypothesis, two trials (one settled, one not settled), a refused
+    corner value that uses no budget, a verdict, `end_session`, then `bench-verify` and `bench-scan` on the
+    sealed folder. The user runs it before a real session. Changed: `stop-list.txt`,
+    `rehearse_session.py`, the README is not changed. Design Decision 29.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

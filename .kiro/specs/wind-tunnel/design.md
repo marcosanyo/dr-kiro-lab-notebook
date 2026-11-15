@@ -783,6 +783,15 @@ Made by the builder in this design; none changes a requirement.
     about one second at start (three container starts).
 27. **`measured_by` does not describe the picture** (Requirements Decision 40). The sentence on a flow that has not
     settled says that the picture is still returned, and nothing about what it shows (Requirement 1.3).
+28. **`gmsh.initialize(interruptible=False)`** (Requirements Decision 41). Alternatives: run the mesh in the main
+    thread (the front end would have to change, which `lab-bench` does not allow for one application), or
+    install the signal handler ourselves (no gain). With `interruptible=False` Gmsh makes no handler, and the
+    output is byte-identical. The calls are still serialised by the front end's lock, so Gmsh's global state is
+    not used from two threads at once.
+29. **Stop-list words and the rehearsal** (Requirements Decision 42). `application` and `image` are added to the
+    stop list; the scan code is unchanged. The rehearsal is a script and not a pytest test, because it needs the
+    MCP client, the adapter and Docker in one Python, which only the installed tool has; it uses the installed
+    commands, as Kiro CLI does.
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)
