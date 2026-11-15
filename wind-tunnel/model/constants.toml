@@ -65,4 +65,7 @@ cell_width = 400
 cell_height = 200
 gap = 4
 window = [-2.5, 9.5, -3.0, 3.0]  # x_min, x_max, y_min, y_max
-vorticity_limit = 5.0  # STARTING VALUE, replaced from the observed range in task 14.4 and then fixed (9.5)
+# Fixed by task 14.4 (9.5, Decision 24 of the design): the largest of the per-run 99th percentiles of |omega| over
+# the six frames, over the 29 settled runs of wind-tunnel/extreme-runs.json (4.5979, run 3/0/3/15), rounded up to
+# an integer. Changing it later needs the user.
+vorticity_limit = 5.0

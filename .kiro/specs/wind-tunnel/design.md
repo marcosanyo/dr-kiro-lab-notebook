@@ -319,8 +319,7 @@ library: the sheet is built from arrays.
   for k = 0..frames-1, so the last frame is at the end of the run and the times increase. With the starting values
   this is 145, 146, ..., 150. The settings loader refuses `t_0 < average_from` (9.3) and `frames != rows * columns`.
 - Colour: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`, an integer in 0..254, with `L` =
-  `vorticity_limit` from `constants.toml` (a starting value, chosen from the vorticity range of the 32 gate runs and
-  then fixed, 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
+  `vorticity_limit` from `constants.toml` (fixed at 5.0 by task 14.4 from the 32 gate runs, Decision 24; 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
   three anchor colours (a blue and a red that are not black, and white at the middle) built by linear interpolation
   in `picture.py`. A masked point gets one fixed grey that is not in the table. The table has one source and the
   same table is used in every trial (9.1).
@@ -742,6 +741,12 @@ Made by the builder in this design; none changes a requirement.
     the message is one line in Dr. Kiro's terms. The band is rounded inward to 3 decimals, and that band is what is
     tested.
 
+24. **The colour limit is fixed at 5.0** (task 14.4, Requirement 9.5; Requirements Decision 36). The rule, fixed
+    beforehand: the largest of the per-run 99th percentiles of the absolute vorticity over the six frames, over the
+    settled runs of the 32 gate cases, rounded up to an integer. The 29 settled runs (3 of the 32 cases were refused
+    by the corner rule) gave 4.5979 at most (aspect 3, corner 0, splitter 3, angle 15), so L = 5. The per-run
+    maximum of the absolute vorticity is up to 54.5, so a few points near the body saturate the colour, which is the
+    intention of a limit set from the 99th percentile.
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)

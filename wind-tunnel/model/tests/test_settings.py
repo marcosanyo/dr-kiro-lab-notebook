@@ -35,6 +35,7 @@ def test_real_file_loads():
     assert s.body.thickness == 0.08
     assert (s.body.min_arc, s.body.min_line) == (0.0314, 0.0025)
     assert s.time.max_delta_t <= ESTIMATOR_MAX_DT
+    assert s.picture.vorticity_limit == 5.0  # fixed by task 14.4 from extreme-runs.json
 
 
 def test_real_file_frame_times():

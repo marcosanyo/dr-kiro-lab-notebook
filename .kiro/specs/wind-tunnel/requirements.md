@@ -828,6 +828,11 @@ reading check failed.
     (Requirement 6.11), so the budget is not used; it gives the accepted band in Dr. Kiro's terms. The geometry no
     longer carries the rule. Design Decision 23.
 
+36. **The colour limit is fixed at 5.0** (task 14.4, Requirement 9.5). By the rule fixed before the runs: the largest
+    of the per-run 99th percentiles of the absolute vorticity over the six frames, over the settled runs of the 32
+    cases of Requirement 17.2, rounded up to an integer. Result: 29 settled runs, largest value 4.5979, so 5. Design
+    Decision 24.
+
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:
