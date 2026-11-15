@@ -106,7 +106,7 @@ class GmshMesher:
         except subprocess.TimeoutExpired as expired:
             raise MeshTimeout(
                 "the mesh was still being built at the time limit",
-                f"stdout: {_text(expired.stdout)}\nstderr: {_text(expired.stderr)}",
+                f"stdout: {expired.stdout!r}\nstderr: {expired.stderr!r}",
             ) from expired
         if done.returncode != 0:
             raise MeshError(
@@ -120,12 +120,6 @@ class GmshMesher:
                 "the mesh process gave no cell count",
                 f"stdout: {done.stdout!r}\nstderr:\n{done.stderr.strip()}",
             ) from error
-
-
-def _text(value: str | bytes | None) -> str:
-    if value is None:
-        return ""
-    return value.decode("utf-8", "replace") if isinstance(value, bytes) else value
 
 
 def outline_to_data(outline: Outline) -> list[dict]:
