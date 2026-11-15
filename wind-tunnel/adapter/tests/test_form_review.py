@@ -3,11 +3,15 @@
 This checks that a line exists for every text; it does not check what the texts say (that is a review by
 reading)."""
 
+import sys
 from pathlib import Path
 
 from wind_tunnel.adapter import NOT_SETTLED_REASON, NOT_SHEDDING_REASON
 from wind_tunnel.declaration import scan_adapter
 from wind_tunnel.failures import FailureKind
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from builder_files import builder_files  # noqa: E402
 
 ADAPTER = Path(__file__).resolve().parents[1]
 LAB = ADAPTER.parent / "lab"
@@ -20,7 +24,7 @@ def _has_line(*needles: str) -> bool:
 
 
 def test_every_builder_written_lab_file_has_a_line() -> None:
-    files = [p for p in LAB.rglob("*") if p.is_file() and "__pycache__" not in p.parts]
+    files = builder_files(LAB)
     assert files
     for path in files:
         name = path.relative_to(LAB).as_posix()
