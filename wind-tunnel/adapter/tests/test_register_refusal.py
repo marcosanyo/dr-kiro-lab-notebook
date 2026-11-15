@@ -78,6 +78,9 @@ def test_a_point_range_is_a_refusal_not_a_bench_failure(tmp_path: Path) -> None:
     requirements.write_text(requirements.read_text(encoding="utf-8") + "\n" + _block("H1", "P1", 1, 1))
     outcome = session.register("H1")
     assert isinstance(outcome, Refused), outcome
+    assert "strictly below high" in outcome.message.plain()
+    assert "a single value is not accepted as a range" in outcome.message.plain()
+    assert "[0.5, 1.5] for the value 1" in outcome.message.plain()
     assert session.state.sealed is None
     assert session.last_failure_detail is None
     # the session is still open: a corrected hypothesis is accepted
