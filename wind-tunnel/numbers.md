@@ -13,5 +13,8 @@ Non-blank, non-comment lines, counted by `count_lines.py`. Lock files, virtual e
 and caches are not counted.
 
 <!-- code-size:begin -->
-<not yet measured>
+- `adapter/`: 988 lines
+- `model/`: 1175 lines
+- Total (without test files): 2163 lines
+- Test files, counted on their own: `adapter/` 1736 lines, `model/` 1166 lines
 <!-- code-size:end -->
