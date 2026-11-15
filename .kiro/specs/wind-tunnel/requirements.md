@@ -927,6 +927,30 @@ reading check failed.
     corner value that uses no budget, a verdict, `end_session`, then `bench-verify` and `bench-scan` on the
     sealed folder. The user runs it before a real session. Changed: `stop-list.txt`,
     `rehearse_session.py`, the README is not changed. Design Decision 29.
+43. **Gmsh runs in a child process** (found by the second real session, `wt-002`). `wt-002` ran E1 (three
+    trials) and then crashed: the bench process ended with SIGSEGV in `gmsh::initialize`, called from a Python
+    worker thread (crash report `python3.12-2026-11-15-222933.ips`). From the hook log (UTC): `run_experiment`
+    E1 started at 13:26:22 and returned at 13:29:04 (the run itself took 2 min 42 s); `record_verdict` 13:29:11;
+    `register_hypothesis` H2 13:29:22; the write of `e2.py` 13:29:23; `run_experiment` E2 started at 13:29:24
+    and ended at 13:29:25 with "Connection closed" (22:29:25 +0900). So the call that crashed came about 20 s
+    after the previous `run_experiment` had returned. The front end runs each adapter call with
+    `anyio.to_thread.run_sync`, and an idle worker thread of anyio exits after
+    `WorkerThread.MAX_IDLE_TIME` = 10 s (`anyio/_backends/_asyncio.py`, line 1069 of the installed anyio), so
+    the call after a pause of 20 s probably ran in a new thread, while the three trials of E1 (seconds apart)
+    shared one. That the front end really used a new thread is an inference. The thread matrix proves the
+    Gmsh part (`spikes/timing/gmsh-threads.md`, 20 runs per variant, each in its own process): a second
+    `gmsh.initialize` after an earlier thread has initialised it and exited crashes with SIGSEGV in 80 of 80
+    runs (no pause, 2 s and 15 s pauses, and a main-thread build after a thread build); builds in one thread,
+    or a thread build after a main-thread build, never crashed (60 of 60). The pause does not matter. The
+    matrix does not show in which build the crash happens. Now the mesh is built in a child process
+    (`GmshMesher` starts `wind_tunnel_model.mesh_worker`, which runs Gmsh in the main thread of a fresh
+    interpreter): the three patterns that crash in-process ran 60 of 60 times without a crash. A Gmsh crash
+    now ends the child and becomes a `MeshError` (a bench failure, with the exit status on the builder side),
+    not the end of the bench process. The front end of `lab-bench` is not changed: it runs adapter calls in
+    changing worker threads, and an adapter must not rely on one thread. The mesh bytes are unchanged
+    (`spikes/timing/reference-mesh-child.json`). The rehearsal (Decision 42) now calls `run_experiment` three
+    times with pauses longer than the idle time, so that it fails on the old code. Changed: 6 (mesher),
+    `mesh.py`, `mesh_worker.py`, `adapter.py`, `rehearse_session.py`, their tests. Design Decision 30.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

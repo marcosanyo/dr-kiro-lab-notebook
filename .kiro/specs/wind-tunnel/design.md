@@ -204,8 +204,11 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   chosen so that none is a word of the told set (13.8).
 - Written as a Gmsh `.msh` file in the case folder. Mesh generation uses no random seed; Gmsh's algorithm choice and
   the thread count (1) are set explicitly in `constants.toml` (10.2).
-- Interface `Mesher.build(outline, settings, dest) -> None`, raising `MeshError(reason)`. `GmshMesher` is the real
-  one; `FakeMesher` writes a fixed small file for tests.
+- Interface `Mesher.build(outline, settings, dest, *, timeout_s=None) -> None`, raising `MeshError(reason)` (and
+  `MeshTimeout`). `GmshMesher` is the real one: it runs the recipe in a short-lived child process
+  (`mesh_worker.py`), never in the bench server, because Gmsh crashes the process when it is initialised in a
+  new thread after another thread has initialised it and exited, and the front end runs adapter calls in
+  changing worker threads (Decision 30). `FakeMesher` writes a fixed small file for tests.
 
 ### 4. Case and solver (Req 6.6, 6.8, 6.9, 10.1) in `model/case/` and `casegen.py`
 
@@ -792,6 +795,15 @@ Made by the builder in this design; none changes a requirement.
     stop list; the scan code is unchanged. The rehearsal is a script and not a pytest test, because it needs the
     MCP client, the adapter and Docker in one Python, which only the installed tool has; it uses the installed
     commands, as Kiro CLI does.
+30. **The mesh is built in a child process** (Requirements Decision 43). Alternatives: keep Gmsh in the bench
+    process and change the front end to one fixed thread (which `lab-bench` does not allow for one application),
+    or keep one long-lived mesh process (more state, and a restart after a crash would be a fallback). Chosen:
+    one short-lived child per mesh, so that Gmsh always starts in the main thread of a fresh interpreter and a
+    crash ends only the child. Cost: the start of one Python interpreter and the Gmsh import per run, small
+    against a run of minutes. `GmshMesher.build` passes the time left of the run to the child as a time-out
+    (`MeshTimeout`). The `interruptible=False` call of Decision 28 stays (it is harmless in the main thread).
+    Case folders of a crashed session stay on disk; the adapter never deletes or renames a leftover folder
+    (`create_case_folder` raises `FileExistsError`), and the builder moves it aside before a resume.
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)
