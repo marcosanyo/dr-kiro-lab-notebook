@@ -1,8 +1,8 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/design.md`](../../../.kiro/specs/wind-tunnel/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `517bd20821430ecef44d8c3b65d5061d7054dec5c39296599f010eddaf19ba0c`
+> 原文 SHA-256: `af8dc89c466ac9dd158bfc4b03d695a0c8d90f559dd98349fc2b1a10ce0d4a9c`
 # Design: wind-tunnel
 
-要件 1-18 を対象とします。設定は `wind-tunnel/model/settings.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
+要件 1-18 を対象とします。設定は `wind-tunnel/model/constants.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
 
 ## Overview
 
@@ -18,7 +18,7 @@
 | 話題 | 選択 | 理由 |
 |---|---|---|
 | ストローハル数の推定器 | 細かい周波数格子での最小二乗による正弦波フィットを、黄金分割探索で精密化する。FFT は使わない | ビンの幅 1/70（0.17 の約 8%）よりずっと細かく分解できる。適応時間刻みの不均等な時刻でも使える（5.2） |
-| ソルバーの出力 | 関数オブジェクトが実行中に `force.dat` とサンプリングした渦度を書く。フィールドのダンプも再構成もしない | 実行が短く、ディスク使用が小さく、力と画像が同じ実行から来る |
+| ソルバーの出力 | 関数オブジェクトが実行中に `force.dat` とサンプリングした渦度を書く。読まれるフィールドのダンプも再構成もしない（ソルバーは最新の時間フォルダーだけを残す） | 実行が短く、ディスク使用が小さく、力と画像が同じ実行から来る |
 | 画像 | PNG の画像シート 1 枚: 渦度の 6 フレームを 2 行 3 列に並べ、固定の色ランプ、numpy と `bench.pictures.encode_png`、Pillow なし | 色スケールが構成上すべての試行で同じ（9.1）。Dr. Kiro のファイルツールは 1 枚の静止画を届ける（GIF チェックは失敗した）。作図ライブラリも、文字も、メタデータもない。`body-lab` の画像と同じ形 |
 | Docker | 固定したイメージの `docker run`。ケースフォルダーをバインドマウントし、`model/` の 1 つのスクリプト（`Allrun`）を使う | タイムアウトして kill するコマンドが 1 つ。イメージ内のコマンドはソルバー設定なので `model/` に置く（6.9） |
 | 環境チェック | アダプターの構築時。スキャンは宣言だけを作る別のファクトリーを使う | `bench-scan` は Docker なしで動く必要がある（Kiro Web、公開） |
@@ -33,15 +33,16 @@ wind-tunnel/
   circle-check.json               written by the circle check (15.5)
   form-knowledge-review.md        the reviewed list (12.3)
   count_lines.py                  writes the code size into numbers.md (16.2)
-  extreme-runs.json               outcome and time of the 32 end-corner and near-end runs (17.6)
+  extreme-runs.json               outcome and time of the 32 end-corner and near-end cases (17.6)
   model/                          uv project "wind-tunnel-model"; never visible from lab/
     pyproject.toml                depends on gmsh and numpy
-    settings.toml                 every number of the solver setup (6.8, 6.9)
+    constants.toml                 every number of the solver setup (6.8, 6.9)
     image-lock.toml               image digest and image id, written by the digest task (7.1)
     case/                         OpenFOAM templates (*.in, placeholders @NAME@) and Allrun
     src/wind_tunnel_model/
-      settings.py                 load and validate settings.toml; the Reynolds-number override
+      settings.py                 load and validate constants.toml; the Reynolds-number override
       geometry.py                 outline of the body from the four knobs (pure)
+      input_rule.py               the corner rule: which corner values are accepted for an aspect (pure, 6.11)
       mesh.py                     Gmsh recipe: outline -> mesh file
       casegen.py                  templates -> case folder (pure text)
       solver_output.py            parse force.dat and sampled-vorticity files
@@ -74,16 +75,16 @@ flowchart TD
     B --> C[mesh: Mesher]
     C -->|MeshError| F
     C --> D[case folder: casegen.py]
-    D --> E[Runner: Allrun in the pinned image, 140 s limit]
+    D --> E[Runner: Allrun in the pinned image, inside the 140 s limit]
     E -->|SolverFailure / timeout| F
     E --> G[force.dat + sampled vorticity]
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
     I -->|not settled| F
     I --> J[picture: PNG sheet]
-    J --> K[TrialResult]
-    F --> L[keep case folder, detail to builder log only]
-    K --> M[remove case folder]
+    J --> K[TrialResult, if the clock is still inside 140 s; else timeout]
+    F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
+    K --> M[case folder renamed into trash/; deleted at the start of the next trial]
 ```
 
 ## Components and Interfaces
@@ -101,6 +102,7 @@ flowchart TD
   - `angle`: 角度が何か。流れが +x に向かうこと（`measured_by` と同じ事実だが、ノブの文だけで完結するよう繰り返す）。0 の意味。回転の中心。板がボディと一緒に回ること。正の角度の向きを +y と -y で（`measured_by` が揚力にすでに使っている語）。
   - どの文も定義である。ノブが流れや計測に何をするかを述べる文はない。レビュー済みの一覧（要件 12）が、これを文ごとに記録する。
   - テストは、厚さを入れた 4 つの文を、spec ファイルから読んだ要件 3.2 と比べる（`.kiro/` がない所では見える理由つきでスキップ）。spec とコードがずれないようにするためである。
+- 入力チェック: `WindAdapter.check_inputs(inputs) -> str | None`。`lab-bench` の任意のフック（要件 19）。`aspect` と `corner` で `input_rule.py`（セクション 2）の `corner_refusal` を呼び、ほかのノブは見ない。純関数なので、同じ入力には常に同じ答えを返す。`run_trial` も検証の中で同じ関数を呼び、拒否された `corner` に対して `InputRuleError` を送出するので、フックが呼ばれなかったときでも、拒否された値が走ることはない（フォールバックなし）。
 - ファクトリーは 2 つ: `WindAdapter()`（環境をチェックする、セクション 6）と `scan_adapter()`（同じ宣言で、`run_trial` も、チェックもない）。`scan_sources.toml` は `scan_adapter` を `adapter` として挙げます。テストは、両者の宣言が等しいことを確かめます。したがってスキャンに Docker は要りません（13.5、14.4）。
 - `told_set.py` にはコンソールコマンド `wind-tunnel-told-set --out PATH` があります。`scan_adapter().declaration()` に `bench.frontend.describe.declaration_text` を呼び、そのテキストを、末尾の改行だけ付けて書きます。パスは必須です（2.1-2.3）。テストは、出力を `describe.py` がツールの説明に入れるテキストと比べます（2.4）。
 
@@ -110,35 +112,36 @@ flowchart TD
 
 - 回転前のボディの座標系: 長方形は x が [-a/2, a/2]、y が [-1/2, 1/2]、`a = aspect`。流れは +x 向きなので、後ろは +x 側です。
 - 角の半径 `r = corner * min(1, a) / 2`（6.2）。直線部分は、長さ `side - 2r` が 0 より大きいとき残し、ちょうど 0 のとき省きます（`corner = 1` と短い辺。`a = 1` では 4 辺すべてが省かれ、輪郭は 4 つの四分円弧、つまり円になります）。`corner` と 2 のべき乗の浮動小数点の積は、ちょうど 0 になる場合を正確にします。
-- 板（`splitter` > 0 のとき）: 厚さ `t` = 0.08（`settings.toml`）で、中心線上に（`splitter` の文で伝える）、`x = a/2 - t`（ボディの内側。丸めがどうでも隙間ができない）から `x = a/2 + s` まで。輪郭は和集合です: 後ろの直線部分（または円弧）は、板の上辺と下辺がそれと交わる所で切ります。交点は閉じた式で求めます: `t/2 <= 1/2 - r` のとき `x_c = a/2`（`a < 1` では `r <= 1/4` なので後ろは常に直線）、そうでなければ `x_c = a/2 - r + sqrt(r^2 - (t/2 - (1/2 - r))^2)`。板の内側の重なりに、独自の輪郭は要りません。
+- 板（`splitter` > 0 のとき）: 厚さ `t` = 0.08（`constants.toml`）で、中心線上に（`splitter` の文で伝える）、`x = a/2 - t`（ボディの内側。丸めがどうでも隙間ができない）から `x = a/2 + s` まで。輪郭は和集合です: 後ろの直線部分（または円弧）は、板の上辺と下辺がそれと交わる所で切ります。交点は閉じた式で求めます: `t/2 <= 1/2 - r` のとき `x_c = a/2`（`a < 1` では `r <= 1/4` なので後ろは常に直線）、そうでなければ `x_c = a/2 - r + sqrt(r^2 - (t/2 - (1/2 - r))^2)`。板の内側の重なりに、独自の輪郭は要りません。
 - 原点（長方形の中心）まわりに `angle` 度の回転。向きは要件 6.4 のとおり: 正の角度 `θ` は先端側（回転前の -x）を +y の向きに動かします。流れが +x、+y が上のとき、これは時計回りで、迎え角の正の向きとして通常のものです。行列では `(x, y) -> (x cos θ + y sin θ, -x sin θ + y cos θ)`。点 `(-a/2, 0)` は `(-(a/2) cos θ, (a/2) sin θ)` に移り、`θ > 0` では軸の上にあります。点 `(a/2, 0)` は軸の下に移ります。向きは `geometry.py` に、この行列の符号として 1 回だけ書きます。伝えるテキストとずれうる `rotation_sense` の設定はありません。向きは `angle` の文（要件 3.2）で伝え、性質 3 が固定します。この向きを選んだ理由: プロトタイプの向きで、ユーザーが確認済み（要件の Decision 19）。
 - 出力: 順序づけられた閉じたプリミティブの並び（`Line(p, q)`、`Arc(p, centre, q)`）。端点は正確です。
-- `GeometryError`（ノブの値と理由を持つ。ビルダー側だけ）: 正の長さの部分が `min_edge` より短いとき、または `x_c` が定義できないとき。長さがちょうど 0 の部分はエラーではありません（要件 6.10）。`min_edge` はユーザーが別に決めるまで `settings.toml` で 0.0 です。要件 17.2 の端に近いケースは、計測できるようにメッシャーとソルバーに届かなければならず、ジオメトリでの拒否は結果を隠してしまうからです。0.0 では、負の部分か定義できない部分だけが `GeometryError` です。Decision 12。
+- `GeometryError`（ノブの値と理由を持つ。ビルダー側だけ）: 部分の長さが負のとき、または `x_c` が定義できないとき。長さがちょうど 0 の部分はエラーではありません（要件 6.10）。ジオメトリは、短いという理由で部分を拒否しません。Decision 12（このルールのないジオメトリ）は維持し、ルールは `input_rule.py` に移りました（Decision 23）。
+- `input_rule.py`（要件 6.11）: `corner_band(aspect, settings) -> (lo, hi)`、`corner_accepted`、`corner_refusal(aspect, corner, settings) -> str | None`。`h = min(1, aspect)` とすると、1 つのコーナーの弧は `(pi / 4) h c`、ボディの最も短い直線の辺は `h (1 - c)`。`lo = ceil(1000 * 4 min_arc / (pi h)) / 1000`、`hi = floor(1000 (1 - min_line / h)) / 1000`（千分の一への 1e-9 の許容は、ちょうどの境界の浮動小数点誤差を吸収する。例として 1 - 0.0025 / 0.5 = 0.995）。ちょうど 0 または 1 の `corner` は受け入れる。それ以外は `lo <= corner <= hi` のとき受け入れるので、メッセージが伝える範囲がテストされる範囲であり、ルールより広くなることはない。メッセージは `corner <c> is not accepted: corner must be 0, 1, or between <lo> and <hi> when aspect is <a>`。板とほかのすべてのノブは見ない。
 
 ### 3. Mesh (Req 6.8, 7.2) in `wind_tunnel_model/mesh.py`
 
-- Gmsh の Python API、組み込みカーネル: 輪郭から点、線、`addCircleArc`。外側の長方形は 6.8 の領域（入口はボディの中心の 6 高さ前、出口は 18 後ろ、上下は 7。中心から測る。`settings.toml [domain]` と同じ値）。ボディを穴とする平面サーフェスが 1 つ。
+- Gmsh の Python API、組み込みカーネル: 輪郭から点、線、`addCircleArc`。外側の長方形は 6.8 の領域（入口はボディの中心の 6 高さ前、出口は 18 後ろ、上下は 7。中心から測る。`constants.toml [domain]` と同じ値）。ボディを穴とする平面サーフェスが 1 つ。
 - サイズ場: ボディの曲線からの距離としきい値の場（`size_body` から `size_far` へ増える）と、近い後流の箱の場（`size_wake`）。サイズは `<chosen in the mesh task, before the circle check is run>`。その後の変更は円柱チェックを変えるかもしれず、ユーザーが必要です（6.8）。
-- z 方向に `depth`（`settings.toml`。単位奥行きあたりの力の単位、1）だけ 1 層押し出し、OpenFOAM が 2D のケースとして扱えるようにします。物理グループがパッチ `inlet`、`outlet`、`lateral`（上下）、`obstacle`、`frontAndBack` を与えます。名前は `settings.toml [patches]` にあり、レシピとテンプレートの両方が使います。どれも伝える集合の語にならないよう選んであります（13.8）。
-- Gmsh の `.msh` ファイルとしてケースフォルダーに書きます。メッシュ生成は乱数シードを使いません。Gmsh のアルゴリズムの選択とスレッド数（1）は `settings.toml` で明示します（10.2）。
+- z 方向に `depth`（`constants.toml`。単位奥行きあたりの力の単位、1）だけ 1 層押し出し、OpenFOAM が 2D のケースとして扱えるようにします。物理グループがパッチ `inlet`、`outlet`、`lateral`（上下）、`obstacle`、`frontAndBack` を与えます。名前は `constants.toml [patches]` にあり、レシピとテンプレートの両方が使います。どれも伝える集合の語にならないよう選んであります（13.8）。
+- Gmsh の `.msh` ファイルとしてケースフォルダーに書きます。メッシュ生成は乱数シードを使いません。Gmsh のアルゴリズムの選択とスレッド数（1）は `constants.toml` で明示します（10.2）。
 - インターフェース `Mesher.build(outline, settings, dest) -> None`、`MeshError(reason)` を送出します。`GmshMesher` が本物で、`FakeMesher` はテスト用に固定の小さなファイルを書きます。
 
 ### 4. Case and solver (Req 6.6, 6.8, 6.9, 10.1) in `model/case/` and `casegen.py`
 
 `casegen.render_case(knobs, settings, dest)` は、すべてのテンプレートをコピーし、`@NAME@` を `NAME` という設定（float の `repr` で整形）に置き換え、ファイルをソート順に、`\n` 終端で書きます。プレースホルダーの値がない場合、または置換後にプレースホルダーが残った場合はエラーです。等しい入力での 2 回の呼び出しは、同一のバイト列を書きます（10.2）。
 
-テンプレートの内容（名前は OpenFOAM のもの。値は `settings.toml` から）:
+テンプレートの内容（名前は OpenFOAM のもの。値は `constants.toml` から）:
 
 | File | Holds |
 |---|---|
 | `constant/transportProperties.in` | `nu = speed * height / reynolds` |
-| `constant/momentumTransport.in` | laminar |
+| `constant/turbulenceProperties.in` | laminar |
 | `system/controlDict.in` | `pimpleFoam`、終了時刻 150、`maxCo` 0.8 の適応刻み、`maxDeltaT`（0.05 以下、セクション 5）、フィールド出力なし、下の関数オブジェクト |
 | `system/fvSchemes.in`, `fvSolution.in` | 2 次精度の時間・対流スキーム（`backward`、`linearUpwind`）、外側修正 1 回の圧力・速度連成。選択は円柱チェックで確認する |
 | `system/decomposeParDict.in` | 3 つの部分領域、方法 `simple`、分割数 (3 1 1)、固定のテキスト（10.1） |
 | `system/changeDictionaryDict.in` | `gmshToFoam` の後で `frontAndBack` を `empty` にする |
 | `0/U.in`, `0/p.in` | 入口の速さ `(speed 0 0)`、`lateral` は `slip`、`obstacle` は `noSlip`、出口の圧力 0 |
-| `system/functions.in` | `obstacle` 上の力の関数オブジェクト（密度 1、毎時間刻みで書く）と、渦度のサンプリング（下） |
+| `system/monitors.in` | `obstacle` 上の力の関数オブジェクト（密度 1、毎時間刻みで書く）と、渦度のサンプリング（下）。渦度のフィールドはサンプラーのために計算され、ディスクには書かれない（Decision 22） |
 | `Allrun` | `set -e`、`gmshToFoam`、`changeDictionary`、`decomposePar`、`mpirun -np 3 pimpleFoam -parallel` |
 
 - 上下の境界は brief で指定されていません（"walls 7 above and below"）。この設計は `slip` を取ります。受け入れられるかは円柱チェックが決めます（Decision 5）。
@@ -147,23 +150,24 @@ flowchart TD
 
 ### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `model/estimators.py`, `settle.py`
 
-入力は、落ち着いた部分（`t >= average_from`）の力の履歴 `(t, Fx, Fy)` で、時刻は不均等です。定数: `ESTIMATOR_MAX_DT = 0.05` は、1% の精度が示されるサンプル間隔の最大値です。`settings.toml` は読み込み時に `max_delta_t <= ESTIMATOR_MAX_DT` を確認されます。
+入力は、落ち着いた部分（`t >= average_from`）の力の履歴 `(t, Fx, Fy)` で、時刻は不均等です。定数: `ESTIMATOR_MAX_DT = 0.05` は、1% の精度が示されるサンプル間隔の最大値です。`constants.toml` は読み込み時に `max_delta_t <= ESTIMATOR_MAX_DT` を確認されます。
 
-- `cd = mean(Fx) / q`、`cl = Fy / q`、`q = 0.5 * rho * speed^2 * height * depth`（値は `settings.toml` の 1）（4.2、4.6）。平均は時間重みつきです（落ち着いた部分の台形則の積分を、その長さで割る）。
+- `cd = mean(Fx) / q`、`cl = Fy / q`、`q = 0.5 * rho * speed^2 * height * depth`（値は `constants.toml` の 1）（4.2、4.6）。平均は時間重みつきです（落ち着いた部分の台形則の積分を、その長さで割る）。
 - `cl_mean` は `cl` の時間重みつき平均。`cl_amp = (max(cl) - min(cl)) / 2` はサンプルについて。
+  平均は、周期の整数個ではなく、落ち着いた部分について取る。窓が周期の整数個を含むことはまれなので、残る端数の周期が平均を最大でも `amplitude / (pi * f * T)`（`f` は信号の周波数、`T` は落ち着いた部分の長さ）だけずらす。これは要件 5.4 の限界の一部である（要件の Decision 28）。
 - `shedding = 1.0`（`cl_amp > 0.01` のとき）、そうでなければ `0.0`（4.2）。
 - `strouhal`（`shedding` が 1 のときだけ）: 何も引かずに、`5 / T` から `1.0` までの周波数格子（刻み `1 / (10 T)`、`T` は落ち着いた部分の長さ）の各 `f` について、`a cos(2 pi f t) + b sin(2 pi f t) + c` を線形最小二乗でフィットして説明された分散を取り、最良の格子周波数を、隣り合う 2 つの格子刻みの中で、幅 1e-9 まで黄金分割探索で精密化します。`St = f * height / speed`。決定的で、乱数の出発点はありません。理由: `T = 70` では FFT の 1 ビンは `1/70 = 0.0143`、0.17 の 8%（5.2）。この推定器にはビンがありません。格子の開始 `5 / T` は、8.3 の 5 周期の規則を満たせる最低の周波数です。
 - `shedding` が 0 のとき、アダプターは `strouhal` に `NotMeasured("not_shedding", "the lift does not oscillate: cl_amp is not above 0.01")` を返し、推定器は走らせません（4.4）。
-- 要件 5.3 の精度の範囲: St は [0.08, 0.5]。下端は 5 周期の規則（0.0714）に余裕を持たせたもの。上端は、ボディが鈍い物体のとき予想される値の少なくとも 2 倍で、0.5 と `ESTIMATOR_MAX_DT` では 1 周期に 40 サンプルあります。5.3 と 5.4 の振幅は [0.011, 3]、平均は [-3, 3] です。
+- 要件 5.3 の精度の範囲: St は [0.08, 0.5]。下端は 5 周期の規則（0.0714）に余裕を持たせたもの。上端は、ボディが鈍い物体のとき予想される値の少なくとも 2 倍で、0.5 と `ESTIMATOR_MAX_DT` では 1 周期に 40 サンプルあります。5.3 と 5.4 の振幅は [0.011, 3]、平均は [-3, 3] です。5.4 の `cl_mean` の限界は、平均の 1% に `amplitude / (pi * f * T)` を足したものです。
 - 落ち着き（8.3）、`settled(t, cd, cl, shedding, st) -> SettleResult(ok, reason)`: 落ち着いた部分を時間の中点で分けます。`|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`。`|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`。`shedding` が 1 のとき、`st * speed / height * T >= 5`。比較は除算なしで書きます。理由には、失敗した基準を名指します（ビルダー側）。
 
 ### 6. Environment and run (Req 7, 8.7, 10)
 
 - `environment.check(settings)` は `WindAdapter.__init__` で走ります。Docker がなければ、最初の試行ではなくベンチサーバーの起動時に止まります。`docker version`、記録したダイジェストでのイメージの `docker image inspect`、Docker マシンの CPU 数の `docker info`（10.1 の 3 プロセス以上。さもないと `mpirun` が始められない）を実行します。失敗はそれぞれ `EnvironmentFailure` で、次のどれか、期待したもの、見つけたものを名指します: Docker に届かない、イメージがない、ダイジェストが違う、CPU が足りない。pull もほかのタグもしません（7.4）。
 - 次に、`bench-run/wind-tunnel/environment.jsonl`（git 管理外、ビルダー側）に JSON を 1 行追記します: イメージ名、ダイジェスト、イメージ ID、Gmsh のバージョン、numpy のバージョン、プラットフォーム。時刻は書かないので、ファイルは環境の関数になります（7.5）。封印された記録はこれを持たず、`measured_by` も触れません。
-- イメージ: `opencfd/openfoam-default:2412`。`name@digest` として実行します。`settings.toml [image]` は `name` と `tag` を持ちます。ダイジェストとイメージ ID は `model/image-lock.toml` にあり、ダイジェストのタスクが走るまで存在しません。それがない間、`WindAdapter`（`scan_adapter` ではない）は「image lock missing」で失敗するので、プレースホルダーが値として読み込まれることはなく、Docker なしの部分はダイジェストを必要としません。ユーザーの Mac 上のタスクが、`docker image inspect` で両方を書きます（ダイジェストはイメージインデックスのもの。イメージ ID は arm64 ビルドのものなので、組でプラットフォームを固定します、7.1）。ダイジェストは作り上げません。
-- `Runner` プロトコル: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`、`SolverFailure(kind, reason, detail)` を送出します。`DockerRunner` は `docker run --rm --name <case-name> -v <case>:/case -w /case <name@digest> ./Allrun` を `subprocess.run(..., timeout=remaining)` で実行します。`remaining = 140 s - (輪郭とメッシュで使った時間)`。タイムアウトでは `docker kill <case-name>` を実行し、`SolverFailure("timeout")` を送出します。ゼロでない終了、出力ファイルの欠落、非有限値は、`detail` にソルバーのログの最後の数行を入れた `SolverFailure` になります。イメージ内の正確な呼び出し（ユーザー ID、イメージのエントリーポイントがすでに環境を準備するか）は、スモーク実行のタスクで確認します（S5）。
-- ケースフォルダー: `bench-run/wind-tunnel/<16 桁の 16 進数のシード>/`。アダプターが作ります。`bench-run/` は git 管理外です。フォルダー名は試行のシードをラベルとしてだけ使います（Decision 3）。すでにあるフォルダーは上書きせず失敗です。成功後に削除し、失敗後は残し、`detail` に名前を入れます（10.5、10.6）。
+- イメージ: `opencfd/openfoam-default:2412`。`name@digest` として実行します。`constants.toml [image]` は `name` と `tag` を持ちます。ダイジェストとイメージ ID は `model/image-lock.toml` にあり、ダイジェストのタスクが走るまで存在しません。それがない間、`WindAdapter`（`scan_adapter` ではない）は「image lock missing」で失敗するので、プレースホルダーが値として読み込まれることはなく、Docker なしの部分はダイジェストを必要としません。ユーザーの Mac 上のタスクが、`docker image inspect` で両方を書きます（ダイジェストはイメージインデックスのもの。イメージ ID は arm64 ビルドのものなので、組でプラットフォームを固定します、7.1）。ダイジェストは作り上げません。
+- `Runner` プロトコル: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`、`SolverFailure(kind, reason, detail)` を送出します。`DockerRunner` は `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest> /case/Allrun` を `subprocess.run(..., timeout=remaining)` で実行します。`remaining = 140 s - (輪郭とメッシュで使った時間)`。上限は画像までのすべてを含む: ソルバーの段階の後で、アダプターはもう一度時計を確かめ（解析、推定器、落ち着き、渦度の解析、画像）、そのときに上限に達しているか過ぎている実行は、その部分が何を見つけたかにかかわらず `timeout` の失敗である（Decision 21）。タイムアウトでは `docker kill <case-name>` を実行し、`SolverFailure("timeout")` を送出します。ゼロでない終了、出力ファイルの欠落、非有限値は、`detail` にソルバーのログの最後の数行を入れた `SolverFailure` になります。イメージ内の正確な呼び出し（ユーザー ID、イメージのエントリーポイントがすでに環境を準備するか）は、スモーク実行のタスクで確認します（S5）。
+- ケースフォルダー: `bench-run/wind-tunnel/<16 桁の 16 進数のシード>/`。アダプターが作ります。`bench-run/` は git 管理外です。フォルダー名は試行のシードをラベルとしてだけ使います（Decision 3）。すでにあるフォルダーは上書きせず失敗です。成功後は `bench-run/wind-tunnel/trash/` に直ちに名前を変えて移し（1 つのファイルシステム内の名前変更で、フォルダーの大きさによらない）、次の `run_trial` の開始時に、時計が始まる前に `empty_trash` で削除します（Decision 21）。削除できないゴミ箱は送出してセッションを止め、すでにゴミ箱にある名前はエラーです。失敗後は、ログ（`solver.log`）、設定（`system/`、`constant/`、`0/` のテキストファイル。`polyMesh` は除く）、メッシュファイル（`case.msh`）、力のファイル（`postProcessing/forces/**/force.dat`）に削り、`detail` に名前を入れます（10.5、10.6、Decision 20）。削りに失敗したときは、例外を捕まえず、セッションを止めます。
 - `run_trial(inputs, seed)`: `inputs` がちょうど 4 つの名前と、範囲内の有限な数を持つことを確かめます（そうでなければ `ValueError`。ベンチがベンチ障害にします。何もクリップしません、3.4）。次に上の図の流れ。予期しない例外は捕まえません。
 - レイノルズ数: `Settings.load()` は 150 を読みます。`Settings.with_reynolds(x)` はコピーを返し、`circle_check.py` だけが呼びます。テストは両プロジェクトの `src/` のファイルの構文木をたどり、それ以外のファイルがこれに触れていれば失敗します。`WindAdapter` はレイノルズ数の引数を取らないので、試行の入力も lab のファイルも、そこには届きません（6.7）。
 
@@ -173,11 +177,11 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 
 - 入力: 各フレームの時刻について、`cell_width * cell_height` 格子上でサンプリングした渦度 `omega_z` と、サンプラーが返さなかった点（ボディ）のマスク。
 - フレームの時刻（モデルの `settings.py` の純関数 `frame_times(settings)`。ケース生成と画像が同じ一覧を使うため）: k = 0..frames-1 について `t_k = end - (frames - 1 - k) * spacing`。最後のフレームは実行の終わりで、時刻は増えます。初期値では 145、146、…、150。設定の読み込みは `t_0 < average_from`（9.3）と `frames != rows * columns` を拒否します。
-- 色: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`（0..254 の整数）。`L` は `settings.toml` の `vorticity_limit`（初期値。32 回のゲートの実行の渦度の範囲から選び、その後は固定、9.5）。添字の色は、255 エントリーの RGB の固定の 1 つの表から取ります。黒でない青と赤、中央の白の 3 つの基準色の間を線形補間で `picture.py` が作る発散的なランプです。マスクされた点は、表にない固定の灰色 1 色です。表の出所は 1 つで、すべての試行で同じ表を使います（9.1）。
+- 色: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`（0..254 の整数）。`L` は `constants.toml` の `vorticity_limit`（タスク 14.4 で 32 回のゲートの実行から 5.0 に固定、Decision 24。9.5）。添字の色は、255 エントリーの RGB の固定の 1 つの表から取ります。黒でない青と赤、中央の白の 3 つの基準色の間を線形補間で `picture.py` が作る発散的なランプです。マスクされた点は、表にない固定の灰色 1 色です。表の出所は 1 つで、すべての試行で同じ表を使います（9.1）。
 - セル: サンプリング格子がそのままセルなので、リサイズはしません。セルは表を引いて作る `cell_height * cell_width * 3` の `uint8` 配列です。
 - シート: 隙間の色（黒。表にない）の配列に、セルを書き込みます。セル `k` は行 `k // columns`、列 `k % columns`（時間順、左から右、次に上から下）に置き、セルの間に `gap` ピクセル、外側にはなしです。大きさ: 幅 `columns * cell_width + (columns - 1) * gap`、高さ `rows * cell_height + (rows - 1) * gap`。提案の値では 1208 x 404。
 - 符号化: 配列を RGB のタプルの行にして `bench.pictures.encode_png` で符号化します。補助チャンクは書きません。同じ入力は同じバイト列になります。文字は描きません。`bench.pictures.check_picture` をテストでそのバイト列に対して走らせます。
-- 設定（9.4、`settings.toml [picture]`、**提案、ユーザーは設計の承認時に確認する**、Decision 16）: `rows = 2`、`columns = 3`、`frames = 6`、`spacing = 1.0`、`cell_width = 400`、`cell_height = 200`、`gap = 4`。窓は x が [-2.5, 9.5]、y が [-3, 3]（2 対 1、セルの形）。`vorticity_limit`。6 フレームを間隔 1.0 にする理由: ストローハル数約 0.17 での渦放出の 1 周期は約 6 時間単位なので、シートはほぼ 1 周期を覆います。振動しないボディはほぼ同じセルになります（9.11）。隙間の理由: 自由流の渦度はほぼ 0 で、表の中央の白で表されるので、隙間がないと 1 つのセルの右端と次のセルの左端がつながります。ユーザーが望むなら gap 0 も有効な設定です。
+- 設定（9.4、`constants.toml [picture]`、**提案、ユーザーは設計の承認時に確認する**、Decision 16）: `rows = 2`、`columns = 3`、`frames = 6`、`spacing = 1.0`、`cell_width = 400`、`cell_height = 200`、`gap = 4`。窓は x が [-2.5, 9.5]、y が [-3, 3]（2 対 1、セルの形）。`vorticity_limit`。6 フレームを間隔 1.0 にする理由: ストローハル数約 0.17 での渦放出の 1 周期は約 6 時間単位なので、シートはほぼ 1 周期を覆います。振動しないボディはほぼ同じセルになります（9.11）。隙間の理由: 自由流の渦度はほぼ 0 で、表の中央の白で表されるので、隙間がないと 1 つのセルの右端と次のセルの左端がつながります。ユーザーが望むなら gap 0 も有効な設定です。
 - 読み取れること: この大きさのシートを Dr. Kiro のファイルツールが届け、各セルが読み取れることは、仮定せずに確かめます。合成シートではタスク 7.1-7.2、本物のシートではタスク 14.5 です（9.7、9.10）。大きさは設定なので、失敗には別の値で応えられますが、ユーザーの決定があるときだけです（9.8）。
 - ライブラリ: numpy だけ（アダプターの依存）と `bench.pictures`。Pillow は要りません: リサイズも GIF ライターもありません。matplotlib は使いません: 表、マスク、スケールは数行で、作図ライブラリは軸、フォント、メタデータを持ち込み、9.2 が禁じています。
 - ノートブック: ノートブックの動く画像（シートのフレームを順に見せる）は、両方のラボについて 1 回、`lab-notebook` spec で決めます。ここでは何も準備しません。
@@ -202,8 +206,9 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 |---|---|---|
 | `openfoam-dict` | 各 `case/**/*.in` | すべてのエントリーのキーワード、すべてのサブ辞書の名前、値であるすべての裸の語（スキーム、ソルバー、境界の種類、関数オブジェクトの名前）。数、スイッチ語 `yes no on off true false`、`FoamFile` ヘッダーのブロックは構文なので除く |
 | `shell-words` | `case/Allrun` | コマンド名 |
-| `toml-names` | `settings.toml` | キーと、名前に見える文字列の値（パッチ名、イメージ名とタグ） |
-| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | 関数、クラス、モジュールレベルの定数の名前。名前に見える文字列リテラル |
+| `toml-names` | `constants.toml` | キーと、名前に見える文字列の値（パッチ名、イメージ名とタグ） |
+| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | 関数、クラス、モジュールレベルの定数の名前。文字列リテラルは取らない |
+- すべての抽出器は、2 つの固定のルールだけで、ほかのフィルターなしに、次を捨てる（Decisions の項目 29）: Python の予約語（`keyword.kwlist`、`keyword.softkwlist`）、Python の組み込み名（`dir(builtins)`）、1 文字の名前。リストは標準ライブラリのものである。
 
 - 読めない、またはパースできないファイルは、ファイルと問題を名指す `ScanError` です（13.2）。テンプレートのプレースホルダー `@NAME@` は裸の語 `NAME` として読みます。
 - ソースのファイル名と語幹は、既存のコードが terms に入れます（`lab-bench` の 11.1）。
@@ -218,12 +223,12 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 
 ## Data Models
 
-`settings.toml`（model。各行の読み手は `settings.py` だけで、キーの欠落、余分、プレースホルダーで失敗します）:
+`constants.toml`（model。各行の読み手は `settings.py` だけで、キーの欠落、余分、プレースホルダーで失敗します）:
 
 | Section | Keys | Source of the value |
 |---|---|---|
 | `[flow]` | `reynolds`, `speed`, `height`, `depth`, `density` | 150（brief）、1、1、1、1 |
-| `[body]` | `thickness`, `min_edge` | 0.08（decisions）、0.0（ユーザーが決めるまでジオメトリでは拒否しない、Decision 12） |
+| `[body]` | `thickness`, `min_arc`, `min_line` | 0.08（decisions）、0.0314 と 0.0025（コーナーのルール、Decision 23。データは `spikes/timing/extreme-v2-summary.md`、マージン 115 s） |
 | `[domain]` | `ahead`, `behind`, `above_below` | 6、18、7（brief） |
 | `[time]` | `end`, `average_from`, `max_co`, `max_delta_t`, `initial_delta_t` | 150、80、0.8（brief）、0.05（推定器の上限）、スモーク実行のタスクが確認する初期値 |
 | `[mesh]` | `size_body`, `size_far`, `size_wake`, `wake_length`, `algorithm`, `threads` | メッシュのタスクがセル数から選び、スモーク実行が確認する初期値。algorithm と threads は設定 |
@@ -240,7 +245,7 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 - `SettleResult(ok, reason)`。
 - `environment.jsonl` の 1 行: `{image, digest, image_id, gmsh, numpy, platform}`。
 - `circle-check.json`: セクション 10。
-- 力のファイル: 列は `time`、`(total_x total_y total_z)`、`(pressure ...)`、`(viscous ...)`。`#` で始まる行はコメント。読むのは total だけ。
+- 力のファイル: 1 行に、括弧なしの 10 個の素の数: `time`、`total_x total_y total_z`、`pressure_x pressure_y pressure_z`、`viscous_x viscous_y viscous_z`（タスク 14.1 で確認）。`#` で始まる行はコメント。読むのは total だけ。
 
 ## Correctness Properties
 
@@ -250,7 +255,7 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 
 ### Property 1: Outline is closed and valid for every knob value
 
-For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 30]（両端を含む）、the outline is either a closed, continuous loop in which no straight piece has length zero, or a `GeometryError` that names the piece shorter than `min_edge`.
+For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 15]（両端を含む）、the outline is a closed, continuous loop in which no straight piece has length zero. ジオメトリは短い部分を拒否しない。コーナーのルールは Property 17 である。
 
 **Validates: Requirements 3.3, 6.10**
 
@@ -274,7 +279,7 @@ For all sinusoidal lift signals with St in [0.08, 0.5], any mean in [-3, 3], any
 
 ### Property 5: Amplitude and mean accuracy
 
-For all such signals, and for amplitude 0, `cl_amp` is within 1% of the amplitude (absolute 1e-6 at 0) and `cl_mean` is within 1% of the mean (absolute 1e-6 at 0).
+For all such signals, and for amplitude 0, `cl_amp` is within 1% of the amplitude (absolute 1e-6 at 0) and `cl_mean` is within 1% of the mean plus `amplitude / (pi * f * T)` (absolute 1e-6 when amplitude and mean are 0), with `f` the signal frequency and `T` the length of the settled part.
 
 **Validates: Requirements 5.4**
 
@@ -343,6 +348,9 @@ For all terms planted from each kind of solver source (an OpenFOAM keyword, a pa
 For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from` that the loader accepts, the frame times are `frames = rows * columns` numbers in strictly increasing order, the last equals `end`, consecutive times differ by `spacing`, and the first is not before `average_from`; settings whose first frame would be before `average_from`, or with `frames != rows * columns`, are refused naming the key.
 
 **Validates: Requirements 9.3, 9.4**
+### Property 17: Corner rule
+For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer of `corner_refusal` is the same on two calls; a `corner` of 0 or 1 is accepted; an accepted `corner` gives a corner arc of at least `min_arc` and a straight side of at least `min_line` (up to a relative 1e-9); a refused `corner` lies outside the band told in its message, and either breaks the rule or lies within one thousandth of the band's end; the message holds both ends of the band。例が計測データを固定する: aspect 1.75 と corner 0.04（弧 0.031416）、および aspect 0.5 と corner 0.995（直線の辺 0.0025）は受け入れられる。aspect 0.5 と corner 0.07（弧 0.02749）、および aspect 1.75 と corner 0.998（直線の辺 0.002）は拒否される。アダプターの `check_inputs` は `splitter` と `angle` がどうであっても同じ答えを返し、拒否された `corner` が `run_trial` に届けば送出する。
+**Validates: Requirements 3.3, 6.11**
 
 ## Error Handling
 
@@ -354,7 +362,7 @@ For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from`
 | 140 s 超過 | コンテナを kill、`TrialFailure` `timeout` | 同上 |
 | 落ち着き基準を満たさない | `TrialFailure` `not_settled` | 同上 |
 | 結果が契約を破る | `check_result` によるベンチ障害 | ビルダー |
-| `settings.toml` にプレースホルダーが残る、キーがない | 読み込み時のエラー | ビルダー |
+| `constants.toml` にプレースホルダーが残る、キーがない | 読み込み時のエラー | ビルダー |
 | アダプターのプログラムエラー | 例外。固定のテキストのベンチ障害 | ビルダー |
 
 `TrialFailure` はセッションを止めます（`lab-bench` 2.7 と 11.3）。これらのどれも、再試行も修復もされません。
@@ -365,10 +373,10 @@ For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from`
 
 | Kind | Tests | Runs where |
 |---|---|---|
-| Properties 1-16 | `hypothesis`、各 1 つのテスト、`Feature: wind-tunnel, Property N` のタグ | Kiro Web とローカル |
+| Properties 1-17 | `hypothesis`、各 1 つのテスト、`Feature: wind-tunnel, Property N` のタグ | Kiro Web とローカル |
 | Examples | 宣言が `check_declaration` を通る。両ファクトリーが等しい宣言を与える。ノブの文が要件 3.2 と等しい。本物のファイルでの 13.8 の重なりチェック。レイノルズ数 100 での円柱の文献値が 1e-6 以内で 0.164335 で、帯が 0.1561 から 0.1726。`max_delta_t <= ESTIMATOR_MAX_DT`。レイノルズ数の上書きのたどり | Kiro Web とローカル |
 | Gmsh | ノブの範囲の角でのメッシャーが、5 つの名前つきグループを持つメッシュファイルを与える。`needs_gmsh` を付け、Gmsh が import できない場所では目に見える理由つきでスキップ（タスクがまず Kiro Web でこれを確かめる。`body-lab` が描画でそうしたように） | Gmsh が import できる場所 |
-| Slow (marker `slow`、既定では除外、Docker) | 円柱チェック（15）。同じ入力 2 回で同一の計測と画像（10.4）。本物のシートでのシート読み取りチェック（9.10、ビルダーが実行し、`spikes/sheet/results.md` に記録）。16 の端のコーナーの実行と 16 の端に近い実行。`extreme-runs.json` に書き、17.6 の停止を伴う | ローカルの Mac のみ |
+| Slow (marker `slow`、既定では除外、Docker) | 円柱チェック（15）。同じ入力 2 回で同一の計測と画像（10.4）。本物のシートでのシート読み取りチェック（9.10、ビルダーが実行し、`spikes/sheet/results.md` に記録）。16 の端のコーナーの実行と 16 の端に近い実行。`extreme-runs.json` に書き、6.11 の拒否と 17.6 の停止を伴う（115 s を超える実行も止める） | ローカルの Mac のみ |
 | Review | `form-knowledge-review.md`（12.3） | 読んで |
 
 通常のスイートは `FakeMesher` と `FakeRunner` を使います。`FakeRunner` は既知の正弦波から合成した `force.dat` と渦度ファイルを書くので、`run_trial` は Docker なしで端から端までテストされます。
@@ -379,7 +387,8 @@ For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from`
 |---|---|
 | `declaration.py`, `told_set.py`, the knob `description` field (`lab-bench` 18) | 1, 2, 3, 4.1-4.4, 11 |
 | `geometry.py` | 3.3, 6.1-6.5, 6.10 |
-| `mesh.py`, `casegen.py`, `model/case/`, `settings.toml` | 6.6-6.9, 9.5, 10.1 |
+| `input_rule.py`, `WindAdapter.check_inputs` (`lab-bench` 19) | 3.3, 6.11, 17.2, 17.6 |
+| `mesh.py`, `casegen.py`, `model/case/`, `constants.toml` | 6.6-6.9, 9.5, 10.1 |
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
 | `failures.py` | 8.1-8.6 |
@@ -397,7 +406,7 @@ For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from`
 - S1. `lab-bench` のタスク 23-26 が終わっていない、またはそれらの後で body-lab の golden ファイルが違う（タスク 1.1 が確認する）。
 - S2. シート読み取りチェック（`spikes/sheet/results.md`）がない、失敗、または本物のシートでエージェントがシートを説明できない（9.8-9.10）。
 - S3. 抽出器とノブの `description` 項目以外の `lab-bench` の変更（14.2）、または `lab-bench` spec との衝突。
-- S4. 円柱チェックを実行した後で変えなければならないメッシュまたはソルバーの設定（6.8）。5% の外の円柱チェック（15.7）。1 つの入力の 2 回の実行が違う（10.4）。140 s より遅い実行、または 900 s に収まらない 6 回の実行（8.7）。端のコーナーと端に近い 32 の実行のうち、タイムアウト、メッシュの失敗、失敗、または落ち着かないもの（17.2、17.6）。
+- S4. 円柱チェックを実行した後で変えなければならないメッシュまたはソルバーの設定（6.8）。5% の外の円柱チェック（15.7）。1 つの入力の 2 回の実行が違う（10.4）。140 s より遅い実行、または 900 s に収まらない 6 回の実行（8.7）。端のコーナーと端に近い 32 の実行のうち、拒否されず、タイムアウト、メッシュの失敗、失敗、落ち着かない、または 115 s を超えるもの（17.2、17.6）。
 - S5. スモーク実行で確認できない OpenFOAM の綴り、イメージ内のコマンド、Docker のオプション（たとえば関数オブジェクトの時間窓、サンプラーの出力の配置、コンテナ内のユーザー ID）。
 - S6. ソルバーファイルから導かれた語が、伝える集合やビルダーのテキストと衝突し、名前の変更や言い換えで避けられない場合: ユーザーへの根拠つきの提案とし、ユーザーが承認するまで除外リストには決して加えない（13.4、13.9）。
 - S7. 実行を失敗させる、または上限を超えさせる `corner` または `splitter` の端に近い値: 数値を報告する。ユーザーが、ベンチのルール、範囲を狭める、リスクの受け入れ、から選ぶ（17.6）。
@@ -418,14 +427,22 @@ For all settings with `rows`, `columns`, `spacing` > 0, `end` and `average_from`
 9. **Docker マシンの CPU のチェック。** 7.3 に加えて。
 
 10. **推定器と落ち着き基準は `model/` に置く**（Decision 14）。
-11. **イメージのダイジェストとイメージ ID は `model/image-lock.toml` に置く。** ダイジェストのタスクが書く。`settings.toml` が、ローダーが拒否しなければならないプレースホルダーを持たないようにするため。
-12. **`min_edge` は 0.0。** 端に近い実行を計測するまで（要件 17.2、17.6）。ジオメトリはメッシャーの前では何も拒否しない。メッシャーとソルバーが何をするかが計測になる。端に近い距離（範囲の 0.001 と 0.01）はビルダーの提案である。
+11. **イメージのダイジェストとイメージ ID は `model/image-lock.toml` に置く。** ダイジェストのタスクが書く。`constants.toml` が、ローダーが拒否しなければならないプレースホルダーを持たないようにするため。
+12. **ジオメトリは短い部分を拒否しない。**（端に近い実行を計測するまで、`min_edge` は 0.0 だった。今はコーナーのルール、Decision 23 に置き換わり、実行の前に入力に適用される。）端に近い距離（範囲の 0.001 と 0.01）はビルダーの提案で、ユーザーが承認した。
 13. **stop-list の提案**は、OpenFOAM のキーワードについて、書面の提案つきの停止である（要件 13.9）。ビルダーは先に自分の識別子を改名し、言い換える。
 14. **角度の符号。** 正の角度は先端側を +y の向きに動かす（流れが +x、+y が上のとき時計回り。プロトタイプと同じで、ユーザーが確認済み）。`geometry.py` に 1 回だけ書く。推定器は `model/` に置くので、アダプターのコードを止めるシート読み取りゲート（要件 9.9）より前に書かれる。
-15. **`splitter` の文の板の厚さは `settings.toml` から書式化する。** もう一度手で書かない。
+15. **`splitter` の文の板の厚さは `constants.toml` から書式化する。** もう一度手で書かない。
 16. **画像シートの配置: 提案、ユーザーは設計の承認時に確認する。** PNG 1 枚、6 フレームを 2 行 3 列、各セル 400 x 200、フレームは t = 145、…、150（間隔 1.0、設定）、黒の固定の 4 ピクセルの隙間で、シートは 1208 x 404（隙間 0 なら 1200 x 400）。理由: セクション 7。サンプリング格子がセルと同じなので、リサイズはしない。Dr. Kiro への読み取りやすさは確かめる（9.7、9.10）のであって、主張しない。
 17. **Pillow なし。** GIF ライターとリサイズだけが使い道だった。シートは `bench.pictures.encode_png` で符号化する。
 18. **ノートブックの動く画像**は両方のラボについての `lab-notebook` の決定である（要件の Decision 25）。この設計は何も準備しない。
+19. **タスク 14.1 で確認または変更した綴り（スモーク実行、イメージ `opencfd/openfoam-default:2412`、arm64）。** イメージのエントリーポイントはどのコマンドもホームディレクトリで始め、`-w` を無視し、`mpirun` は root としての実行を拒否する。そのためコマンドは `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest> /case/Allrun` で、`Allrun` は `cd /case` で始まる。constant フォルダーのファイルは `turbulenceProperties`（v2412 は `momentumTransport` を読まない）。力のファイルは、1 行に括弧なしの 10 個の素の数を持つ。ソルバーはフレーム間隔ごとに書く（`adjustableRunTime`、`purgeWrite 1`）ので、サンプラーのフレームがちょうど 145〜150 に落ちる。これがないと最初のフレームは 144.997 で書かれた。初期のメッシュの大きさは遅すぎた（`size_body` 0.02、`size_wake` 0.08 で 1 回の実行に 310 s）。今は 0.04 と 0.16 である（円柱 1 回の実行で 102 s）。タスク 14.2 の円柱チェックはまだ実行していないので、これは許される（要件 6.8）。
+20. **失敗した実行のケースフォルダーは削る**（ユーザーの決定）。残すのはログ、設定、メッシュファイル、力のファイルだけで、processor フォルダー、時間ディレクトリ、サンプルの出力、メッシュフォルダーは、ケースフォルダーがある失敗のすべての経路で呼ばれる `prune_case_folder` が削除する。理由: 残した失敗のケースフォルダーは 4.6〜8.3 GB だった。削りに失敗したら送出してセッションを止める（フォールバックなし）。要件の Decision 31。
+21. **140 s の上限はメッシュ、ソルバー、後処理を含み、削除はその外**（ユーザーの決定、タスク 14.4）。`run_trial` は、ソルバーの後の作業の後で、もう一度期限を確かめる。成功した実行のケースフォルダーは `trash/` に名前を変えて移し、次の試行の開始時に、時計が始まる前に削除する。理由: 5 GB のフォルダーの削除を計測すると約 15 s かかり、これが 1 回の 900 s の呼び出しの 6 回の実行に数えられてしまう（要件 8.7）。選択: 削除は次の試行自身の呼び出しの中で行うので、バックグラウンドのプロセスはなく、削除の失敗は前景で送出される。ゴミ箱は、各試行の前に空にされるので、最大 1 つのフォルダーを持つ。最後の実行のフォルダーは、次の試行までゴミ箱に残る。出力を減らした（Decision 22）ので約 54 MB である。要件の Decision 32。
+22. **ソルバーの出力はアダプターが読むものに減らす**（ユーザーの決定、選択肢 3(b)、タスク 14.4）。渦度の関数オブジェクトには `writeFields no` を与えていたが、これはそのオブジェクトのキーワードではなく無視され、フィールドは各ステップで各 processor の時間フォルダーに書かれていた（processor あたり約 12 400 ファイルと 1.6 GB）。今は `writeControl none` を持つ: サンプラーのために計算され、書かれない。力のファイルとサンプリングした渦度（1 フレーム 80 000 点、6 フレーム）は変わらない。計測、レイノルズ数 150 の円柱: 1 回の実行あたり 4.90 GB から 54 MB へ、`processor*` フォルダーは残らない。主張ではなく示した: 円柱と、`aspect=1.5, corner=0.5, splitter=1.0, angle=10.0`（シード 0、同じマシンと同じイメージのダイジェスト）で、5 つの測定値、画像のバイト列、力のファイルのハッシュは、前後でバイト単位で同一（`spikes/timing/reference-before.json`、`reference-after.json`、`reference.py compare`）。要件の Decision 33。
+
+23. **ジオメトリの外のコーナーのルール**（ユーザーの決定、タスク 14.4 ステージ 3b。要件の Decisions 34 と 35）。マージンのルールは、宣言した範囲の中での最悪の実時間 115 s で、angle の範囲は [0, 15]。単一の `min_edge` は `min_arc` = 0.0314（最も短いコーナーの弧）と `min_line` = 0.0025（ボディの最も短い直線の辺）に置き換わる。データ（`spikes/timing/extreme-v2-summary.md`）が 2 つの限界を 1 桁離しているためである。1 つの値では、高い側を必要より約 12 倍多く拒否するか、上限に達する弧を受け入れてしまう。どちらも板には適用しない。拒否は `wind_tunnel_model/input_rule.py` にある `aspect` と `corner` の純関数で、`WindAdapter.check_inputs`（実験のどの試行よりも前に、予算を使わずに）と、拒否された corner に対して送出する `run_trial` から、もう一度呼ばれる。選択: ジオメトリには置かない。ジオメトリはどんなノブの値でもボディを描くもので、ルールはこのマシンでのソルバーの限界だからである。メッセージは Dr. Kiro の言葉の 1 行である。範囲は 3 桁に内側へ丸められ、その範囲がテストされる。
+
+24. **色の上限は 5.0 に固定**（タスク 14.4、要件 9.5。要件の Decision 36）。事前に決めたルール: 32 のゲートケースのうち落ち着いた実行について、6 フレームでの渦度の絶対値の実行ごとの 99 パーセンタイルの最大値を、整数に切り上げる。落ち着いた 29 回の実行（32 ケースのうち 3 つはコーナーのルールで拒否された）は、最大 4.5979（aspect 3、corner 0、splitter 3、angle 15）を与えたので、L = 5。渦度の絶対値の実行ごとの最大値は最大 54.5 なので、ボディの近くのいくつかの点は色を飽和させるが、これは 99 パーセンタイルから決めた上限の意図したものである。
 
 ## Open questions
 

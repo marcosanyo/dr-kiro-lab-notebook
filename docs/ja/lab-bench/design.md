@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `39e21303aa0be54caf39bb0be0c1b2e1078e77d992ae49e56c06876385a1c5b2`
+> 原文 SHA-256: `4bd9d6ffb81fbeea07bd8085a5f14deb7a6ebb08e7ad5c33abe1ae13c0bef7e7`
 
 # 設計: lab-bench（コア）
 
@@ -674,3 +674,63 @@ class NumberKnob:    name; low; high; description: str = ""
 - golden ファイルが変更後の出力と違う（18.8）: 改訂は body-lab を変えてはならない。止めて、最初に違う行を報告する。
 - A1-A3 以外のコードパスが説明を読む必要がある。
 
+
+---
+
+# 改訂: アダプターの入力チェック（要件 19）
+
+タスク 1-28 を終えた後に、`wind-tunnel` spec の求め（そのタスク 14.4）で加えました。セクション 1-14、F1-F12、A1-A8 は書き直しません。下のステップ 9a は、番号を振り直さずに 6.1 のゲート順序に加えます。
+
+## B1. 契約（19.1, 19.4, 19.7）
+
+`Adapter` プロトコルの外にある任意のアダプターメソッドで、`builder_versions` と同じ様式です:
+
+```python
+CHECK_INPUTS_METHOD = "check_inputs"       # def check_inputs(self, inputs: ComputedInputs) -> str | None
+INPUT_REFUSAL_MAX = 400
+
+def check_input_refusal(text: object) -> str      # raises ResultError unless the message is usable
+def input_refusal(adapter: object, inputs) -> str | None   # None when the adapter has no such method
+```
+
+- メソッドは `getattr` で探す。これを持たないアダプターは、どの入力に対しても `None` を返す: body-lab とフェイクアプリケーションでは何も変わらない（宣言、伝えるテキスト、記録は手つかずで、A5 の golden 比較がその証明である）。
+- `check_input_refusal` が受け付けるのは、空でなく、`str.isprintable()` を満たし、両端に空白がなく、`INPUT_REFUSAL_MAX` 文字以下の `str` だけである（`_check_description` と同種の上限だが、エラーの中の 1 文なので短い）。それ以外は `ResultError` を送出する。
+- `input_refusal` は、メソッドの例外を捕まえない。
+
+## B2. ゲート 9a（19.2, 19.3, 19.5, 19.8）
+
+`Session._check_inputs(path, experiment)` は、予算チェック（ステップ 9）の後、spec ファイルを読む（ステップ 10）前に走る。試行を順に、それぞれ `input_refusal(adapter, trial.inputs)` を呼ぶ:
+
+- `ResultError`（不正なメッセージ）: `_Failure(ADAPTER_BROKE_CONTRACT, "input check of trial N: ...")`、ベンチ障害。
+- それ以外の例外: `_Failure(ADAPTER_RAISED, "input check of trial N: <traceback>")`、ベンチ障害。トレースバックは `builder.log` だけに書く。
+- メッセージ: ビルダーログに `input check refused trial N of '<path>': <message>` の行を書き、その後 `_refuse("trial N of this experiment cannot run: <message>")`。ループは最初に拒否した試行で止まる。
+
+この拒否は結果 2 である: `_act` が `RefusalError` を `Refused` にし、`_finish` が `refusal` エントリを 1 つだけ記録する。`experiment` エントリも `trial` エントリも書かれないので、状態、予算、試した入力の集合は変わらず、同じ入力を後の実験で使える。
+
+## B3. ブラインドのルール（19.6）
+
+メッセージは `_finish` を通り、`_finish` はすべての `Refused` メッセージをビルダーレベルでスキャンする（11.4, 15.8）。したがって拒否テキストはベンチの出力である: 導出された用語、パス、認証情報があれば、その呼び出しは固定の `WITHHELD` テキストのベンチ障害になり、メッセージの内容は何も示されない。アダプターの作者は、メッセージを Dr. Kiro の言葉で書く。ツールの説明は変わらない。Dr. Kiro は、拒否された値を拒否によってのみ知る。
+
+## B4. 性質（要件 16 の様式、`Feature: lab-bench, Property N` のタグ）
+
+| # | 性質 | 要件 |
+|---|---|---|
+| P25 | すべての実験（1-3 個の変種の compare、または 6 点の sweep）と、拒否される入力のすべての集合で、拒否は予算を使わず、`refusal` エントリを 1 つだけ追加する。 | 19.3 |
+| P26 | 同じ実験で、どの試行での拒否も、試行が 1 つも走る前に実験全体を拒否する。名指される試行は最初のものである。拒否される試行がなければ、実験は走る。 | 19.2, 19.3 |
+| P27 | すべての実験で、`check_inputs` を持たないアダプターは何も拒否しない。 | 19.1, 19.7 |
+| P28 | すべての候補メッセージで、`check_input_refusal` は有効なものだけをちょうど受け付ける。それ以外のメッセージと、例外を送出するメソッドは、試行を 1 つも走らせないベンチ障害である。 | 19.4, 19.5 |
+| P29 | 導出された用語を含むメッセージでは、結果は `WITHHELD` テキストのベンチ障害である。 | 19.6 |
+
+## B5. 決定（ビルダーが、wind-tunnel spec についてのユーザーの決定に基づいて決めた）
+
+1. **プロトコルの外の任意のメソッド**。`builder_versions` と同じで、既存のアダプターは何も変わらない。
+2. **予算チェックの後**。既存の理由が順序を保つため（19.8）。大きすぎて、かつ値で拒否される実験には、予算の理由が先に出る。
+3. **ベンチが試行番号を前に付ける**（`trial N of this experiment cannot run: ...`）。既存の入力の繰り返しの拒否が試行番号を名指すのと同じである。
+4. **不正なメッセージは拒否ではなくベンチ障害**。アダプターの落ち度であり、Dr. Kiro には直せないため（2.6、rules.md セクション 2）。
+5. **400 文字、1 行。** 上限であって、品質のルールではない。
+6. **純粋さはアダプターの契約。** ベンチは、確認のために関数を 2 回呼ばない。
+
+## B6. 止めて確認することになる場合
+
+- 変更後に body-lab の golden ファイルが違う（18.8）。そうはなっていない: 変更なしで通る。
+- 拒否される値を、試す前に Dr. Kiro に伝える必要がある（伝えるテキストの変更）。

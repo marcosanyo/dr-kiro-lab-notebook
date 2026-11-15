@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/requirements.md`](../../../.kiro/specs/lab-bench/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `066602411b05601554adc0cc70a5ffc9ccb97685efca20f349a7b6da28605ee6`
+> 原文 SHA-256: `1f43fc0c2691deeb79a4369a0acca7bc4ce55012cb3b66a699e97aaf2dbceef4`
 
 # 要件: lab-bench
 
@@ -357,3 +357,23 @@ MCP スパイク（`spikes/mcp/results.md`）の後にユーザーが決定し�
 7. THE bench SHALL scan every description at the builder level, with the rest of the tool descriptions, when the front end starts (design F3), and SHALL scan the declaration in the record at the builder level when the session is sealed（要件 13.1）。THE words of a description SHALL NOT be added to the allow list; the allow list stays the declared names（要件 15.3）。
 8. WHERE an application declares no description、THE bench SHALL give a told text and a session record that are byte-identical to those of the bench before this amendment。これは説明を宣言しない body-lab について成り立ち、body-lab の伝えるテキストと記録された宣言を、変更前のベンチから作ったファイルと比べるテストで SHALL be shown。
 9. FOR ALL declarations, with and without descriptions, THE told text SHALL contain each non-empty description exactly as declared, on the line of its own knob, and SHALL contain no description of another knob on that line。
+
+### 要件 19: アダプターの入力チェック（改訂）
+
+**改訂。** 要件 1-18 を実装しテストした後に、`wind-tunnel` spec の求め（そのタスク 14.4 と要件 17.6 の選択肢 1。ユーザーが決定した: そのような値を Dr. Kiro の言葉のメッセージで拒否するベンチのルール）で加えました。既存の要件は番号の振り直しも書き換えもしません。この要件はアダプターに任意の関数を 1 つ、実行に 1 つのゲートを加えます。これは `rules.md` セクション 2 の結果 2（ラボのルールによる拒否）であり、`rules.md` のルールは何も変わりません。
+
+**ユーザーストーリー:** アプリケーションのビルダーとして、アダプターが、アプリケーションが実行できない計算済み入力を、実験の試行が 1 つも走る前に拒否できるようにしたい。実験の途中でセッションが止まる代わりに、Dr. Kiro が何を変えるべきかを費用なしで伝えられるようにするためである。body-lab とフェイクアプリケーションのビルダーとして、そのような関数を与えないアダプターでは何も変わらないようにしたい。
+
+**対象:** ビルダーとアダプターの作者。Dr. Kiro が見るのは拒否メッセージだけです。
+
+#### 受け入れ基準
+
+1. THE adapter contract SHALL let an adapter provide an optional function `check_inputs` that takes the computed inputs of one trial and returns either nothing or one refusal message。これはその入力だけの純粋関数である: 同じ入力には同じ答えを返し、アプリケーションを実行しない。An adapter without it SHALL refuse nothing。
+2. WHEN an experiment has passed the gates up to and including the budget check（要件 7.5）、THE bench SHALL call `check_inputs` for the computed inputs of every trial of the experiment, in trial order (all variants of a compare, all points of a sweep), BEFORE any trial runs。
+3. WHEN `check_inputs` returns a message for any trial、THE bench SHALL refuse the whole experiment with that message, naming the number of the first such trial within the experiment, and SHALL stop calling it。THE refusal SHALL run no trial, record no experiment or trial, use no budget, and change nothing but its own refusal entry（要件 9.2）。THE bench SHALL also write the refusal and the trial number to the builder-side log。
+4. THE bench SHALL check the message: it is text, not empty, has no line break or other control character, has no space at its start or end, and has at most 400 characters。IF the message breaks one of these、THEN THE bench SHALL treat it as a bench failure（要件 2.6）。
+5. IF `check_inputs` raises、THEN THE bench SHALL treat it as a bench failure with the bench's fixed text for an error in the application, and SHALL write the traceback to the builder-side log only。THE bench SHALL NOT go on to run the trials, and SHALL NOT substitute an answer。
+6. THE refusal message SHALL be bench output: THE bench SHALL scan it at the builder level before it returns it（要件 15.8）。したがって、パス、識別子、バージョン、導出された用語を含むメッセージはベンチ障害であり、その内容は Dr. Kiro に何も示されない。アダプターの作者は、メッセージを Dr. Kiro の言葉（ノブ、範囲、実験ファイル、予算）で書く。
+7. THE bench SHALL NOT change the told text, the tool descriptions, the declaration, the record's declaration or any existing refusal for an adapter that gives no `check_inputs`。これは body-lab とフェイクアプリケーションについて成り立ち、要件 18.8 の golden 比較が変更なしで通り続けることで SHALL be shown。
+8. THE gate SHALL come after the budget check and before the lab spec files are read for the snapshot（設計 6.1、ステップ 9a）。これにより、先のチェックの順序とその理由は変わらない。
+9. THE tests SHALL check, over random experiments and random sets of refused inputs, that: a refusal uses no budget and writes only a refusal entry; a refusal in any planned trial (first, middle or last, compare or sweep) refuses the whole experiment before any trial runs; an adapter without the function refuses nothing; a message that breaks 19.4, and a function that raises, are bench failures; a message with a derived term is a bench failure and is not shown。

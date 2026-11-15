@@ -51,8 +51,8 @@ user.
 
 ## Tasks
 
-- [ ] 1. Dependencies on `lab-bench`
-  - [ ] 1.1 Check that the `lab-bench` amendment is done
+- [x] 1. Dependencies on `lab-bench`
+  - [x] 1.1 Check that the `lab-bench` amendment is done
     - Read `.kiro/specs/lab-bench/tasks.md` and check that tasks 23, 24, 25 and 26 are ticked; check that
       `FunctionKnob` and `NumberKnob` in `bench/src/bench/adapter.py` have a `description` field; run
       `sh bench/scripts/check.sh` and the tests of `body-lab/adapter` (the golden comparison).
@@ -60,8 +60,8 @@ user.
     - Verified by: the report states the four ticks, the field and the passing checks.
     - _Requirements: 1.4, 14.2, 18.4 of lab-bench_
 
-- [ ] 2. Model project and settings
-  - [ ] 2.1 Create `wind-tunnel/model/` as a `uv` project with its settings
+- [x] 2. Model project and settings
+  - [x] 2.1 Create `wind-tunnel/model/` as a `uv` project with its settings
     - `pyproject.toml` (project `wind-tunnel-model`, Python 3.12, dependencies `gmsh` and `numpy`, dev
       dependencies `pytest`, `hypothesis`, `ruff`), `constants.toml` with every key of the Data Models table of the
       design, and `src/wind_tunnel_model/settings.py`: load, validate, refuse a missing, extra or placeholder key
@@ -81,12 +81,12 @@ user.
       frame times 145, 146, ..., 150.
     - Verified by: the checks of `model/`.
     - _Requirements: 6.6-6.9, 7.2, 9.3, 9.4, 10.1, 14.1_
-  - [ ] 2.2 Write property test for the frame times
+  - [x] 2.2 Write property test for the frame times
     - **Property 16: Frame times follow the settings**
     - **Validates: Requirements 9.3, 9.4**
 
-- [ ] 3. Geometry
-  - [ ] 3.1 Write the outline of the body
+- [x] 3. Geometry
+  - [x] 3.1 Write the outline of the body
     - `geometry.py` per design 2: `outline(aspect, corner, splitter, angle, settings)` returns an ordered closed
       tuple of `Line` and `Arc`; radius `corner * min(1, aspect) / 2`; pieces of length exactly zero omitted; plate
       from `a/2 - t` to `a/2 + splitter` with the cut `x_c`; rotation with the matrix of design 2 (a positive angle
@@ -96,18 +96,18 @@ user.
       end-corner combinations gives a valid outline; the front end of the body is above the axis for a positive `angle`.
     - Verified by: the checks of `model/`.
     - _Requirements: 3.3, 3.6, 6.1-6.5, 6.10_
-  - [ ] 3.2 Write property test for the outline
+  - [x] 3.2 Write property test for the outline
     - **Property 1: Outline is closed and valid for every knob value**
     - **Validates: Requirements 3.3, 6.10**
-  - [ ] 3.3 Write property test for the corner radius
+  - [x] 3.3 Write property test for the corner radius
     - **Property 2: Corner radius follows the definition**
     - **Validates: Requirements 6.1, 6.2**
-  - [ ] 3.4 Write property test for the plate and the rotation
+  - [x] 3.4 Write property test for the plate and the rotation
     - **Property 3: Plate and rotation**, including the sign of the angle that the `angle` text tells.
     - **Validates: Requirements 3.6, 6.3, 6.4**
 
-- [ ] 4. Mesh
-  - [ ] 4.1 Write the Gmsh recipe and the mesher interface
+- [x] 4. Mesh
+  - [x] 4.1 Write the Gmsh recipe and the mesher interface
     - `mesh.py` per design 3: `Mesher` protocol, `GmshMesher` (built-in kernel, arcs from the outline, domain from
       the settings, size fields, one layer extruded in z, five physical groups named from `[patches]`, no random
       seed, explicit algorithm and thread count), `FakeMesher` (a fixed small file), `MeshError`. Mark the Gmsh
@@ -120,8 +120,8 @@ user.
     - Verified by: the checks of `model/`.
     - _Requirements: 6.8, 6.9, 7.2, 10.2_
 
-- [ ] 5. Case generation and solver output
-  - [ ] 5.1 Write the case templates and the case generator
+- [x] 5. Case generation and solver output
+  - [x] 5.1 Write the case templates and the case generator
     - `model/case/` templates and `Allrun` (design 4) and `casegen.py` (`render_case`: `@NAME@` replaced from the
       settings, sorted files, `\n` endings, an unfilled placeholder is an error). Include the force function
       object, the vorticity sampling over the picture grid and the 3-process decomposition. Spellings that cannot
@@ -130,10 +130,10 @@ user.
       byte-identical.
     - Verified by: the checks of `model/`.
     - _Requirements: 6.6, 6.7, 6.9, 10.1, 10.2_
-  - [ ] 5.2 Write property test for case generation
+  - [x] 5.2 Write property test for case generation
     - **Property 11: Case generation is deterministic and complete**
     - **Validates: Requirements 6.6, 6.7, 10.1, 10.2**
-  - [ ] 5.3 Write the solver output parsers
+  - [x] 5.3 Write the solver output parsers
     - `solver_output.py`: parse the force file (columns of design Data Models; the total only), refuse a missing or
       unreadable file, a non-finite value, no rows or non-increasing times; parse the sampled vorticity files into
       arrays and a mask. A test-side writer lives in `tests/`.
@@ -141,12 +141,12 @@ user.
       missing points.
     - Verified by: the checks of `model/`.
     - _Requirements: 8.1, 9.1_
-  - [ ] 5.4 Write property test for the force file
+  - [x] 5.4 Write property test for the force file
     - **Property 12: Force file round trip**
     - **Validates: Requirements 8.1**
 
-- [ ] 6. Estimators and settle criterion
-  - [ ] 6.1 Write the estimators
+- [x] 6. Estimators and settle criterion
+  - [x] 6.1 Write the estimators
     - `estimators.py` per design 5: time-weighted means, `cd`, `cl_mean`, `cl_amp`, `shedding`, and the Strouhal
       estimator by least squares on a frequency grid refined by golden-section search (no FFT, no randomness). The
       Strouhal number is absent (`None`) when `shedding` is 0. Pure functions of the settled part.
@@ -154,31 +154,31 @@ user.
       number; an uneven time series.
     - Verified by: the checks of `model/`.
     - _Requirements: 4.2, 4.6, 5.1, 5.2, 5.6_
-  - [ ] 6.2 Write property test for the Strouhal accuracy
+  - [x] 6.2 Write property test for the Strouhal accuracy
     - **Property 4: Strouhal accuracy**
     - **Validates: Requirements 5.2, 5.3**
-  - [ ] 6.3 Write property test for amplitude and mean
+  - [x] 6.3 Write property test for amplitude and mean
     - **Property 5: Amplitude and mean accuracy**
     - **Validates: Requirements 5.4**
-  - [ ] 6.4 Write property test for the shedding flag
+  - [x] 6.4 Write property test for the shedding flag
     - **Property 6: Shedding flag and the absent Strouhal number**
     - **Validates: Requirements 4.4, 4.5, 5.5**
-  - [ ] 6.5 Write property test for determinism
+  - [x] 6.5 Write property test for determinism
     - **Property 7: Estimators are deterministic and shift-invariant**
     - **Validates: Requirements 5.1, 5.6**
-  - [ ] 6.6 Write the settle criterion
+  - [x] 6.6 Write the settle criterion
     - `settle.py` per design 5 and Requirement 8.3: halves of the settled part, the `cd` 2% rule, the `cl_amp` 10%
       rule with the floor 0.002, at least 5 periods when shedding, comparisons without division, a reason naming
       the failed rule.
     - Unit tests: a steady series; a ramp; an amplitude drift; too few periods.
     - Verified by: the checks of `model/`.
     - _Requirements: 8.3_
-  - [ ] 6.7 Write property test for the settle criterion
+  - [x] 6.7 Write property test for the settle criterion
     - **Property 8: Settle criterion**
     - **Validates: Requirements 8.3**
 
-- [ ] 7. Sheet reading gate
-  - [ ] 7.1 Run the sheet reading check on a synthetic sheet **[local Mac + Kiro CLI]**
+- [x] 7. Sheet reading gate
+  - [x] 7.1 Run the sheet reading check on a synthetic sheet **[local Mac + Kiro CLI]**
     - Write `spikes/sheet/make_sheet.py` (scratch area: nothing outside `spikes/` may use it at runtime; it may use
       `bench.pictures.encode_png`). It writes `spikes/sheet/check-sheet.png`, a **synthetic test fixture, not a
       result** (say so in the script and in `results.md`): 6 cells in 2 rows of 3, each cell 400 by 200 with 4 pixel
@@ -201,7 +201,7 @@ user.
       the check.
     - Verified by: `spikes/sheet/results.md` exists with the verdict "pass" and all six cells correct.
     - _Requirements: 9.7, 9.8, 18.2_
-  - [ ] 7.2 Gate: read the result of the sheet reading check
+  - [x] 7.2 Gate: read the result of the sheet reading check
     - Check that `spikes/sheet/results.md` exists, is tracked in git (`git ls-files spikes/sheet/results.md`), and
       records the verdict "pass" for the synthetic sheet. This task only reads. If the file is missing, not
       tracked, or says the check failed, **stop and report** which; do not create or edit the file, and do not
@@ -209,8 +209,8 @@ user.
     - Verified by: the report quotes the line of the file that records the verdict.
     - _Requirements: 9.7, 9.8, 9.9, 18.2_
 
-- [ ] 8. Adapter project and declaration
-  - [ ] 8.1 Create the adapter project and the declaration
+- [x] 8. Adapter project and declaration
+  - [x] 8.1 Create the adapter project and the declaration
     - `wind-tunnel/adapter/` as a `uv` project `wind-tunnel-adapter` (Python 3.12; dependencies `lab-bench` and
       `wind-tunnel-model` by path, `numpy`; dev `pytest`, `hypothesis`, `ruff`; the `slow` marker
       excluded by default; the console scripts `wind-tunnel-told-set` and `wind-tunnel-circle-check`, whose modules
@@ -224,28 +224,28 @@ user.
       threshold 0.01 and no averaging time, run length or other solver number.
     - Verified by: the checks of `adapter/` and `model/`.
     - _Requirements: 1.1-1.4, 3.1-3.5, 4.1-4.5, 11.1-11.3, 14.1, 14.2_
-  - [ ] 8.2 Write the told-set export
+  - [x] 8.2 Write the told-set export
     - `told_set.py` with the command `wind-tunnel-told-set --out PATH`: calls `bench.frontend.describe.declaration_text`
       on `scan_adapter().declaration()`, writes the text with a final newline and nothing else, requires the path.
     - Unit tests: two runs write identical bytes; the file equals the declaration text that the tool descriptions
       contain; the file holds no path, version or session value.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 2.1-2.4_
-  - [ ] 8.3 Write property test for the told-set export
+  - [x] 8.3 Write property test for the told-set export
     - **Property 13: Told set export equals the declaration**, with generated declarations that carry descriptions.
     - **Validates: Requirements 1.1, 2.1, 2.2, 2.3, 2.4**
 
-- [ ] 9. Failures and picture
-  - [ ] 9.1 Write the failure mapping
+- [x] 9. Failures and picture
+  - [x] 9.1 Write the failure mapping
     - `failures.py` per design 8: the three kinds, their fixed public reasons, and the trial failure with the cause,
       the knob values, the case folder and the solver log tail in `detail`.
     - Unit tests: each kind gives its fixed public reason; the reason holds no knob value.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 8.1, 8.2, 8.4-8.6, 8.8_
-  - [ ] 9.2 Write property test for the failure mapping
+  - [x] 9.2 Write property test for the failure mapping
     - **Property 9: Failure mapping**
     - **Validates: Requirements 8.1, 8.4, 8.5, 8.8**
-  - [ ] 9.3 Write the picture sheet
+  - [x] 9.3 Write the picture sheet
     - `picture.py` per design 7: vorticity to a colour index with the fixed limit, one fixed 255-entry colour table
       and a fixed mask colour, a cell per frame (the sampling grid is the cell, no resizing), cells copied into an
       array of the gap colour in time order (left to right, then top to bottom), rows of RGB tuples encoded with
@@ -256,12 +256,12 @@ user.
       0 gives 1200 by 400.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 9.1-9.5_
-  - [ ] 9.4 Write property test for the picture
+  - [x] 9.4 Write property test for the picture
     - **Property 14: Picture sheet mapping and file**
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
 
-- [ ] 10. Environment and runner
-  - [ ] 10.1 Write the environment check
+- [x] 10. Environment and runner
+  - [x] 10.1 Write the environment check
     - `environment.py` per design 6: Docker reachable, image present by the digest in `model/image-lock.toml`,
       digest equal, CPUs at least 3; each failure names which, what was expected and what was found; no pull and no
       other tag; `bench-run/wind-tunnel/environment.jsonl` line (no time). A missing lock file is an error saying
@@ -270,7 +270,7 @@ user.
       sealed-record text holds none of it.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 7.1, 7.3-7.6_
-  - [ ] 10.2 Write the runner
+  - [x] 10.2 Write the runner
     - `runner.py` per design 6: `Runner` protocol, `DockerRunner` (the `docker run` command line, the remaining
       time from the 140 s limit, kill on timeout, abnormal exit and missing output as `SolverFailure`), case folder
       under `bench-run/wind-tunnel/` named by the seed, kept on failure and removed on success.
@@ -279,8 +279,8 @@ user.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 7.2, 8.1, 8.2, 8.7, 8.8, 10.1, 10.5, 10.6_
 
-- [ ] 11. Run pipeline, circle check and numbers
-  - [ ] 11.1 Write the adapter and its pipeline
+- [x] 11. Run pipeline, circle check and numbers
+  - [x] 11.1 Write the adapter and its pipeline
     - `adapter.py`: `WindAdapter` (environment check at construction, no Reynolds argument), `run_trial` per the flow
       diagram: validate inputs (exactly the four names, finite, in range, no clipping), outline, mesh, case, run,
       parse, estimators, settle, picture; map `shedding` 0 to `NotMeasured("not_shedding", "the lift does not
@@ -292,10 +292,10 @@ user.
       absent.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 3.3, 3.4, 4.4, 4.5, 6.7, 8.1-8.8, 10.2, 14.2_
-  - [ ] 11.2 Write property test for the result contract
+  - [x] 11.2 Write property test for the result contract
     - **Property 10: Result contract and seed independence**
     - **Validates: Requirements 3.3, 3.4, 10.2, 17.1**
-  - [ ] 11.3 Write the circle check
+  - [x] 11.3 Write the circle check
     - `circle_check.py` and the command `wind-tunnel-circle-check` per design 10: `literature(re)` from the three
       constants of Requirement 15.4, the circle run with `with_reynolds(100.0)` through the same pipeline, the
       difference in percent, and the writer of `wind-tunnel/circle-check.json` with the fields of Requirement 15.5.
@@ -305,7 +305,7 @@ user.
       writes `passed = false` with the reason.
     - Verified by: the checks of `adapter/`.
     - _Requirements: 15.1-15.5, 15.7_
-  - [ ] 11.4 Write the code-size script and the numbers file
+  - [x] 11.4 Write the code-size script and the numbers file
     - `wind-tunnel/count_lines.py` counts non-blank, non-comment lines in `wind-tunnel/adapter/` and
       `wind-tunnel/model/`, excluding lock files, virtual environments and caches, lists test files on their own
       line, and rewrites the code-size part of `wind-tunnel/numbers.md`. Create `numbers.md` with the connection
@@ -314,8 +314,8 @@ user.
     - Verified by: the test passes; `ruff` clean for the script.
     - _Requirements: 16.1-16.3_
 
-- [ ] 12. Blind scan for the solver files
-  - [ ] 12.1 Write the extractors in the bench
+- [x] 12. Blind scan for the solver files
+  - [x] 12.1 Write the extractors in the bench
     - `bench/src/bench/scan/foam_terms.py` per design 9: `openfoam-dict`, `shell-words`, `toml-names`,
       `python-names`, registered in `EXTRACTORS` of `terms.py`; standard library only; an unreadable or unparsable
       file is a `ScanError` naming file and problem. If anything else in `bench/` must change, **stop and report**
@@ -324,10 +324,10 @@ user.
       placeholder `@NAME@`; the syntax words left out; an unparsable file.
     - Verified by: `sh bench/scripts/check.sh`.
     - _Requirements: 13.1, 13.2, 14.2_
-  - [ ] 12.2 Write property test for planted solver terms
+  - [x] 12.2 Write property test for planted solver terms
     - **Property 15: Planted solver terms are found**
     - **Validates: Requirements 13.1, 13.2, 13.7**
-  - [ ] 12.3 Wire the scan and test the told set against the derived terms
+  - [x] 12.3 Wire the scan and test the told set against the derived terms
     - `wind-tunnel/adapter/scan_sources.toml`: the solver files and geometry scripts with their extractors, the lab
       layout as `body-lab` does, `adapter = "wind_tunnel.adapter:scan_adapter"` (Requirement 13.5). Write the 13.8
       test: no derived term appears in the told set (`declaration_text` of `scan_adapter()`).
@@ -339,7 +339,7 @@ user.
     - Unit tests: the 13.8 test passes, or the findings file lists exactly the hits that fail it.
     - Verified by: the checks of `bench/`, `adapter/` and `model/`.
     - _Requirements: 13.3-13.8_
-  - [ ] 12.4 Stop and ask: stop-list proposal (only if findings remain)
+  - [x] 12.4 Stop and ask: stop-list proposal (only if findings remain)
     - IF `wind-tunnel/blind-scan-findings.md` lists no remaining term, record "none" in it and go on.
     - OTHERWISE **stop and report** to the user a proposal for each remaining word: the derived term, its source
       file and line, the text and line that contains it, and why the word says nothing about the structure of the
@@ -350,8 +350,8 @@ user.
       contains only approved words.
     - _Requirements: 1.7, 13.4, 13.9_
 
-- [ ] 13. Lab and the form-knowledge review
-  - [ ] 13.1 Create the lab
+- [x] 13. Lab and the form-knowledge review
+  - [x] 13.1 Create the lab
     - Run `bench-make-lab wind-tunnel/lab` (the `dr-kiro` command, as for `body-lab`) and commit the result. The
       lab holds nothing specific to the flow. Add a test (in `bench/tests/drkiro/` style, or in the adapter tests)
       that the generated builder-written files equal those `bench-make-lab` makes for `body-lab/lab` apart from
@@ -359,7 +359,7 @@ user.
       nothing.
     - Verified by: `bench-scan` on `wind-tunnel/lab` reports no finding; the checks of the touched project.
     - _Requirements: 14.3, 12.1, 12.2_
-  - [ ] 13.2 Write the form-knowledge review list
+  - [x] 13.2 Write the form-knowledge review list
     - `wind-tunnel/form-knowledge-review.md`: one line per text Dr. Kiro can read: each builder-written file of
       `wind-tunnel/lab/`, the told set as a whole, each of the four knob texts (with a note of which sentences are
       geometry definitions and that no sentence states an effect), `measured_by`, the goal, and each fixed public
@@ -371,8 +371,8 @@ user.
     - Verified by: the completeness test; the checks of the touched project.
     - _Requirements: 12.1-12.5_
 
-- [ ] 14. Docker steps — **[local Mac + Docker]**
-  - [ ] 14.1 Record the image lock and run one trial end to end **[local Mac + Docker]**
+- [x] 14. Docker steps — **[local Mac + Docker]**
+  - [x] 14.1 Record the image lock and run one trial end to end **[local Mac + Docker]**
     - Pull-free: check that `opencfd/openfoam-default:2412` is present on the Mac. If it is not, **stop and report**;
       do not pull or substitute (Requirement 7.4). Write `wind-tunnel/model/image-lock.toml` from
       `docker image inspect` (digest and image id of the arm64 build); invent nothing.
@@ -383,7 +383,7 @@ user.
     - Verified by: the run settles, measurements pass `check_result`, the sheet passes the picture check, and the
       report lists the time and what was confirmed or changed (changes here are allowed, before the circle check).
     - _Requirements: 7.1, 7.3, 8.7, 11.4_
-  - [ ] 14.2 Run the circle check **[local Mac + Docker]**
+  - [x] 14.2 Run the circle check **[local Mac + Docker]**
     - Run `wind-tunnel-circle-check`. It writes `wind-tunnel/circle-check.json`. The check passes when the
       measured Strouhal number is within 5% of the literature value (Requirement 15.3). Before the run, confirm that
       the literature constants and the source in `circle_check.py` equal Requirement 15.4. If the source or a fit
@@ -393,12 +393,12 @@ user.
       mesh or the setup to make it pass (Requirement 15.7).
     - Verified by: `circle-check.json` has `passed = true`, every field of 15.5, and values from the run.
     - _Requirements: 15.1-15.5, 15.7_
-  - [ ] 14.3 Run the same-input-twice check **[local Mac + Docker]**
+  - [x] 14.3 Run the same-input-twice check **[local Mac + Docker]**
     - Write and run the slow test: two runs of one input give identical measurements and an identical picture
       (Requirement 10.4). If they differ, **stop and report**; do not weaken the statement.
     - Verified by: the slow test passes.
     - _Requirements: 10.3, 10.4_
-  - [ ] 14.4 Run the end-corner and near-end cases, and fix the colour limit **[local Mac + Docker]**
+  - [x] 14.4 Run the end-corner and near-end cases, and fix the colour limit **[local Mac + Docker]**
     - Write the slow test and handle 32 cases one at a time: the 16 end-corner combinations of the four knobs, and
       the 16 near-end cases (each knob at 0.001 and at 0.01 of its range from each end, the other three at the
       middle of their ranges). Compute the values from the declared ranges (`angle` is [0, 15], Decision 34). A case
@@ -416,7 +416,7 @@ user.
     - Verified by: `extreme-runs.json` lists the 32 cases from the run, every run settled in at most 115 s; the
       limit is set from the data.
     - _Requirements: 9.5, 17.2, 17.6_
-  - [ ] 14.5 Run the sheet reading check on a real sheet **[local Mac + Docker + Kiro CLI]**
+  - [x] 14.5 Run the sheet reading check on a real sheet **[local Mac + Docker + Kiro CLI]**
     - Run one trial of the circle (`aspect` 1, `corner` 1, `splitter` 0, `angle` 0) through `WindAdapter` with the
       fixed colour limit, and write the returned PNG to `bench-run/fake/lab/pictures/real-sheet.png` (git-ignored).
       Check that it passes `bench.pictures.check_picture` and has the size of the settings.
@@ -431,8 +431,8 @@ user.
     - Verified by: `spikes/sheet/results.md` holds the answers for the real sheet and the agent described the cells.
     - _Requirements: 9.10_
 
-- [ ] 15. README facts
-  - [ ] 15.1 Write `wind-tunnel/README.md` and fill `numbers.md` (code size)
+- [x] 15. README facts
+  - [x] 15.1 Write `wind-tunnel/README.md` and fill `numbers.md` (code size)
     - Run `count_lines.py` to fill the code size. Write the README from recorded files only: how the application
       measures (the same meaning as `measured_by`), the budget and mode costs (Requirement 11.3), the time of one
       run and of one experiment from task 14.1 (fits 900 s), the form of the picture (one PNG sheet of 6 frames in
@@ -447,7 +447,7 @@ user.
       needed (it is not in `lab/`) but no solver identifier is copied into `lab/`.
     - _Requirements: 4.7, 9.10, 9.11, 10.3, 11.4, 12.4, 15.6, 16.2, 16.4, 17.4_
 
-- [ ] 16. Checkpoint — **Stop and ask**
+- [x] 16. Checkpoint — **Stop and ask**
   - Run the checks of `model/`, `adapter/` and `bench/` (non-slow tests and ruff), `bench-scan` on `wind-tunnel/lab`
     and on the exported told text (`wind-tunnel-told-set --out` to a temporary file outside the repository),
     and `sh scripts/ja-check.sh`. Check that `form-knowledge-review.md` is filled and complete, that
