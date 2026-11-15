@@ -1,7 +1,8 @@
 """Does Gmsh survive being initialised from a NEW thread after an earlier thread has exited? (Decision 43)
 
-The real session wt-002 crashed (SIGSEGV in gmsh::initialize, in the OpenMP runtime) on the first mesh built
-in a new anyio worker thread, three minutes after a first run had meshed in an earlier worker thread.
+The real session wt-002 crashed (SIGSEGV in gmsh::initialize, in the OpenMP runtime) at 13:29:25Z, in the
+first mesh of its second run_experiment, which came about 20 s after the first run_experiment had returned.
+That is longer than anyio's idle time for worker threads (10 s), so the call probably ran in a new thread.
 
 usage: gmsh_threads.py matrix [REPS]   run every variant REPS times (default 20), each in its own subprocess,
                                        and print the exit codes; no solver, no Docker, no MCP server
