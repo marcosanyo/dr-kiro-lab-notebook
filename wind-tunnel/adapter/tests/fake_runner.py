@@ -42,6 +42,8 @@ def fake_docker(settings: Settings):
             return CommandResult(0, f"{json.dumps([f'{name}@{DIGEST}'])} {IMAGE_ID}\n", "")
         if args[:2] == ["docker", "info"]:
             return CommandResult(0, "4\n", "")
+        if args[:2] == ["docker", "run"]:  # the case mount probe
+            return CommandResult(0, "", "")
         raise AssertionError(f"unexpected command {args}")
 
     return command

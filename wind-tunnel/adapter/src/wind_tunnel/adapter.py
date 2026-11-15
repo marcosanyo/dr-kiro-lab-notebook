@@ -82,7 +82,13 @@ class WindAdapter:
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._settings = settings or Settings.load()
-        environment.check(self._settings, command=command, lock_path=lock_path, record_path=record_path)
+        environment.check(
+            self._settings,
+            command=command,
+            lock_path=lock_path,
+            record_path=record_path,
+            case_base=case_base,
+        )
         if runner is None:
             lock = environment.load_lock(lock_path)
             runner = DockerRunner(f"{self._settings.image.name}@{lock.digest}")

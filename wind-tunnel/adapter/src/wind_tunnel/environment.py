@@ -1,11 +1,12 @@
 """The solver environment check (wind-tunnel Requirement 7; design 6).
 
 ``check`` runs when the adapter is created. It looks at Docker, at the image recorded in
-``image-lock.toml`` and at the CPUs of the Docker machine, and raises ``EnvironmentFailure`` on the first
-thing that is wrong, naming which it is, what was expected and what was found. It never pulls an image and
-never looks at another tag. A passing check appends one line to the builder-side record, which holds no time
-and is not part of the sealed session record.
-
+``image-lock.toml`` and at the CPUs of the Docker machine, then runs the case mount probe (Decision 38):
+it renders a throw-away case folder, starts the container as the runner does with the command
+``test -x /case/Allrun`` and expects exit 0, three times with fresh folder names. It raises
+``EnvironmentFailure`` on the first thing that is wrong, naming which it is, what was expected and what was
+found. It never pulls an image and never looks at another tag. A passing check appends one line to the
+builder-side record, which holds no time and is not part of the sealed session record.
 Docker is reached only through ``CommandFunction``, so a test needs no Docker.
 """
 
@@ -17,12 +18,16 @@ import re
 import subprocess
 import sys
 import tomllib
+import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
 
+from wind_tunnel_model.casegen import render_case
 from wind_tunnel_model.settings import SETTINGS_PATH, Settings
+
+from wind_tunnel.runner import DockerRunner, empty_trash, move_to_trash
 
 LOCK_PATH = SETTINGS_PATH.parent / "image-lock.toml"
 RECORD_PATH = Path(__file__).resolve().parents[4] / "bench-run" / "wind-tunnel" / "environment.jsonl"
@@ -34,6 +39,9 @@ IMAGE_MISSING = "image missing"
 DIGEST_DIFFERENT = "digest different"
 TOO_FEW_CPUS = "too few CPUs"
 IMAGE_LOCK_MISSING = "image lock missing"
+CASE_MOUNT_PROBE = "case mount probe"
+PROBE_COUNT = 3
+PROBE_KNOBS = {"aspect": 1.5, "corner": 0.5, "splitter": 0.5, "angle": 5.0}
 
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -106,8 +114,10 @@ def check(
     command: CommandFunction = run_command,
     lock_path: Path | str | None = None,
     record_path: Path | str | None = None,
+    case_base: Path | str | None = None,
 ) -> dict[str, str]:
-    """Check Docker, the image and the CPUs; append the environment line; return it."""
+    """Check Docker, the image, the CPUs and the case mount; append the environment line; return it.
+    ``case_base`` is the folder that holds the case folders; it defaults to the folder of the record."""
     lock = load_lock(lock_path)
     name, tag = settings.image.name, settings.image.tag
     reference = f"{name}:{tag}"
@@ -146,6 +156,9 @@ def check(
     if cpus < needed:
         raise EnvironmentFailure(TOO_FEW_CPUS, f"at least {needed} CPUs in Docker", f"{cpus} CPUs")
 
+    target = Path(record_path) if record_path is not None else RECORD_PATH
+    base = Path(case_base) if case_base is not None else target.parent
+    _probe_case_mount(settings, f"{name}@{lock.digest}", base, command)
     line = {
         "image": reference,
         "digest": lock.digest,
@@ -154,11 +167,35 @@ def check(
         "numpy": metadata.version("numpy"),
         "platform": f"{sys.platform}-{platform.machine()}",
     }
-    target = Path(record_path) if record_path is not None else RECORD_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
     with open(target, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(line, sort_keys=True) + "\n")
     return line
+
+
+def _probe_case_mount(settings: Settings, image: str, base: Path, command: CommandFunction) -> None:
+    """Start one container exactly as the runner does, with `test -x /case/Allrun`, on a throw-away folder.
+    Done three times with fresh folder names, each folder moved to the trash after its container, the way a
+    case folder of a run is (Decision 38). Any other exit than 0 raises; nothing is retried. The solver is not
+    started. A failed probe leaves its folder in place for the builder."""
+    runner = DockerRunner(image)
+    base.mkdir(parents=True, exist_ok=True)
+    for number in range(1, PROBE_COUNT + 1):
+        # A fresh name every time: a folder name that is created again right after a folder of that name was
+        # moved away and deleted is the pattern of the fault of Decision 38, and the probe must not cause it.
+        folder = base / f"mount-probe-{uuid.uuid4().hex[:12]}"
+        folder.mkdir()
+        render_case(PROBE_KNOBS, settings, folder)
+        done = command(runner.command(folder)[:-1] + ["test", "-x", "/case/Allrun"])
+        if done.returncode != 0:
+            raise EnvironmentFailure(
+                CASE_MOUNT_PROBE,
+                f"`test -x /case/Allrun` exits 0 in a container started as the runner does (probe {number} "
+                f"of {PROBE_COUNT}, folder {folder})",
+                _tail(done),
+            )
+        move_to_trash(folder)
+    empty_trash(base)
 
 
 def _tail(result: CommandResult) -> str:

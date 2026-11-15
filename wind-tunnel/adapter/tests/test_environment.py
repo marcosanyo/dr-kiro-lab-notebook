@@ -26,8 +26,17 @@ def lock(tmp_path):
 
 
 def fake_docker(
-    *, version=0, inspect=0, digests=None, image_id=IMAGE_ID, cpus="4", name="opencfd/openfoam-default"
+    *,
+    version=0,
+    inspect=0,
+    digests=None,
+    image_id=IMAGE_ID,
+    cpus="4",
+    name="opencfd/openfoam-default",
+    run=None,
 ):
+    """`run` is the list of exit codes of the successive probe containers (default: all 0)."""
+    run_codes = iter(run if run is not None else [0] * 3)
     digests = [f"{name}@{DIGEST}"] if digests is None else digests
     calls = []
 
@@ -43,6 +52,9 @@ def fake_docker(
             return CommandResult(0, f"{json.dumps(digests)} {image_id}\n", "")
         if args[:2] == ["docker", "info"]:
             return CommandResult(0, f"{cpus}\n", "")
+        if args[:2] == ["docker", "run"]:
+            code = next(run_codes)
+            return CommandResult(code, "", "" if code == 0 else "sh: /case/Allrun: No such file or directory")
         raise AssertionError(f"unexpected command {args}")
 
     command.calls = calls
@@ -145,3 +157,32 @@ def test_sealed_record_text_holds_none_of_it(settings):
         lowered = text.lower()
         for word in ("sha256", "docker", "gmsh", "openfoam", "numpy"):
             assert word not in lowered
+
+
+def test_probe_runs_three_containers_as_the_runner_does_and_leaves_no_folder(settings, lock, tmp_path):
+    command = fake_docker()
+    run_check(settings, lock, tmp_path, command)
+    runs = [call for call in command.calls if call[:2] == ["docker", "run"]]
+    assert len(runs) == 3
+    assert runs[0][-3:] == ["test", "-x", "/case/Allrun"]
+    names = [call[call.index("--name") + 1] for call in runs]
+    assert len(set(names)) == 3
+    assert not (tmp_path / "out" / "trash").exists()
+    # the same options as DockerRunner.command, except the command at the end
+    from wind_tunnel.runner import DockerRunner
+
+    folder = tmp_path / "out" / names[0].removeprefix("wind-tunnel-")
+    reference = DockerRunner(f"opencfd/openfoam-default@{DIGEST}").command(folder)
+    assert runs[0][:-3] == reference[:-1]
+
+
+@pytest.mark.parametrize("failing", [0, 1, 2])
+def test_failing_probe_is_loud_and_writes_no_record(settings, lock, tmp_path, failing):
+    codes = [0, 0, 0]
+    codes[failing] = 127
+    with pytest.raises(EnvironmentFailure) as error:
+        run_check(settings, lock, tmp_path, fake_docker(run=codes))
+    assert error.value.which == environment.CASE_MOUNT_PROBE == "case mount probe"
+    assert f"probe {failing + 1} of 3" in error.value.expected
+    assert "exit 127" in error.value.found and "No such file" in error.value.found
+    assert not (tmp_path / "out" / "environment.jsonl").exists()

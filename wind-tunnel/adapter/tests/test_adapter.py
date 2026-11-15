@@ -301,7 +301,7 @@ def test_invalid_inputs_are_refused_without_a_case(settings, tmp_path, inputs):
     with pytest.raises(ValueError):
         adapter.run_trial(inputs, 1)
     assert runner.calls == []
-    assert not (tmp_path / "cases").exists()
+    assert list((tmp_path / "cases").iterdir()) == []  # the mount probe leaves the base empty
 
 
 def test_range_ends_are_accepted(settings, tmp_path):
@@ -401,4 +401,4 @@ def test_a_refused_corner_that_reaches_run_trial_fails_loudly(settings, tmp_path
     with pytest.raises(InputRuleError, match="corner must be"):
         adapter.run_trial({**KNOBS, "corner": 0.999}, 1)
     assert runner.calls == []
-    assert not (tmp_path / "cases").exists()
+    assert list((tmp_path / "cases").iterdir()) == []  # the mount probe leaves the base empty
