@@ -629,3 +629,52 @@ descriptions (Requirement 17.4).
    the bench before the change.
 9. FOR ALL declarations, with and without descriptions, THE told text SHALL contain each non-empty description
    exactly as declared, on the line of its own knob, and SHALL contain no description of another knob on that line.
+
+### Requirement 19: Adapter input check (amendment)
+
+**Amendment.** Added after Requirements 1-18 were implemented and tested, at the request of the `wind-tunnel` spec
+(its task 14.4 and Requirement 17.6, option 1, decided by the user: a rule in the bench that refuses such values with a
+message in Dr. Kiro's terms). No existing requirement is renumbered or reworded. This requirement adds one optional
+function to the adapter and one gate to a run. It is outcome 2 of `rules.md` section 2 (refused by a lab rule), so no
+rule of `rules.md` changes.
+
+**User story:** As the builder of an application, I want the adapter to be able to refuse computed inputs that
+the application cannot run, before any trial of the experiment runs, so that Dr. Kiro is told at no cost what to
+change, instead of the session stopping in the middle of an experiment. As the builder of body-lab and the fake
+application, I want nothing to change for an adapter that gives no such function.
+
+**Concerns:** the builder and the adapter author. Dr. Kiro sees only the refusal message.
+
+#### Acceptance criteria
+
+1. THE adapter contract SHALL let an adapter provide an optional function `check_inputs` that takes the computed
+   inputs of one trial and returns either nothing or one refusal message. It is a pure function of those inputs:
+   the same inputs give the same answer, and it does not run the application. An adapter without it SHALL refuse
+   nothing.
+2. WHEN an experiment has passed the gates up to and including the budget check (Requirement 7.5), THE bench SHALL
+   call `check_inputs` for the computed inputs of every trial of the experiment, in trial order (all variants of a
+   compare, all points of a sweep), BEFORE any trial runs.
+3. WHEN `check_inputs` returns a message for any trial, THE bench SHALL refuse the whole experiment with that
+   message, naming the number of the first such trial within the experiment, and SHALL stop calling it. THE refusal
+   SHALL run no trial, record no experiment or trial, use no budget, and change nothing but its own refusal entry
+   (Requirement 9.2). THE bench SHALL also write the refusal and the trial number to the builder-side log.
+4. THE bench SHALL check the message: it is text, not empty, has no line break or other control character, has no
+   space at its start or end, and has at most 400 characters. IF the message breaks one of these, THEN THE bench
+   SHALL treat it as a bench failure (Requirement 2.6).
+5. IF `check_inputs` raises, THEN THE bench SHALL treat it as a bench failure with the bench's fixed text for an error
+   in the application, and SHALL write the traceback to the builder-side log only. THE bench SHALL NOT go on to run
+   the trials, and SHALL NOT substitute an answer.
+6. THE refusal message SHALL be bench output: THE bench SHALL scan it at the builder level before it returns it
+   (Requirement 15.8), so a message that holds a path, an identifier, a version or a derived term is a bench failure
+   and nothing of it is shown to Dr. Kiro. THE adapter author writes the message in Dr. Kiro's terms (knobs, ranges,
+   experiment file, budget).
+7. THE bench SHALL NOT change the told text, the tool descriptions, the declaration, the record's declaration or any
+   existing refusal for an adapter that gives no `check_inputs`. This holds for body-lab and the fake application,
+   and SHALL be shown by the golden comparison of Requirement 18.8 still passing unchanged.
+8. THE gate SHALL come after the budget check and before the lab spec files are read for the snapshot
+   (design 6.1, step 9a), so that the order of the earlier checks and their reasons does not change.
+9. THE tests SHALL check, over random experiments and random sets of refused inputs, that: a refusal uses no budget
+   and writes only a refusal entry; a refusal in any planned trial (first, middle or last, compare or sweep)
+   refuses the whole experiment before any trial runs; an adapter without the function refuses nothing; a message
+   that breaks 19.4, and a function that raises, are bench failures; a message with a derived term is a bench
+   failure and is not shown.

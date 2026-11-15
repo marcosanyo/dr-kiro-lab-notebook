@@ -918,3 +918,79 @@ of golden files in `bench/tests/fixtures/` covers it.
 - The golden files differ from the output after the change (18.8): the amendment is not allowed to alter
   body-lab. Stop and report the first differing line.
 - A code path other than A1-A3 needs to read a description.
+
+---
+
+# Amendment: adapter input check (Requirement 19)
+
+Added after tasks 1-28 were done, at the request of the `wind-tunnel` spec (its task 14.4). Sections 1-14, F1-F12 and
+A1-A8 are not rewritten. Step 9a below is added to the gate order of 6.1 without renumbering it.
+
+## B1. Contract (19.1, 19.4, 19.7)
+
+An optional adapter method, outside the `Adapter` protocol, in the style of `builder_versions`:
+
+```python
+CHECK_INPUTS_METHOD = "check_inputs"       # def check_inputs(self, inputs: ComputedInputs) -> str | None
+INPUT_REFUSAL_MAX = 400
+
+def check_input_refusal(text: object) -> str      # raises ResultError unless the message is usable
+def input_refusal(adapter: object, inputs) -> str | None   # None when the adapter has no such method
+```
+
+- The method is looked up with `getattr`. An adapter without it gives `None` for every input: nothing changes for
+  body-lab and the fake application (their declarations, told text and records are untouched; the golden
+  comparison of A5 is the proof).
+- `check_input_refusal` accepts a `str` that is not empty, is `str.isprintable()`, has no space at either end, and is at
+  most `INPUT_REFUSAL_MAX` characters (the same kind of limits as `_check_description`, shorter because it is a
+  sentence in an error). Anything else raises `ResultError`.
+- `input_refusal` does not catch an exception of the method.
+
+## B2. Gate 9a (19.2, 19.3, 19.5, 19.8)
+
+`Session._check_inputs(path, experiment)` runs after the budget check (step 9) and before the spec files are read
+(step 10). For each trial in order it calls `input_refusal(adapter, trial.inputs)`:
+
+- `ResultError` (bad message): `_Failure(ADAPTER_BROKE_CONTRACT, "input check of trial N: ...")`, a bench failure.
+- Any other exception: `_Failure(ADAPTER_RAISED, "input check of trial N: <traceback>")`, a bench failure; the
+  traceback goes to `builder.log` only.
+- A message: builder log line `input check refused trial N of '<path>': <message>`, then
+  `_refuse("trial N of this experiment cannot run: <message>")`. The loop stops at the first refusing trial.
+
+The refusal is outcome 2: `_act` turns `RefusalError` into `Refused`, `_finish` records one `refusal` entry and
+nothing else. No `experiment` or `trial` entry is written, so the state, the budget and the set of tried inputs
+are unchanged, and the same inputs can be used in a later experiment.
+
+## B3. Blind rules (19.6)
+
+The message goes through `_finish`, which scans every `Refused` message at the builder level (11.4, 15.8). The
+refusal text is therefore bench output: a derived term, a path or a credential makes the call a bench failure with
+the fixed `WITHHELD` text, and nothing of the message is shown. The adapter author writes the message in Dr. Kiro's
+terms. The tool descriptions are not changed; Dr. Kiro learns of a refused value only by the refusal.
+
+## B4. Properties (Req 16 style, tagged `Feature: lab-bench, Property N`)
+
+| # | Property | Req |
+|---|---|---|
+| P25 | For all experiments (compare of 1-3 variants or a 6-point sweep) and all sets of refused inputs, a refusal uses no budget and appends only one `refusal` entry. | 19.3 |
+| P26 | For the same experiments, a refusal in any trial refuses the whole experiment before any trial runs; the refusing trial named is the first one; with no refused trial the experiment runs. | 19.2, 19.3 |
+| P27 | For all experiments, an adapter without `check_inputs` refuses nothing. | 19.1, 19.7 |
+| P28 | For all candidate messages, `check_input_refusal` accepts exactly the valid ones; any other message, and a method that raises, is a bench failure that runs no trial. | 19.4, 19.5 |
+| P29 | For a message containing a derived term, the outcome is a bench failure with the `WITHHELD` text. | 19.6 |
+
+## B5. Decisions (taken by the builder, on the user's decision for the wind-tunnel spec)
+
+1. **Optional method outside the protocol**, as `builder_versions` is, so no existing adapter changes.
+2. **After the budget check**, so existing reasons keep their order (19.8). An experiment that is both too large
+   and refused by value gets the budget reason first.
+3. **The bench prefixes the trial number** (`trial N of this experiment cannot run: ...`), as the existing
+   repeat-input refusal names a trial number.
+4. **A bad message is a bench failure, not a refusal**, because it is the adapter's fault and Dr. Kiro cannot fix it
+   (2.6, rules.md section 2).
+5. **400 characters, one line.** A bound, not a quality rule.
+6. **Purity is the adapter's contract.** The bench does not call the function twice to check it.
+
+## B6. What would make me stop and ask
+
+- The golden files of body-lab differ after the change (18.8). Not the case: they pass unchanged.
+- A refused value needs to be told to Dr. Kiro before it is tried (a change of the told text).

@@ -293,3 +293,32 @@ sealed and unchanged.
   - Update the Japanese translation under `docs/ja/wind-tunnel/` as `japanese-translations.md` requires. Run
     `sh scripts/ja-check.sh` if it applies.
   - _Requirements: wind-tunnel 12.3_
+
+## Amendment: adapter input check (Requirement 19)
+
+Added for the `wind-tunnel` spec (its task 14.4): a refusal before any trial for values the solver cannot settle.
+Design: "Amendment: adapter input check" (B1-B6). Commit `d6089fc` holds the code and tests of tasks 29-31.
+
+- [x] 29. Optional adapter method and gate 9a
+  - `adapter.py`: add `CHECK_INPUTS_METHOD`, `INPUT_REFUSAL_MAX = 400`, `check_input_refusal` and `input_refusal`
+    (design B1). `core/session.py`: add `Session._check_inputs`, called after the budget check and before the spec
+    files are read (design B2); a refusal is outcome 2 with the builder-log line; a bad message or an exception is a
+    bench failure.
+  - No change to `describe.py`, `declaration_record`, the fake application or body-lab.
+  - Verified by: `sh bench/scripts/check.sh` passes, and the body-lab adapter tests (golden comparison) pass unchanged.
+  - _Requirements: 19.1-19.3, 19.5, 19.7, 19.8_
+
+- [x] 30. Unit tests
+  - `bench/tests/unit/test_input_check.py`: a refusal in the second trial refuses the experiment, runs no trial, uses no
+    budget, appends only a `refusal` entry and writes the builder-log line; the same first row runs afterwards; a sweep
+    is checked in full; an adapter without the method and a method that returns nothing refuse nothing; a raising
+    method is a bench failure with the traceback in the detail only; bad messages (empty, spaces, line break, tab,
+    401 characters, not text) are bench failures; a message with a derived term is withheld.
+  - _Requirements: 19.1-19.6_
+
+- [x] 31. Property tests and full check
+  - `bench/tests/properties/test_input_check.py`: P25-P29 (design B4), at least 100 examples each, tagged
+    `Feature: lab-bench, Property N`.
+  - Run `sh bench/scripts/check.sh` (500 passed, ruff clean), the body-lab adapter tests (7 passed, golden files
+    unchanged), and the `wind-tunnel/adapter` and `wind-tunnel/model` tests (127 passed 1 skipped; 121 passed).
+  - _Requirements: 19.7, 19.9_
