@@ -456,22 +456,26 @@ user.
     17-19 need the user's hands.
   - _Requirements: 12.3, 13.7, 13.8, 17.1, 17.2_
 
-## Hands-on steps (the user)
+## Hands-on steps (the user), and the builder step between them
 
-These steps need the user (Requirement 18.1, 18.3). A sub-agent does not run them, and does not tick them.
+Tasks 17 and 19 need the user (Requirement 18.1, 18.3). Task 18 is a builder step that follows task 17: it runs
+after the user says that task 17 is done (Decision 39). A sub-agent does not run these tasks before that, and does
+not tick them.
 
 - [ ] 17. **User step:** start and finish the 24-run session in Kiro CLI
-  - On the Mac: install the commands, create the session with `bench-new-session` (application `wind-tunnel`,
+  - The user does this himself and records the screen (Decision 39). On the Mac: install the commands, create the
+    session with `bench-new-session` (application `wind-tunnel`,
     adapter `wind_tunnel.adapter:WindAdapter`, seed and session id of the user's choice), export the two variables,
     and start Dr. Kiro from `wind-tunnel/lab/` with `kiro-cli chat --agent dr-kiro` (steps in
     `wind-tunnel/README.md`). Type `Begin the session.`; if a turn ends early, `Continue the session.` Pass: the
     session ends with the budget used (24 runs) or ends by Dr. Kiro's own `end_session`.
   - _Requirements: 17.3, 18.1_
 
-- [ ] 18. **User step:** seal check and commit of the session
-  - Run `bench-verify sessions/wind-tunnel/<session-id>` and `bench-scan` on `wind-tunnel/lab` and on the sealed
-    folder. Only if both pass, commit `sessions/wind-tunnel/<session-id>/` by name, in the environment where it
-    was made (`handoff.md`). A record that fails either check is not committed (Requirement 17.5).
+- [ ] 18. **Builder step after task 17:** seal check and commit of the session
+  - Run only after the user says that task 17 is done. Run `bench-verify sessions/wind-tunnel/<session-id>` and
+    `bench-scan` on `wind-tunnel/lab` and on the sealed folder. Only if both pass, commit
+    `sessions/wind-tunnel/<session-id>/` by name, in the environment where it was made (`handoff.md`). A record
+    that fails either check is not committed (Requirement 17.5).
   - _Requirements: 17.3, 17.5, 18.1_
 
 - [ ] 19. **User step:** report the connection time

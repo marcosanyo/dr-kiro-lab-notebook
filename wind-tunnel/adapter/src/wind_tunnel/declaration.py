@@ -52,7 +52,7 @@ MEASURED_BY = (
     "free-stream speed. "
     "shedding is 1 when cl_amp is above 0.01 and 0 otherwise. "
     "When the flow has not settled within the trial, none of the five is measured: each is the not-measured "
-    "outcome not_settled, and the picture still shows the flow. This says nothing about whether a longer "
+    "outcome not_settled, and the picture is still returned. This says nothing about whether a longer "
     "trial would settle."
 )
 

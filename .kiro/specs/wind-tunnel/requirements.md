@@ -205,9 +205,11 @@ without knowing how they were computed.
      Requirement 7.7); it is neither a hit nor a miss.
    - THE `measured_by` text SHALL say, in Dr. Kiro's terms and without a number of the settle criterion, that when
      the flow has not settled within the trial the five measurements are not measured (outcome `not_settled`)
-     and the picture still shows the flow, and that this says nothing about whether a longer trial would settle.
-     The words "within the trial" SHALL be in the text. (The user approved this sentence with Decision 37; it
-     adds nothing about what any knob does, Requirement 1.3.)
+     and the picture is still returned, and that this says nothing about whether a longer trial would settle. The
+     words "within the trial" SHALL be in the text. THE text SHALL say nothing about what the picture shows
+     (Requirement 1.3). (The user approved Decision 37, which says the picture is returned; the first wording
+     of this sentence said that the picture "still shows the flow", which tells the content of the picture and
+     was not approved. It was corrected by Decision 40.)
 6. THE reference length SHALL be the height (1) and the free-stream speed SHALL be 1, so that the coefficients and
    the Strouhal number need no other reference.
 7. THE meaning of each measurement SHALL be the same in the `measured_by` text, in `wind-tunnel/README.md`, and in
@@ -322,6 +324,13 @@ that a result can be reproduced and a wrong environment is never silently used.
    declaration's `measured_by` SHALL NOT carry them, because Dr. Kiro is not told them; THE design SHALL decide
    where the record is kept, and no text in the sealed session record SHALL fail the blind scan because of it.
 6. THE adapter SHALL need Docker only for the solver. `body-lab` and the bench SHALL NOT need Docker.
+7. AFTER the checks of 7.3 and the CPU check, and before any trial, THE adapter SHALL run a case mount probe: three
+   times, with a fresh folder name each time, it SHALL render a small throw-away case folder in the case base, start
+   one container with the same image, user mapping and mount as the runner, with the command `test -x /case/Allrun`,
+   expect exit code 0, and move the folder to the trash. IF a probe does not exit 0, THEN the adapter SHALL fail
+   with `EnvironmentFailure` named `case mount probe`, giving the expected result and the found output, and SHALL
+   NOT retry or continue. The probe needs no solver and takes a few seconds. The failure is shown on the builder
+   side only: it stops the bench server at start, before Dr. Kiro sees anything. Decision 38.
 
 ### Requirement 8: Failures, settling and time limits
 
@@ -653,9 +662,12 @@ shown to work.
    1 (before a run, through `check_inputs`); such a case is recorded as `refused` with the message and is not
    run. THE geometry SHALL NOT refuse any case.
 3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of
-   17.6 has passed or the user has decided what to do about it. Pass: the record is sealed
+   17.6 has passed or the user has decided what to do about it. THE user starts and finishes it himself, and
+   records the screen; he acts as the experimenter only (Decision 39). Pass: the record is sealed
    as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and
-   on the sealed folder reports nothing.
+   on the sealed folder reports nothing. WHEN the user says that the session is done, THE builder (not the user)
+   SHALL run `bench-verify` and both scans, and SHALL commit the sealed folder only if all of them pass (17.5), in
+   the environment where it was made (`handoff.md`).
 4. THE README of `wind-tunnel` SHALL report the circle check and the numbers of Requirement 16, as the brief's
    "done when" asks: the circle check within 5% of the literature value (with the difference), one full session of 24
    runs completed, how long the application took to connect, and how much code it is.
@@ -681,8 +693,9 @@ run in one go.
 #### Acceptance criteria
 
 1. THE steps that need the user are: the approval of these requirements, with the proposals; starting and finishing
-   the 24-run session (Requirement 17.3), including the sealing check and the commit of `sessions/wind-tunnel/`; and
-   reporting the connection time (Requirement 16.1).
+   the 24-run session (Requirement 17.3), recorded on screen by the user; and reporting the connection time
+   (Requirement 16.1). The sealing check and the commit of `sessions/wind-tunnel/` are not among them: the builder
+   does them after the user says the session is done (Requirement 17.3, Decision 39).
 2. THE sheet reading check (Requirement 9.7) SHALL be a gate before the adapter is written. THE builder runs it
    itself, so no step of the user stands before "Run All Tasks".
 3. THE later `tasks.md` SHALL put every other hands-on step together at its very end, apart from the tasks the
@@ -732,7 +745,8 @@ reading check failed.
     of the knob texts are scanned like any builder text, and the solver and mesh identifiers stay forbidden.
 11. **No form knowledge** in any lab text; checked by a reviewed list, not automatically.
 12. **Scope.** Adapter, `model/`, the lab, the extractor, the circle check, the numbers, and the first 24-run
-    session sealed in `sessions/wind-tunnel/`. The user starts that session.
+    session sealed in `sessions/wind-tunnel/`. The user starts that session (the sealing check and the commit are
+    the builder's, Decision 39).
 13. **README numbers.** Connection time from approval of these requirements to the start of the first full session,
     self-reported; code size counted by a script; both in `wind-tunnel/numbers.md`.
 14. **Purpose.** The goal sentence is decided in item 15.
@@ -863,6 +877,36 @@ reading check failed.
     failure are unchanged. Changed: 1.2, 4.5, 8 (story, 8.1, 8.3, 8.4), 17.6 (the outcome name stays), the told
     text, the glossary. Design Decision 25.
 
+38. **A case mount probe in the environment check** (after task 16). Five of 30 runs of the measurement pass
+    (`spikes/timing/random-points.md`, draws 11 to 15) ended in 0.4 to 0.5 s with "the solver run exited with code
+    127" and the solver log `/case/Allrun: No such file or directory`, although the file is written before the
+    container starts. Each followed a failed run whose case folder the measurement driver had renamed aside. In
+    production such a run is `incomplete`, a `TrialFailure`, and the session ends (`lab-bench` 2.7, 11.3).
+    Result of the reproduction without the solver (`spikes/timing/env_127.py`, `spikes/timing/env-127.md`): when
+    one folder name is created again right after a folder of that name was moved to `trash/` and deleted, 84 of
+    1000 containers did not see the mount at all (`/case` absent in the container, although the folder is complete
+    on the host). With a new name for each folder (the production pattern: the bench gives every trial a different
+    seed, and the seed names the folder) there were 0 failures in 1000; the driver's rename aside with the same
+    name created again gave 0 in 1000. So a session of the production pattern cannot have this fault unless two
+    trials get one seed, and the runner is not changed. The cause inside Docker is not known. The measurement
+    driver used one fixed name for all runs, which fits its five faults; this is not proven, because the gap
+    between those runs (about 55 s) was not reproduced. The probe (Requirement 7.7) checks that a container of
+    the runner's kind sees a fresh case folder (a base folder that Docker does not share, for example). It would
+    not have caught this fault, which needs a repeated name, so the probe uses a new name every time and does not
+    cause it. A fault of this kind in a session stays what it is: `incomplete`, a `TrialFailure`, the session
+    ends, nothing is retried (Requirement 8, `rules.md` 2). Design Decision 26.
+39. **Roles in the first full session** (the user's decision). The user runs task 17 himself: he starts and
+    finishes the 24-run session in Kiro CLI and records the screen. The builder does task 18 (`bench-verify`,
+    `bench-scan` on the lab and on the sealed folder, and the commit of the sealed folder only if all pass) after
+    the user says that task 17 is done. Task 19 stays with the user. Reasons: (a) the user records the screen, so
+    the session runs without the builder's commands in the way; (b) the experimenter role (Dr. Kiro, started by the
+    user) and the builder role (checks and commit) stay apart. Changed: 12, 17.3, 18.1, tasks 17 and 18 (task 18 is
+    a builder step), `README.md`.
+40. **The picture is not described in `measured_by`** (correction of Decision 37). The first wording said that
+    the picture "still shows the flow". That tells what the picture shows, which Requirement 1.3 does not allow,
+    and the user had not approved it: the approval of Decision 37 covered that the picture is returned. Now the
+    sentence says that the picture is still returned, and nothing about what it shows. Changed: 4.5, the told text
+    (`declaration.py`), design 4, the tests of the declaration. Design Decision 27.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

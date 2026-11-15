@@ -164,7 +164,10 @@ The blind scan covers terms, paths and credentials only.
   judged `not-checkable`, neither a hit nor a miss (requirements Decision 37). The adapter does not retry, change
   the mesh or fill in a value. Two points are too few to say where such runs lie. The same file records that 5 first
   attempts failed at once with an exit code of the container (an environment fault whose cause is not known); that
-  is a failure and still ends the session. The five reruns settled.
+  is a failure and still ends the session. The five reruns settled. A reproduction without the solver
+  (`spikes/timing/env-127.md`) found the same fault when one case folder name was created again right after it was
+  deleted (84 of 1000 containers), and not with a new name each time (0 of 1000), which is how a session names its
+  folders.
 - **Time.** One run is limited to 140 s. The measured spread between identical runs is 11.7 to 19.0 s, so the 115 s
   margin is a rule for the choice of ranges, not a guarantee for a single run.
 - **The refusal of corner values near 0 and 1** (above) removes some knob values from reach on purpose.
@@ -176,7 +179,9 @@ The solver runs only in the Docker image `opencfd/openfoam-default:2412`, pinned
 the builder's Mac. The digest is in `model/image-lock.toml`:
 `sha256:1ba02114b1c025c370f2e269a07677c16c9bea8d990fcd75ac8378aff9d41b50` (the same digest is in
 `circle-check.json`). Before any trial the adapter checks that Docker is reachable, that the image is present with
-that digest, and that at least 3 CPUs are available. If one of these fails, it fails and says which one, what was
+that digest, and that at least 3 CPUs are available. It then starts a throw-away container three times, as the
+runner does, and checks that `/case/Allrun` is there (the case mount probe, about 1 s, no solver). If one of these
+fails, it fails and says which one, what was
 expected and what was found. It does not pull the image or use another one. The mesh is made on the host by Gmsh, a
 Python package locked in `adapter/uv.lock`. Only the solver needs Docker: `body-lab` and the bench do not.
 
@@ -220,8 +225,8 @@ kiro-cli chat --agent dr-kiro
 ```
 
 In Kiro CLI, check that `/mcp` shows `bench` running, then type `Begin the session.` If Kiro CLI ends a turn before
-the session ends, type only `Continue the session.` When the session has ended, go back to the repository root and
-run:
+the session ends, type only `Continue the session.` When the session has ended, tell the builder. The builder goes
+back to the repository root and runs:
 
 ```sh
 bench-verify sessions/wind-tunnel/<session-id>
@@ -229,7 +234,7 @@ bench-scan --config wind-tunnel/adapter/scan_sources.toml --stop-list .kiro/blin
   wind-tunnel/lab sessions/wind-tunnel/<session-id>
 ```
 
-Commit the sealed folder only if both pass. If the session does not end on its own, quit Kiro CLI and run
+The builder commits the sealed folder only if both pass. If the session does not end on its own, quit Kiro CLI and run
 `bench-stop $R/<session-id>.toml --reason <text>`.
 
 ## Numbers

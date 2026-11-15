@@ -97,7 +97,8 @@ def test_measured_by_says_what_a_flow_that_has_not_settled_gives() -> None:
     stated without a claim about a longer trial."""
     assert "When the flow has not settled within the trial, none of the five is measured" in MEASURED_BY
     assert "not-measured outcome not_settled" in MEASURED_BY
-    assert "the picture still shows the flow" in MEASURED_BY
+    assert "the picture is still returned" in MEASURED_BY
+    assert "shows" not in MEASURED_BY  # Requirement 1.3: nothing is told about what the picture shows
     assert "whether a longer trial would settle" in MEASURED_BY
 
 

@@ -117,7 +117,7 @@ flowchart TD
 - `picture = "image/png"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
   "the settled part of the trial" and nothing about times (4.3). It ends with one sentence (4.5): when the flow
   has not settled within the trial, none of the five is measured, each is the not-measured outcome `not_settled`,
-  and the picture still shows the flow; this says nothing about whether a longer trial would settle. It holds no
+  and the picture is still returned (nothing about what it shows, Requirement 1.3); this says nothing about whether a longer trial would settle. It holds no
   number of the settle rule. In the wording, "force" is used in the singular
   where the sentence allows, so that no word of the told set equals a term the solver files will give (13.8);
   the test of 13.8 decides, and what it cannot avoid goes the way of Requirements 13.4 and 13.9.
@@ -279,6 +279,13 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   digest, and `docker info` for the number of CPUs of the Docker machine (at least the 3 processes of 10.1, else
   `mpirun` cannot start). Each failure raises `EnvironmentFailure` naming which of: Docker not reachable, image
   missing, digest different, too few CPUs; what was expected; what was found. No pull, no other tag (7.4).
+- **The case mount probe** (7.7, Decision 26). After the CPU check, `_probe_case_mount` runs three times: it makes
+  `<case base>/mount-probe-<12 hex digits>` (a new random name each time), renders a case into it with
+  `render_case`, runs `DockerRunner.command(folder)[:-1] + ["test", "-x", "/case/Allrun"]` through the same
+  `CommandFunction`, and moves the folder to `trash/`; `trash/` is emptied at the end. Exit 0 is the only pass. Else
+  `EnvironmentFailure("case mount probe", ...)` with the folder and the last three lines of the output, and the
+  folder stays. `check` has a `case_base` parameter (default: the folder of the record), which `WindAdapter`
+  passes. The error is raised at construction, before the bench server starts, so Dr. Kiro never sees it.
 - It then appends one JSON line to `bench-run/wind-tunnel/environment.jsonl` (git-ignored, builder side): the image
   name, the digest, the image id, the Gmsh version, the numpy version, the platform. No time, so that
   the file is a function of the environment (7.5). The sealed record does not carry it and `measured_by` does not
@@ -645,7 +652,8 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
 | Extreme and near-end runs, `extreme-runs.json`, and the stops | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
-| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3) | 9.7-9.10, 18 |
+| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3); the seal check and commit (task 18) are the builder's, after the user's session (Decision 39) | 9.7-9.10, 17.3, 18 |
+| Case mount probe in `environment.py` | 7.7 |
 
 ## What would make me stop and ask
 
@@ -767,6 +775,14 @@ Made by the builder in this design; none changes a requirement.
     prediction on a not-measured value `not-checkable`; `bench/` is unchanged (its contract check accepts five
     not-measured values). Cost: the failed settle rule is no longer logged, because a result has no builder-side
     detail field.
+26. **A case mount probe in the environment check** (Requirements Decision 38). Reason: five runs of the
+    measurement pass ended with exit code 127 at once, and the reproduction (`spikes/timing/env-127.md`) showed
+    containers that do not see the mount when a folder name is created again right after it was deleted (84 of
+    1000), and none with new names (0 of 1000). A session uses new names, so the runner stays as it is. The probe
+    uses new names too, so that it does not cause the fault; it catches a mount that is not visible at all. Cost:
+    about one second at start (three container starts).
+27. **`measured_by` does not describe the picture** (Requirements Decision 40). The sentence on a flow that has not
+    settled says that the picture is still returned, and nothing about what it shows (Requirement 1.3).
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)
