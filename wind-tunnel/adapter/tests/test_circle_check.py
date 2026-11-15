@@ -93,12 +93,12 @@ def test_no_strouhal_number_writes_passed_false_with_the_reason(tmp_path):
 
 
 def test_a_failed_trial_writes_passed_false_with_the_reason(tmp_path, capsys):
-    adapter = FakeAdapter(TrialFailure("the trial did not settle", "kind: not_settled"))
+    adapter = FakeAdapter(TrialFailure("the trial took too long", "kind: timeout"))
     path = tmp_path / "circle-check.json"
     record = run_circle_check(adapter, DIGEST, path)
     assert record["passed"] is False
-    assert "the trial did not settle" in record["reason"]
-    assert "kind: not_settled" in capsys.readouterr().err
+    assert "the trial took too long" in record["reason"]
+    assert "kind: timeout" in capsys.readouterr().err
 
 
 def test_a_measured_value_is_written_with_the_run_values(tmp_path):

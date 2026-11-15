@@ -50,8 +50,15 @@ MEASURED_BY = (
     "settled part (half the peak-to-peak value). "
     "strouhal is the frequency of the lift coefficient's oscillation, times the height, divided by the "
     "free-stream speed. "
-    "shedding is 1 when cl_amp is above 0.01 and 0 otherwise."
+    "shedding is 1 when cl_amp is above 0.01 and 0 otherwise. "
+    "When the flow has not settled within the trial, none of the five is measured: each is the not-measured "
+    "outcome not_settled, and the picture still shows the flow. This says nothing about whether a longer "
+    "trial would settle."
 )
+
+# The not-measured outcome of a trial whose flow has not settled within the trial (Requirement 4.5). It is
+# declared for all five measurements; `strouhal` has `not_shedding` as well (Requirement 4.4).
+NOT_SETTLED = "not_settled"
 
 
 def knob_texts(settings: Settings) -> dict[str, str]:
@@ -74,11 +81,11 @@ def build_declaration(settings: Settings | None = None) -> Declaration:
         NumberKnob("angle", 0.0, 15.0, texts["angle"]),
     )
     measurements = (
-        Measurement("cd", "1", "scalar"),
-        Measurement("cl_mean", "1", "scalar"),
-        Measurement("cl_amp", "1", "scalar"),
-        Measurement("strouhal", "1", "scalar", ("not_shedding",)),
-        Measurement("shedding", "1", "scalar"),
+        Measurement("cd", "1", "scalar", (NOT_SETTLED,)),
+        Measurement("cl_mean", "1", "scalar", (NOT_SETTLED,)),
+        Measurement("cl_amp", "1", "scalar", (NOT_SETTLED,)),
+        Measurement("strouhal", "1", "scalar", ("not_shedding", NOT_SETTLED)),
+        Measurement("shedding", "1", "scalar", (NOT_SETTLED,)),
     )
     return Declaration(
         knobs=knobs,

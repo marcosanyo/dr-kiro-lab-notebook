@@ -37,16 +37,13 @@ KNOBS = st.fixed_dictionaries(
 )
 
 
-@settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.too_slow])
-@given(inputs=KNOBS, seed_a=SEEDS, seed_b=SEEDS)
-def test_result_passes_the_contract_and_ignores_the_seed(inputs, seed_a, seed_b):
-    """**Validates: Requirements 3.3, 3.4, 10.2, 17.1**"""
+def _two_results(inputs, seed_a, seed_b, **runner_options):
     config = small_settings()
     with tempfile.TemporaryDirectory() as directory:
         base = Path(directory)
         adapter = WindAdapter(
             config,
-            runner=FakeRunner(config),
+            runner=FakeRunner(config, **runner_options),
             mesher=FakeMesher(),
             command=fake_docker(config),
             lock_path=write_lock(base),
@@ -59,4 +56,26 @@ def test_result_passes_the_contract_and_ignores_the_seed(inputs, seed_a, seed_b)
         assert isinstance(second, TrialResult)
         check_result(adapter.declaration(), first)
         check_result(adapter.declaration(), second)
-        assert first == second
+        return first, second
+
+
+@settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+@given(inputs=KNOBS, seed_a=SEEDS, seed_b=SEEDS)
+def test_result_passes_the_contract_and_ignores_the_seed(inputs, seed_a, seed_b):
+    """**Validates: Requirements 3.3, 3.4, 10.2, 17.1**"""
+    first, second = _two_results(inputs, seed_a, seed_b)
+    assert first == second
+
+
+@settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+@given(inputs=KNOBS, seed_a=SEEDS, seed_b=SEEDS)
+def test_a_run_that_does_not_settle_is_a_result_that_passes_the_contract(inputs, seed_a, seed_b):
+    """All five measurements are `not_settled`, the picture is the sheet, and the seed changes nothing.
+
+    **Validates: Requirements 4.5, 8.3, 10.2, 17.1**"""
+    first, second = _two_results(inputs, seed_a, seed_b, drift=0.05)
+    assert first == second
+    assert {name: value.outcome for name, value in first.values.items()} == dict.fromkeys(
+        ("cd", "cl_mean", "cl_amp", "strouhal", "shedding"), "not_settled"
+    )
+    assert first.picture.kind == "image/png"

@@ -19,7 +19,6 @@ CAUSES = [
     "non-finite value in the force file",
     "non-finite value in the sampled field",
     "timeout after the wall-clock limit",
-    "not settled: the force signal still drifts",
 ]
 
 # A fixed list of solver words that must never reach the public reason.
@@ -79,7 +78,7 @@ def test_failure_has_a_fixed_reason_free_of_inputs_and_solver_words(kind, cause,
     failure = trial_failure(kind, cause, knobs, folder, tail)
     assert isinstance(failure, TrialFailure)
     assert failure.public_reason in set(PUBLIC_REASONS.values())
-    assert len(set(PUBLIC_REASONS.values())) == 3
+    assert len(set(PUBLIC_REASONS.values())) == 2
     assert failure.public_reason == PUBLIC_REASONS[kind]
     lowered = failure.public_reason.lower()
     for word in SOLVER_WORDS:

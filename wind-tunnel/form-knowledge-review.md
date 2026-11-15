@@ -42,10 +42,19 @@ Reviewer: builder (Kiro in this repository), by reading each text in full. The u
 
 | Reason | Result | Reviewed by |
 |---|---|---|
-| `NOT_SETTLED`: "the trial did not settle" | reviewed, no form knowledge | builder |
 | `INCOMPLETE`: "the trial could not be completed" | reviewed, no form knowledge | builder |
 | `TIMEOUT`: "the trial took too long" | reviewed, no form knowledge | builder |
 
+## Not-measured reasons of `adapter.py`
+
+A run that does not settle is a result, not a failure (Requirement 4.5), so its text is a not-measured reason and
+not a public reason of `failures.py`. The sentence about it in `measured_by` is covered by the `measured_by` line
+above, which was read again after the sentence was added.
+
+| Reason | Result | Reviewed by |
+|---|---|---|
+| `NOT_SHEDDING_REASON`: "the lift does not oscillate: cl_amp is not above 0.01" | reviewed, no form knowledge | builder |
+| `NOT_SETTLED_REASON`: "the flow had not settled within the trial" | reviewed, no form knowledge | builder |
 ## Other
 
 | Text | Result | Reviewed by |

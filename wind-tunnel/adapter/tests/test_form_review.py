@@ -5,6 +5,7 @@ reading)."""
 
 from pathlib import Path
 
+from wind_tunnel.adapter import NOT_SETTLED_REASON, NOT_SHEDDING_REASON
 from wind_tunnel.declaration import scan_adapter
 from wind_tunnel.failures import FailureKind
 
@@ -34,6 +35,14 @@ def test_every_knob_has_a_line() -> None:
 def test_every_public_reason_has_a_line() -> None:
     for kind in FailureKind:
         assert _has_line(f"`{kind.name}`", "reviewed, no form knowledge", "builder"), kind.name
+
+
+def test_every_not_measured_reason_has_a_line() -> None:
+    for name, reason in (
+        ("NOT_SHEDDING_REASON", NOT_SHEDDING_REASON),
+        ("NOT_SETTLED_REASON", NOT_SETTLED_REASON),
+    ):
+        assert _has_line(f"`{name}`", f'"{reason}"', "reviewed, no form knowledge", "builder"), name
 
 
 def test_told_set_measured_by_and_goal_have_a_line() -> None:

@@ -32,11 +32,11 @@ def test_knobs_and_measurements_are_as_required() -> None:
         ("angle", 0.0, 15.0),
     ]
     assert [(m.name, m.unit, m.kind, m.not_measured) for m in decl.measurements] == [
-        ("cd", "1", "scalar", ()),
-        ("cl_mean", "1", "scalar", ()),
-        ("cl_amp", "1", "scalar", ()),
-        ("strouhal", "1", "scalar", ("not_shedding",)),
-        ("shedding", "1", "scalar", ()),
+        ("cd", "1", "scalar", ("not_settled",)),
+        ("cl_mean", "1", "scalar", ("not_settled",)),
+        ("cl_amp", "1", "scalar", ("not_settled",)),
+        ("strouhal", "1", "scalar", ("not_shedding", "not_settled")),
+        ("shedding", "1", "scalar", ("not_settled",)),
     ]
     assert (decl.picture, decl.budget, decl.fake) == ("image/png", 24, False)
     assert decl.goal == GOAL
@@ -90,3 +90,17 @@ def test_measured_by_states_the_threshold_and_no_solver_number() -> None:
         assert f"{value:g}" not in numbers
     for word in ("average", "averaging", "seconds", "run length", "Reynolds"):
         assert word not in MEASURED_BY
+
+
+def test_measured_by_says_what_a_flow_that_has_not_settled_gives() -> None:
+    """Requirement 4.5: all five are not measured, the picture is still given, and 'within the trial' is
+    stated without a claim about a longer trial."""
+    assert "When the flow has not settled within the trial, none of the five is measured" in MEASURED_BY
+    assert "not-measured outcome not_settled" in MEASURED_BY
+    assert "the picture still shows the flow" in MEASURED_BY
+    assert "whether a longer trial would settle" in MEASURED_BY
+
+
+def test_every_measurement_declares_not_settled() -> None:
+    for measurement in build_declaration().measurements:
+        assert "not_settled" in measurement.not_measured, measurement.name

@@ -12,9 +12,9 @@ def make(kind):
     return trial_failure(kind, "the cause text", KNOBS, "/some/case/folder", "last solver line")
 
 
-def test_three_kinds_with_fixed_reasons():
-    assert {k.value for k in FailureKind} == {"not_settled", "incomplete", "timeout"}
-    assert public_reason(FailureKind.NOT_SETTLED) == "the trial did not settle"
+def test_two_kinds_with_fixed_reasons():
+    # A run that does not settle is a result (Requirements 4.5, 8.3), so it has no failure kind.
+    assert {k.value for k in FailureKind} == {"incomplete", "timeout"}
     assert public_reason(FailureKind.INCOMPLETE) == "the trial could not be completed"
     assert public_reason(FailureKind.TIMEOUT) == "the trial took too long"
 

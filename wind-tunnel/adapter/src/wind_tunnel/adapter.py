@@ -2,7 +2,9 @@
 
 `WindAdapter.run_trial` follows the flow of the design: validate the four inputs, outline, case, mesh, run,
 parse, estimators, settle, picture. Every expected failure of a stage becomes a `TrialFailure` with one of
-the three fixed public reasons; its detail (cause, knob values, case folder, log tail) is builder side only.
+the two fixed public reasons; its detail (cause, knob values, case folder, log tail) is builder side only.
+A run whose flow does not settle is not a failure: it is a result with the picture and `not_settled` for all
+five measurements (Requirements 4.5 and 8.3, Decision 37).
 Nothing is retried, repaired, clipped or defaulted, the trial seed is not used (10.2), and an exception that
 is not one of the named failures of a stage is not caught.
 
@@ -42,7 +44,7 @@ from wind_tunnel_model.solver_output import (
 )
 
 from wind_tunnel import environment
-from wind_tunnel.declaration import build_declaration
+from wind_tunnel.declaration import NOT_SETTLED, build_declaration
 from wind_tunnel.failures import FailureKind, trial_failure
 from wind_tunnel.picture import picture_sheet
 from wind_tunnel.runner import (
@@ -58,6 +60,8 @@ from wind_tunnel.runner import (
 
 CASE_BASE = environment.RECORD_PATH.parent
 NOT_SHEDDING_REASON = "the lift does not oscillate: cl_amp is not above 0.01"
+# One fixed line in Dr. Kiro's terms: no number of the settle rule, and no claim about a longer trial (4.5).
+NOT_SETTLED_REASON = "the flow had not settled within the trial"
 # A sample folder is matched to a frame time when the two differ by less than this (time units).
 FRAME_TIME_TOLERANCE = 1e-6
 
@@ -126,7 +130,7 @@ class WindAdapter:
             return self._failure_with_case(failure.kind, failure.reason, knobs, case_dir, failure.detail)
 
         problem: tuple[FailureKind, str] | None = None
-        outcome: TrialResult | str | None = None
+        outcome: TrialResult | None = None
         try:
             outcome = self._evaluate(output, settings)
         except SolverOutputError as error:
@@ -137,7 +141,7 @@ class WindAdapter:
         # time-out, whatever the part found (8.7).
         over = self._clock() - deadline
         if over >= 0:
-            found = problem[1] if problem else outcome if isinstance(outcome, str) else "a result"
+            found = problem[1] if problem else "a result"
             return self._failure_with_case(
                 FailureKind.TIMEOUT,
                 f"the limit of {settings.run.timeout_s!r} s was over by {over!r} s when the work after the "
@@ -148,9 +152,8 @@ class WindAdapter:
             )
         if problem is not None:
             return self._failure_with_case(*problem, knobs, case_dir, "")
-        if isinstance(outcome, str):
-            return self._failure_with_case(FailureKind.NOT_SETTLED, outcome, knobs, case_dir, "")
 
+        # A run that did not settle is a result, like a settled one: its folder goes to the trash too.
         move_to_trash(case_dir)
         return outcome
 
@@ -188,8 +191,9 @@ class WindAdapter:
         prune_case_folder(case_dir)
         return trial_failure(kind, cause, knobs, case_dir, detail)
 
-    def _evaluate(self, output: RunOutput, settings: Settings) -> TrialResult | str:
-        """Parse, measure, settle, draw. A string is the reason a run did not settle."""
+    def _evaluate(self, output: RunOutput, settings: Settings) -> TrialResult:
+        """Parse, measure, settle, draw. The picture sheet is drawn the same way whether the run settled or
+        not. A run that did not settle gives `not_settled` for all five measurements (4.5, 8.3)."""
         force = parse_force_file(output.force_file)
         if force.t[-1] < settings.time.end - settings.time.max_delta_t:
             raise SolverOutputError(
@@ -201,10 +205,14 @@ class WindAdapter:
         measured = measure(t, fx, fy, settings.flow)
         q = dynamic_pressure(settings.flow)
         verdict = settled(t, fx / q, fy / q, measured.shedding, measured.strouhal)
-        if not verdict.ok:
-            return verdict.reason
         frames = self._frames(output, settings)
         sheet = picture_sheet(frames, settings.picture)
+        picture = Picture(kind="image/png", data=sheet)
+        if not verdict.ok:
+            not_settled = NotMeasured(NOT_SETTLED, NOT_SETTLED_REASON)
+            return TrialResult(
+                values={m.name: not_settled for m in self._declaration.measurements}, picture=picture
+            )
         strouhal: float | NotMeasured = (
             NotMeasured("not_shedding", NOT_SHEDDING_REASON)
             if measured.strouhal is None
@@ -217,7 +225,7 @@ class WindAdapter:
             "strouhal": strouhal,
             "shedding": float(measured.shedding),
         }
-        return TrialResult(values=values, picture=Picture(kind="image/png", data=sheet))
+        return TrialResult(values=values, picture=picture)
 
     @staticmethod
     def _frames(output: RunOutput, settings: Settings) -> list[tuple[np.ndarray, np.ndarray]]:

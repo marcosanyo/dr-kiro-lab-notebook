@@ -11,6 +11,7 @@ from pathlib import Path
 from bench.frontend.describe import declaration_text
 from bench.scan.scan import Scanner
 
+from wind_tunnel.adapter import NOT_SETTLED_REASON, NOT_SHEDDING_REASON
 from wind_tunnel.declaration import scan_adapter
 from wind_tunnel.failures import PUBLIC_REASONS
 
@@ -47,4 +48,10 @@ def test_scanner_derives_terms_from_every_kind_of_solver_file():
 def test_public_reasons_contain_no_derived_term():
     scanner = _scanner()
     for reason in PUBLIC_REASONS.values():
+        assert scanner.find_terms(reason) == []
+
+
+def test_not_measured_reasons_contain_no_derived_term():
+    scanner = _scanner()
+    for reason in (NOT_SHEDDING_REASON, NOT_SETTLED_REASON):
         assert scanner.find_terms(reason) == []

@@ -17,7 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from bench.adapter import NumberKnob, TrialFailure, TrialResult
+from bench.adapter import NotMeasured, NumberKnob, Picture, TrialFailure, TrialResult
 from wind_tunnel_model.settings import Settings
 
 from wind_tunnel.adapter import WindAdapter
@@ -137,6 +137,18 @@ def test_refused_is_an_outcome_and_a_refused_record_does_not_stop_the_stage():
         assert violation({"outcome": outcome, "wall_clock_s": 1.0}) is not None
 
 
+def test_a_result_of_not_settled_values_is_recorded_as_did_not_settle():
+    """`did not settle` stays an outcome name of extreme-runs.json (17.6), now read from a result."""
+    picture = Picture("image/png", b"")
+    names = ("cd", "cl_mean", "cl_amp", "strouhal", "shedding")
+    unsettled = TrialResult(dict.fromkeys(names, NotMeasured("not_settled", "r")), picture)
+    settled = TrialResult(
+        {**dict.fromkeys(names, 1.0), "strouhal": NotMeasured("not_shedding", "r")}, picture
+    )
+    assert outcome_of(unsettled) == NOT_SETTLED
+    assert outcome_of(settled) == SETTLED
+
+
 class RecordingAdapter(WindAdapter):
     """The adapter, unchanged, that also notes the vorticity of the frames it draws."""
 
@@ -156,9 +168,11 @@ class RecordingAdapter(WindAdapter):
 
 def outcome_of(result: TrialResult | TrialFailure) -> str:
     if isinstance(result, TrialResult):
-        return SETTLED
-    if result.public_reason == PUBLIC_REASONS[FailureKind.NOT_SETTLED]:
-        return NOT_SETTLED
+        # A run that did not settle is a result with `not_settled` for the measurements (Requirement 4.5).
+        unsettled = [
+            v for v in result.values.values() if isinstance(v, NotMeasured) and v.outcome == "not_settled"
+        ]
+        return NOT_SETTLED if unsettled else SETTLED
     if result.public_reason == PUBLIC_REASONS[FailureKind.TIMEOUT]:
         return TIME_LIMIT
     if result.public_reason == PUBLIC_REASONS[FailureKind.INCOMPLETE]:
@@ -251,7 +265,7 @@ def test_extreme_runs_survey():
                 record["vorticity"] = adapter.frame_stats
             else:
                 record["detail"] = result.detail
-                # The adapter keeps the case folder of a run that did not settle, under a name that depends
+                # The adapter keeps the case folder of a failed run, under a name that depends
                 # only on the seed. Move it aside (nothing is deleted) so that the next run can be made.
                 kept = REPO / "bench-run" / "wind-tunnel" / f"{SEED:016x}"
                 if kept.exists():

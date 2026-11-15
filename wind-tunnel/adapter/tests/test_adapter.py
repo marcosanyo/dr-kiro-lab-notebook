@@ -22,7 +22,7 @@ from wind_tunnel_model.mesh import FakeMesher, MeshError  # noqa: E402
 
 from wind_tunnel import adapter as adapter_module  # noqa: E402
 from wind_tunnel import environment  # noqa: E402
-from wind_tunnel.adapter import NOT_SHEDDING_REASON, WindAdapter  # noqa: E402
+from wind_tunnel.adapter import NOT_SETTLED_REASON, NOT_SHEDDING_REASON, WindAdapter  # noqa: E402
 from wind_tunnel.environment import EnvironmentFailure  # noqa: E402
 from wind_tunnel.failures import PUBLIC_REASONS, FailureKind  # noqa: E402
 from wind_tunnel.runner import SolverFailure  # noqa: E402
@@ -101,11 +101,47 @@ def test_each_solver_failure_kind(settings, tmp_path, kind):
     assert "aspect=2.0" in result.detail
 
 
-def test_not_settled(settings, tmp_path):
+def test_a_run_that_does_not_settle_is_a_result_with_five_not_settled_and_the_sheet(settings, tmp_path):
+    """Requirements 4.5 and 8.3: a result, not a failure; the picture is the sheet of a settled run."""
     adapter, _ = make(settings, tmp_path, FakeRunner(settings, drift=0.05))
     result = adapter.run_trial(KNOBS, 4)
-    assert_failure(result, FailureKind.NOT_SETTLED, tmp_path, 4)
-    assert "cd rule" in result.detail
+    assert isinstance(result, TrialResult)
+    check_result(adapter.declaration(), result)
+    expected = NotMeasured("not_settled", NOT_SETTLED_REASON)
+    assert dict(result.values) == dict.fromkeys(("cd", "cl_mean", "cl_amp", "strouhal", "shedding"), expected)
+    assert result.picture.kind == "image/png"
+    (tmp_path / "settled").mkdir()
+    settled_adapter, _ = make(settings, tmp_path / "settled")
+    assert (
+        result.picture == settled_adapter.run_trial(KNOBS, 4).picture
+    )  # the same sheet code and the same flow
+    assert not (tmp_path / "cases" / "0000000000000004").exists()
+    assert (tmp_path / "cases" / "trash" / "0000000000000004").is_dir()  # a result, so the folder is trashed
+    assert adapter.run_trial(KNOBS, 5) == result  # deterministic, the seed is not used
+
+
+def test_the_not_settled_reason_is_one_fixed_line_without_a_number():
+    assert NOT_SETTLED_REASON.isprintable()
+    assert not any(ch.isdigit() for ch in NOT_SETTLED_REASON)
+    assert "longer" not in NOT_SETTLED_REASON
+
+
+def test_a_run_that_does_not_settle_and_does_not_shed_is_still_not_settled_for_strouhal(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path, FakeRunner(settings, amp=0.005, drift=0.05))
+    result = adapter.run_trial(KNOBS, 1)
+    assert isinstance(result, TrialResult)
+    check_result(adapter.declaration(), result)
+    assert result.values["strouhal"] == NotMeasured("not_settled", NOT_SETTLED_REASON)
+
+
+class Short(FakeRunner):
+    """A run whose force history stops early: an incomplete run."""
+
+    def run(self, case_dir, deadline):
+        output = super().run(case_dir, deadline)
+        lines = output.force_file.read_text().splitlines()
+        output.force_file.write_text("\n".join(lines[: len(lines) // 2]) + "\n")
+        return output
 
 
 def test_mesh_error_is_incomplete(settings, tmp_path):
@@ -132,28 +168,21 @@ def test_unreadable_output_is_incomplete(settings, tmp_path):
 
 
 def test_force_history_that_stops_early_is_incomplete(settings, tmp_path):
-    class Short(FakeRunner):
-        def run(self, case_dir, deadline):
-            output = super().run(case_dir, deadline)
-            lines = output.force_file.read_text().splitlines()
-            output.force_file.write_text("\n".join(lines[: len(lines) // 2]) + "\n")
-            return output
-
     adapter, _ = make(settings, tmp_path, Short(settings))
     assert_failure(adapter.run_trial(KNOBS, 8), FailureKind.INCOMPLETE, tmp_path, 8)
 
 
 def test_failed_run_keeps_only_log_settings_mesh_file_and_force_file(settings, tmp_path):
-    class Leaves(FakeRunner):
+    class Leaves(Short):
         def run(self, case_dir, deadline):
             for name in ("processor0/0.5/U", "constant/polyMesh/points", "12/U", "solver.log"):
                 (case_dir / name).parent.mkdir(parents=True, exist_ok=True)
                 (case_dir / name).write_text("x")
             return super().run(case_dir, deadline)
 
-    adapter, _ = make(settings, tmp_path, Leaves(settings, drift=0.05))
+    adapter, _ = make(settings, tmp_path, Leaves(settings))
     result = adapter.run_trial(KNOBS, 10)
-    assert_failure(result, FailureKind.NOT_SETTLED, tmp_path, 10)
+    assert_failure(result, FailureKind.INCOMPLETE, tmp_path, 10)
     case = tmp_path / "cases" / "000000000000000a"
     files = {str(p.relative_to(case)) for p in case.rglob("*") if p.is_file()}
     assert "solver.log" in files
@@ -173,7 +202,7 @@ def test_prune_failure_stops_the_run_loudly(settings, tmp_path, monkeypatch):
         raise PermissionError("cannot prune")
 
     monkeypatch.setattr(adapter_module, "prune_case_folder", refuse)
-    adapter, _ = make(settings, tmp_path, FakeRunner(settings, drift=0.05))
+    adapter, _ = make(settings, tmp_path, Short(settings))
     with pytest.raises(PermissionError):
         adapter.run_trial(KNOBS, 11)
 
@@ -218,7 +247,7 @@ def test_a_late_run_that_also_did_not_settle_is_a_timeout(settings, tmp_path):
     adapter._clock = SteppedClock(0.0, settings.run.timeout_s + 1.0)
     result = adapter.run_trial(KNOBS, 14)
     assert_failure(result, FailureKind.TIMEOUT, tmp_path, 14)
-    assert "cd rule" in result.detail  # what the part found is kept on the builder side
+    assert "the part found: a result" in result.detail  # a late result is a time-out, whatever it holds
 
 
 def test_the_trash_is_deleted_before_the_clock_starts_and_the_next_trial_does_not_see_it(settings, tmp_path):
