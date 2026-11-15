@@ -1,6 +1,7 @@
 """Tests of the mesher (design 3; Requirements 6.8, 6.9, 7.2, 10.2)."""
 
 import itertools
+import threading
 
 import pytest
 
@@ -71,3 +72,30 @@ def test_same_input_gives_identical_file(tmp_path, settings):
     GmshMesher().build(pieces, settings, first)
     GmshMesher().build(pieces, settings, second)
     assert (first / MESH_FILE).read_bytes() == (second / MESH_FILE).read_bytes()
+
+
+def _build_in_worker_thread(outline_value, settings, dest):
+    errors = []
+
+    def work():
+        try:
+            GmshMesher().build(outline_value, settings, dest)
+        except BaseException as error:  # noqa: BLE001 - handed to the main thread and asserted on
+            errors.append(error)
+
+    thread = threading.Thread(target=work)
+    thread.start()
+    thread.join()
+    return errors
+
+
+@pytest.mark.needs_gmsh
+def test_mesh_builds_in_a_worker_thread_with_the_same_bytes(tmp_path, settings):
+    """Trials run in a worker thread in the front end; Gmsh must not need the main thread (Decision 41)."""
+    pytest.importorskip("gmsh", reason="Gmsh cannot be imported here")
+    body = outline(1.5, 0.5, 1.0, 10.0, settings)
+    (tmp_path / "main").mkdir()
+    (tmp_path / "worker").mkdir()
+    GmshMesher().build(body, settings, tmp_path / "main")
+    assert _build_in_worker_thread(body, settings, tmp_path / "worker") == []
+    assert (tmp_path / "worker" / MESH_FILE).read_bytes() == (tmp_path / "main" / MESH_FILE).read_bytes()

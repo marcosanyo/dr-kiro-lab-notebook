@@ -57,7 +57,9 @@ class GmshMesher:
             raise MeshError("the outline is empty")
         target = Path(dest) / MESH_FILE
         target.parent.mkdir(parents=True, exist_ok=True)
-        gmsh.initialize()
+        # interruptible=False: Gmsh then installs no SIGINT handler (Python allows that in the main
+        # thread only), and the bench front end runs trials in a worker thread (Decision 41).
+        gmsh.initialize(interruptible=False)
         try:
             self.cells = _build(gmsh, outline, settings, target)
         except MeshError:
