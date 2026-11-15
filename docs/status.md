@@ -3,7 +3,7 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: 2026-11-17（ローカル）。`wind-tunnel` のタスク 16 まで完了。次はタスク 17（ユーザーの実セッション）。
+最終更新: 2026-11-17（ローカル、最終リハーサル後）。`wind-tunnel` のタスク 16 まで完了。次はタスク 17（ユーザーの実セッション）。
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
@@ -27,6 +27,12 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
     `empty`（OpenFOAM の patch 型でもある語）が入っていて、`Session._finish` のスキャンで bench failure になった（Decision 44）。
     `empty` ほか 4 語を stop list に入れ、ベンチ自身の文を全部スキャンするテスト（掃引）を足した。
   - `wt-002` と `wt-003` は `stopped` として封印済み（`sessions/wind-tunnel/`、コミットしていない）。id は再利用できない。
+- `wt-003` の後の修正（最後のコード変更）: `range` の下限が上限以上のときの拒否文を、Dr. Kiro が直せる文に変えた
+  （下限は上限より厳密に小さくする、1 つの値は範囲として受け付けない、値がちょうど 1 つの数なら `[0.5, 1.5]`（値 1 の場合）のような小さな範囲を書く）。
+  `bench/src/bench/specfiles/hypotheses.py`、テストは `bench/tests/unit/test_hypotheses.py` と、本物の Session を通す
+  `wind-tunnel/adapter/tests/test_register_refusal.py`（通常の拒否で、ベンチ障害ではない）。コミット `fc85e5e`。
+  この変更の後、本物の Docker で最終リハーサルが通り、封印、`bench-verify`、`bench-scan` も問題なし。`docs/ja` の訳も最新（`ja-check` 通過）。
+- `wind-tunnel/lab` には `wt-003` の残りがある（`bench-new-session` が初期化する）。
 - 次のセッションは `wt-004`、シード `20261118`。コマンドは `wind-tunnel/README.md` の「Running a session」。
   前のセッションがクラッシュして封印されていない場合は、`bench-new-session` の前に
   `bench-stop <設定ファイル> --reason <理由>` で閉じる（理由はビルダーの文としてスキャンされる。ソルバーやメッシュの語を入れない）。
