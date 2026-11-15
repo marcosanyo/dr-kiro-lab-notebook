@@ -54,6 +54,17 @@ def test_declaration_is_the_declared_one(settings, tmp_path):
     check_declaration(adapter.declaration())
 
 
+def test_a_case_folder_that_already_exists_stops_the_trial_and_is_left_alone(settings, tmp_path):
+    """No fallback (rules 2): a leftover folder of the same name is an error, never deleted or renamed. The
+    bench turns the exception into a bench failure (session stops); the builder moves the folder aside."""
+    adapter, runner = make(settings, tmp_path)
+    leftover = tmp_path / "cases" / "0000000000000007"
+    leftover.mkdir(parents=True)
+    (leftover / "marker").write_text("kept", encoding="utf-8")
+    with pytest.raises(FileExistsError):
+        adapter.run_trial(KNOBS, 7)
+    assert (leftover / "marker").read_text(encoding="utf-8") == "kept"
+    assert runner.calls == []
 def test_settled_run_passes_check_result_and_moves_the_case_to_the_trash(settings, tmp_path):
     adapter, runner = make(settings, tmp_path)
     result = adapter.run_trial(KNOBS, 7)
