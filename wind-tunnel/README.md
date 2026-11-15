@@ -182,7 +182,7 @@ the builder's Mac. The digest is in `model/image-lock.toml`:
 that digest, and that at least 3 CPUs are available. It then starts a throw-away container three times, as the
 runner does, and checks that `/case/Allrun` is there (the case mount probe, about 1 s, no solver). If one of these
 fails, it fails and says which one, what was
-expected and what was found. It does not pull the image or use another one. The mesh is made on the host by Gmsh, a
+expected and what was found. It does not pull the image or use another one. The mesh is made on the host by Gmsh, in a short-lived child process (not in the bench server), a
 Python package locked in `adapter/uv.lock`. Only the solver needs Docker: `body-lab` and the bench do not.
 
 ## Install and test
