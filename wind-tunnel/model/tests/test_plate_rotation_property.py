@@ -22,8 +22,8 @@ aspects = st.floats(min_value=0.5, max_value=3.0, allow_nan=False)
 corners = st.one_of(st.sampled_from([0.0, 1.0]), st.floats(min_value=0.0, max_value=1.0, allow_nan=False))
 splitters = st.one_of(st.just(0.0), st.floats(min_value=1e-3, max_value=3.0, allow_nan=False))
 positive_splitters = st.floats(min_value=1e-3, max_value=3.0, allow_nan=False)
-angles = st.one_of(st.just(0.0), st.floats(min_value=0.0, max_value=30.0, allow_nan=False))
-positive_angles = st.floats(min_value=0.01, max_value=30.0, allow_nan=False)
+angles = st.one_of(st.just(0.0), st.floats(min_value=0.0, max_value=15.0, allow_nan=False))
+positive_angles = st.floats(min_value=0.01, max_value=15.0, allow_nan=False)
 
 PBT = hyp_settings(max_examples=200, deadline=None)
 

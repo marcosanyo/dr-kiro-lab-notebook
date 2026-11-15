@@ -10,7 +10,7 @@ from hypothesis import given
 from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
 
-from wind_tunnel_model.geometry import Arc, GeometryError, Line, outline
+from wind_tunnel_model.geometry import Arc, Line, outline
 from wind_tunnel_model.settings import Settings
 
 
@@ -51,17 +51,9 @@ corners = st.one_of(
 @hyp_settings(max_examples=200, deadline=None)
 @given(aspect=aspects, corner=corners)
 def test_corner_radius_follows_the_definition(model_settings, aspect, corner):
-    min_edge = model_settings.body.min_edge
     shorter = min(1.0, aspect)
     r = corner * shorter / 2
     straight = {"vertical": 1 - 2 * r, "horizontal": aspect - 2 * r}
-    expected_lengths = [straight["vertical"], straight["horizontal"], r * math.pi / 2 if r > 0 else 0.0]
-    too_short = any(0 < n < min_edge for n in expected_lengths)
-
-    if too_short:
-        with pytest.raises(GeometryError):
-            outline(aspect, corner, 0, 0, model_settings)
-        return
 
     pieces = outline(aspect, corner, 0, 0, model_settings)
 

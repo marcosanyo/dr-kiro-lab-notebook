@@ -45,7 +45,7 @@ wind-tunnel/
   circle-check.json               written by the circle check (15.5)
   form-knowledge-review.md        the reviewed list (12.3)
   count_lines.py                  writes the code size into numbers.md (16.2)
-  extreme-runs.json               outcome and time of the 32 end-corner and near-end runs (17.6)
+  extreme-runs.json               outcome and time of the 32 end-corner and near-end cases (17.6)
   model/                          uv project "wind-tunnel-model"; never visible from lab/
     pyproject.toml                depends on gmsh and numpy
     constants.toml                 every number of the solver setup (6.8, 6.9)
@@ -54,6 +54,7 @@ wind-tunnel/
     src/wind_tunnel_model/
       settings.py                 load and validate constants.toml; the Reynolds-number override
       geometry.py                 outline of the body from the four knobs (pure)
+      input_rule.py               the corner rule: which corner values are accepted for an aspect (pure, 6.11)
       mesh.py                     Gmsh recipe: outline -> mesh file
       casegen.py                  templates -> case folder (pure text)
       solver_output.py            parse force.dat and sampled-vorticity files
@@ -135,6 +136,11 @@ flowchart TD
     reviewed list (Requirement 12) records this sentence by sentence.
   - A test compares the four texts, with the thickness filled in, with Requirement 3.2 read from the spec file
     (skipped with a visible reason where `.kiro/` is absent), so that spec and code cannot drift.
+- Input check: `WindAdapter.check_inputs(inputs) -> str | None`, the optional hook of `lab-bench` (Requirement 19). It
+  calls `corner_refusal` of `input_rule.py` (section 2) with `aspect` and `corner` and looks at no other knob. It is
+  a pure function, so the same inputs always give the same answer. `run_trial` calls the same function in its
+  validation and raises `InputRuleError` for a refused corner, so a refused value can never run when the hook was
+  not called (no fallback).
 - Two factories: `WindAdapter()` (checks the environment, section 6) and `scan_adapter()` (the same declaration, no
   `run_trial`, no check). `scan_sources.toml` names `scan_adapter` as its `adapter`. A test asserts that both give
   equal declarations. The scan therefore needs no Docker (13.5, 14.4).
@@ -168,11 +174,18 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   `angle` text (Requirement 3.2) and Property 3 pins it.
   Why this sense: it is the prototype's, confirmed by the user (Decision 19 of the requirements).
 - Output: an ordered, closed list of primitives (`Line(p, q)`, `Arc(p, centre, q)`), each with exact endpoints.
-- `GeometryError` (with the knob values and the reason, builder side only) when a positive piece is shorter than
-  `min_edge`, or when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10).
-  `min_edge` is 0.0 in `constants.toml` until the user decides otherwise: the near-end cases of Requirement 17.2
-  must reach the mesher and the solver so that they can be measured, and a refusal in the geometry would hide the
-  result. With 0.0, only a negative or undefined piece is a `GeometryError`. Decision 12.
+- `GeometryError` (with the knob values and the reason, builder side only) when a piece has negative length, or
+  when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10). The geometry refuses no
+  piece for being short; Decision 12 (a geometry free of this rule) is kept, and the rule moved to `input_rule.py`
+  (Decision 23).
+- `input_rule.py` (Requirement 6.11): `corner_band(aspect, settings) -> (lo, hi)`, `corner_accepted`, and
+  `corner_refusal(aspect, corner, settings) -> str | None`. With `h = min(1, aspect)`: the arc of one corner is
+  `(pi / 4) h c` and the shortest straight side of the body is `h (1 - c)`. `lo = ceil(1000 * 4 min_arc / (pi h)) /
+  1000` and `hi = floor(1000 (1 - min_line / h)) / 1000` (a tolerance of 1e-9 on the thousandths absorbs float
+  error of an exact bound, as 1 - 0.0025 / 0.5 = 0.995). A corner of exactly 0 or 1 is accepted; any other is
+  accepted when `lo <= corner <= hi`, so the band that the message tells is the band that is tested and is never
+  wider than the rule. The message is `corner <c> is not accepted: corner must be 0, 1, or between <lo> and <hi>
+  when aspect is <a>`. The plate and every other knob are not looked at.
 
 ### 3. Mesh (Req 6.8, 7.2) in `wind_tunnel_model/mesh.py`
 
@@ -402,7 +415,7 @@ key):
 | Section | Keys | Source of the value |
 |---|---|---|
 | `[flow]` | `reynolds`, `speed`, `height`, `depth`, `density` | 150 (brief), 1, 1, 1, 1 |
-| `[body]` | `thickness`, `min_edge` | 0.08 (decisions), 0.0 (no refusal in the geometry until the user decides, Decision 12) |
+| `[body]` | `thickness`, `min_arc`, `min_line` | 0.08 (decisions), 0.0314 and 0.0025 (the corner rule, Decision 23; data in `spikes/timing/extreme-v2-summary.md`, margin 115 s) |
 | `[domain]` | `ahead`, `behind`, `above_below` | 6, 18, 7 (brief) |
 | `[time]` | `end`, `average_from`, `max_co`, `max_delta_t`, `initial_delta_t` | 150, 80, 0.8 (brief), 0.05 (the estimator limit), a starting value confirmed by the smoke-run task |
 | `[mesh]` | `size_body`, `size_far`, `size_wake`, `wake_length`, `algorithm`, `threads` | starting values chosen in the mesh task from cell counts and confirmed by the smoke run; algorithm and threads set |
@@ -432,9 +445,9 @@ Docker, OpenFOAM or a display. Property 1-3 and 13 need no Gmsh either.
 
 ### Property 1: Outline is closed and valid for every knob value
 
-For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 30] (ends included), the
-outline is either a closed, continuous loop in which no straight piece has length zero, or a `GeometryError`
-that names the piece shorter than `min_edge`.
+For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 15] (ends included), the
+outline is a closed, continuous loop in which no straight piece has length zero. The geometry refuses no short
+piece; the corner rule is Property 17.
 
 **Validates: Requirements 3.3, 6.10**
 
@@ -563,6 +576,16 @@ differ by `spacing`, and the first is not before `average_from`; settings whose 
 
 **Validates: Requirements 9.3, 9.4**
 
+### Property 17: Corner rule
+For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer of `corner_refusal` is the same on
+two calls; a `corner` of 0 or 1 is accepted; an accepted `corner` gives a corner arc of at least `min_arc` and a
+straight side of at least `min_line` (up to a relative 1e-9); a refused `corner` lies outside the band told in its
+message, and either breaks the rule or lies within one thousandth of the band's end; the message holds both ends of
+the band. Examples pin the measured data: aspect 1.75 and corner 0.04 (arc 0.031416) and aspect 0.5 and corner 0.995
+(straight side 0.0025) are accepted; aspect 0.5 and corner 0.07 (arc 0.02749) and aspect 1.75 and corner 0.998
+(straight side 0.002) are refused. `check_inputs` of the adapter gives the same answers whatever `splitter` and
+`angle` are, and a refused `corner` that reaches `run_trial` raises.
+**Validates: Requirements 3.3, 6.11**
 ## Error Handling
 
 | Situation | Outcome | Where it is seen |
@@ -587,10 +610,10 @@ tests and the reviewed list.
 
 | Kind | Tests | Runs where |
 |---|---|---|
-| Properties 1-16 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
+| Properties 1-17 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
 | Examples | the declaration passes `check_declaration`; both factories give equal declarations; knob texts equal Requirement 3.2; the 13.8 overlap check on the real files; the circle literature value at Reynolds 100 is 0.164335 within 1e-6 and the band is 0.1561 to 0.1726; `max_delta_t <= ESTIMATOR_MAX_DT`; the Reynolds-override walk | Kiro Web and local |
 | Gmsh | the mesher on the corners of the knob ranges gives a mesh file with the five named groups; marked `needs_gmsh`, skipped with a visible reason where Gmsh cannot be imported (the task checks this in Kiro Web first, as `body-lab` did for rendering) | where Gmsh imports |
-| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the sheet reading check on a real sheet (9.10, run by the builder, recorded in `spikes/sheet/results.md`); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the stop of 17.6 | Local Mac only |
+| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the sheet reading check on a real sheet (9.10, run by the builder, recorded in `spikes/sheet/results.md`); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the refusals of 6.11 and the stop of 17.6 (a run over 115 s stops too) | Local Mac only |
 | Review | `form-knowledge-review.md` (12.3) | By reading |
 
 The ordinary suite uses `FakeMesher` and `FakeRunner`, which writes a synthetic `force.dat` and vorticity files from
@@ -602,6 +625,7 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 |---|---|
 | `declaration.py`, `told_set.py`, the knob `description` field (`lab-bench` 18) | 1, 2, 3, 4.1-4.4, 11 |
 | `geometry.py` | 3.3, 6.1-6.5, 6.10 |
+| `input_rule.py`, `WindAdapter.check_inputs` (`lab-bench` 19) | 3.3, 6.11, 17.2, 17.6 |
 | `mesh.py`, `casegen.py`, `model/case/`, `constants.toml` | 6.6-6.9, 9.5, 10.1 |
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
@@ -623,7 +647,7 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
   the `lab-bench` spec.
 - S4. Mesh or solver settings that I must change after the circle check was run (6.8); a circle check outside 5%
   (15.7); two runs of one input that differ (10.4); a run slower than 140 s or six runs that do not fit in 900 s
-  (8.7); any of the 32 end-corner and near-end runs that times out, fails to mesh, fails or does not settle (17.2, 17.6).
+  (8.7); any of the 32 end-corner and near-end runs that is not refused and times out, fails to mesh, fails, does not settle or takes more than 115 s (17.2, 17.6).
 - S5. An OpenFOAM spelling, an in-image command or a Docker option that I cannot confirm in the smoke run (for
   example the function-object time window, the sampler output layout, the user id in the container).
 - S6. A derived term of the solver files that collides with the told set or with a builder text and cannot be
@@ -658,9 +682,9 @@ Made by the builder in this design; none changes a requirement.
 10. **Estimators and settle criterion live in `model/`** (Decision 14).
 11. **The image digest and image id are in `model/image-lock.toml`**, written by the digest task, so that
     `constants.toml` never holds a placeholder that a loader must refuse.
-12. **`min_edge` is 0.0** until the near-end runs have been measured (Requirement 17.2, 17.6). The geometry then
-    refuses nothing before the mesher; whatever the mesher and the solver do is the measurement. The near-end
-    distances (0.001 and 0.01 of the range) are the builder's proposal.
+12. **The geometry refuses no short piece.** (Until the near-end runs were measured, `min_edge` was 0.0; it is now
+    replaced by the corner rule of Decision 23, applied to the inputs before a run.) The near-end distances (0.001
+    and 0.01 of the range) are the builder's proposal, accepted by the user.
 13. **Stop-list proposals** for OpenFOAM keywords are a stop with a written proposal (Requirement 13.9). The builder
     renames its own identifiers and rewords first.
 14. **Sign of the angle.** A positive angle moves the front end toward +y (clockwise with the flow along +x and +y
@@ -705,6 +729,18 @@ Made by the builder in this design; none changes a requirement.
     angle=10.0` (seed 0, same machine and image digest) the five measurements, the picture bytes and the force file
     hash are byte-identical before and after (`spikes/timing/reference-before.json`, `reference-after.json`,
     `reference.py compare`). Requirements Decision 33.
+
+23. **Corner rule outside the geometry** (the user's decisions, task 14.4 stage 3b; Requirements Decisions 34 and 35).
+    The margin rule is a worst wall-clock time of 115 s inside the declared ranges; the angle range is [0, 15]. The
+    single `min_edge` is replaced by `min_arc` = 0.0314 (shortest corner arc) and `min_line` = 0.0025 (shortest
+    straight side of the body), because the data (`spikes/timing/extreme-v2-summary.md`) put the two limits an order
+    of magnitude apart: one value would refuse the high side about 12 times more than needed, or accept arcs that
+    hit the limit. Neither applies to the plate. The refusal is a pure function of `aspect` and `corner` in
+    `wind_tunnel_model/input_rule.py`, called by `WindAdapter.check_inputs` (before any trial of an experiment, no
+    budget used) and again by `run_trial`, which raises for a refused corner. Choice: not in the geometry, because
+    the geometry is a drawing of the body for any knob values and the rule is a limit of the solver on this machine;
+    the message is one line in Dr. Kiro's terms. The band is rounded inward to 3 decimals, and that band is what is
+    tested.
 
 ## Open questions
 

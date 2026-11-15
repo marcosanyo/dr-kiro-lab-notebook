@@ -4,8 +4,9 @@ Pure arithmetic; no mesher is imported. Frame before the turn: the rectangle spa
 y in [-1/2, 1/2] with ``a = aspect``; the flow goes along +x, so the rear is the +x side. The outline runs
 counter-clockwise, starting at the bottom edge.
 
-Pieces whose length is exactly zero are omitted. A negative or undefined piece, or a positive piece shorter
-than ``settings.body.min_edge``, raises ``GeometryError``.
+Pieces whose length is exactly zero are omitted. A negative or undefined piece raises ``GeometryError``.
+No piece is refused for being short: the rule of the corner values (``input_rule.py``) is applied to the
+inputs before a run, not here.
 """
 
 from __future__ import annotations
@@ -57,7 +58,6 @@ def outline(aspect: float, corner: float, splitter: float, angle: float, setting
     h = a / 2
     r = corner * min(1.0, a) / 2
     t = settings.body.thickness
-    min_edge = settings.body.min_edge
 
     # Plate cut on the rear side (design 2).
     cut = h
@@ -72,13 +72,13 @@ def outline(aspect: float, corner: float, splitter: float, angle: float, setting
 
     def line(p: Point, q: Point, *, signed: float | None = None) -> None:
         length = math.dist(p, q) if signed is None else signed
-        _keep(pieces, Line(p, q), length, min_edge, knobs)
+        _keep(pieces, Line(p, q), length, knobs)
 
     def arc(p: Point, centre: Point, q: Point) -> None:
         a0 = math.atan2(p[1] - centre[1], p[0] - centre[0])
         a1 = math.atan2(q[1] - centre[1], q[0] - centre[0])
         sweep = (a1 - a0) % (2 * math.pi)
-        _keep(pieces, Arc(p, centre, q), r * sweep, min_edge, knobs)
+        _keep(pieces, Arc(p, centre, q), r * sweep, knobs)
 
     c_br = (h - r, -0.5 + r)
     c_tr = (h - r, 0.5 - r)
@@ -115,13 +115,11 @@ def outline(aspect: float, corner: float, splitter: float, angle: float, setting
     return _turn(tuple(pieces), angle)
 
 
-def _keep(pieces: list, piece: Line | Arc, length: float, min_edge: float, knobs: str) -> None:
+def _keep(pieces: list, piece: Line | Arc, length: float, knobs: str) -> None:
     if length < 0:
         raise GeometryError(f"a piece has negative length {length} ({knobs})")
     if length == 0:
         return
-    if length < min_edge:
-        raise GeometryError(f"a piece of length {length} is shorter than min_edge {min_edge} ({knobs})")
     pieces.append(piece)
 
 

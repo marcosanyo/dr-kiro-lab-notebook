@@ -64,7 +64,7 @@ knob_values = st.fixed_dictionaries(
         "aspect": st.floats(0.5, 3.0),
         "corner": st.floats(0.0, 1.0),
         "splitter": st.floats(0.0, 3.0),
-        "angle": st.floats(0.0, 30.0),
+        "angle": st.floats(0.0, 15.0),
     }
 )
 kinds = st.sampled_from(list(FailureKind))

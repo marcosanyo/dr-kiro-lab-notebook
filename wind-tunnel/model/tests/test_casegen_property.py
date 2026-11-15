@@ -15,7 +15,7 @@ knob_values = st.fixed_dictionaries(
         "aspect": st.floats(min_value=0.5, max_value=3.0),
         "corner": st.floats(min_value=0.0, max_value=1.0),
         "splitter": st.floats(min_value=0.0, max_value=3.0),
-        "angle": st.floats(min_value=0.0, max_value=30.0),
+        "angle": st.floats(min_value=0.0, max_value=15.0),
     }
 )
 reynolds_numbers = st.floats(min_value=10.0, max_value=1000.0)

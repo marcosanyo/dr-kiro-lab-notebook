@@ -29,7 +29,7 @@ def test_knobs_and_measurements_are_as_required() -> None:
         ("aspect", 0.5, 3.0),
         ("corner", 0.0, 1.0),
         ("splitter", 0.0, 3.0),
-        ("angle", 0.0, 30.0),
+        ("angle", 0.0, 15.0),
     ]
     assert [(m.name, m.unit, m.kind, m.not_measured) for m in decl.measurements] == [
         ("cd", "1", "scalar", ()),

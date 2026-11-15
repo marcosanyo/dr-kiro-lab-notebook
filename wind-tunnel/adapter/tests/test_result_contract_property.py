@@ -24,12 +24,15 @@ def knob(low: float, high: float):
     return st.floats(min_value=low, max_value=high, allow_nan=False, allow_infinity=False)
 
 
+# The corner rule accepts 0, 1 and, for every aspect of the range, the band [0.08, 0.995] (the band of
+# aspect 0.5 is the narrowest; Requirement 6.11).
+CORNERS = st.one_of(st.sampled_from([0.0, 1.0]), knob(0.08, 0.995))
 KNOBS = st.fixed_dictionaries(
     {
         "aspect": knob(0.5, 3.0),
-        "corner": knob(0.0, 1.0),
+        "corner": CORNERS,
         "splitter": knob(0.0, 3.0),
-        "angle": knob(0.0, 30.0),
+        "angle": knob(0.0, 15.0),
     }
 )
 

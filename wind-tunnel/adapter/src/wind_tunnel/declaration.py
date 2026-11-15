@@ -71,7 +71,7 @@ def build_declaration(settings: Settings | None = None) -> Declaration:
         NumberKnob("aspect", 0.5, 3.0, texts["aspect"]),
         NumberKnob("corner", 0.0, 1.0, texts["corner"]),
         NumberKnob("splitter", 0.0, 3.0, texts["splitter"]),
-        NumberKnob("angle", 0.0, 30.0, texts["angle"]),
+        NumberKnob("angle", 0.0, 15.0, texts["angle"]),
     )
     measurements = (
         Measurement("cd", "1", "scalar"),

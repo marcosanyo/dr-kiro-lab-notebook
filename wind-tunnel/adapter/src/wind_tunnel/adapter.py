@@ -31,6 +31,7 @@ from bench.adapter import (
 from wind_tunnel_model.casegen import KNOB_NAMES, render_case
 from wind_tunnel_model.estimators import EstimatorError, dynamic_pressure, measure
 from wind_tunnel_model.geometry import GeometryError, outline
+from wind_tunnel_model.input_rule import InputRuleError, corner_refusal
 from wind_tunnel_model.mesh import GmshMesher, Mesher, MeshError
 from wind_tunnel_model.settings import Settings, frame_times
 from wind_tunnel_model.settle import settled
@@ -90,6 +91,12 @@ class WindAdapter:
     def declaration(self) -> Declaration:
         return self._declaration
 
+    def check_inputs(self, inputs: ComputedInputs) -> str | None:
+        """The bench's optional input check (lab-bench Requirement 19), called for every trial of an
+        experiment before any trial runs. A pure function of the inputs: the corner rule of the model, in
+        Dr. Kiro's terms. The plate (`splitter`) and `angle` are never looked at."""
+        return corner_refusal(float(inputs["aspect"]), float(inputs["corner"]), self._settings)
+
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
         """One trial. The seed is not used: the same inputs give the same result (10.2).
 
@@ -148,7 +155,8 @@ class WindAdapter:
         return outcome
 
     def _validate(self, inputs: ComputedInputs) -> dict[str, float]:
-        """Exactly the four names, finite numbers inside the ranges. Nothing is clipped or defaulted (3.4)."""
+        """Exactly the four names, finite numbers inside the ranges, a corner the rule accepts. Nothing is
+        clipped or defaulted (3.4)."""
         if not isinstance(inputs, Mapping) or set(inputs) != set(KNOB_NAMES):
             found = sorted(inputs) if isinstance(inputs, Mapping) else type(inputs).__name__
             raise ValueError(f"inputs: expected exactly {sorted(KNOB_NAMES)}, found {found}")
@@ -161,6 +169,10 @@ class WindAdapter:
             if not knob.low <= value <= knob.high:
                 raise ValueError(f"inputs: {knob.name}={value!r} is outside [{knob.low}, {knob.high}]")
             knobs[knob.name] = float(value)
+        # A value the check refuses must never run, even when the bench check was not called (no fallback).
+        refusal = corner_refusal(knobs["aspect"], knobs["corner"], self._settings)
+        if refusal is not None:
+            raise InputRuleError(f"inputs: {refusal}")
         return knobs
 
     def _failure_without_case(

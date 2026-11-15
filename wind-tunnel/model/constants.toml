@@ -10,7 +10,12 @@ density = 1.0
 
 [body]
 thickness = 0.08  # Decision 8 of the design (plate thickness)
-min_edge = 0.0  # no refusal in the geometry until the user decides (Decision 12)
+# The two limits of the corner rule (input_rule.py), from the 140 s runs of spikes/timing/extreme-v2-summary.md,
+# with the margin rule of the user's decision (Decision 34): the worst wall-clock time of a run inside the
+# declared ranges is at most 115 s. Both apply to the body's corner arcs and straight sides only, never to the
+# plate, and a piece of length zero is absent, not short.
+min_arc = 0.0314  # shortest corner arc length: 0.031416 settled in 94.7 s, 0.02749 took 123.3 s
+min_line = 0.0025  # shortest straight side of the body: 0.0025 settled in 111.6 s, 0.002 hit the limit
 
 [domain]
 ahead = 6.0  # brief, measured from the centre of the body

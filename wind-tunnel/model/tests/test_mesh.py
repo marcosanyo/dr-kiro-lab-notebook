@@ -46,7 +46,7 @@ def test_empty_outline_is_a_mesh_error(tmp_path, settings):
 @pytest.mark.needs_gmsh
 @pytest.mark.parametrize(
     ("aspect", "corner", "splitter", "angle"),
-    list(itertools.product((0.5, 3.0), (0.0, 1.0), (0.0, 3.0), (0.0, 30.0))),
+    list(itertools.product((0.5, 3.0), (0.0, 1.0), (0.0, 3.0), (0.0, 15.0))),
 )
 def test_end_corner_outlines_give_named_groups(tmp_path, settings, aspect, corner, splitter, angle):
     pytest.importorskip("gmsh", reason="Gmsh cannot be imported here")

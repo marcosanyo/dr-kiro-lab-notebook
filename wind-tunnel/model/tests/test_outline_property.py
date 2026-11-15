@@ -7,7 +7,7 @@ from hypothesis import given
 from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
 
-from wind_tunnel_model.geometry import Arc, GeometryError, Line, outline
+from wind_tunnel_model.geometry import Arc, Line, outline
 from wind_tunnel_model.settings import Settings
 
 SETTINGS = Settings.load()
@@ -25,15 +25,12 @@ def knob(low, high):
     aspect=knob(0.5, 3.0),
     corner=knob(0.0, 1.0),
     splitter=knob(0.0, 3.0),
-    angle=knob(0.0, 30.0),
+    angle=knob(0.0, 15.0),
 )
 def test_outline_is_closed_and_valid_for_every_knob_value(aspect, corner, splitter, angle):
-    try:
-        pieces = outline(aspect, corner, splitter, angle, SETTINGS)
-    except GeometryError as error:
-        # The only allowed failure names the piece that is too short.
-        assert "shorter than min_edge" in str(error)
-        return
+    # The geometry refuses no short piece (the corner rule is applied to the inputs before a run), so inside
+    # the ranges the outline is always valid and a GeometryError fails the test.
+    pieces = outline(aspect, corner, splitter, angle, SETTINGS)
     assert len(pieces) >= 3
     for piece in pieces:
         assert isinstance(piece, Line | Arc)

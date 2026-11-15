@@ -126,8 +126,9 @@ I can vary the system knowingly.
 
 #### Acceptance criteria
 
-1. THE adapter SHALL declare exactly four number knobs, with these names and ranges (`docs/brief.md` section 1):
-   `aspect` in [0.5, 3]; `corner` in [0, 1]; `splitter` in [0, 3]; `angle` in [0, 30] degrees.
+1. THE adapter SHALL declare exactly four number knobs, with these names and ranges: `aspect` in [0.5, 3];
+   `corner` in [0, 1]; `splitter` in [0, 3]; `angle` in [0, 15] degrees. The brief (`docs/brief.md` section 1) says
+   [0, 30] for `angle`; the user's decision of Decision 34 overrides it for this spec. The brief is not edited.
 2. THE adapter SHALL tell Dr. Kiro, for each knob, its knob text in the `description` of the knob, and nothing else
    about the knob (Requirement 1.3). THE knob texts are the following, and a change SHALL be made here first, with
    the user's approval:
@@ -149,7 +150,9 @@ I can vary the system knowingly.
    the angle. None says what the knob does. The number 0.08 in the `splitter` text SHALL be written into the text
    from the plate thickness in `wind-tunnel/model/` (Requirement 6.3), not typed a second time.
 3. WHEN the bench passes computed inputs, THE adapter SHALL accept every combination of values inside the four
-   ranges, ends included, and SHALL build the body for it (Requirement 6) or fail with the reason (Requirement 8).
+   ranges, ends included, that the corner rule of Requirement 6.11 accepts, and SHALL build the body for it
+   (Requirement 6) or fail with the reason (Requirement 8). A combination that the corner rule refuses never
+   reaches a run (Requirement 6.11).
 4. THE adapter SHALL NOT clip, round or default a knob value; the bench has already refused values outside a range
    (`lab-bench` Requirement 4.6).
 5. THE knob texts SHALL be reviewed against Requirement 12 in the reviewed list (Requirement 12.3), and SHALL pass
@@ -264,6 +267,23 @@ system and the solver values never reach a `lab/` folder.
 10. IF the geometry for a combination of knob values is invalid (a self-intersecting outline, a mesh that cannot
     be made), THEN the run SHALL be a bench failure with the reason (Requirement 8), and the builder SHALL report
     the combination to the user.
+11. THE adapter SHALL refuse, before any run, a value of `corner` that gives a corner arc or a straight side of the
+    body that is too short, and SHALL implement the refusal once, in `wind-tunnel/model/` (`input_rule.py`), through
+    the optional `check_inputs` hook of `lab-bench` (Requirement 19). With `h` = min(1, `aspect`) and `c` = `corner`
+    the arc of one corner has length (pi / 4) x `h` x `c` and the shortest straight side of the body has length `h`
+    x (1 - `c`). A `corner` of exactly 0 or exactly 1 SHALL be accepted: a piece of length zero is absent, not
+    short. Any other `corner` SHALL be accepted only when the arc is at least `min_arc` = 0.0314 and the straight
+    side is at least `min_line` = 0.0025 (both settings of `constants.toml`). The two limits apply to the corner
+    arcs and the straight sides of the body only, and NEVER to the plate (`splitter`) or to any other knob. THE
+    refusal message SHALL be one line in Dr. Kiro's terms (knob names and values only; no solver, mesh, piece,
+    file or time) and SHALL say which values of `corner` are accepted for the given `aspect`, in the form "corner
+    must be 0, 1, or between <lo> and <hi> when aspect is <a>", where `lo` is the lower limit rounded up and `hi`
+    the upper limit rounded down to 3 decimals, so that the band told is never wider than the rule allows. THE
+    adapter SHALL accept or refuse by that band, so that what is told is what is tested. THE check SHALL be a pure
+    function of the inputs, SHALL be called by the bench for every trial of an experiment before any trial runs,
+    and a refused combination SHALL use no budget. The geometry (Requirement 6.1-6.4) SHALL NOT refuse a piece for
+    being short; a refused `corner` that nevertheless reaches `run_trial` SHALL raise (a bench failure), never
+    run. Reasons and data: Decision 35.
 
 ### Requirement 7: The solver environment
 
@@ -612,9 +632,9 @@ shown to work.
    run of every combination of the extreme values of the four knobs (16 runs, the end-corner cases), and the
    near-end cases: for each knob, the values at 0.001 and at 0.01 of its range from each end of the range, with the
    other three knobs at the middle of their ranges (16 runs). The values are computed from the declared ranges and
-   not typed. THE geometry SHALL NOT refuse any of these cases beforehand (the smallest piece length allowed in the
-   geometry is zero until the user decides otherwise, Decisions item 21), so that the measurement shows what the
-   mesher and the solver do.
+   not typed. THE corner rule of Requirement 6.11 refuses the near-end corner values that are too close to 0 or
+   1 (before a run, through `check_inputs`); such a case is recorded as `refused` with the message and is not
+   run. THE geometry SHALL NOT refuse any case.
 3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of
    17.6 has passed or the user has decided what to do about it. Pass: the record is sealed
    as `ended` in `sessions/wind-tunnel/<session-id>/`, `bench-verify` verifies it, and `bench-scan` on the lab and
@@ -623,14 +643,15 @@ shown to work.
    "done when" asks: the circle check within 5% of the literature value (with the difference), one full session of 24
    runs completed, how long the application took to connect, and how much code it is.
 5. THE builder SHALL NOT commit a session record that fails `bench-verify` or the blind scan.
-6. WHEN the 32 runs of 17.2 have been run, THE builder SHALL write for each run, to the tracked file
+6. WHEN the 32 cases of 17.2 have been handled, THE builder SHALL write for each case, to the tracked file
    `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made,
-   solver failed, time limit) and the wall-clock time, all from the run. IF any run hits the time limit, fails to
-   mesh, fails, or does not settle, THEN the builder SHALL stop and report the knob values, the outcome and the
-   times to the user. THE builder SHALL NOT change a range, the time limit, the minimum piece length or the setup
-   by itself, and SHALL NOT start the first full session. THE user decides among: a rule in the bench that refuses
-   such values with a message in Dr. Kiro's terms (a `lab-bench` change), a narrower declared range (a change of
-   Requirement 3.1), or accepting the risk.
+   solver failed, time limit, refused) and, for a run, the wall-clock time, all from the run; a refused case has
+   the message and no time. IF any run that was not refused hits the time limit, fails to mesh, fails, does not
+   settle, or takes more than 115 s (the margin rule, Decision 34), THEN the builder SHALL stop and report the knob
+   values, the outcome and the times to the user. THE builder SHALL NOT change a range, the time limit, the limits
+   `min_arc` and `min_line`, or the setup by itself, and SHALL NOT start the first full session. THE user decides
+   among: a rule that refuses such values with a message in Dr. Kiro's terms (Requirement 6.11, `lab-bench`
+   Requirement 19), a narrower declared range (a change of Requirement 3.1), or accepting the risk.
 
 ### Requirement 18: Steps that need the user's hands
 
@@ -724,8 +745,9 @@ reading check failed.
     against Requirement 12.
 20. **Blind-scan clashes** are resolved in the order of Requirement 13.4 (rename what the builder chose, reword,
     then ask); the stop list changes only with the user's approval.
-21. **Near-degenerate knob values: measure first.** The 16 end-corner runs and 16 near-end runs (Requirement 17.2)
-    are run before the first session, with no refusal in the geometry. Any time-out, mesh failure, solver failure or
+21. **Near-degenerate knob values: measure first.** (Amended by items 34 and 35: the corner rule refuses some
+    near-end values before the run; the geometry still refuses nothing.) The 16 end-corner runs and 16 near-end runs
+    (Requirement 17.2) are run before the first session. Any time-out, mesh failure, solver failure or
     unsettled run stops the builder, which reports the numbers (Requirement 17.6). The ranges and the time limit are
     not changed by the builder. The near-end distances 0.001 and 0.01 of the range are the builder's proposal.
 22. **Stop-list additions for OpenFOAM keywords** are proposed with evidence and approved by the user, as an
@@ -790,6 +812,22 @@ reading check failed.
 33. **The solver output is reduced** (the user's decision, option 3(b), task 14.4): 4.90 GB to 54 MB per run for the
     circle, with identical measurements, picture and force file on the two reference inputs, same machine and image
     digest (Requirement 10.3). Design Decision 22.
+34. **Margin 115 s and angle range [0, 15]** (the user's final decisions, task 14.4 stage 3b). The margin rule: the
+    worst wall-clock time of a run inside the declared ranges, as measured, is at most 115 s (the limit stays 140 s).
+    The upper end of `angle` is 15 degrees: at 20 to 30 the combinations 3/0/0 and 3/0/3 do not settle (the settle
+    rule on `cd`), at 15 all 8 end combinations settle, the slowest in 95.2 s (`spikes/timing/extreme-v2-summary.md`).
+    The brief says [0, 30]; this decision overrides it for this spec, and `docs/brief.md` is not edited. Requirement
+    3.1, the declaration, the tests and `product.md` carry [0, 15].
+35. **Corner rule: two limits, plate exempt, refusal before the run** (the user's decision). `min_edge` of
+    `constants.toml` is replaced by `min_arc` = 0.0314 and `min_line` = 0.0025. Data (`extreme-v2-summary.md`, the
+    new setup): arcs settled from 0.03142 (94.7 s and 78.7 s) and not at 0.02749 (123.3 s); straight sides settled
+    from 0.0025 (111.6 s and 99.9 s) and hit the limit at 0.002. One value for both would refuse the high side
+    about 12 times more than needed, or accept arcs that hit the limit. The limits are for the body's arcs and
+    straight sides only: plate lengths of 0.001, 0.01 and 0.1 settled in at most 62.7 s. A corner of 0 or 1 is
+    accepted, since a piece of length zero is absent. The refusal is made before the run, through `check_inputs`
+    (Requirement 6.11), so the budget is not used; it gives the accepted band in Dr. Kiro's terms. The geometry no
+    longer carries the rule. Design Decision 23.
+
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

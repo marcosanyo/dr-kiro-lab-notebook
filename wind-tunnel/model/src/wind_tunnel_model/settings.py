@@ -35,7 +35,8 @@ class Flow:
 @dataclass(frozen=True)
 class Body:
     thickness: float
-    min_edge: float
+    min_arc: float
+    min_line: float
 
 
 @dataclass(frozen=True)
@@ -229,6 +230,8 @@ def _check(settings: Settings) -> None:
         raise SettingsError("picture.spacing: expected a positive number")
     if pic.gap < 0:
         raise SettingsError("picture.gap: expected zero or more")
+    if settings.body.min_arc < 0 or settings.body.min_line < 0:
+        raise SettingsError("body.min_arc, body.min_line: expected zero or more")
     first = frame_times(settings)[0]
     if first < time.average_from:
         raise SettingsError(

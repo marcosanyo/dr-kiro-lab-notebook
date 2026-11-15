@@ -262,7 +262,7 @@ def test_trash_that_cannot_be_deleted_stops_the_next_trial_loudly(settings, tmp_
         {**KNOBS, "aspect": 0.49},
         {**KNOBS, "corner": 1.01},
         {**KNOBS, "splitter": -0.01},
-        {**KNOBS, "angle": 30.5},
+        {**KNOBS, "angle": 15.5},
         {**KNOBS, "angle": True},
         {**KNOBS, "angle": "10"},
     ],
@@ -278,7 +278,7 @@ def test_invalid_inputs_are_refused_without_a_case(settings, tmp_path, inputs):
 def test_range_ends_are_accepted(settings, tmp_path):
     adapter, _ = make(settings, tmp_path)
     low = {"aspect": 0.5, "corner": 0.0, "splitter": 0.0, "angle": 0.0}
-    high = {"aspect": 3.0, "corner": 1.0, "splitter": 3.0, "angle": 30.0}
+    high = {"aspect": 3.0, "corner": 1.0, "splitter": 3.0, "angle": 15.0}
     for seed, inputs in enumerate((low, high), start=1):
         assert isinstance(adapter.run_trial(inputs, seed), TrialResult)
 
@@ -340,3 +340,36 @@ def test_reynolds_is_reachable_only_from_the_circle_check():
             assert not [n for n in names if "reynolds" in n.lower()], path
         if path.name not in {"settings.py", "circle_check.py"}:
             assert "with_reynolds" not in names, path
+
+
+# The corner rule (Requirement 6.11; lab-bench Requirement 19).
+def test_check_inputs_accepts_and_refuses_by_the_corner_rule(settings, tmp_path):
+    from bench.adapter import check_input_refusal, input_refusal
+
+    adapter, _ = make(settings, tmp_path)
+    assert input_refusal(adapter, KNOBS) is None
+    refused = input_refusal(adapter, {**KNOBS, "aspect": 1.75, "corner": 0.01})
+    assert refused == check_input_refusal(refused)
+    assert "corner must be 0, 1, or between 0.04 and 0.997 when aspect is 1.75" in refused
+    for ends in (0.0, 1.0):
+        assert input_refusal(adapter, {**KNOBS, "corner": ends}) is None
+
+
+def test_check_inputs_ignores_the_plate_and_the_angle(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path)
+    for splitter in (0.0, 0.001, 3.0):
+        for angle in (0.0, 15.0):
+            inputs = {**KNOBS, "splitter": splitter, "angle": angle}
+            assert adapter.check_inputs(inputs) is None
+            refused = adapter.check_inputs({**inputs, "corner": 0.001})
+            assert refused == adapter.check_inputs({**KNOBS, "corner": 0.001})
+
+
+def test_a_refused_corner_that_reaches_run_trial_fails_loudly(settings, tmp_path):
+    from wind_tunnel_model.input_rule import InputRuleError
+
+    adapter, runner = make(settings, tmp_path)
+    with pytest.raises(InputRuleError, match="corner must be"):
+        adapter.run_trial({**KNOBS, "corner": 0.999}, 1)
+    assert runner.calls == []
+    assert not (tmp_path / "cases").exists()

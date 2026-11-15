@@ -67,7 +67,7 @@ user.
       design, and `src/wind_tunnel_model/settings.py`: load, validate, refuse a missing, extra or placeholder key
       or a wrong type, read nothing from the environment, and provide `with_reynolds(x)` (design 6, 14.2).
     - Values: the brief's values (Reynolds number 150, domain 6 / 18 / 7, end time 150, averaging from 80,
-      Courant 0.8, 3 processes, 140 s), 0.08 plate thickness, `min_edge = 0.0`, `max_delta_t = 0.05`, patch names of
+      Courant 0.8, 3 processes, 140 s), 0.08 plate thickness, `min_arc = 0.0314` and `min_line = 0.0025` (the corner rule, Decision 23 of the design), `max_delta_t = 0.05`, patch names of
       Decision 8, and the picture settings of design 7 (the proposed layout, Decision 16). Mesh sizes, `initial_delta_t` and `vorticity_limit` are starting
       values with a comment naming the task that confirms them (4.1, 14.1, 14.4). Write no placeholder into the file.
     - The loader checks `max_delta_t <= ESTIMATOR_MAX_DT` (0.05), defined in `settings.py`, that `frames` equals
@@ -90,10 +90,10 @@ user.
     - `geometry.py` per design 2: `outline(aspect, corner, splitter, angle, settings)` returns an ordered closed
       tuple of `Line` and `Arc`; radius `corner * min(1, aspect) / 2`; pieces of length exactly zero omitted; plate
       from `a/2 - t` to `a/2 + splitter` with the cut `x_c`; rotation with the matrix of design 2 (a positive angle
-      moves the front end toward +y); `GeometryError` for a negative or undefined piece or a piece shorter than
-      `min_edge`. No Gmsh import.
+      moves the front end toward +y); `GeometryError` for a negative or undefined piece (a short piece is not refused here; the corner rule
+      of `input_rule.py` does that before a run, Decision 23 of the design). No Gmsh import.
     - Unit tests: a circle at (1, 1, 0, 0); a square at (1, 0, 0, 0); the plate at `corner` 1; each of the 16
-      end-corner combinations gives a valid outline; the front end of the body is above the axis for `angle` 30.
+      end-corner combinations gives a valid outline; the front end of the body is above the axis for a positive `angle`.
     - Verified by: the checks of `model/`.
     - _Requirements: 3.3, 3.6, 6.1-6.5, 6.10_
   - [ ] 3.2 Write property test for the outline
@@ -399,16 +399,22 @@ user.
     - Verified by: the slow test passes.
     - _Requirements: 10.3, 10.4_
   - [ ] 14.4 Run the end-corner and near-end cases, and fix the colour limit **[local Mac + Docker]**
-    - Write the slow test and run 32 runs one at a time: the 16 end-corner combinations of the four knobs, and the
-      16 near-end cases (each knob at 0.001 and at 0.01 of its range from each end, the other three at the middle
-      of their ranges). Compute the values from the declared ranges. Write `wind-tunnel/extreme-runs.json` (knob
-      values, outcome, wall-clock time) from the runs, with the geometry refusing nothing (`min_edge = 0.0`).
-    - **Stop and ask:** IF any run hits the time limit, fails to mesh, fails, or does not settle, **stop and
-      report** the knob values, outcomes and times to the user (in Japanese), with the three options of Requirement
-      17.6. Do not change a range, the time limit, `min_edge` or the setup, and do not go on.
-    - Only if all 32 runs settle: set `vorticity_limit` in `constants.toml` from the vorticity range observed in
-      these runs (the rule and the numbers in the report), then fix it (Requirement 9.5).
-    - Verified by: `extreme-runs.json` lists 32 runs from the run, all settled; the limit is set from the data.
+    - Write the slow test and handle 32 cases one at a time: the 16 end-corner combinations of the four knobs, and
+      the 16 near-end cases (each knob at 0.001 and at 0.01 of its range from each end, the other three at the
+      middle of their ranges). Compute the values from the declared ranges (`angle` is [0, 15], Decision 34). A case
+      that `check_inputs` refuses (the corner rule, Requirement 6.11) is recorded as `refused` with its message and
+      is not run. Write `wind-tunnel/extreme-runs.json` (knob values, outcome, wall-clock time or the refusal
+      message) from the cases.
+    - **Stop and ask:** IF any run that was not refused hits the time limit, fails to mesh, fails, does not settle,
+      or takes more than 115 s, **stop and report** the knob values, outcomes and times to the user (in Japanese),
+      with the options of Requirement 17.6. Do not change a range, the time limit, `min_arc`, `min_line` or the
+      setup, and do not go on.
+    - Only if every run that was not refused settled within 115 s: set `vorticity_limit` in `constants.toml` by the
+      fixed rule (the largest of the per-run 99th percentiles of the absolute vorticity over the six frames, over
+      the settled runs of these 32, rounded up to an integer; Decision 24 of the design), then fix it (Requirement
+      9.5).
+    - Verified by: `extreme-runs.json` lists the 32 cases from the run, every run settled in at most 115 s; the
+      limit is set from the data.
     - _Requirements: 9.5, 17.2, 17.6_
   - [ ] 14.5 Run the sheet reading check on a real sheet **[local Mac + Docker + Kiro CLI]**
     - Run one trial of the circle (`aspect` 1, `corner` 1, `splitter` 0, `angle` 0) through `WindAdapter` with the

@@ -57,7 +57,7 @@ def test_plate_at_full_corner(settings):
 
 
 @pytest.mark.parametrize(
-    ("aspect", "corner", "splitter", "angle"), list(itertools.product((0.5, 3), (0, 1), (0, 3), (0, 30)))
+    ("aspect", "corner", "splitter", "angle"), list(itertools.product((0.5, 3), (0, 1), (0, 3), (0, 15)))
 )
 def test_end_corners_are_valid(settings, aspect, corner, splitter, angle):
     pieces = outline(aspect, corner, splitter, angle, settings)
@@ -65,19 +65,16 @@ def test_end_corners_are_valid(settings, aspect, corner, splitter, angle):
 
 
 def test_front_end_above_axis_for_positive_angle(settings):
-    pieces = outline(3, 0, 0, 30, settings)
-    front = [p.p for p in pieces if isinstance(p, Line)]
-    xs = [x for x, _ in front]
-    leftmost = min(front, key=lambda pt: pt[0])
-    rightmost = max(front, key=lambda pt: pt[0])
-    assert min(xs) < 0
-    assert leftmost[1] > 0 > rightmost[1]
-    assert leftmost == pytest.approx(
-        (
-            -1.5 * math.cos(math.radians(30)) - 0.5 * math.sin(math.radians(30)),
-            1.5 * math.sin(math.radians(30)) - 0.5 * math.cos(math.radians(30)),
-        )
-    )
+    # The middle of the front side is (-1.5, 0) before the turn; the middle of the rear side is (1.5, 0).
+    pieces = outline(3, 0, 0, 15, settings)
+    sides = [p for p in pieces if isinstance(p, Line)]
+    mids = [((p.p[0] + p.q[0]) / 2, (p.p[1] + p.q[1]) / 2) for p in sides]
+    front = min(mids, key=lambda m: m[0])
+    rear = max(mids, key=lambda m: m[0])
+    theta = math.radians(15)
+    assert front[1] > 0 > rear[1]
+    assert front == pytest.approx((-1.5 * math.cos(theta), 1.5 * math.sin(theta)))
+    assert rear == pytest.approx((1.5 * math.cos(theta), -1.5 * math.sin(theta)))
 
 
 @pytest.mark.parametrize(
@@ -88,10 +85,8 @@ def test_invalid_knobs_raise(settings, knobs):
         outline(*knobs, settings)
 
 
-def test_short_piece_raises(settings):
-    import dataclasses
-
-    body = dataclasses.replace(settings.body, min_edge=0.1)
-    strict = dataclasses.replace(settings, body=body)
-    with pytest.raises(GeometryError):
-        outline(1, 0.99, 0, 0, strict)
+def test_short_pieces_are_not_refused_by_the_geometry(settings):
+    # The corner rule is applied to the inputs before a run (input_rule.py), not here.
+    pieces = outline(1, 0.999, 0, 0, settings)
+    assert_closed(pieces)
+    assert min(math.dist(p.p, p.q) for p in pieces if isinstance(p, Line)) == pytest.approx(0.001)
