@@ -34,7 +34,7 @@ from wind_tunnel_model.casegen import KNOB_NAMES, render_case
 from wind_tunnel_model.estimators import EstimatorError, dynamic_pressure, measure
 from wind_tunnel_model.geometry import GeometryError, outline
 from wind_tunnel_model.input_rule import InputRuleError, corner_refusal
-from wind_tunnel_model.mesh import GmshMesher, Mesher, MeshError
+from wind_tunnel_model.mesh import GmshMesher, Mesher, MeshError, MeshTimeout
 from wind_tunnel_model.settings import Settings, frame_times
 from wind_tunnel_model.settle import settled
 from wind_tunnel_model.solver_output import (
@@ -126,9 +126,10 @@ class WindAdapter:
         case_dir = create_case_folder(self._case_base, seed)
         render_case(knobs, settings, case_dir)
         try:
-            self._mesher.build(body, settings, case_dir)
+            self._mesher.build(body, settings, case_dir, timeout_s=deadline - self._clock())
         except MeshError as error:
-            return self._failure_with_case(FailureKind.INCOMPLETE, f"mesh: {error}", knobs, case_dir, "")
+            kind = FailureKind.TIMEOUT if isinstance(error, MeshTimeout) else FailureKind.INCOMPLETE
+            return self._failure_with_case(kind, f"mesh: {error}", knobs, case_dir, error.detail)
 
         try:
             output = self._runner.run(case_dir, deadline)

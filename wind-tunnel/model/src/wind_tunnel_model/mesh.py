@@ -4,17 +4,25 @@ The domain is a rectangle around the centre of the body (the origin), with the b
 mesh is extruded one layer in z by ``flow.depth``, so the mid-plane is at ``z = depth / 2`` (the plane
 that the vorticity sampling uses). Mesh generation uses no random seed; the 2D algorithm and the thread
 count come from ``settings.mesh``. The file is Gmsh format 2.2, ASCII, which is what ``gmshToFoam`` reads.
+
+Gmsh runs in a child process (``mesh_worker``), never in the bench server (Decision 43).
 """
 
 from __future__ import annotations
 
+import dataclasses
+import json
 import math
+import subprocess
+import sys
 from pathlib import Path
 from typing import Protocol
 
 from wind_tunnel_model.casegen import MESH_FILE
 from wind_tunnel_model.geometry import Arc, Line, Outline
 from wind_tunnel_model.settings import Settings
+
+WORKER_MODULE = "wind_tunnel_model.mesh_worker"
 
 # Shape of the size fields. The three sizes and the wake length are in constants.toml [mesh]; these two
 # extents are part of the recipe. STARTING VALUES, confirmed by task 14.1 together with the sizes.
@@ -25,12 +33,24 @@ VOLUME_NAME = "fluid"  # the cells; gmshToFoam needs the cells in a physical gro
 
 
 class MeshError(Exception):
-    """The mesher could not produce a mesh. Builder side only."""
+    """The mesher could not produce a mesh. Builder side only. ``detail`` holds the full failure detail."""
+
+    def __init__(self, message: str, detail: str = "") -> None:
+        super().__init__(message)
+        self.detail = detail
+
+
+class MeshTimeout(MeshError):
+    """The time limit of the run was reached before or while the mesh was built."""
 
 
 class Mesher(Protocol):
-    def build(self, outline: Outline, settings: Settings, dest: Path) -> None:
-        """Write the mesh file ``MESH_FILE`` into the case folder ``dest``; raise ``MeshError`` on failure."""
+    def build(
+        self, outline: Outline, settings: Settings, dest: Path, *, timeout_s: float | None = None
+    ) -> None:
+        """Write the mesh file ``MESH_FILE`` into the case folder ``dest``; raise ``MeshError`` on failure.
+
+        ``timeout_s`` is the time left of the run's limit, in seconds; ``None`` means no limit."""
         ...
 
 
@@ -39,35 +59,112 @@ class FakeMesher:
 
     CONTENT = "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n"
 
-    def build(self, outline: Outline, settings: Settings, dest: Path) -> None:
+    def build(
+        self, outline: Outline, settings: Settings, dest: Path, *, timeout_s: float | None = None
+    ) -> None:
         Path(dest).mkdir(parents=True, exist_ok=True)
         (Path(dest) / MESH_FILE).write_text(self.CONTENT, encoding="utf-8", newline="\n")
 
 
 class GmshMesher:
-    """The real mesher. ``cells`` holds the number of cells of the last mesh built."""
+    """The real mesher. Gmsh runs in a short-lived child process, always in the main thread of a fresh
+    interpreter (Decision 43): Gmsh crashes the process (SIGSEGV in its OpenMP runtime) when it is
+    initialised in a new thread after another thread has initialised it and exited, and the bench front
+    end runs every call in a changing worker thread. A crash of Gmsh now ends the child, not the bench.
+    ``cells`` holds the number of cells of the last mesh built."""
 
     def __init__(self) -> None:
         self.cells: int | None = None
 
-    def build(self, outline: Outline, settings: Settings, dest: Path) -> None:
-        import gmsh  # imported here so that a missing Gmsh is an error of the call, not of the module
-
+    def build(
+        self, outline: Outline, settings: Settings, dest: Path, *, timeout_s: float | None = None
+    ) -> None:
         if not outline:
             raise MeshError("the outline is empty")
+        if timeout_s is not None and timeout_s <= 0:
+            raise MeshTimeout(
+                "the time limit was used up before the mesh was built", f"remaining: {timeout_s!r}"
+            )
         target = Path(dest) / MESH_FILE
         target.parent.mkdir(parents=True, exist_ok=True)
-        # interruptible=False: Gmsh then installs no SIGINT handler (Python allows that in the main
-        # thread only), and the bench front end runs trials in a worker thread (Decision 41).
-        gmsh.initialize(interruptible=False)
+        request = json.dumps(
+            {
+                "outline": outline_to_data(outline),
+                "settings": dataclasses.asdict(settings),
+                "target": str(target),
+            }
+        )
         try:
-            self.cells = _build(gmsh, outline, settings, target)
-        except MeshError:
-            raise
-        except Exception as error:  # noqa: BLE001 - re-raised as MeshError with the cause kept
-            raise MeshError(f"Gmsh failed: {error}") from error
-        finally:
-            gmsh.finalize()
+            done = subprocess.run(  # noqa: S603 - a list of arguments, no shell
+                [sys.executable, "-m", WORKER_MODULE],
+                input=request,
+                capture_output=True,
+                text=True,
+                timeout=timeout_s,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as expired:
+            raise MeshTimeout(
+                "the mesh was still being built at the time limit",
+                f"stdout: {_text(expired.stdout)}\nstderr: {_text(expired.stderr)}",
+            ) from expired
+        if done.returncode != 0:
+            raise MeshError(
+                f"the mesh process exited with status {done.returncode}",
+                f"exit status: {done.returncode}\nstderr:\n{done.stderr.strip()}",
+            )
+        try:
+            self.cells = int(json.loads(done.stdout)["cells"])
+        except (ValueError, KeyError, TypeError) as error:
+            raise MeshError(
+                "the mesh process gave no cell count",
+                f"stdout: {done.stdout!r}\nstderr:\n{done.stderr.strip()}",
+            ) from error
+
+
+def _text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    return value.decode("utf-8", "replace") if isinstance(value, bytes) else value
+
+
+def outline_to_data(outline: Outline) -> list[dict]:
+    """The outline as plain data (for the child process); floats survive JSON exactly."""
+    return [
+        {"line": [list(piece.p), list(piece.q)]}
+        if isinstance(piece, Line)
+        else {"arc": [list(piece.p), list(piece.centre), list(piece.q)]}
+        for piece in outline
+    ]
+
+
+def outline_from_data(data: list[dict]) -> Outline:
+    pieces: list[Line | Arc] = []
+    for item in data:
+        if "line" in item:
+            p, q = item["line"]
+            pieces.append(Line(tuple(p), tuple(q)))
+        else:
+            p, centre, q = item["arc"]
+            pieces.append(Arc(tuple(p), tuple(centre), tuple(q)))
+    return tuple(pieces)
+
+
+def build_in_this_process(outline: Outline, settings: Settings, target: Path) -> int:
+    """Run Gmsh in the calling thread of this process and write ``target``; return the number of cells.
+    Called by ``mesh_worker`` in the main thread of a fresh interpreter, and by nothing else."""
+    import gmsh  # imported here so that a missing Gmsh is an error of the call, not of the module
+
+    # interruptible=False: Gmsh then installs no SIGINT handler (Decision 41).
+    gmsh.initialize(interruptible=False)
+    try:
+        return _build(gmsh, outline, settings, target)
+    except MeshError:
+        raise
+    except Exception as error:  # noqa: BLE001 - re-raised as MeshError with the cause kept
+        raise MeshError(f"Gmsh failed: {error}") from error
+    finally:
+        gmsh.finalize()
 
 
 def _build(gmsh, outline: Outline, settings: Settings, target: Path) -> int:

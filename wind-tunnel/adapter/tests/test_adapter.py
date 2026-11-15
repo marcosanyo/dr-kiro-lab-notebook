@@ -18,7 +18,7 @@ from bench.adapter import (
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fake_runner import FakeRunner, fake_docker, small_settings, write_lock  # noqa: E402
-from wind_tunnel_model.mesh import FakeMesher, MeshError  # noqa: E402
+from wind_tunnel_model.mesh import FakeMesher, MeshError, MeshTimeout  # noqa: E402
 
 from wind_tunnel import adapter as adapter_module  # noqa: E402
 from wind_tunnel import environment  # noqa: E402
@@ -146,14 +146,38 @@ class Short(FakeRunner):
 
 def test_mesh_error_is_incomplete(settings, tmp_path):
     class Broken:
-        def build(self, outline, settings, dest):
-            raise MeshError("no mesh")
+        def build(self, outline, settings, dest, *, timeout_s=None):
+            raise MeshError("no mesh", "the detail")
 
     adapter, runner = make(settings, tmp_path, mesher=Broken())
     result = adapter.run_trial(KNOBS, 5)
     assert_failure(result, FailureKind.INCOMPLETE, tmp_path, 5)
     assert "no mesh" in result.detail
     assert runner.calls == []
+
+
+def test_mesh_timeout_is_a_timeout(settings, tmp_path):
+    class Slow:
+        def build(self, outline, settings, dest, *, timeout_s=None):
+            raise MeshTimeout("the mesh was still being built at the time limit", "the detail")
+
+    adapter, runner = make(settings, tmp_path, mesher=Slow())
+    result = adapter.run_trial(KNOBS, 5)
+    assert_failure(result, FailureKind.TIMEOUT, tmp_path, 5)
+    assert runner.calls == []
+
+
+def test_mesher_gets_the_time_left(settings, tmp_path):
+    seen = []
+
+    class Watching(FakeMesher):
+        def build(self, outline, settings, dest, *, timeout_s=None):
+            seen.append(timeout_s)
+            super().build(outline, settings, dest)
+
+    adapter, _ = make(settings, tmp_path, mesher=Watching())
+    adapter.run_trial(KNOBS, 5)
+    assert 0 < seen[0] <= settings.run.timeout_s
 
 
 def test_unreadable_output_is_incomplete(settings, tmp_path):
