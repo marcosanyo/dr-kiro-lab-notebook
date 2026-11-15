@@ -41,7 +41,8 @@ operating the bench; "Dr. Kiro" is the experimenter agent.
 - **Settled part**: the part of a run, from the averaging start time to the end, over which the measurements are
   taken.
 - **Run**: one solver run, which is one trial.
-- **Settled run**: a run whose settled part meets the settle criterion (Requirement 8.3).
+- **Settled run**: a run whose settled part meets the settle criterion (Requirement 8.3). A run that does not meet
+  it is a result with `not_settled` for all five measurements (Requirement 4.5), not a failure.
 - **Case folder**: the folder of one run: its mesh, solver files, output and sampled vorticity.
 - **Told set**: the complete information Dr. Kiro is given about the system, as one text built from the adapter's
   declaration (Requirement 1).
@@ -84,8 +85,9 @@ be one set, so that a comparison Kiro can be given exactly the same.
 1. THE told set SHALL be the text of the adapter's declaration as `lab-bench` builds it for Dr. Kiro
    (`lab-bench` design F3), and SHALL be built from the adapter's own declaration, with no second copy.
 2. THE told set SHALL contain exactly: the four knob names with their ranges and their knob texts, including the
-   geometry definitions in them (Requirement 3); the name, unit and meaning of each measurement and the
-   not-measured outcome of `strouhal` (Requirement 4); that the flow is two-dimensional and has Reynolds number
+   geometry definitions in them (Requirement 3); the name, unit and meaning of each measurement, the
+   not-measured outcome `not_shedding` of `strouhal`, and the not-measured outcome `not_settled` of all five
+   measurements with the sentence of Requirement 4.5 (Requirement 4); that the flow is two-dimensional and has Reynolds number
    150, based on the height and the free-stream speed; the kind of the picture; the budget; and the goal
    (Requirement 11).
 3. THE told set SHALL NOT contain what any knob does to the flow or to a measurement, any part of the hidden set
@@ -192,8 +194,20 @@ without knowing how they were computed.
 4. THE adapter SHALL declare for `strouhal` one not-measured outcome, named `not_shedding`, and SHALL return it,
    with the reason "the lift does not oscillate: cl_amp is not above 0.01", WHEN `shedding` is 0. THE adapter SHALL
    NOT fill in a value of `strouhal` in that case (`lab-bench` Requirements 2.4 and 2.5).
-5. THE adapter SHALL declare no not-measured outcome for `cd`, `cl_mean`, `cl_amp` or `shedding`: a run that cannot
-   give them is a bench failure (Requirement 8).
+5. THE adapter SHALL declare the not-measured outcome `not_settled` for all five measurements (`strouhal` has
+   `not_shedding` as well), and SHALL return it for all five at once, with the one fixed reason "the flow had not
+   settled within the trial", WHEN the settled part of the run does not meet the settle criterion (Requirement
+   8.3). That run is a result: it uses one trial of the budget, its record is written, and the picture sheet is
+   returned, made by the same code as for a settled run (Requirement 9). THE reason SHALL hold no number of the
+   settle criterion. A not-measured outcome for `cd`, `cl_mean`, `cl_amp` or `shedding` is returned in no other
+   case: a run that cannot give them for any other reason is a failure (Requirement 8). Decision 37.
+   - A prediction on a measurement that is `not_settled` is judged `not-checkable` by the bench (`lab-bench`
+     Requirement 7.7); it is neither a hit nor a miss.
+   - THE `measured_by` text SHALL say, in Dr. Kiro's terms and without a number of the settle criterion, that when
+     the flow has not settled within the trial the five measurements are not measured (outcome `not_settled`)
+     and the picture still shows the flow, and that this says nothing about whether a longer trial would settle.
+     The words "within the trial" SHALL be in the text. (The user approved this sentence with Decision 37; it
+     adds nothing about what any knob does, Requirement 1.3.)
 6. THE reference length SHALL be the height (1) and the free-stream speed SHALL be 1, so that the coefficients and
    the Strouhal number need no other reference.
 7. THE meaning of each measurement SHALL be the same in the `measured_by` text, in `wind-tunnel/README.md`, and in
@@ -313,23 +327,26 @@ that a result can be reproduced and a wrong environment is never silently used.
 
 **Concerns:** the builder (what a failure is), Dr. Kiro (what it sees).
 
-**User Story:** As the builder, I want a failed or unsettled run to stop the session with its reason, never to
-produce a made-up value, so that every number in a record comes from a run that settled.
+**User Story:** As the builder, I want a failed run to stop the session with its reason, and a run whose flow does
+not settle to be a result with no number in it, never a made-up value, so that every number in a record comes from
+a run that settled.
 
 #### Acceptance criteria
 
 1. IF a run ends with a non-finite value in any force, a diverged solution, an abnormal exit of the solver or the
-   mesher, a missing or unreadable output, or the time limit of 8.7, or does not settle (8.3), THEN the adapter
-   SHALL return a trial failure (`lab-bench` design 4), and the bench failure rules apply (`lab-bench` Requirement
-   2.7 and 11.3): the session stops.
+   mesher, a missing or unreadable output, or the time limit of 8.7, THEN the adapter SHALL return a trial failure
+   (`lab-bench` design 4), and the bench failure rules apply (`lab-bench` Requirement 2.7 and 11.3): the session
+   stops. A run that does not settle (8.3) is not in this list: it is the result of Requirement 4.5.
 2. THE adapter SHALL NOT retry a failed run, change the time step, the mesh or the method, fill in a value, or
    return a partial result.
 3. A run SHALL count as settled WHEN, for the first and the second half of the settled part: the
    means of the drag coefficient differ by no more than 2% of the mean over the whole part; the values of `cl_amp`
    differ by no more than the larger of 10% of the value over the whole part and 0.002; and, WHEN `shedding` is 1,
-   the settled part holds at least 5 full periods of the lift oscillation.
+   the settled part holds at least 5 full periods of the lift oscillation. A run for which this does not hold SHALL
+   give the result of Requirement 4.5, not a failure. The rule that failed is not told to Dr. Kiro. (It has no
+   place in a result, so it is not recorded either.)
 4. THE trial failure's `public_reason` SHALL be one of a fixed small set of plain statements in Dr. Kiro's terms,
-   such as "the trial did not settle" and "the trial could not be completed", and SHALL contain no solver, mesh,
+   that is "the trial could not be completed" and "the trial took too long", and SHALL contain no solver, mesh,
    file, path, version or log text. THE `detail` SHALL hold the cause, the case folder and the solver's own message,
    and goes to the builder-side log only (`rules.md`, Blind).
 5. THE failure's `public_reason` SHALL NOT state which knob values caused it (Requirement 12).
@@ -506,7 +523,7 @@ nothing in a `lab/` folder or in a bench output reveals the solver.
 2. IF the extractor cannot read or parse a solver file, THEN it SHALL fail, naming the file and the problem, and
    SHALL NOT skip the file (`lab-bench` Requirement 15.7).
 3. THE blind scan SHALL remove the adapter's declared names (the four knob names, the five measurement names and
-   the not-measured outcome name) and the stop list, and nothing else (`lab-bench` Requirement 15.3). THE words of
+   the not-measured outcome names) and the stop list, and nothing else (`lab-bench` Requirement 15.3). THE words of
    the told set, including the knob texts, are NOT removed: the knob texts are told on purpose, but the scan
    treats them as builder-level text like any other. So telling what a knob is does not open any identifier of the
    solver or the mesh. Terms derived from the solver files and the mesh script stay forbidden in the knob texts and
@@ -645,7 +662,8 @@ shown to work.
 5. THE builder SHALL NOT commit a session record that fails `bench-verify` or the blind scan.
 6. WHEN the 32 cases of 17.2 have been handled, THE builder SHALL write for each case, to the tracked file
    `wind-tunnel/extreme-runs.json`, the knob values, the outcome (settled, did not settle, mesh could not be made,
-   solver failed, time limit, refused) and, for a run, the wall-clock time, all from the run; a refused case has
+   solver failed, time limit, refused; `did not settle` is a run whose result has `not_settled` for the five
+   measurements, Requirement 4.5, and stays a recorded outcome name) and, for a run, the wall-clock time, all from the run; a refused case has
    the message and no time. IF any run that was not refused hits the time limit, fails to mesh, fails, does not
    settle, or takes more than 115 s (the margin rule, Decision 34), THEN the builder SHALL stop and report the knob
    values, the outcome and the times to the user. THE builder SHALL NOT change a range, the time limit, the limits
@@ -832,6 +850,18 @@ reading check failed.
     of the per-run 99th percentiles of the absolute vorticity over the six frames, over the settled runs of the 32
     cases of Requirement 17.2, rounded up to an integer. Result: 29 settled runs, largest value 4.5979, so 5. Design
     Decision 24.
+
+37. **A flow that does not settle within the trial is a result, not a failure** (the user's decision, after task 16).
+    Before: it was a `TrialFailure` (`not_settled`), and a failure ends the whole session (`lab-bench` 2.7, 11.3).
+    Reasons: (a) 2 of 30 random in-range points did not settle (`spikes/timing/random-points.md`), so a session of
+    24 runs would often stop for a reason that is not an instrument fault; (b) that a flow does not settle is a
+    finding about the specimen, which Dr. Kiro can use; (c) the bench already judges a prediction on a not-measured
+    value `not-checkable` (`lab-bench` Requirement 7.7), so no change of `bench/` is needed (checked: the contract
+    check accepts a result of five not-measured values). Now: the run uses one trial, its record is written, the
+    picture is returned, and `cd`, `cl_mean`, `cl_amp`, `strouhal` and `shedding` are all
+    `NotMeasured("not_settled", "the flow had not settled within the trial")`. The 140 s limit and every other
+    failure are unchanged. Changed: 1.2, 4.5, 8 (story, 8.1, 8.3, 8.4), 17.6 (the outcome name stays), the told
+    text, the glossary. Design Decision 25.
 
 ## Open questions
 

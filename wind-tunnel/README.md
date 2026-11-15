@@ -42,6 +42,10 @@ sampled flow, over the settled part of the run (the same meaning as `measured_by
 Forces are per unit depth, divided by one half of the density times the square of the free-stream speed times the
 height. The height of the body is the reference length and the free-stream speed is 1.
 
+When the flow has not settled within the trial, all five measurements have the not-measured outcome `not_settled`
+and the picture is still returned. The run uses one trial of the budget. This says nothing about whether a longer
+trial would settle.
+
 Goal, declared to Dr. Kiro: find the setting of the four knobs with the lowest `cd` among the settings where
 `shedding` is 0.
 
@@ -153,13 +157,14 @@ The blind scan covers terms, paths and credentials only.
   same Gmsh version, with the same computed inputs, give identical measurements and an identical picture. No
   reproducibility is claimed across machines, other chips or other image builds. The solver runs with a fixed
   domain decomposition of 3 processes, and the adapter does not use the trial seed.
-- **A run can fail to settle, and that ends the session.** Of the 30 random points inside the final ranges
-  (`spikes/timing/random-points.md`), 2 did not settle (draws 10 and 22, both by the rule on `cl_amp`, with `aspect`
-  above 2.5 and `angle` near 1 degree), that is 2 of 30 or 6.7%. The same file records that 5 first attempts failed
-  at once with an exit code of the container (an environment fault whose cause is not known), which would make 7 of 30
-  if counted; the five reruns settled. A run that does not settle is a bench failure: the adapter does not retry, change the
-  mesh or fill in a value, and the session stops with the reason. A session of 24 runs can therefore end early.
-  Two points are too few to say where failures lie.
+- **A run can fail to settle, and that is a result, not the end of the session.** Of the 30 random points inside
+  the final ranges (`spikes/timing/random-points.md`), 2 did not settle (draws 10 and 22, both by the rule on
+  `cl_amp`, with `aspect` above 2.5 and `angle` near 1 degree), that is 2 of 30 or 6.7%. Such a run uses one trial
+  of the budget, returns its picture, and gives `not_settled` for all five measurements; a prediction on it is
+  judged `not-checkable`, neither a hit nor a miss (requirements Decision 37). The adapter does not retry, change
+  the mesh or fill in a value. Two points are too few to say where such runs lie. The same file records that 5 first
+  attempts failed at once with an exit code of the container (an environment fault whose cause is not known); that
+  is a failure and still ends the session. The five reruns settled.
 - **Time.** One run is limited to 140 s. The measured spread between identical runs is 11.7 to 19.0 s, so the 115 s
   margin is a rule for the choice of ranges, not a guarantee for a single run.
 - **The refusal of corner values near 0 and 1** (above) removes some knob values from reach on purpose.

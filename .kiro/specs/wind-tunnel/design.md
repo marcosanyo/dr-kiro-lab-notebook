@@ -94,8 +94,7 @@ flowchart TD
     E --> G[force.dat + sampled vorticity]
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
-    I -->|not settled| F
-    I --> J[picture: PNG sheet]
+    I -->|settled: five values; not settled: five not_settled| J[picture: PNG sheet, same code for both]
     J --> K[TrialResult, if the clock is still inside 140 s; else timeout]
     F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
     K --> M[case folder renamed into trash/; deleted at the start of the next trial]
@@ -113,9 +112,13 @@ flowchart TD
   Requirement 3.2 (read from the spec file when it exists, so the two cannot drift; skipped with a visible reason
   where `.kiro/` is absent).
 - Measurements: `cd`, `cl_mean`, `cl_amp`, `strouhal`, `shedding`, unit `1`, kind `scalar`; `strouhal` has the
-  not-measured outcome `not_shedding`.
+  not-measured outcomes `not_shedding` and `not_settled`; the other four have `not_settled` (4.5, Decision 25).
+  `NOT_SETTLED = "not_settled"` is a constant of `declaration.py`, used by the adapter too.
 - `picture = "image/png"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
-  "the settled part of the trial" and nothing about times (4.3). In the wording, "force" is used in the singular
+  "the settled part of the trial" and nothing about times (4.3). It ends with one sentence (4.5): when the flow
+  has not settled within the trial, none of the five is measured, each is the not-measured outcome `not_settled`,
+  and the picture still shows the flow; this says nothing about whether a longer trial would settle. It holds no
+  number of the settle rule. In the wording, "force" is used in the singular
   where the sentence allows, so that no word of the told set equals a term the solver files will give (13.8);
   the test of 13.8 decides, and what it cannot avoid goes the way of Requirements 13.4 and 13.9.
 - **The knob texts are carried in the `description` field** that `lab-bench` Requirement 18 adds to `NumberKnob`
@@ -264,7 +267,10 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   midpoint in time; `|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`;
   `|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`; when `shedding` is 1,
   `st * speed / height * T >= 5`. Comparisons are written without division. The reason names the criterion that
-  failed (builder side).
+  failed; the adapter does not use it, because a result has no place for it (Decision 25).
+- When the criterion fails, `run_trial` returns a `TrialResult` whose five values are all
+  `NotMeasured("not_settled", "the flow had not settled within the trial")` (constant `NOT_SETTLED_REASON` in
+  `adapter.py`, fixed text, no number). `strouhal` is `not_settled`, not `not_shedding`, even when `shedding` is 0.
 
 ### 6. Environment and run (Req 7, 8.7, 10)
 
@@ -351,11 +357,11 @@ library: the sheet is built from arrays.
 
 ### 8. Failures (Req 8)
 
-`failures.py` holds the kinds and the only public texts:
+`failures.py` holds the kinds and the only public texts. There are two kinds. A run that does not settle is not
+a failure: it is a result (4.5, Decision 25), so it has no kind here.
 
 | Kind | Cause (builder side) | `public_reason` |
 |---|---|---|
-| `not_settled` | settle criterion failed | "the trial did not settle" |
 | `incomplete` | diverged, non-finite, abnormal exit, missing or unreadable output, geometry or mesh error | "the trial could not be completed" |
 | `timeout` | the 140 s limit | "the trial took too long" |
 
@@ -511,8 +517,8 @@ periods, it says not settled; scaling `cd` by a positive constant does not chang
 
 ### Property 9: Failure mapping
 
-For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout, not settled)
-and all knob values, the `TrialFailure` has one of the three fixed public reasons, the reason is the same for the
+For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout) and all knob
+values, the `TrialFailure` has one of the two fixed public reasons, the reason is the same for the
 same kind whatever the inputs, it has no term of a fixed list of solver words, and the `detail` holds the cause.
 
 **Validates: Requirements 8.1, 8.4, 8.5, 8.8**
@@ -520,9 +526,11 @@ same kind whatever the inputs, it has no term of a fixed list of solver words, a
 ### Property 10: Result contract and seed independence
 
 For all in-range knob values and two seeds, `run_trial` with the fake mesher and fake runner returns a result that
-passes `bench.adapter.check_result` for the declaration, and the two results are equal.
+passes `bench.adapter.check_result` for the declaration, and the two results are equal. This holds for a run that
+settles and for a run that does not: in the second case all five values are `not_settled` and the picture is a
+PNG sheet.
 
-**Validates: Requirements 3.3, 3.4, 10.2, 17.1**
+**Validates: Requirements 3.3, 3.4, 4.5, 8.3, 10.2, 17.1**
 
 ### Property 11: Case generation is deterministic and complete
 
@@ -593,12 +601,13 @@ the band. Examples pin the measured data: aspect 1.75 and corner 0.04 (arc 0.031
 | Geometry or mesh cannot be made | `TrialFailure` `incomplete` | Dr. Kiro sees the fixed reason; builder sees the knob values |
 | Solver exits abnormally, non-finite value, missing output | `TrialFailure` `incomplete` | same |
 | 140 s exceeded | container killed, `TrialFailure` `timeout` | same |
-| Settle criterion fails | `TrialFailure` `not_settled` | same |
+| Settle criterion fails | not a failure: `TrialResult` with `not_settled` for all five measurements and the picture | Dr. Kiro sees the result; a prediction on it is `not-checkable` |
 | Result breaks the contract | bench failure by `check_result` | Builder |
 | Placeholder left in `constants.toml`, missing key | error at load | Builder |
 | Programming error in the adapter | exception, a bench failure with a fixed text | Builder |
 
-A `TrialFailure` stops the session (`lab-bench` 2.7 and 11.3); none of these is retried or repaired.
+A `TrialFailure` stops the session (`lab-bench` 2.7 and 11.3); none of these is retried or repaired. A run that does
+not settle does not stop the session (Decision 25).
 
 ## Testing Strategy
 
@@ -747,6 +756,17 @@ Made by the builder in this design; none changes a requirement.
     by the corner rule) gave 4.5979 at most (aspect 3, corner 0, splitter 3, angle 15), so L = 5. The per-run
     maximum of the absolute vorticity is up to 54.5, so a few points near the body saturate the colour, which is the
     intention of a limit set from the 99th percentile.
+
+25. **A flow that does not settle within the trial is a result, not a failure** (the user's decision; Requirements
+    Decision 37). The `not_settled` failure kind is removed; `failures.py` has two kinds. In `_evaluate` the picture
+    sheet is drawn before the settle verdict is used, so the code path is the same; when the verdict is not ok the
+    five values are `NotMeasured("not_settled", NOT_SETTLED_REASON)` (declared for all five measurements, with
+    `not_shedding` kept for `strouhal`), and the case folder goes to `trash/` like a settled run's. The time-out
+    check still comes first: a late run is a time-out whatever it found. Reasons: a failure ends the session, 2 of 30
+    random points did not settle, not settling is a finding about the specimen, and the bench already judges a
+    prediction on a not-measured value `not-checkable`; `bench/` is unchanged (its contract check accepts five
+    not-measured values). Cost: the failed settle rule is no longer logged, because a result has no builder-side
+    detail field.
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)
