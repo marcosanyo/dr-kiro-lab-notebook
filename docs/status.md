@@ -3,7 +3,7 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: 2026-11-16（ローカル）。`wind-tunnel` のタスク 16 まで完了。次はタスク 17（ユーザーの実セッション）。
+最終更新: 2026-11-17（ローカル）。`wind-tunnel` のタスク 16 まで完了。次はタスク 17（ユーザーの実セッション）。
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
@@ -23,8 +23,16 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
     メッシュを子プロセスで作るようにして直した（Decision 43、設計の Decision 30）。スレッドの行列は `spikes/timing/gmsh-threads.md`。
   - どちらのセッションも封印もコミットもしていない。状態のフォルダーは `bench-run/wind-tunnel/state`（git 管理外）に残り、id は再利用できない。
   - 残ったケースフォルダー `bench-run/wind-tunnel/9fe3f7e964ddc328` は `wt-002` の試行 4 のもの。
-- 次のセッションは新しい id とシードを使う。推奨は `wt-003`、シード `20261117`（最初の 30 試行のケースフォルダー名は存在しない）。
-  コマンドは `wind-tunnel/README.md` の「Running a session」。
+  - `wt-003`: 最初の操作（H1 の登録）で終わった。予測 P2 の `range = [1, 1]` は通常の拒否になるはずだったが、拒否の文に
+    `empty`（OpenFOAM の patch 型でもある語）が入っていて、`Session._finish` のスキャンで bench failure になった（Decision 44）。
+    `empty` ほか 4 語を stop list に入れ、ベンチ自身の文を全部スキャンするテスト（掃引）を足した。
+  - `wt-002` と `wt-003` は `stopped` として封印済み（`sessions/wind-tunnel/`、コミットしていない）。id は再利用できない。
+- 次のセッションは `wt-004`、シード `20261118`。コマンドは `wind-tunnel/README.md` の「Running a session」。
+  前のセッションがクラッシュして封印されていない場合は、`bench-new-session` の前に
+  `bench-stop <設定ファイル> --reason <理由>` で閉じる（理由はビルダーの文としてスキャンされる。ソルバーやメッシュの語を入れない）。
+- 掃引: ベンチ自身の文字列（`bench/tests/message_sweep.py` の固定ルール、1006 個）を、両アプリの導出語と本物の stop list でスキャンする。
+  `wind-tunnel/adapter/tests/test_message_sweep.py` と `body-lab/adapter/tests/test_message_sweep.py`。
+- 未決: Dr. Kiro レベルの文に単独の `P` や `U` があると、ファイル名パターン（`0/p.in`、`0/U.in`）に当たる。スキャン規則の変更になるので、あなたの判断を待つ（Decision 44）。
 - タスク 17 の後、ビルダーがタスク 18、次にタスク 19（ユーザー）、20、21 を行う。
 ## ユーザーが片づけるもの
 - git の worktree `/private/tmp/wt-old`、`wt-old2`、`wt-old3`: `git worktree list` で確認し、それぞれ `git worktree remove --force <path>`、最後に `git worktree prune`。

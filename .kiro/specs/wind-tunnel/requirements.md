@@ -951,6 +951,31 @@ reading check failed.
     (`spikes/timing/reference-mesh-child.json`). The rehearsal (Decision 42) now calls `run_experiment` three
     times with pauses longer than the idle time, so that it fails on the old code. Changed: 6 (mesher),
     `mesh.py`, `mesh_worker.py`, `adapter.py`, `rehearse_session.py`, their tests. Design Decision 30.
+44. **A derived term in a normal refusal ended a session; the bench's own text is swept** (found by the third real
+    session, `wt-003`, which ended at its first action). Dr. Kiro registered H1 with a prediction `range = [1, 1]`
+    on `shedding` (a 0/1 measurement). The hypothesis file check refuses it with "range is empty or reversed; low
+    must be below high" (`specfiles/hypotheses.py`). `Session._finish` scans every outcome at builder level, and
+    "empty" is a derived term (the OpenFOAM patch type `empty`), so the refusal became a bench failure and the
+    session stopped (builder log: `bench failure in register: output of register failed the blind check:
+    output:1: term: empty`). A test through the real Session with the real `scan_sources.toml` and the real stop
+    list reproduced it (`wind-tunnel/adapter/tests/test_register_refusal.py`). Resolved by the standing policy for
+    common words: `empty`, `columns`, `rows`, `default` and `domain` are on the stop list. The sweep found two
+    more words that were not common to stop: a refusal said `id must be P<n>`, and a lone letter `P` matches the
+    file name pattern of `0/p.in` (the pattern is case-insensitive and scanned at both levels), so the message now
+    says `id must be numbered like "P1", "P2", "P3"`; a builder-side seal text said "by hand", a part name of
+    body-lab, and now says "manually". The rule of the sweep, permanent: every string constant of the bench's own
+    code (`specfiles`, `core`, `lang`, `frontend`, `record`, `adapter.py`, `conditions.py`, `pictures.py`), with the
+    constant parts of f-strings, is scanned at builder level with the real derived terms and the real stop list,
+    except docstrings, dictionary keys, subscripts, comparison operands and regular expression arguments
+    (`bench/tests/message_sweep.py`; 1006 strings; tests `wind-tunnel/adapter/tests/test_message_sweep.py` and
+    `body-lab/adapter/tests/test_message_sweep.py`). Text that does not exist before a run (a library's own error
+    text, a quote of Dr. Kiro's file) cannot be swept; quotes are Dr. Kiro level (paths and credentials only). Open
+    risk, not changed (it needs a change of the scan rules, which the user decides): a lone `P` or `U` in text at
+    Dr. Kiro level is a file name finding (`0/p.in`, `0/U.in`), for example in a quote or a note that Dr. Kiro
+    writes. The rehearsal now also checks a point range refusal, the corrected registration, and an invalid
+    experiment file (a refusal, session open). Changed: `stop-list.txt`, `hypotheses.py`, `session.py` (text),
+    their tests, `rehearse_session.py`, `README.md` (`bench-stop` before a new session). Design Decision 31.
+
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:

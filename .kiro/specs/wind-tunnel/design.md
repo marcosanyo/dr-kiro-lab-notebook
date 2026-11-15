@@ -804,6 +804,15 @@ Made by the builder in this design; none changes a requirement.
     (`MeshTimeout`). The `interruptible=False` call of Decision 28 stays (it is harmless in the main thread).
     Case folders of a crashed session stay on disk; the adapter never deletes or renames a leftover folder
     (`create_case_folder` raises `FileExistsError`), and the builder moves it aside before a resume.
+31. **Sweep of the bench's own text** (Requirements Decision 44). Alternatives: scan only the strings that reach
+    Dr. Kiro (needs a list of constructions that goes stale when a message moves), or catch the finding in
+    `_finish` and turn it into a refusal (a fallback, and it would hide the word from the builder). Chosen: one
+    exclusion rule that errs towards scanning too much (all strings except docstrings, dictionary keys, subscripts,
+    comparison operands and regular expression arguments), and a stop list or a rewording for every finding, so
+    that no bench message can end a session by its words. The test lives in each application's own tests because
+    each needs its own scan sources (`wind-tunnel/adapter`, `body-lab/adapter`); the collector is shared in
+    `bench/tests/message_sweep.py`. The bench is not changed to scan less.
+
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)

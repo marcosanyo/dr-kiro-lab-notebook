@@ -213,6 +213,8 @@ From the repository root, in the one terminal where you will start `kiro-cli`, w
 ```sh
 R=bench-run/wind-tunnel
 mkdir -p $R/state sessions
+# only if an earlier session was not sealed (a crash): close it first, or bench-new-session refuses
+bench-stop $R/<old-session-id>.toml --reason "<text>"   # the text is scanned: no solver or mesh terms
 bench-make-lab wind-tunnel/lab                   # after builder files change; the lab is committed
 bench-new-session --application wind-tunnel --adapter wind_tunnel.adapter:WindAdapter \
   --scan-sources wind-tunnel/adapter/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \

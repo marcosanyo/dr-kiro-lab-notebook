@@ -79,19 +79,21 @@ def run(command: list[str], cwd: Path = REPO, timeout: int = 600) -> str:
     return done.stdout
 
 
-def prediction(pid: str, when: list[float]) -> str:
+def prediction(pid: str, when: list[float], bounds: tuple[float, float] = (0.1, 5.0)) -> str:
     conditions = "\n".join(f"{name} = {value!r}" for name, value in zip(KNOBS, when, strict=True))
     return (
-        f'[[prediction]]\nid = "{pid}"\nmeasurement = "cd"\nrange = [0.1, 5.0]\nlabel = "inside"\n'
-        f"[prediction.when]\n{conditions}\n"
+        f'[[prediction]]\nid = "{pid}"\nmeasurement = "cd"\nrange = [{bounds[0]!r}, {bounds[1]!r}]\n'
+        f'label = "inside"\n[prediction.when]\n{conditions}\n'
     )
 
 
-def hypothesis_block() -> str:
+def hypothesis_block(point_range: bool = False) -> str:
+    """The hypotheses. With `point_range`, P2 of H1 has the range [1, 1], which the bench refuses."""
+    second = prediction("P2", NOT_SETTLING, (1.0, 1.0) if point_range else (0.1, 5.0))
     return (
         "### H1: rehearsal\n\n"
         "WHEN the knobs are at the given values, THE system SHALL give a cd between 0.1 and 5.0.\n\n"
-        f"```prediction\n{prediction('P1', SETTLED)}{prediction('P2', NOT_SETTLING)}```\n"
+        f"```prediction\n{prediction('P1', SETTLED)}{second}```\n"
         + later_hypothesis("H2", "P3", AFTER_FIRST_PAUSE)
         + later_hypothesis("H3", "P4", AFTER_SECOND_PAUSE)
     )
@@ -182,9 +184,30 @@ async def drive(lab: Path, config: Path, source_root: Path | None) -> None:
             ],
             f"unexpected tools {names}",
         )
+        # Decision 44: a refusal that held a derived term ended wt-003 at its first action. A point range is
+        # a normal refusal: the session stays open, nothing is recorded, a corrected hypothesis is accepted.
+        refused_range = await client.call_tool("register_hypothesis", {"id": "H1"})
+        check(refused_range.is_error, "a prediction with the range [1, 1] was not refused")
+        check(
+            "bench stopped the session" not in text(refused_range) and "range" in text(refused_range),
+            f"the point range was not a normal refusal: {text(refused_range)}",
+        )
+        print("refusal of the point range:", text(refused_range))
+        requirements = lab / ".kiro/specs/lab/requirements.md"
+        requirements.write_text(
+            requirements.read_text(encoding="utf-8").replace("[1.0, 1.0]", "[0.1, 5.0]"), encoding="utf-8"
+        )
         registered = await client.call_tool("register_hypothesis", {"id": "H1"})
         check(not registered.is_error, f"register_hypothesis refused: {text(registered)}")
         print("registered H1:", text(registered))
+        check(json.loads(text(registered)) == {"budget_remaining": 24}, "the refusal used budget")
+        (lab / "experiments/bad.py").write_text('# H1: invalid\nPHASE = "map"\n', encoding="utf-8")
+        invalid = await client.call_tool("run_experiment", {"path": "experiments/bad.py"})
+        check(
+            invalid.is_error and "bench stopped the session" not in text(invalid),
+            f"an invalid experiment file was not a normal refusal: {text(invalid)}",
+        )
+        print("refusal of the invalid experiment file:", text(invalid))
 
         (lab / "experiments/e1.py").write_text(experiment([SETTLED, NOT_SETTLING]), encoding="utf-8")
         started = time.monotonic()
@@ -271,7 +294,7 @@ def main() -> int:
     )  # fmt: skip
     requirements = lab / ".kiro/specs/lab/requirements.md"
     requirements.write_text(
-        requirements.read_text(encoding="utf-8") + "\n" + hypothesis_block(),
+        requirements.read_text(encoding="utf-8") + "\n" + hypothesis_block(point_range=True),
         encoding="utf-8",
     )
     # The table must agree with the record for end_session to be accepted (an observed rule cites no miss).
