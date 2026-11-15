@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/design.md`](../../../.kiro/specs/wind-tunnel/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `3edafa56b2d0e8809756b092de67865a8846c8ab5f629b6a29bc8f4e387b8117`
+> 原文 SHA-256: `2b560bbcecef9957ca60e3cf0eddab57e50e1692d5db13b139a53b434a11cc9a`
 # Design: wind-tunnel
 
 要件 1-18 を対象とします。設定は `wind-tunnel/model/constants.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
@@ -123,7 +123,7 @@ flowchart TD
 - サイズ場: ボディの曲線からの距離としきい値の場（`size_body` から `size_far` へ増える）と、近い後流の箱の場（`size_wake`）。サイズは `<chosen in the mesh task, before the circle check is run>`。その後の変更は円柱チェックを変えるかもしれず、ユーザーが必要です（6.8）。
 - z 方向に `depth`（`constants.toml`。単位奥行きあたりの力の単位、1）だけ 1 層押し出し、OpenFOAM が 2D のケースとして扱えるようにします。物理グループがパッチ `inlet`、`outlet`、`lateral`（上下）、`obstacle`、`frontAndBack` を与えます。名前は `constants.toml [patches]` にあり、レシピとテンプレートの両方が使います。どれも伝える集合の語にならないよう選んであります（13.8）。
 - Gmsh の `.msh` ファイルとしてケースフォルダーに書きます。メッシュ生成は乱数シードを使いません。Gmsh のアルゴリズムの選択とスレッド数（1）は `constants.toml` で明示します（10.2）。
-- インターフェース `Mesher.build(outline, settings, dest) -> None`、`MeshError(reason)` を送出します。`GmshMesher` が本物で、`FakeMesher` はテスト用に固定の小さなファイルを書きます。
+- インターフェース `Mesher.build(outline, settings, dest, *, timeout_s=None) -> None`、`MeshError(reason)`（および `MeshTimeout`）を送出します。`GmshMesher` が本物です。レシピを短命の子プロセス（`mesh_worker.py`）で実行し、ベンチのサーバーでは決して実行しません。Gmsh は、別のスレッドが初期化して終了した後に新しいスレッドで初期化されるとプロセスをクラッシュさせ、フロントエンドはアダプターの呼び出しを変わるワーカースレッドで実行するためです（Decision 30）。`FakeMesher` はテスト用に固定の小さなファイルを書きます。
 
 ### 4. Case and solver (Req 6.6, 6.8, 6.9, 10.1) in `model/case/` and `casegen.py`
 
@@ -451,6 +451,7 @@ For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer 
 
 28. **`gmsh.initialize(interruptible=False)`**（要件の Decision 41）。代替案: メッシュをメインスレッドで実行する（フロントエンドを変える必要があるが、`lab-bench` は 1 つのアプリケーションのためにそれを許さない）、または自分でシグナルハンドラーを設定する（利点なし）。`interruptible=False` では Gmsh はハンドラーを作らず、出力はバイト単位で同一である。呼び出しは引き続きフロントエンドのロックで直列化されるので、Gmsh のグローバル状態が 2 つのスレッドから同時に使われることはない。
 29. **除外リストの単語とリハーサル**（要件の Decision 42）。`application` と `image` を除外リストに追加する。スキャンのコードは変わらない。リハーサルは pytest のテストではなくスクリプトである。MCP クライアント、アダプター、Docker を 1 つの Python で必要とし、それを持つのはインストール済みのツールだけだからである。Kiro CLI と同じく、インストール済みのコマンドを使う。
+30. **メッシュは子プロセスで作る**（要件の Decision 43）。代替案: Gmsh をベンチのプロセスに置いたままフロントエンドを固定の 1 スレッドに変える（`lab-bench` は 1 つのアプリケーションのためにそれを許さない）、または長命のメッシュプロセスを 1 つ保つ（状態が増え、クラッシュ後の再起動はフォールバックになる）。選択: メッシュ 1 つにつき短命の子を 1 つ使う。Gmsh は常に新しいインタープリターのメインスレッドで始まり、クラッシュは子だけを終わらせる。コスト: 実行ごとの Python インタープリターの起動 1 回と Gmsh の import で、数分かかる実行に比べれば小さい。`GmshMesher.build` は、実行の残り時間をタイムアウト（`MeshTimeout`）として子に渡す。Decision 28 の `interruptible=False` の呼び出しは残す（メインスレッドでは害がない）。クラッシュしたセッションのケースフォルダーはディスクに残る。アダプターは残ったフォルダーを削除も改名もしない（`create_case_folder` は `FileExistsError` を送出する）。ビルダーが再開の前にそれを脇へ移す。
 ## Open questions
 
 1 つが未解決だが、タスクの妨げにはならない: ユーザーはこの設計の承認時に、Decision 16 のシートの配置（提案）を確認する。結果依存の 2 つの質問（ほぼ縮退したノブの値、OpenFOAM のキーワードの stop-list の語）は、停止つきの手続きとして受け入れられた: 要件 17.6 と要件 13.9、Decision 12 と 13。計算領域は、ユーザーの決定どおり、伝えないままである。
