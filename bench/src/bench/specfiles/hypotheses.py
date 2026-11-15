@@ -260,7 +260,7 @@ def parse_hypothesis(text: str, hypothesis_id: str, decl: Declaration, file: str
                 file, line, f"{where} must have exactly the keys id, measurement, range, label and when"
             )
         if not isinstance(local, str) or not ids.is_local_prediction_id(local):
-            raise _refuse(file, line, f'{where}: id must be P<n>, such as "P1"')
+            raise _refuse(file, line, f'{where}: id must be numbered like "P1", "P2", "P3"')
         if local in seen:
             raise _refuse(file, line, "prediction ", Quote(local, file, line), " is listed twice")
         seen.add(local)

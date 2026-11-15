@@ -780,7 +780,7 @@ class Session:
             parent.mkdir(exist_ok=True)
             temporary = parent / f".{self.config.session_id}.sealing"
             if temporary.exists():
-                return self._seal_failed(f"{temporary} is left from an earlier attempt; remove it by hand")
+                return self._seal_failed(f"{temporary} is left from an earlier attempt; remove it manually")
             temporary.mkdir()
             shutil.copy2(self.store.folder / LOG_NAME, temporary / LOG_NAME)
             shutil.copytree(self.store.folder / BLOB_DIR, temporary / BLOB_DIR)

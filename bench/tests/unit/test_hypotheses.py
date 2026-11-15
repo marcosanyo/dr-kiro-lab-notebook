@@ -163,7 +163,7 @@ def refusal(old: str, new: str) -> str:
         ("range = [0.1, 0.4]", "range = [0.1, 0.4", "not valid TOML"),
         ("[[prediction]]", "[other]", "one or more [[prediction]] tables"),
         ('label = "outside"\n', "", "exactly the keys"),
-        ('id = "P1"', 'id = "1"', "id must be P<n>"),
+        ('id = "P1"', 'id = "1"', "id must be numbered like"),
         ('"distance"', '"speed"', "not one of the declared measurements"),
         ('"distance"', '"trace"', "scalar measurements only"),
         ("[0.1, 0.4]", "[0.4, 0.1]", "empty or reversed"),

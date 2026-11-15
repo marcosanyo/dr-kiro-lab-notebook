@@ -69,3 +69,10 @@ points
 # the structure of the body. Approved under the user's standing policy for common-word findings (Decision 42).
 application
 image
+# wind-tunnel session wt-003: "empty" ended the session at its first action (a refusal said "range is empty");
+# the sweep of the bench's own text found the others (wind-tunnel Decision 44). Common English words.
+empty
+columns
+rows
+default
+domain

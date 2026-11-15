@@ -272,6 +272,8 @@ def test_repository_stop_list_loads() -> None:
         + ("behind", "points")
         # wind-tunnel session wt-001, common words found when sealing (wind-tunnel Decision 42)
         + ("application", "image")
+        # wind-tunnel session wt-003 and the sweep of the bench's own text (wind-tunnel Decision 44)
+        + ("empty", "columns", "rows", "default", "domain")
     )
 
 
