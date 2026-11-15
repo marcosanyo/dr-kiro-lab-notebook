@@ -63,3 +63,9 @@ method
 replace
 behind
 points
+# wind-tunnel session: the first real session (wt-001) failed sealing on these two words, found in the bench's own
+# record entries. "application" is the key of the start entry (and an OpenFOAM keyword in controlDict); "image" is the
+# name of the "image/png" media type and of a section of constants.toml. Both are general words and say nothing about
+# the structure of the body. Approved under the user's standing policy for common-word findings (Decision 42).
+application
+image

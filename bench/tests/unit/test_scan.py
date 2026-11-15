@@ -270,6 +270,8 @@ def test_repository_stop_list_loads() -> None:
         # wind-tunnel lab, approved by the user in task 13.1 ("settings" was already listed)
         + ("name", "none", "run", "raw", "field", "keep", "p", "functions", "include", "method", "replace")
         + ("behind", "points")
+        # wind-tunnel session wt-001, common words found when sealing (wind-tunnel Decision 42)
+        + ("application", "image")
     )
 
 
