@@ -11,5 +11,6 @@ every copy matches its record.
 Only a session that Dr. Kiro ended, and whose record holds an end snapshot, has a copy:
 
 - `body-lab/body-1` has no copy. It was sealed before the bench recorded the spec files at the end of a
-  session, so its record does not hold the final table. A second body-lab session will be run.
+  session, so its record does not hold the final table. The second body-lab session, `body-lab/body-2`, was run
+  for that reason and has a copy.
 - Stopped sessions (`wind-tunnel/wt-002`, `wind-tunnel/wt-003`) have no copy. They did not end with a spec.

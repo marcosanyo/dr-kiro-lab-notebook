@@ -27,7 +27,7 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
     findings, after hooks were changed to run with `python -B` (a `.pyc` in the lab had stopped the scan); Dr.
     Kiro named only `method` and `workflow` as its steering.
   - _Requirements: 6.2_
-- [ ] 6. A second Dr. Kiro session of 40 trials (body-2) — **Stop and ask**
+- [x] 6. A second Dr. Kiro session of 40 trials (body-2) — **Stop and ask**
   - Why: body-1's record holds no discovered spec table. It was sealed before the bench recorded the three spec
     files at the end of a session (`lab-bench` 10.4), so it has no end snapshot and no copy in `discovered/`
     (`dr-kiro` Decision 12). body-1 stays as it is, sealed and committed.
@@ -38,4 +38,10 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
   - The user runs it on the Mac, with the steps the builder wrote in chat. Pass: as task 5, and
     `bench-export-spec` writes `discovered/body-lab/body-2/` and `bench-check-discovered` passes.
   - Then the builder records the result here and updates `discovered/README.md`.
+  - Result (body-2, macOS, 2026-11-16, commit `471ca88`): sealed as `ended` by Dr. Kiro's own `end_session`,
+    39 of 40 trials used (1 left), 3 refusals, without any continue line; `bench-verify` verified 125 entries and
+    77 blobs; `bench-scan` on the lab and the sealed folder reported no findings; `bench-export-spec` wrote
+    `discovered/body-lab/body-2/`, `bench-check-discovered` passed, and its scan reported no findings. The table
+    has 14 rows: 2 `validated`, 4 `observed`, 8 `rejected`, each naming the row that replaces it. Dr. Kiro named
+    only `workflow` and `method` as its steering.
   - _Requirements: 6.2_
