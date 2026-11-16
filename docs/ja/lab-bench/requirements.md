@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/requirements.md`](../../../.kiro/specs/lab-bench/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `1f43fc0c2691deeb79a4369a0acca7bc4ce55012cb3b66a699e97aaf2dbceef4`
+> 原文 SHA-256: `3ad63a0c3ef07708dc8b4afc861177c0454da9b9f9920195cc2fe3aa0b7e0a66`
 
 # 要件: lab-bench
 
@@ -377,3 +377,25 @@ MCP スパイク（`spikes/mcp/results.md`）の後にユーザーが決定し�
 7. THE bench SHALL NOT change the told text, the tool descriptions, the declaration, the record's declaration or any existing refusal for an adapter that gives no `check_inputs`。これは body-lab とフェイクアプリケーションについて成り立ち、要件 18.8 の golden 比較が変更なしで通り続けることで SHALL be shown。
 8. THE gate SHALL come after the budget check and before the lab spec files are read for the snapshot（設計 6.1、ステップ 9a）。これにより、先のチェックの順序とその理由は変わらない。
 9. THE tests SHALL check, over random experiments and random sets of refused inputs, that: a refusal uses no budget and writes only a refusal entry; a refusal in any planned trial (first, middle or last, compare or sweep) refuses the whole experiment before any trial runs; an adapter without the function refuses nothing; a message that breaks 19.4, and a function that raises, are bench failures; a message with a derived term is a bench failure and is not shown。
+
+### 要件 20: ファイル名のステムと除外リスト（改訂）
+
+**改訂。** 要件 1-19 の実装とテストの後、2026-11-16 のユーザーの決定で加えた（ブラインドスキャンのファイル名の照合の変更。`rules.md` セクション 1 によりユーザーが決める）。既存の要件の番号は変えず、文言も変えない。この要件は、15.1、15.4、15.5 が「ファイル名」と呼ぶものを狭める。
+
+**ユーザーストーリー:** ビルダーとして、Dr. Kiro の文にある単独の `P` や `U` をファイル名として指摘してほしくない。1 文字でセッションの封印が終わらないようにしつつ、ソースファイルを名指すパスやファイル名は、両方のレベルで引き続き見つけたい。
+
+**関係者:** ビルダーとベンチ。Dr. Kiro には、スキャンがすでに返している指摘だけが見える。
+
+#### 受け入れ基準
+
+1. THE blind scan SHALL match the file name of every source file of an application in full, and its stem (the part before the first dot), as file-name findings（要件 15.4、15.5）。
+2. THE blind scan SHALL NOT match a stem of one character as a file name。
+3. THE blind scan SHALL NOT match a stem of two or more characters as a file name when it is on the stop list（`.kiro/blind-scan/stop-list.txt`）。THE comparison SHALL be the one the stop list has for terms: the stem is compared in token form, so case does not matter。
+4. THE blind scan SHALL always match the full name of a file。ドットのない名前には別のステムがない: それはフルの名前であり、1 文字であっても、除外リストにあっても、照合される。
+5. THE rules of 20.2-20.4 SHALL apply at both levels（ビルダーレベルと Dr. Kiro レベル）and in the same way。THE stop list SHALL still change only with the user's approval。除外リストにないステム（たとえば `geometry`、`mesh`、`constants`、`monitors`）は引き続き見つかる。それらを除外リストに入れるかどうかは、ユーザーが別に決める。
+6. THE blind scan SHALL NOT change otherwise: 導出された用語（15.2、15.3）、パス、認証情報、body-lab のスキャンと golden ファイルは変わらない。
+7. THE tests SHALL check, over random file names and random stop lists, at both levels, that: a one-character stem is not found; a stop-listed stem is not found in any case; a stem that is not stop-listed is found; the full name is always found; a name without a dot is found even when it is one character or is stop-listed。
+
+#### 決定（ユーザーが承認、2026-11-16）
+
+**ファイル名のステムと除外リスト。** ファイル名のパターン（`bench/src/bench/scan/patterns.py` の `Patterns`）は、各ソースファイルのフルの名前とそのステム（最初のドットの前の部分）を照合する。1 文字のステムはファイル名として照合しない: 情報を持たないためである（`p.in` と `U.in` のステムである `P` と `U` が、Dr. Kiro レベルのメモを通じてセッションの封印を終わらせうることが、最初に分かった）。2 文字以上のステムは、レビュー済みの除外リストにあれば照合しない。比較は、除外リストが用語に対して行う比較と同じく、大文字小文字を区別しない。ファイルのフルの名前は常に照合する。除外リストは、引き続きユーザーの承認があるときだけ変える。両方のレベルに両方の規則が適用される。body-lab のスキャンと golden ファイルは変わらない。理由: Dr. Kiro の文にある単独の `P` や `U` はファイル名として指摘され、除外リストはファイル名のパターンに適用されなかったので、それを取り除けなかった。

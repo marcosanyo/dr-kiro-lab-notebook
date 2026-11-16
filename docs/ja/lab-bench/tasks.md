@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `5ea295bd8c95d2d7a06c0e65718a94f0e344690b2c4b83c5060dbc9bb5f960ba`
+> 原文 SHA-256: `6ac63243f54ba3f7e87d2f7c7cf1647d471bfbd5414d031abddc0aefefd2cde3`
 
 # タスク: lab-bench
 
@@ -270,3 +270,20 @@ import する唯一の場所です。
   - `bench/tests/properties/test_input_check.py`: P25-P29（設計 B4）。それぞれ 100 例以上、`Feature: lab-bench, Property N` のタグ付き。
   - `sh bench/scripts/check.sh`（500 passed、ruff クリーン）、body-lab アダプターのテスト（7 passed、golden ファイルは変更なし）、`wind-tunnel/adapter` と `wind-tunnel/model` のテスト（127 passed 1 skipped、121 passed）を走らせる。
   - _要件: 19.7, 19.9_
+
+## 改訂: ファイル名のステム（要件 20）
+
+2026-11-16 のユーザーの決定で加えた: Dr. Kiro の文にある単独の `P` や `U` で、セッションの封印が終わってはならない。設計: 「改訂: ファイル名のステム」（C1-C5）。タスク 32-33 のコードとテストはコミット `d6d7371` にある。
+
+- **32. ファイル名パターンが 1 文字と除外リストのステムをスキップする** — 完了
+  - `scan/patterns.py`: `Patterns` が除外リストを受け取り、1 文字のステムと除外リストにあるステム（トークン形式）をスキップする。フルの名前は常に照合し、ドットのない名前も含む。`scan/scan.py`: `Scanner` が除外リストを渡す。それ以外は変えない。
+  - 確認方法: `sh bench/scripts/check.sh` が通り、body-lab アダプターのテスト（golden 比較）が変更なしで通る。
+  - _要件: 20.1-20.6_
+- **33. テスト** — 完了
+  - `bench/tests/unit/test_scan.py`: 単独の `P` と `U` は見つからない。`p.in`、`U.in`、`mesh.py`、`geometry.py` はフルの名前で見つかる。除外リストにあるステムは、どの大文字小文字でも見つからない。`geometry` は今も見つかる。ドットのない名前は、短くても除外リストにあっても見つかる。ビルダーレベルと Dr. Kiro レベルで同じ。
+  - `bench/tests/properties/test_file_name_stems.py`: P30（設計 C3）。100 例以上、`Feature: lab-bench, Property 30` のタグ付き。
+  - 新しいテストは、変更前のコードでは失敗し（`['P', 'U']` が見つかった）、変更後は通る。
+  - _要件: 20.7_
+- **34. 全体チェック、スキャン、リハーサル** — 完了
+  - `sh bench/scripts/check.sh`（506 passed、ruff クリーン）、`wind-tunnel` の model と adapter のテストと ruff、body-lab アダプターのテスト（golden ファイルは変更なし、`git diff --stat body-lab/` は空）、`wind-tunnel/lab` と `sessions/wind-tunnel/wt-002`、`wt-003`、`wt-004` の `bench-scan`（これまでどおり指摘なし）、body-lab のラボと `sessions/body-lab` の `bench-scan`、封印済みの 3 フォルダーの `bench-verify`、最後のコード変更の後の本物の Docker での `wind-tunnel/rehearse_session.py`。
+  - _要件: 20.6_
