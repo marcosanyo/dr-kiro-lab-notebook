@@ -88,3 +88,4 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   body-1 の埋まった表の控えは `bench-run/body-1/design-final.md`（git 管理外、この Mac だけ。参照用でノートには使わない）。
   Dr. Kiro はラボのフォルダーで `kiro-cli chat --agent dr-kiro` から起動し、`export` は同じターミナルで行う。
 - **共通**: セッション記録（`sessions/`）は作った環境ですぐコミットする。
+- 停止した wind-tunnel セッション `wt-002` と `wt-003` は、失敗した試行の記録としてコミット済み。`wt-001` は封印できず、git 管理外の `bench-run/` の状態フォルダーにだけある。
