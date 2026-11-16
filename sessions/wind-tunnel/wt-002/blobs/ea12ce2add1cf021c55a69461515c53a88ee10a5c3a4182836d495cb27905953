@@ -1,0 +1,27 @@
+### H2: Longer splitter weakens shedding
+
+WHEN splitter grows from 0 to 3 at aspect 1, corner 0, angle 0, THE system SHALL show falling cl_amp, with cl_amp at splitter 3 below 0.3 and cd at splitter 3 below 1.4.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cl_amp"
+range = [0.0, 0.3]
+label = "inside"
+[prediction.when]
+aspect = 1.0
+corner = 0.0
+splitter = 3.0
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "cd"
+range = [1.0, 1.4]
+label = "inside"
+[prediction.when]
+aspect = 1.0
+corner = 0.0
+splitter = 3.0
+angle = 0.0
+```
