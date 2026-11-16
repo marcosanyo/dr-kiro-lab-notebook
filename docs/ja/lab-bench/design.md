@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `781774e1efab297c600ca81032f7f38bb383d7b9c7a2ce06f12661d3ad032b1b`
+> 原文 SHA-256: `3440ff1b627e70b9f7312f0c111a81afe411ff9a0b5eba84912179487de07d5d`
 
 # 設計: lab-bench（コア）
 
@@ -767,7 +767,7 @@ def input_refusal(adapter: object, inputs) -> str | None   # None when the adapt
 
 1. **除外リストはトークン形式（`term_tokens`）で比較する。** 用語と同じ方法なので、`solver_output` と `solverOutput` はどちらも除外語 `solver_output` と等しい。`fvSchemes` のようなキャメルケースのステムは、リストに同じトークンの語（`fv_schemes`）があるときだけスキップされる。
 2. **ドットのない名前はフルの名前**なので、常に照合する。代案: ステムとして扱い、短いときや除外リストにあるときにスキップする。採らなかった: ユーザーの文は、フルの名前は常に照合すると述べている。
-3. **一般的な語のステムは、ユーザーが除外リストに入れるまで見つかる**: `geometry`、`mesh`、`constants`、`monitors`。Dr. Kiro レベルでは普通の文に当たりうる。ビルダーはこれらを除外リストに加えない。
+3. **一般的な語のステムは、除外リストに入れるまで見つかる。** `geometry`、`mesh`、`constants`、`monitors` の選択はユーザーが任せ、2026-11-16 に 1 つ目、3 つ目、4 つ目を入れ、`mesh` は入れなかった（`wind-tunnel` 要件の Decision 46）。入れていないステムは、Dr. Kiro レベルでは普通の文に当たりうる。
 
 ## C5. 止めて確認することになる場合
 
