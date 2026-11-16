@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/requirements.md`](../../../.kiro/specs/dr-kiro/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `4562de07ffa09fe62266076b52973385d83309019546edabe77d10e28072e919`
+> 原文 SHA-256: `d449f761aa3f8ea09c58872446c960298a3eaf6e95cda91fe42384a7945324e7`
 
 # 要件: dr-kiro
 
@@ -56,6 +56,7 @@ Dr. Kiro は実験者です。アプリケーションの `lab/` フォルダー
 4. THE ワークフロー SHALL Dr. Kiro に、最後の 2 つのフェーズのために予算を残すよう伝える。THE ワークフロー SHALL NOT 予算の配分を数値で示す。
 5. THE ワークフロー SHALL 各判定の後に Dr. Kiro が `design.md`（今何を信じているか）と `tasks.md`（自分の計画）を更新すること、そして終了する前に `## Discovered spec` の表を埋めることを、各ステータスの意味（`lab-bench` 要件 12）とともに述べる。
 6. THE ラボのステアリング SHALL Dr. Kiro が書く各形式の例を 1 つずつ示す（予測ブロック付きの仮説、フラグとなるパラメーターを持つ compare 実験、sweep 実験、Discovered spec 表）。すべての値の代わりに、`<low>` のような目に見えるプレースホルダーを置く（`rules.md`、Honest）。
+7. THE workflow SHALL `rejected` の定義の直後に、否定されたルールは `## Discovered spec` の表から消さず、ステータス `rejected` の行として残す、と述べる。半分だけ正しいルールを `partly` と `rejected` のどちらにするかは述べない（それは Dr. Kiro の判断のままとする）。
 
 ### 要件 4: テンプレート
 
