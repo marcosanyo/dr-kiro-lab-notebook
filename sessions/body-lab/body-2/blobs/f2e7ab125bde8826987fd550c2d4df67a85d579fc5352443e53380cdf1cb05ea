@@ -1,0 +1,17 @@
+### H1: Zero input leaves the body still
+
+WHEN all constant levels a0..a4 are 0 for the whole trial, THE system SHALL stay near the start pose.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "inside"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+```

@@ -1,0 +1,37 @@
+# H3: Oscillating drive on c0 produces sustained displacement
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["a0", "a1", "a2", "a3", "a4", "f"]
+TRIALS = [
+    [1, 0, 0, 0, 0, 1],
+    [0, 0, 1, 0, 0, 1],
+    [0, 0, 0, 1, 0, 1],
+]
+
+
+def wave(a, f, t):
+    if f == 0:
+        return a
+    return a * math.sin(2 * math.pi * f * t)
+
+
+def c0(t, a0, f):
+    return wave(a0, f, t)
+
+
+def c1(t, a1, f):
+    return wave(a1, f, t)
+
+
+def c2(t, a2, f):
+    return wave(a2, f, t)
+
+
+def c3(t, a3, f):
+    return wave(a3, f, t)
+
+
+def c4(t, a4, f):
+    return wave(a4, f, t)

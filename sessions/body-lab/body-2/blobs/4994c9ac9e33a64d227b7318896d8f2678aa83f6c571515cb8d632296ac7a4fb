@@ -1,0 +1,36 @@
+# H11: Square-wave c3 strokes add travel per cycle
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f", "sq"]
+TRIALS = [
+    [-1, 1, 2, 1],
+    [-1, 1, 3, 1],
+    [-1, 1, 2.5, 0],
+]
+
+
+def c0(t, a1, s3, f, sq):
+    return 0
+
+
+def c1(t, a1, s3, f, sq):
+    return a1
+
+
+def c2(t, a1, s3, f, sq):
+    return 0
+
+
+def c3(t, a1, s3, f, sq):
+    v = math.sin(2 * math.pi * f * t)
+    if sq == 1:
+        if v >= 0:
+            return s3
+        return -s3
+    return s3 * v
+
+
+def c4(t, a1, s3, f, sq):
+    return 0

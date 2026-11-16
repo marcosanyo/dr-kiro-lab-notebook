@@ -1,0 +1,18 @@
+### H3: Oscillating drive on c0 produces sustained displacement
+
+WHEN c0 is a 1 Hz sine of amplitude 1 and the other inputs are 0, THE system SHALL move the body so that x ends above 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+f = 1
+```

@@ -1,0 +1,31 @@
+# H8: Piecewise-linear c1 rule and turn cancellation by c3 oscillation
+import math
+
+PHASE = "test"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f"]
+TRIALS = [
+    [0.25, 0, 1],
+    [-0.75, 0, 1],
+    [-1, 1, 1],
+]
+
+
+def c0(t, a1, s3, f):
+    return 0
+
+
+def c1(t, a1, s3, f):
+    return a1
+
+
+def c2(t, a1, s3, f):
+    return 0
+
+
+def c3(t, a1, s3, f):
+    return s3 * math.sin(2 * math.pi * f * t)
+
+
+def c4(t, a1, s3, f):
+    return 0

@@ -1,0 +1,10 @@
+# Design
+
+## Beliefs
+
+Nothing known yet. Five inputs c0..c4, pose outputs x, y, heading and tracks.
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|

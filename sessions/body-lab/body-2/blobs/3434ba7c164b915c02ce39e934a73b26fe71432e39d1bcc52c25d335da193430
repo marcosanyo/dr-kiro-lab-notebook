@@ -1,0 +1,17 @@
+### H2: Inputs c2, c3, c4 each do something to the pose
+
+WHEN only one of a2, a3, a4 is 1 and the rest are 0, THE system SHALL move or turn the body measurably, with at least one of x or heading changing.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-180, -5]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 1
+a3 = 0
+a4 = 0
+```

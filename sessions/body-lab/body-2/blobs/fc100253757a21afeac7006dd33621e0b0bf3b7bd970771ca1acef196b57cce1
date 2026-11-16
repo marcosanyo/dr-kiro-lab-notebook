@@ -1,0 +1,35 @@
+### H10: Stroke gain per c3 cycle holds at higher frequency
+
+WHEN c1 = -1 and c3 is a unit sine at f Hz, THE system SHALL reach x of about 0.062 m times 5f, up to a frequency at which the actuator can no longer follow: f = 3 gives 0.75-1.05 m, f = 4 gives 0.9-1.35 m, f = 5 gives 0.9-1.7 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.75, 1.05]
+label = "outside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 3
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.9, 1.35]
+label = "outside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 4
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.9, 1.7]
+label = "outside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 5
+```

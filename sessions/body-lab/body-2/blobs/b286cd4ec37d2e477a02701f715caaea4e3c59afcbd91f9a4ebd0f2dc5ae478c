@@ -1,0 +1,16 @@
+### H6: c0 held constant gates or scales the wave-driven travel
+
+WHEN the wave of c1..c4 is run at f = 1.5 and ph = 1.0 with c0 held at k = 1 instead of a sine, THE system SHALL end with x different from the sine-c0 value 0.219 by more than 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.32, 3.0]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.0
+k = 1
+```
