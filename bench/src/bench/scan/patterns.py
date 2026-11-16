@@ -8,6 +8,8 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from bench.scan.tokens import term_tokens
+
 
 @dataclass(frozen=True)
 class Match:
@@ -48,16 +50,28 @@ def redact(text: str) -> str:
 
 class Patterns:
     def __init__(
-        self, file_names: Iterable[str], solver_dirs: Iterable[str], local_paths: Iterable[str]
+        self,
+        file_names: Iterable[str],
+        solver_dirs: Iterable[str],
+        local_paths: Iterable[str],
+        stop_list: Iterable[str] = (),
     ) -> None:
         """`local_paths` are absolute paths of this machine (the home folder, the repository) that are flagged
-        wherever they appear, whatever their root."""
+        wherever they appear, whatever their root.
+
+        A file name is matched in full, always. Its stem (the part before the first dot) is matched too,
+        unless the stem is one character, or is on the stop list (compared as the stop list is compared for
+        terms: in token form, so case does not matter). A name without a dot has no separate stem: it is a
+        full name and is always matched, even when it is one character or on the stop list (design C1)."""
+        stop = {term_tokens(w) for w in stop_list}
         paths = sorted({p.rstrip("/") for p in local_paths if len(p.rstrip("/")) > 1}, key=len, reverse=True)
         self._local = [re.compile(rf"{re.escape(p)}(?![\w-])") for p in paths]
         names: set[str] = set()
         for name in file_names:
             names.add(name)
-            names.add(name.split(".", 1)[0])
+            stem = name.split(".", 1)[0]
+            if stem != name and len(stem) > 1 and term_tokens(stem) not in stop:
+                names.add(stem)
         self._names = [
             re.compile(rf"(?i)(?<![\w.-]){re.escape(n)}(?![\w-])")
             for n in sorted(names, key=len, reverse=True)

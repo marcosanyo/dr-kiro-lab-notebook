@@ -341,3 +341,48 @@ def test_pictures_in_a_lab_are_checked_as_pictures(tmp_path: Path) -> None:
     (lab / "data.bin").write_bytes(b"\xff\xfe\x00")
     with pytest.raises(ScanError, match="not UTF-8"):
         scanner.scan_paths([lab])
+
+
+# File-name stems and the stop list (lab-bench Requirement 20, design C1)
+STEM_FILES = ("p.in", "U.in", "geometry.py", "mesh.py", "Allrun", "X", "solver_output.json")
+
+
+def _file_name_hits(patterns: Patterns, text: str) -> list[str]:
+    return [m.text for m in patterns.find(text) if m.kind == "file name"]
+
+
+def test_one_character_stem_is_not_a_file_name() -> None:
+    patterns = Patterns(STEM_FILES, [], [])
+    assert _file_name_hits(patterns, "the pressure P in Pa and U = 3") == []
+    assert _file_name_hits(patterns, "open p.in and U.in") == ["p.in", "U.in"]
+
+
+def test_stop_listed_stem_is_not_a_file_name_but_the_full_name_is() -> None:
+    patterns = Patterns(STEM_FILES, [], [], stop_list=["mesh", "solver_output"])
+    assert _file_name_hits(patterns, "the Mesh is fine, and solver_output too") == []
+    assert _file_name_hits(patterns, "see mesh.py") == ["mesh.py"]
+    assert _file_name_hits(patterns, "see solver_output.json") == ["solver_output.json"]
+
+
+def test_unlisted_stem_is_still_a_file_name() -> None:
+    patterns = Patterns(STEM_FILES, [], [], stop_list=["mesh"])
+    assert _file_name_hits(patterns, "the geometry here") == ["geometry"]
+    # The full name and its stem are reported separately, as before.
+    assert _file_name_hits(patterns, "geometry.py") == ["geometry.py", "geometry"]
+
+
+def test_name_without_a_dot_is_a_full_name_even_when_short_or_stop_listed() -> None:
+    patterns = Patterns(["X", "mesh"], [], [], stop_list=["mesh", "x"])
+    assert _file_name_hits(patterns, "run X and mesh") == ["X", "mesh"]
+
+
+def test_stem_and_stop_list_apply_at_both_levels(tmp_path: Path) -> None:
+    sources = AppSources((), ("p.in", "U.in", "geometry.py", "mesh.py"), (), (), None)
+    scanner = Scanner([sources], ["mesh"], local_paths=[])
+    for level in ("builder", "dr-kiro"):
+        quiet = scanner.scan_text("the pressure P in Pa and U = 3, the mesh", level, "x")
+        assert [f for f in quiet if f.kind == "file name"] == [], level
+        loud = scanner.scan_text("open p.in, U.in, mesh.py and geometry.py; geometry", level, "x")
+        assert sorted(f.match for f in loud if f.kind == "file name") == sorted(
+            ["p.in", "U.in", "mesh.py", "geometry.py", "geometry", "geometry"]
+        ), level
