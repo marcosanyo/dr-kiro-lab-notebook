@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `a6474e2131f7fa859c81b539f23af224784dfb95418013486b603a260387fc6b`
+> 原文 SHA-256: `d37d58418833b413ec07b18f0956e785b28a4039846cc66781fda363e21d0000`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -59,7 +59,7 @@ Spec: `lab-notebook`。
 2. THE build SHALL NOT read `discovered/`, any `lab/` folder, `bench-run/`, or any file that is not listed in 1.1。
 3. THE build SHALL take every folder it reads and the output folder as explicit arguments, and SHALL refuse to run, naming the missing argument, if one is missing. It SHALL NOT fill in a default folder。
 4. IF the output folder exists and is not empty, THEN THE build SHALL refuse, naming it, and SHALL NOT overwrite or merge into it。
-5. THE build SHALL run with Python 3.12 through `uv`, as its own `uv` project in `notebook/`, and SHALL need no Node, no Docker and no simulator。
+5. THE build SHALL run with Python 3.12 through `uv`, as its own `uv` project in `notebook/`, SHALL need no Node and no Docker, and SHALL run no simulator or solver. It SHALL depend on the bench and on both applications' adapter packages by path only, so that the bench's blind scan can import each adapter's declaration for the allow list (`bench/src/bench/scan/terms.py`) (Decision 42)。
 ### Requirement 2: Checks before anything is written
 **対象:** ビルダー。
 **User Story:** ビルダーとして、記録が約束するものと違う入力に最初に出会った時点でビルドを止めたい。サイトが壊れた記録や改変された記録を見せないようにするためである。
@@ -338,6 +338,7 @@ Spec: `lab-notebook`。
 39. **Strike-through tests**（user）。body-2 の表は `end` のステップにしか存在しないので、途中のリプレイステップの取り消し線は、フィクスチャ（16.11）でテストし続ける。end の表の取り消し線、置き換えのタブ、逆リンク、そして R13 の拒否された終了の注記は、実際の body-2 の記録でテストする（要件 22.5）。
 40. **Order of delivery**（user）。設計とタスクのため。最初のマイルストーン: 実際の記録から描画した、カバーと発見された spec の表。それから止まって、画面をユーザーに見せる。2 番目: 実験の一覧と動く画像、停止したセッション、"How the lab works"、走行バンド。最後: 予測チャート、リプレイ、等しい試行の一覧、入力の時系列の線。「Built from the spec」の実装（要件 19.2-19.7）はこれらの後に来る。
 41. **README limits line**（user）。ベンチが引用結果の要約を書き手 `dr-kiro` の引用として記録するという事実（項目 34）は、README のステップのために、制限の節の 1 行として記録する。オーケストレーターが `docs/status.md` に書き留める。
+42. **Adapters installed for the scan**（user）。ベンチのブラインドスキャンは、各アプリケーションの宣言をインポートして許可リストを読む（`bench/src/bench/scan/terms.py`、`load_app`）。このインポートはアダプターパッケージを（それを通じて MuJoCo の Python パッケージと `wind-tunnel-model` も）インポートする。そのためノートブックは、ベンチと両方のアダプターパッケージにパスで依存する。それらをインストールするが、シミュレーター、ソルバー、Docker は動かさない（設計の以前の Open question 1 の選択肢 A）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（ビルドはプロセスを起動せず、サイトはスキャンの前にディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）（要件 1.5）。
 ## Open questions
 1. 項目 18: 途中のステップでベンチのリーダーが読めない表は、書かれたとおりに、ラベルつきの文とともに見せる。ユーザーは、代わりにビルドが失敗することを望むかもしれない。
 2. 要件 18.1: "How the lab works" が公開リポジトリのルートの `.kiro/` へリンクするかどうかは、設計上の問いである。リンクはラボの外のパスを名指しするので、ビルダーレベルのブラインドスキャンを通らなければならない。通らなければ、ビルダーはユーザーに尋ねる。

@@ -17,8 +17,11 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 - リプレイで取り消し線が出るのが、途中のスナップショットに表がある時だけかどうかは、`lab-notebook` の spec で確かめる。
 
 ## ラボノートブック（ブランチ `spec/lab-notebook`、worktree `.worktrees/lab-notebook`）
-- 要件を書き、日本語の参考訳（`docs/ja/lab-notebook/requirements.md`）まで済み。body-2 を含む封印済み記録が前提。
-- **次の一手:** 設計、続いてタスク。納品の順序は Decision 40: まずカバーと発見された spec の表を実際の記録から描き、そこで止めて画面をユーザーに見せる。
+- 要件、設計、タスクを書き、それぞれの日本語の参考訳（`docs/ja/lab-notebook/`）まで済み。body-2 を含む封印済み記録が前提。
+- **次の一手:** ローカルの Mac でタスク 1 から Run all。納品の順序は Decision 40: まずカバーと発見された spec の表を実際の記録から描く。
+  タスク 11 は停止点で、カバーと表の画面をユーザーに見せ、答えを `docs/status.md` に記録するまでマイルストーン 2 に進まない。
+- **ユーザーの決定（要件 Decision 42）:** ブラインドスキャンが各アダプターの宣言を import するので、ノートブックは `bench` と両方のアダプターにパスで依存する
+  （MuJoCo と `wind-tunnel-model` はインストールされるが、シミュレーターもソルバーも Docker も動かさない）。
 - **README のステップへ:** README の限界に 1 行: ベンチの end 拒否文の中の引用 `H11.P3: hit/not-comparable` は、記録では書き手が Dr. Kiro になっている（ベンチの意図、`bench/src/bench/specfiles/discovered.py` の `_summary`）。ノートは記録どおり Dr. Kiro のインクで出し、注記を添える。ベンチは直さない（ユーザーの決定）。
 ## Dr. Kiro の spec の写し（ブランチ `feat/discovered-spec-export`）
 - 終わった各セッションの Dr. Kiro の 3 ファイルを、封印された記録の最後のスナップショットから `discovered/<app>/<session>/` に写す

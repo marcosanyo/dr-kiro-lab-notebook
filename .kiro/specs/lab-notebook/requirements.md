@@ -131,8 +131,10 @@ line on the site can be traced to the record.
    naming the missing argument, if one is missing. It SHALL NOT fill in a default folder.
 4. IF the output folder exists and is not empty, THEN THE build SHALL refuse, naming it, and SHALL NOT overwrite or
    merge into it.
-5. THE build SHALL run with Python 3.12 through `uv`, as its own `uv` project in `notebook/`, and SHALL need no
-   Node, no Docker and no simulator.
+5. THE build SHALL run with Python 3.12 through `uv`, as its own `uv` project in `notebook/`, SHALL need no Node
+   and no Docker, and SHALL run no simulator or solver. It SHALL depend on the bench and on both applications'
+   adapter packages by path only, so that the bench's blind scan can import each adapter's declaration for the
+   allow list (`bench/src/bench/scan/terms.py`) (Decision 42).
 
 ### Requirement 2: Checks before anything is written
 
@@ -835,6 +837,14 @@ exception to a rule.
 41. **README limits line** (user). The fact that the bench records its cited-outcome summary as a quote with
     author `dr-kiro` (item 34) is recorded for the README step, as a line in its limits; the orchestrator notes it
     in `docs/status.md`.
+42. **Adapters installed for the scan** (user). The bench's blind scan reads each application's allow list by
+    importing its declaration (`bench/src/bench/scan/terms.py`, `load_app`), which imports the adapter packages
+    (and through them the MuJoCo Python package and `wind-tunnel-model`). The notebook therefore depends on the
+    bench and on both adapter packages by path; it installs them but runs no simulator, no solver and no Docker
+    (option A of the design's former Open question 1). Not chosen: B, running the scan in each application's own
+    environment as a separate process (the build starts no process, and the site would have to be on disk before
+    the scan); C, changing the bench so the scan can take the declaration from elsewhere (a `bench/` change, and the
+    allow list must come from the application's own declaration, `rules.md` 1) (Requirement 1.5).
 
 ## Open questions
 
