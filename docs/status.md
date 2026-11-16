@@ -22,6 +22,7 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   タスク 11 は停止点で、カバーと表の画面をユーザーに見せ、答えを `docs/status.md` に記録するまでマイルストーン 2 に進まない。
 - **ユーザーの決定（要件 Decision 42）:** ブラインドスキャンが各アダプターの宣言を import するので、ノートブックは `bench` と両方のアダプターにパスで依存する
   （MuJoCo と `wind-tunnel-model` はインストールされるが、シミュレーターもソルバーも Docker も動かさない）。
+- 途中の段で読めない表は書かれたまま出す（ユーザーが確定、要件 Decision 18、設計 N26）。未決の質問はなし。
 - ルート `.kiro/` へのリンクは置かない（README を書くときに決める）。公開時のサイトの再スキャン方法は publish の spec で決める。
 - **README のステップへ:** README の限界に 1 行: ベンチの end 拒否文の中の引用 `H11.P3: hit/not-comparable` は、記録では書き手が Dr. Kiro になっている（ベンチの意図、`bench/src/bench/specfiles/discovered.py` の `_summary`）。ノートは記録どおり Dr. Kiro のインクで出し、注記を添える。ベンチは直さない（ユーザーの決定）。
 ## Dr. Kiro の spec の写し（ブランチ `feat/discovered-spec-export`）

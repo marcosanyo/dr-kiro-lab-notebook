@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `061ae20fc78e34b08f59fd8e1b2a52de68b367f136c58486ce60921839de1a54`
+> 原文 SHA-256: `050aa3c43bfcf6c56c9132cb3d472eb371ccf718baa0e684a4c2ae713f91b9ad`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -309,7 +309,7 @@ Spec: `lab-notebook`。
 15. **Gap in the layout table**（builder）。wind-tunnel のシートには 4 ピクセルの隙間があるので（1208 × 404 = 3 × 400 + 2 × 4 、2 × 200 + 4）、表はセル間の隙間も持つ。これがないとセルを切り出せない。body-lab のエントリーは隙間 0（1600 × 360 = 5 × 320、2 × 180）（要件 7.1）。
 16. **The end table is checked again at build time**（builder）。ビルドは `end` スナップショットにベンチ自身の表検査を実行する。食い違いは、壊れた記録かベンチの欠陥であり、ビルドを失敗させる（要件 2.4）。
 17. **Status words in the middle of a replay**（builder）。ベンチは表を最後にしか検査しないので、それより前のステップの語は、Dr. Kiro が書いたとおりに、"not yet checked by the bench" と付けて見せる。ノートブックはステータスを計算しない（要件 16.3）。
-18. **A table the reader cannot read at a middle step**（builder）。書かれたとおりに、ラベルつきの文とともに見せ、行は推測しない（要件 16.6）。これは記録をあるがままに見せるもので、何も補わない。**ユーザーは、代わりにビルドの失敗を望むかもしれない。レビューのために印を付けてある。**
+18. **A table the reader cannot read at a middle step**（builder）。書かれたとおりに、ラベルつきの文とともに見せ、行は推測しない（要件 16.6）。これは記録をあるがままに見せるもので、何も補わない。ユーザーが確定した。
 19. **Ticks across the session, emphasis from the row**（builder）。走行バンドの目盛りは、セッション内のパラメーターグループのすべての試行である。したがって "no trial" は、セッション内に試行がないことを意味する。引用された試行と予測の試行は、より強く描く（要件 9.3）。これは brief（"conditions that no trial in the session ran"）と項目 1 を組み合わせたものである。
 20. **Dr. Kiro's text not rendered as Markdown**（builder）。書かれたとおりに、エスケープし、改行つきで見せる。表のセルはベンチのリーダーから来る。Markdown を描画すると、見せるものが変わってしまう（要件 4.3）。
 21. **Rounding**（builder）。一覧とチャートでは有効数字 4 桁。試行を開いたときは、記録された値の全体（要件 5.3）。
@@ -342,4 +342,4 @@ Spec: `lab-notebook`。
 43. **No link to the root `.kiro/`**（user）。"How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがない。ノートブックはラボの外のファイルやフォルダーを名指しせず、リンクもしない。この問いは README を書くとき（README のステップ、`docs/brief.md` セクション 5 項目 8）に改めて決める。これにより以前の Open question 2 は解決して削除される（要件 18.5）。
 44. **Rescanning the written site for `publish`**（user）。`publish` が書き出されたサイトをどう再走査するか（ベンチのフォルダースキャンはすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する）は、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを 1 つ書き（要件 20.3）、書き出す前の自前のスキャンも残る（要件 20.1、20.2）。
 ## Open questions
-1. 項目 18: 途中のステップでベンチのリーダーが読めない表は、書かれたとおりに、ラベルつきの文とともに見せる。ユーザーは、代わりにビルドが失敗することを望むかもしれない。
+なし。

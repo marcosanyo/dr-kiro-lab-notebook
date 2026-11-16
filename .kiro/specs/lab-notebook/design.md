@@ -193,7 +193,7 @@ opened from the same state (N3).
 
 - `tables.read(snapshot) -> Table | Unreadable`: calls `bench.specfiles.discovered.parse_table(design_text,
   file)`. A `TableError` at a middle step gives `Unreadable(section_text, message)`; the `## Discovered spec`
-  section is shown as written (16.6, requirements Open question 1). At the `end` snapshot a `TableError` cannot
+  section is shown as written (16.6, requirements Decision 18, N26). At the `end` snapshot a `TableError` cannot
   happen (the bench accepted it) and fails the build if it does.
 - `tables.check_end(record)`: runs `check_table(design_text, evidence, file)` on the `end` snapshot; any problem
   fails the build, naming the row (2.4). Ended sessions without an `end` snapshot (body-1) are not checked and are
@@ -823,11 +823,12 @@ changes `bench/`.
   `publish` scans the site is decided in the `publish` spec when it is written. The notebook still writes a sidecar
   for every text file (Requirement 20.3, Components 12), and its own two scan passes before writing stay
   (Components 11, N7) (requirements Decision 44). This was the former Open question 4.
+- **N26 Unreadable middle-step table shown as written (user).** A `TableError` at a middle step gives `Unreadable`;
+  the `## Discovered spec` section is shown as written with the labelled sentence, and no rows are guessed
+  (Components 3, Requirement 16.6, requirements Decision 18, confirmed by the user). This was the former Open
+  question 2.
 
 ## Open questions
 
-The former Open question 1 (adapters for the scan) was decided by the user as N23, the former Open question 3 as
-N24, and the former Open question 4 as N25; the number below is kept so that earlier references still match.
-
-2. **Unreadable middle-step table** (requirements Open question 1): shown as written with a labelled sentence, as
-   designed; the user may prefer a build failure.
+None. The former Open question 1 (adapters for the scan) was decided by the user as N23, the former Open question
+2 (unreadable middle-step table) as N26, the former Open question 3 as N24, and the former Open question 4 as N25.

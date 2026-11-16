@@ -757,8 +757,7 @@ exception to a rule.
     at earlier steps are shown as Dr. Kiro wrote them, labelled "not yet checked by the bench". The notebook does
     not compute a status (Requirement 16.3).
 18. **A table the reader cannot read at a middle step** (builder). Shown as written with a labelled sentence, no
-    guessed rows (Requirement 16.6). This shows the record as it is and fills in nothing. **The user may prefer a
-    build failure instead; flagged for review.**
+    guessed rows (Requirement 16.6). This shows the record as it is and fills in nothing. Confirmed by the user.
 19. **Ticks across the session, emphasis from the row** (builder). A run band's ticks are all trials of the
     parameter group in the session, so "no trial" means no trial in the session; the cited and prediction trials
     are drawn stronger (Requirement 9.3). This combines the brief ("conditions that no trial in the session ran")
@@ -856,5 +855,4 @@ exception to a rule.
 
 ## Open questions
 
-1. Item 18: a table that the bench's reader cannot read at a middle step is shown as written with a labelled
-   sentence. The user may prefer that the build fails instead.
+None.

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `3a56f1e7c39094293cb7ae852243a144d02a00c7969d326115a349b5eec35429`
+> 原文 SHA-256: `8d126c34687a9216c60f858a5589df6ad66b3977a9017fe74a1ae78cae30dcd9`
 
 # Design: lab-notebook
 
@@ -154,7 +154,7 @@ end の検査のための `Evidence` は、`Session.evidence` とまったく同
 
 ### 3. Tables (Requirements 2.4-2.6, 8, 16.3-16.6)
 
-- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。途中のステップでの `TableError` は `Unreadable(section_text, message)` になり、`## Discovered spec` の節は書かれたとおりに見せる（16.6、要件の Open question 1）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
+- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。途中のステップでの `TableError` は `Unreadable(section_text, message)` になり、`## Discovered spec` の節は書かれたとおりに見せる（16.6、要件の Decision 18、N26）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
 - `tables.check_end(record)`: `end` スナップショットに `check_table(design_text, evidence, file)` を走らせる。問題があれば、行を名指ししてビルドを失敗させる（2.4）。`end` スナップショットのない終了済みセッション（body-1）は検査せず、"no table" として見せる（2.5）。2 つ目の表リーダーはない（2.6）。
 - `TableView` は、純関数で `Table` から作る:
 
@@ -588,10 +588,8 @@ trial = "T1"
 - **N24 No link to the root `.kiro/` (user).** "How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがなく、ラボの外のファイルやフォルダーを名指ししたりリンクしたりする解説もない。この問いは README のステップ（`docs/brief.md` セクション 5 項目 8）で改めて決める（要件 18.5、要件の Decision 43）。以前の Open question 3 だったもの。
 - **N25 Rescanning the written site is decided in `publish` (user).** ラボの外のフォルダーに対する `bench-scan` はすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する（`bench/src/bench/scan/scan.py`、`scan_file`）。`publish` がサイトをどうスキャンするかは、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを書き（要件 20.3）、書き出す前の自前の 2 回のスキャンも残る（Components 11、N7）（要件の Decision 44）。以前の Open question 4 だったもの。
 
+- **N26 Unreadable middle-step table shown as written (user).** 途中のステップでの `TableError` は `Unreadable` になり、`## Discovered spec` の節は書かれたとおりに、ラベルつきの文とともに見せる。行は推測しない（Components 3、要件 16.6、要件の Decision 18、ユーザーが確定）。以前の Open question 2 だったもの。
+
 ## Open questions
 
-以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。以前の参照が合うように、以下の番号は保っています。
-
-2. **Unreadable middle-step table**（要件の Open question 1）: 設計どおり、書かれたとおりに、ラベルつきの文とともに見せる。ユーザーは、ビルドの失敗を望むかもしれない。
-3. **Link to the root `.kiro/`**（要件の Open question 2）: ユーザーが承認するまで、"How the lab works" にそのリンクはない。承認されれば、それは解説であり、ビルダーレベルのスキャンを通る。
-4. **Rescanning the written site, for `publish`.** ラボの外のフォルダーに対する `bench-scan` は、すべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する（`bench/src/bench/scan/scan.py`、`scan_file`）。ノートブックはすべてのテキストファイルのサイドカーを書き、画像は自分でチェックする。`publish` はテキストファイルだけを渡すか、ベンチを変更する必要がある。これはノートブックを止めない。`publish` の spec のために、ここで挙げておく。
+なし。以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 2（途中のステップで読めない表）は N26 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。
