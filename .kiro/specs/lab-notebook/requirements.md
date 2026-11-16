@@ -34,7 +34,8 @@ they are not results restated by the notebook):
 - `wind-tunnel/wt-003`: stopped at its first action, 0 trials, no snapshots.
 - `body-lab/body-2`: ended by Dr. Kiro, 39 of 40 trials (remaining budget 1), 11 hypotheses, 11 experiments, 24
   prediction outcomes, 23 snapshots, 3 refusals (one `register`, two `end`), one verdict flag (E5, verdict
-  `partly`, counts hit 0, miss 1). Every snapshot before `end` has a `## Discovered spec` table with no rows. The
+  `partly`, counts hit 0, miss 1). Every snapshot before `end` has a `## Discovered spec` table with no rows, which
+  the bench's table reader does not accept (Decision 45). The
   `end` snapshot has 14 rows: `validated` R9, R11; `observed` R1, R5, R7, R13; `rejected` R2 (replaced by R1), R3
   (R11), R4 (R5), R6 (R7), R8 (R9), R10 (R11), R12 (R13), R14 (R13). One row can replace several rows (R11, R13), a
   replacing row can come before the row it replaces (R2 by R1), and a replacing row can be `observed`. Cells contain
@@ -385,15 +386,16 @@ to every experiment, so that I can check any claim.
 6. Dr. Kiro's plan SHALL be the `tasks.md` of the session's last snapshot, shown as written (Requirement 4.3).
 7. WHERE a session is an ended session with an `end` snapshot, THE table SHALL come from that snapshot; WHERE a
    session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words
-   labelled "not checked by the bench".
+   labelled "not checked by the bench" (10.14 applies where the reader does not accept the table).
 8. EACH experiment entry SHALL show: the hypothesis's frozen part as written; its predictions, with conditions,
    range, condition class (labelled "classified at registration") and Dr. Kiro's label; the experiment file as
    written; each trial with its parameter values, its measurements or not-measured outcomes, and its moving
    picture; each prediction outcome; the verdict with Dr. Kiro's words; and the verdict flag if the bench recorded
    one.
-9. IF an ended session's record has no `end` snapshot, or its table has no rows, THEN THE session page SHALL show
-   "no table" in place of the table, with commentary that the record holds no table, and SHALL list every missed
-   prediction of the session in its place (body-1). THE build SHALL NOT fill in a table.
+9. IF an ended session's record has no `end` snapshot (body-1), THEN THE session page SHALL show "no table" in
+   place of the table, with commentary that the record holds no table, and SHALL list every missed prediction of
+   the session in its place. THE build SHALL NOT fill in a table. "No table" SHALL be used for no other case
+   (Decision 45).
 10. WHERE an application's measurements include series (body-lab `track_x`, `track_y`, `track_heading`), THE
    experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the
    series is a not-measured outcome.
@@ -411,6 +413,13 @@ to every experiment, so that I can check any claim.
     outcomes, are composed by the bench from Dr. Kiro's ids; the quote itself SHALL be shown as recorded, in Dr.
     Kiro's ink (Decision 34). Which quotes the note points to is decided in the design; without parsing the
     message, the note covers every quote part of the message.
+14. IF the bench's table reader does not accept the table of the snapshot the page shows (this includes a table
+    with no rows, which the reader refuses; every snapshot of the real records before `end` is such a table), THEN
+    THE site SHALL show that snapshot's `## Discovered spec` section as written, in Dr. Kiro's ink; the message
+    the reader returned, as returned, in pencil; and the commentary "the bench's table reader did not accept this
+    table"; and, WHERE the table is not from an accepted `end` snapshot, the label "not checked by the bench".
+    THE build SHALL NOT parse the message, SHALL NOT guess rows, and SHALL NOT call such a case "no table"
+    (Decision 45).
 
 ### Requirement 11: Links to one experiment
 
@@ -508,7 +517,8 @@ nothing that went wrong is hidden.
    body-2). WHEN a visitor opens an entry of the list, THE site SHALL show the two trials' moving pictures side by
    side (Decision 35).
 6. A stopped session with snapshots SHALL have a session page with every section of Requirement 10, its table as
-   in 10.7, and "no table" where its last snapshot has no rows; a stopped session without snapshots (wt-003) SHALL
+   in 10.7 and 10.14 (wt-002: its last snapshot's section as written, with the bench reader's message); a stopped
+   session without snapshots (wt-003) SHALL
    have a page that shows only the content of 14.2 and the sentence of 16.9.
 
 ### Requirement 15: Verdicts and status words kept apart
@@ -552,9 +562,8 @@ so that I see a rule struck through and replaced as it happened.
 5. IF a `rejected` row's "replaced by" cell at a step is empty or names no row of that step's table, THEN THE
    replay SHALL strike the row through, show the cell as written, and show commentary that the named row is not in
    the table at this step, and SHALL NOT pick a replacement.
-6. IF the bench's table reader cannot read the table of a step's snapshot, THEN THE replay SHALL show that step's
-   `## Discovered spec` section as written, with the commentary "the bench's table reader could not read this
-   table at this step", and SHALL NOT guess its rows.
+6. IF the bench's table reader does not accept the table of a step's snapshot (including a table with no rows),
+   THEN THE replay SHALL show that step's table as in 10.14, and SHALL NOT guess its rows.
 7. THE replay SHALL be labelled "replay of a sealed record" on every step, and SHALL NOT be presented as live.
 8. THE replay SHALL have controls to step back, step forward and play. THE address of a step SHALL include its
    1-based step number in record order, SHALL be the same in every build from the same inputs, and opening it SHALL
@@ -756,8 +765,9 @@ exception to a rule.
 17. **Status words in the middle of a replay** (builder). The bench checks the table only at the end, so the words
     at earlier steps are shown as Dr. Kiro wrote them, labelled "not yet checked by the bench". The notebook does
     not compute a status (Requirement 16.3).
-18. **A table the reader cannot read at a middle step** (builder). Shown as written with a labelled sentence, no
+18. **A table the reader does not accept at a middle step** (builder). Shown as written with a labelled sentence, no
     guessed rows (Requirement 16.6). This shows the record as it is and fills in nothing. Confirmed by the user.
+    Extended by Decision 45.
 19. **Ticks across the session, emphasis from the row** (builder). A run band's ticks are all trials of the
     parameter group in the session, so "no trial" means no trial in the session; the cited and prediction trials
     are drawn stronger (Requirement 9.3). This combines the brief ("conditions that no trial in the session ran")
@@ -852,6 +862,19 @@ exception to a rule.
     folder scan reads every file as text, so the site's PNG files would fail it) is decided in the `publish` spec
     when it is written. The notebook still writes one sidecar per text file (Requirement 20.3), and its own scan
     before writing stays (Requirement 20.1, 20.2).
+
+45. **A table the bench reader does not accept** (user, 2026-11-17). `parse_table` raises `TableError` for a table
+    with no rows ("the discovered spec table has no rules"), so every snapshot before `end` in the real records is
+    one the reader does not accept, and a row-less table cannot be told from other unaccepted tables without
+    parsing the message or a second reader (Requirement 2.6). Decided: a table the reader does not accept, with no
+    rows or for any other reason, is shown with its `## Discovered spec` section as written in Dr. Kiro's ink, the
+    reader's message in pencil, and the commentary "the bench's table reader did not accept this table"; the build
+    does not parse the message. "No table" is used only for an ended session without an `end` snapshot (body-1),
+    which still lists every missed prediction. wt-002 (stopped, last snapshot without rows) shows its last
+    snapshot's section with the message, labelled "not checked by the bench". The edge cases of N12 are unchanged:
+    a replaced-by cell naming the row itself gives "names this row itself", no match (including empty) gives
+    "names no row of this table", two or more give "names more than one row" (Requirements 10.9, 10.14, 14.6, 16.6;
+    design N27; extends Decision 18).
 
 ## Open questions
 

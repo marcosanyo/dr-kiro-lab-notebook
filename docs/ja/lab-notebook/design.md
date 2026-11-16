@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `8d126c34687a9216c60f858a5589df6ad66b3977a9017fe74a1ae78cae30dcd9`
+> 原文 SHA-256: `6a78935ea790a9545ef35a11bf473b113e8ca43a4dec3bf7a27e0f2a75e8909d`
 
 # Design: lab-notebook
 
@@ -154,8 +154,8 @@ end の検査のための `Evidence` は、`Session.evidence` とまったく同
 
 ### 3. Tables (Requirements 2.4-2.6, 8, 16.3-16.6)
 
-- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。途中のステップでの `TableError` は `Unreadable(section_text, message)` になり、`## Discovered spec` の節は書かれたとおりに見せる（16.6、要件の Decision 18、N26）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
-- `tables.check_end(record)`: `end` スナップショットに `check_table(design_text, evidence, file)` を走らせる。問題があれば、行を名指ししてビルドを失敗させる（2.4）。`end` スナップショットのない終了済みセッション（body-1）は検査せず、"no table" として見せる（2.5）。2 つ目の表リーダーはない（2.6）。
+- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。受理された `end` スナップショットでないスナップショット（途中のステップ、または停止したセッションの最後のスナップショット）での `TableError` は `Unreadable(section_text, message)` になる（`message` はリーダーが返したテキスト）。行のない表もリーダーが拒否するのでここに含まれる。ページは `## Discovered spec` の節を Dr. Kiro のインクで書かれたとおりに、`message` をペンシルで、コメンタリー "the bench's table reader did not accept this table" とともに見せる。メッセージは解析しない（10.14、16.6、要件の Decision 18 と 45、N26、N27）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
+- `tables.check_end(record)`: `end` スナップショットに `check_table(design_text, evidence, file)` を走らせる。問題があれば、行を名指ししてビルドを失敗させる（2.4）。`end` スナップショットのない終了済みセッション（body-1）は検査せず、"no table" として見せる（2.5、10.9）。"no table" は他の場合には使わない。2 つ目の表リーダーはない（2.6）。
 - `TableView` は、純関数で `Table` から作る:
 
 ```
@@ -401,7 +401,7 @@ trial = "T1"
 
 ### Property 9: Replay steps equal snapshots and record prefixes
 
-*任意の* 生成された記録について、ステップは、記録順の `verdict` スナップショットと、あれば `end` スナップショットとまったく同じである。各ステップで、見せる表は、そのステップのスナップショットに対するベンチのリーダーの行（または書かれたとおりの読めない節）に等しく、見せるエントリーは、そのスナップショットのエントリーまでを含む記録のエントリーとまったく同じである。各拒否は、それより後にスナップショットが来る最初のステップに、ちょうど 1 つのステップで見せる。
+*任意の* 生成された記録について、ステップは、記録順の `verdict` スナップショットと、あれば `end` スナップショットとまったく同じである。各ステップで、見せる表は、そのステップのスナップショットに対するベンチのリーダーの行（またはリーダーのメッセージつきで書かれたとおりの読めない節）に等しく、見せるエントリーは、そのスナップショットのエントリーまでを含む記録のエントリーとまったく同じである。各拒否は、それより後にスナップショットが来る最初のステップに、ちょうど 1 つのステップで見せる。
 
 **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 
@@ -486,7 +486,8 @@ trial = "T1"
 - body-2 のカバー: 試行 T12 の画像と軌跡を持つ H4.P1、"miss"、行 R4 と R5（13.1、13.2、13.7）。
 - wt-004: 行 R1-R6 が、ステータスの語 "checked by the bench" を持つ。5 つの計測が `not_settled` である試行は、結果名と理由を見せ、プロットされた印を持たない。
 - body-1: "no table" と、その 8 つの外れの一覧（10.9）。
-- wt-002 と wt-003: ラボのページに同じフィールドで現れる。wt-002 は "no table" のセッションページを持つ。wt-003 は停止したセッションの内容と "the record has no snapshot to replay" だけを持つ（14.2、14.6、16.9）。
+- `end` より前の実記録のすべてのスナップショット（body-1、body-2、wt-002、wt-004）: 書かれたとおりの節、ペンシルのリーダーのメッセージ、"the bench's table reader did not accept this table"（10.14、16.6）。
+- wt-002 と wt-003: ラボのページに同じフィールドで現れる。wt-002 は、最後のスナップショットの節を書かれたとおりに、リーダーのメッセージと "not checked by the bench" とともに見せるセッションページを持つ（"no table" ではない）。wt-003 は停止したセッションの内容と "the record has no snapshot to replay" だけを持つ（14.2、14.6、16.9）。
 - 等しい試行の一覧: wt-002 の T1 と wt-004 の T1、および body-1/body-2 の 9 組。すべて厳密に等しい（14.5）。
 - すべての本物の記録のリプレイが、そのスナップショットと一致する（16.10、22.3）。
 
@@ -573,7 +574,7 @@ trial = "T1"
 - **N9 Addresses.** Components 9 の表のとおり。id はパターンで検査したベンチの id。
 - **N10 Replay as static pages.** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
 - **N11 Number format.** `.4g` と `repr`。Data Models のとおり。
-- **N12 Replacement edge cases.** 繰り返された id や行自身を指す `replaced by` のセルは、何も指さないセルと同じに扱う: 書かれたとおりに、注記つきで、タブなしで見せる（途中のステップでだけ起こりうる。end ではベンチが拒否する）。
+- **N12 Replacement edge cases.** 繰り返された id、行自身、または行なしを指す `replaced by` のセルは、書かれたとおりに、注記つきで、タブなしで見せる（途中のステップでだけ起こりうる。end ではベンチが拒否する）。注記は "names this row itself"、"names no row of this table"（空のセルも）、"names more than one row" のいずれか。
 - **N13 Refusal note covers every quote.** Decision 34 のフォールバックのとおり。設計はメッセージを解析しない。
 - **N14 Equal-trial pairs.** 1 つのアプリケーションの、同じキーを持つすべての組。1 つの記録の中の組も含む。等しさは計測値の JSON としての等しさ。
 - **N15 Number knob or Dr. Kiro parameter.** パラメーターが数値ノブなのは、その名前が種類 `number` の宣言されたノブに等しいとき。そうでなければ Dr. Kiro のパラメーターである（body-lab は、関数ノブの名前をパラメーターとして拒否する）。
@@ -589,6 +590,7 @@ trial = "T1"
 - **N25 Rescanning the written site is decided in `publish` (user).** ラボの外のフォルダーに対する `bench-scan` はすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する（`bench/src/bench/scan/scan.py`、`scan_file`）。`publish` がサイトをどうスキャンするかは、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを書き（要件 20.3）、書き出す前の自前の 2 回のスキャンも残る（Components 11、N7）（要件の Decision 44）。以前の Open question 4 だったもの。
 
 - **N26 Unreadable middle-step table shown as written (user).** 途中のステップでの `TableError` は `Unreadable` になり、`## Discovered spec` の節は書かれたとおりに、ラベルつきの文とともに見せる。行は推測しない（Components 3、要件 16.6、要件の Decision 18、ユーザーが確定）。以前の Open question 2 だったもの。
+- **N27 A table the reader does not accept (user, 2026-11-17).** `parse_table` が拒否する表は、行のない表（`end` より前の実記録のすべてのスナップショット）を含め、`## Discovered spec` の節を書かれたとおりに（Dr. Kiro のインク）、リーダーのメッセージ（ペンシル）、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析せず、2 つ目のリーダーも持たない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使う。wt-002 は最後のスナップショットをこの形で、"not checked by the bench" のラベルつきで見せる（Components 3、要件 10.9、10.14、14.6、16.6、要件の Decision 45）。N26 を拡張。
 
 ## Open questions
 

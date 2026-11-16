@@ -192,12 +192,15 @@ opened from the same state (N3).
 ### 3. Tables (Requirements 2.4-2.6, 8, 16.3-16.6)
 
 - `tables.read(snapshot) -> Table | Unreadable`: calls `bench.specfiles.discovered.parse_table(design_text,
-  file)`. A `TableError` at a middle step gives `Unreadable(section_text, message)`; the `## Discovered spec`
-  section is shown as written (16.6, requirements Decision 18, N26). At the `end` snapshot a `TableError` cannot
-  happen (the bench accepted it) and fails the build if it does.
+  file)`. A `TableError` at any snapshot that is not an accepted `end` snapshot (a middle step, or the last
+  snapshot of a stopped session) gives `Unreadable(section_text, message)`, with `message` the text the reader
+  returned; this includes a table with no rows, which the reader refuses. The page shows the `## Discovered spec`
+  section as written in Dr. Kiro's ink, `message` in pencil, and the commentary "the bench's table reader did not
+  accept this table"; the message is never parsed (10.14, 16.6, requirements Decisions 18 and 45, N26, N27). At
+  the `end` snapshot a `TableError` cannot happen (the bench accepted it) and fails the build if it does.
 - `tables.check_end(record)`: runs `check_table(design_text, evidence, file)` on the `end` snapshot; any problem
   fails the build, naming the row (2.4). Ended sessions without an `end` snapshot (body-1) are not checked and are
-  shown as "no table" (2.5). There is no second table reader (2.6).
+  shown as "no table" (2.5, 10.9); "no table" is used for no other case. There is no second table reader (2.6).
 - `TableView` is built from a `Table` by a pure function:
 
 ```
@@ -540,7 +543,7 @@ if that step's table holds the row.
 
 *For any* generated record, the steps are exactly the `verdict` snapshots in record order plus the `end` snapshot
 if present; at each step the shown table equals the bench reader's rows of that step's snapshot (or the unreadable
-section as written), and the shown entries are exactly the record entries up to and including that snapshot entry;
+section as written with the reader's message), and the shown entries are exactly the record entries up to and including that snapshot entry;
 each refusal is shown in exactly one step, the first whose snapshot comes after it.
 
 **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
@@ -671,7 +674,10 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
 - wt-004: rows R1-R6 with their status words "checked by the bench"; the trial whose five measurements are `not_settled` shows the
   outcome name and reason and has no plotted mark.
 - body-1: "no table" and the list of its 8 misses (10.9).
-- wt-002 and wt-003: on the lab page with the same fields; wt-002 has its session page with "no table"; wt-003 has
+- Every real snapshot before `end` (body-1, body-2, wt-002, wt-004): the section as written, the reader's message
+  in pencil and "the bench's table reader did not accept this table" (10.14, 16.6).
+- wt-002 and wt-003: on the lab page with the same fields; wt-002 has its session page with its last snapshot's
+  section as written, the reader's message and "not checked by the bench" (not "no table"); wt-003 has
   only the stopped-session content and "the record has no snapshot to replay" (14.2, 14.6, 16.9).
 - Equal-trial list: wt-002 T1 with wt-004 T1, and the 9 body-1/body-2 pairs, all exactly equal (14.5).
 - Replay of every real record matches its snapshots (16.10, 22.3).
@@ -786,9 +792,10 @@ changes `bench/`.
 - **N10 Replay as static pages.** One page per step, so every step's text is in the HTML and has a fixed address;
   "play" only follows the forward link.
 - **N11 Number format.** `.4g` and `repr`, as in Data Models.
-- **N12 Replacement edge cases.** A `replaced by` cell that names a repeated id or the row itself is treated like a
-  cell that names no row: shown as written, with a note, no tab (only possible at a middle step; the bench refuses
-  it at the end).
+- **N12 Replacement edge cases.** A `replaced by` cell that names a repeated id, the row itself or no row is shown
+  as written, with a note, no tab (only possible at a middle step; the bench refuses it at the end). The note
+  says "names this row itself", "names no row of this table" (also for an empty cell) or "names more than one
+  row".
 - **N13 Refusal note covers every quote.** Per Decision 34's fallback; the design does not parse messages.
 - **N14 Equal-trial pairs.** All pairs with the same key in one application, including pairs within one record;
   equality is JSON equality of the measurements.
@@ -827,6 +834,12 @@ changes `bench/`.
   the `## Discovered spec` section is shown as written with the labelled sentence, and no rows are guessed
   (Components 3, Requirement 16.6, requirements Decision 18, confirmed by the user). This was the former Open
   question 2.
+- **N27 A table the reader does not accept (user, 2026-11-17).** A table that `parse_table` rejects, including a
+  table with no rows (every real snapshot before `end`), is shown as its `## Discovered spec` section as written
+  (Dr. Kiro's ink), the reader's message (pencil) and the commentary "the bench's table reader did not accept this
+  table"; the build does not parse the message and has no second reader. "No table" is only for an ended session
+  without an `end` snapshot (body-1). wt-002 shows its last snapshot this way, labelled "not checked by the
+  bench" (Components 3, Requirements 10.9, 10.14, 14.6, 16.6, requirements Decision 45). Extends N26.
 
 ## Open questions
 
