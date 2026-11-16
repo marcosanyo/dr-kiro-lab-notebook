@@ -44,7 +44,7 @@ Each application runs on its own. body-lab needs no Docker.
   `specimen_01.xml` and `specimen_01.wiring.json`, must not be edited, moved or renamed. Code elsewhere reads them.
   The `README.md` in that folder may be updated only when the user asks. It is the only `model/` folder that is
   fixed.
-- `docs/brief.md` is the user's input. Do not edit it.
+- `docs/brief.md` is the user's input. Kiro edits it only when the user asks for that in chat; never make an unrequested edit. Every edit states what changed in the commit message.
 
 ## Two kinds of `.kiro`
 
