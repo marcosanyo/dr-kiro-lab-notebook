@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/requirements.md`](../../../.kiro/specs/lab-bench/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `3ad63a0c3ef07708dc8b4afc861177c0454da9b9f9920195cc2fe3aa0b7e0a66`
+> 原文 SHA-256: `b5a9b84d9c01e2e50eb99dc635db2ca5d287ed78f8e5a320e3cb51adfb3e44a8`
 
 # 要件: lab-bench
 
@@ -392,7 +392,7 @@ MCP スパイク（`spikes/mcp/results.md`）の後にユーザーが決定し�
 2. THE blind scan SHALL NOT match a stem of one character as a file name。
 3. THE blind scan SHALL NOT match a stem of two or more characters as a file name when it is on the stop list（`.kiro/blind-scan/stop-list.txt`）。THE comparison SHALL be the one the stop list has for terms: the stem is compared in token form, so case does not matter。
 4. THE blind scan SHALL always match the full name of a file。ドットのない名前には別のステムがない: それはフルの名前であり、1 文字であっても、除外リストにあっても、照合される。
-5. THE rules of 20.2-20.4 SHALL apply at both levels（ビルダーレベルと Dr. Kiro レベル）and in the same way。THE stop list SHALL still change only with the user's approval。除外リストにないステム（たとえば `geometry`、`mesh`、`constants`、`monitors`）は引き続き見つかる。それらを除外リストに入れるかどうかは、ユーザーが別に決める。
+5. THE rules of 20.2-20.4 SHALL apply at both levels（ビルダーレベルと Dr. Kiro レベル）and in the same way。THE stop list SHALL still change only with the user's approval。除外リストにないステム（たとえば `mesh`）は引き続き見つかる。`geometry`、`mesh`、`constants`、`monitors` の選択はユーザーが任せ、2026-11-16 に `geometry`、`constants`、`monitors` を除外リストに入れ、`mesh` は入れなかった（`wind-tunnel` 要件の Decision 46）。
 6. THE blind scan SHALL NOT change otherwise: 導出された用語（15.2、15.3）、パス、認証情報、body-lab のスキャンと golden ファイルは変わらない。
 7. THE tests SHALL check, over random file names and random stop lists, at both levels, that: a one-character stem is not found; a stop-listed stem is not found in any case; a stem that is not stop-listed is found; the full name is always found; a name without a dot is found even when it is one character or is stop-listed。
 

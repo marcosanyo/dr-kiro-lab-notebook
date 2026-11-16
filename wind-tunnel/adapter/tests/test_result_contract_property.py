@@ -27,11 +27,13 @@ def knob(low: float, high: float):
 # The corner rule accepts 0, 1 and, for every aspect of the range, the band [0.08, 0.995] (the band of
 # aspect 0.5 is the narrowest; Requirement 6.11).
 CORNERS = st.one_of(st.sampled_from([0.0, 1.0]), knob(0.08, 0.995))
+# The splitter floor accepts 0 and every value from 1e-6 (Decision 45).
+SPLITTERS = st.one_of(st.sampled_from([0.0, 1e-6]), knob(1e-6, 3.0))
 KNOBS = st.fixed_dictionaries(
     {
         "aspect": knob(0.5, 3.0),
         "corner": CORNERS,
-        "splitter": knob(0.0, 3.0),
+        "splitter": SPLITTERS,
         "angle": knob(0.0, 15.0),
     }
 )

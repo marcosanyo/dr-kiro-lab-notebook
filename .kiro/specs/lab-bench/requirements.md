@@ -703,8 +703,9 @@ found at both levels.
    full name, and it is matched even when it is one character or is on the stop list.
 5. THE rules of 20.2-20.4 SHALL apply at both levels (the builder level and the Dr. Kiro level) and in the same
    way. THE stop list SHALL still change only with the user's approval. A stem that is not on the stop list
-   (for example `geometry`, `mesh`, `constants`, `monitors`) SHALL still be found; the user decides separately
-   whether to stop-list any of them.
+   (for example `mesh`) SHALL still be found. The user delegated the choice for `geometry`, `mesh`, `constants` and
+   `monitors`: on 2026-11-16 `geometry`, `constants` and `monitors` were put on the stop list and `mesh` was not
+   (`wind-tunnel` requirements Decision 46).
 6. THE blind scan SHALL NOT change otherwise: the derived terms (15.2, 15.3), paths, credentials, and the scans and
    golden files of body-lab are unchanged.
 7. THE tests SHALL check, over random file names and random stop lists, at both levels, that: a one-character stem

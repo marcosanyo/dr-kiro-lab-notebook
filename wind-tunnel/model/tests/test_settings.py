@@ -34,6 +34,7 @@ def test_real_file_loads():
     assert s.run.processes == 3 and s.run.timeout_s == 140.0
     assert s.body.thickness == 0.08
     assert (s.body.min_arc, s.body.min_line) == (0.0314, 0.0025)
+    assert s.body.min_splitter == 1e-6  # Decision 45
     assert s.time.max_delta_t <= ESTIMATOR_MAX_DT
     assert s.picture.vorticity_limit == 5.0  # fixed by task 14.4 from extreme-runs.json
 

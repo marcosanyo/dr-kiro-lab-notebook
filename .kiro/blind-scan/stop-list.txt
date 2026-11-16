@@ -76,3 +76,10 @@ columns
 rows
 default
 domain
+# 2026-11-16, wind-tunnel Decision 46 (the user delegated the choice): the stems of builder-chosen file names that are
+# ordinary words. Listing a word also removes it as a derived term (bench output, told text, lab text); the full file
+# names (geometry.py, constants.toml, monitors.in) stay forbidden at both levels. "mesh" is NOT listed: it is a solver
+# word (the [mesh] section of the settings and a name in the mesh recipe), and the mesh is a detail Dr. Kiro must not learn.
+geometry
+constants
+monitors

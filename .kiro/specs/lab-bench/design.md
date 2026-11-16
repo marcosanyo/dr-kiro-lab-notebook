@@ -1041,8 +1041,9 @@ file-name patterns only. Body-lab's scans and golden files are unchanged (checke
    the list holds a word with the same tokens (`fv_schemes`).
 2. **A dotless name is a full name**, so it is always matched. Alternative: treat it as a stem and skip it when
    short or listed. Not chosen: the user's text says the full name is always matched.
-3. **Common-word stems stay found** until the user stop-lists them: `geometry`, `mesh`, `constants`, `monitors`.
-   They can match ordinary text at the Dr. Kiro level. The builder does not add them to the stop list.
+3. **Common-word stems stay found** until they are stop-listed. The user delegated the choice for `geometry`,
+   `mesh`, `constants` and `monitors`; on 2026-11-16 the first, third and fourth were listed and `mesh` was not
+   (`wind-tunnel` requirements Decision 46). An unlisted stem can match ordinary text at the Dr. Kiro level.
 
 ## C5. What would make me stop and ask
 

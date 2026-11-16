@@ -439,3 +439,33 @@ def test_a_refused_corner_that_reaches_run_trial_fails_loudly(settings, tmp_path
         adapter.run_trial({**KNOBS, "corner": 0.999}, 1)
     assert runner.calls == []
     assert list((tmp_path / "cases").iterdir()) == []  # the mount probe leaves the base empty
+
+
+# The splitter floor (Requirement 6.11, Decision 45).
+@pytest.mark.parametrize("splitter", [0.0, 1e-6, 2e-6, 3.0])
+def test_check_inputs_accepts_zero_the_floor_and_larger_splitters(settings, tmp_path, splitter):
+    adapter, _ = make(settings, tmp_path)
+    assert adapter.check_inputs({**KNOBS, "splitter": splitter}) is None
+
+
+@pytest.mark.parametrize("splitter", [1e-9, 1e-8, 9.99e-7])
+def test_check_inputs_refuses_a_positive_splitter_below_the_floor(settings, tmp_path, splitter):
+    adapter, _ = make(settings, tmp_path)
+    refused = adapter.check_inputs({**KNOBS, "splitter": splitter})
+    assert refused == f"splitter {splitter:.12g} is not accepted: splitter must be 0 or at least 1e-06"
+
+
+def test_a_refused_splitter_that_reaches_run_trial_fails_loudly(settings, tmp_path):
+    from wind_tunnel_model.input_rule import InputRuleError
+
+    adapter, runner = make(settings, tmp_path)
+    with pytest.raises(InputRuleError, match="splitter must be 0 or at least"):
+        adapter.run_trial({**KNOBS, "splitter": 1e-9}, 1)
+    assert runner.calls == []
+
+
+def test_two_refused_knobs_are_both_named(settings, tmp_path):
+    adapter, _ = make(settings, tmp_path)
+    refused = adapter.check_inputs({**KNOBS, "aspect": 1.75, "corner": 0.01, "splitter": 1e-9})
+    assert refused.startswith("corner 0.01 is not accepted")
+    assert "; splitter 1e-09 is not accepted" in refused

@@ -274,6 +274,8 @@ def test_repository_stop_list_loads() -> None:
         + ("application", "image")
         # wind-tunnel session wt-003 and the sweep of the bench's own text (wind-tunnel Decision 44)
         + ("empty", "columns", "rows", "default", "domain")
+        # stems of builder-chosen file names that are ordinary words (wind-tunnel Decision 46)
+        + ("geometry", "constants", "monitors")
     )
 
 
@@ -386,3 +388,24 @@ def test_stem_and_stop_list_apply_at_both_levels(tmp_path: Path) -> None:
         assert sorted(f.match for f in loud if f.kind == "file name") == sorted(
             ["p.in", "U.in", "mesh.py", "geometry.py", "geometry", "geometry"]
         ), level
+
+
+def test_real_stop_list_lets_a_bare_stem_word_pass_but_not_the_file_name_or_mesh() -> None:
+    """Decision 46: `geometry`, `constants` and `monitors` pass as words at the Dr. Kiro level; the full file
+    names are found at both levels; `mesh` stays forbidden."""
+    sources = AppSources(
+        ("geometry", "mesh"), ("geometry.py", "mesh.py", "constants.toml", "monitors.in"), (), (), None
+    )
+    scanner = Scanner([sources], load_stop_list(STOP_LIST), local_paths=[])
+    for word in ("geometry", "constants", "monitors"):
+        assert scanner.scan_text(f"the {word} of the body", "dr-kiro", "x") == [], word
+        assert scanner.scan_text(f"the {word} of the body", "builder", "x") == [], word
+    for level in ("builder", "dr-kiro"):
+        names = {
+            f.match for f in scanner.scan_text("see geometry.py, constants.toml, monitors.in", level, "x")
+        }
+        assert names >= {"geometry.py", "constants.toml", "monitors.in"}, level
+        assert [f.match for f in scanner.scan_text("the mesh", level, "x") if f.kind == "file name"] == [
+            "mesh"
+        ], level
+    assert [f.match for f in scanner.scan_text("the mesh", "builder", "x") if f.kind == "term"] == ["mesh"]

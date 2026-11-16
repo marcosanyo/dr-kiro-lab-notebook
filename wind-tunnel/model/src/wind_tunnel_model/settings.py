@@ -37,6 +37,7 @@ class Body:
     thickness: float
     min_arc: float
     min_line: float
+    min_splitter: float
 
 
 @dataclass(frozen=True)
