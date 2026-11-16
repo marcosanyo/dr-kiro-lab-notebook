@@ -678,3 +678,47 @@ application, I want nothing to change for an adapter that gives no such function
    refuses the whole experiment before any trial runs; an adapter without the function refuses nothing; a message
    that breaks 19.4, and a function that raises, are bench failures; a message with a derived term is a bench
    failure and is not shown.
+
+### Requirement 20: File-name stems and the stop list (amendment)
+
+**Amendment.** Added after Requirements 1-19 were implemented and tested, on the user's decision of 2026-11-16 (a
+change of the blind scan's file-name matching, which `rules.md` section 1 reserves to the user). No existing
+requirement is renumbered or reworded; this requirement narrows what 15.1, 15.4 and 15.5 call "file names".
+
+**User story:** As the builder, I want a bare `P` or `U` in Dr. Kiro's text not to be reported as a file name, so
+that one letter cannot end the sealing of a session, while a path or a file name that names a source file is still
+found at both levels.
+
+**Concerns:** the builder and the bench. Dr. Kiro sees only the findings the scan already returns.
+
+#### Acceptance criteria
+
+1. THE blind scan SHALL match the file name of every source file of an application in full, and its stem (the part
+   before the first dot), as file-name findings (Requirement 15.4, 15.5).
+2. THE blind scan SHALL NOT match a stem of one character as a file name.
+3. THE blind scan SHALL NOT match a stem of two or more characters as a file name when it is on the stop list
+   (`.kiro/blind-scan/stop-list.txt`). THE comparison SHALL be the one the stop list has for terms: the stem is
+   compared in token form, so case does not matter.
+4. THE blind scan SHALL always match the full name of a file. A name without a dot has no separate stem: it is a
+   full name, and it is matched even when it is one character or is on the stop list.
+5. THE rules of 20.2-20.4 SHALL apply at both levels (the builder level and the Dr. Kiro level) and in the same
+   way. THE stop list SHALL still change only with the user's approval. A stem that is not on the stop list
+   (for example `geometry`, `mesh`, `constants`, `monitors`) SHALL still be found; the user decides separately
+   whether to stop-list any of them.
+6. THE blind scan SHALL NOT change otherwise: the derived terms (15.2, 15.3), paths, credentials, and the scans and
+   golden files of body-lab are unchanged.
+7. THE tests SHALL check, over random file names and random stop lists, at both levels, that: a one-character stem
+   is not found; a stop-listed stem is not found in any case; a stem that is not stop-listed is found; the full name
+   is always found; a name without a dot is found even when it is one character or is stop-listed.
+
+#### Decision (approved by the user, 2026-11-16)
+
+**File-name stems and the stop list.** The file-name patterns (`bench/src/bench/scan/patterns.py`, `Patterns`)
+match each source file's full name and its stem (the part before the first dot). A stem of one character is not
+matched as a file name: it carries no information (first seen when `P` and `U`, the stems of `p.in` and `U.in`,
+could end the sealing of a session through a Dr. Kiro-level note). A stem of two or more characters is not matched
+if it is on the reviewed stop list, compared case-insensitively as the stop list is compared for terms. The full
+name of a file is always matched. The stop list still changes only with the user's approval. Both rules apply at
+both levels. The scans and golden files of body-lab do not change. Reason: Dr. Kiro text with a bare `P` or `U`
+would be flagged as a file name, and the stop list could not remove it because it did not apply to file-name
+patterns.

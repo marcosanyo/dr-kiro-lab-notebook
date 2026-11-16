@@ -424,7 +424,8 @@ that is not here, that is a change to this spec, not a second source.
   files and an extractor for each (15.2). The bench ships `mjcf` (values of `name`, `class`, `joint`, `material`,
   `texture` and `model` attributes, per `rules.md`), `wiring-json` (actuator names), and `fake-json`. The
   `wind-tunnel` spec adds its own extractor.
-- Terms also include the file names and stems of the source files.
+- Terms also include, for each source file, its file name, the part before its first dot and the part before its
+  last dot. Like any term they lose the allow list and the stop list. (The file-name patterns of 11.2 are separate.)
 - Remove the allow list (knob names, measurement names, not-measured outcome names from the declaration) and the
   stop list file (15.3).
 
@@ -440,6 +441,9 @@ that is not here, that is a change to this spec, not a second source.
   and others in `patterns.py`), `~/`, or a drive letter, so that division in experiment code is not taken for a
   path. At scan time the current home folder and the repository's absolute path are also flagged, whatever they
   are.
+- File names: each source file's full name, and its stem (the part before the first dot), matched whole and
+  case-insensitively, at both levels. The stem is skipped when it is one character or is on the stop list (token
+  form, as for terms); the full name is always matched (Requirement 20, C1).
 - Credentials: AWS access key ids (`AKIA`/`ASIA` + 16), private key headers, GitHub token prefixes, and
   `key|secret|token|password` assignments followed by a long value. The patterns live in `patterns.py`.
 
@@ -538,6 +542,8 @@ Approved by the user before the tasks were written.
    runs and verdicts. An accepted `end()` now records the files it checked (Requirement 10.4, 12.6). A stopped
    session gets no final snapshot (10.5), by the user's decision. `body-1` stays as sealed, without a table; how
    the notebook shows that is decided in the `lab-notebook` spec.
+7. **File-name stems and the stop list** (Requirement 20, approved by the user on 2026-11-16, see C1-C4): the
+   file-name patterns skip a one-character stem and a stop-listed stem; the full name is always matched.
 
 ---
 
@@ -994,3 +1000,50 @@ terms. The tool descriptions are not changed; Dr. Kiro learns of a refused value
 
 - The golden files of body-lab differ after the change (18.8). Not the case: they pass unchanged.
 - A refused value needs to be told to Dr. Kiro before it is tried (a change of the told text).
+
+---
+
+# Amendment: file-name stems (Requirement 20)
+
+Added after tasks 1-31 were done, on the user's decision of 2026-11-16. Sections 1-14, F1-F12, A1-A8 and B1-B6 are
+not rewritten except 11.1 and 11.2, which now say what the code does.
+
+## C1. Rules (20.1-20.5)
+
+`Patterns(file_names, solver_dirs, local_paths, stop_list=())` in `scan/patterns.py`. For every source file name:
+
+- the full name is always a pattern;
+- the stem is `name.split(".", 1)[0]`. It is a pattern only when `stem != name` (the name has a dot), `len(stem) > 1`,
+  and `term_tokens(stem)` is not among the stop list's `term_tokens`;
+- a name without a dot has `stem == name`: it is a full name, so it is matched even when it is one character or
+  on the stop list. (`Allrun` is the only such name among the applications' source files; the rule is tested.)
+
+`Scanner.__init__` passes its stop list to `Patterns`; `Scanner.from_config` already loads it. `Patterns.find` is the
+same at both levels, so the rules hold at both. A full name such as `geometry.py` still reports the whole name and,
+separately, its stem `geometry` when the stem is not skipped (as before).
+
+## C2. What does not change
+
+The derived terms (11.1), the allow list, paths, credentials, the author ranges and the findings' format. The terms
+made from one-character stems (for example `u` at the builder level) are untouched; this amendment is about the
+file-name patterns only. Body-lab's scans and golden files are unchanged (checked by task 34).
+
+## C3. Properties (Req 16 style, tagged `Feature: lab-bench, Property N`)
+
+| # | Property | Req |
+|---|---|---|
+| P30 | For all file names and stop lists, at both levels: a one-character stem and a stop-listed stem (any case) are not found; an unlisted stem of two or more characters is found; every full name is found; a name without a dot is found even when it is one character or stop-listed. | 20.2-20.5 |
+
+## C4. Decisions (taken by the builder, on the user's decision)
+
+1. **The stop list is compared in token form** (`term_tokens`), the same way as for terms, so `solver_output` and
+   `solverOutput` both equal the stop word `solver_output`. A camelCase stem such as `fvSchemes` is skipped only if
+   the list holds a word with the same tokens (`fv_schemes`).
+2. **A dotless name is a full name**, so it is always matched. Alternative: treat it as a stem and skip it when
+   short or listed. Not chosen: the user's text says the full name is always matched.
+3. **Common-word stems stay found** until the user stop-lists them: `geometry`, `mesh`, `constants`, `monitors`.
+   They can match ordinary text at the Dr. Kiro level. The builder does not add them to the stop list.
+
+## C5. What would make me stop and ask
+
+- A golden file of body-lab or a sealed session changes its scan result after the change. Not the case.

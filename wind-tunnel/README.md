@@ -176,10 +176,12 @@ The blind scan covers terms, paths and credentials only.
   server, and the server crashed in a call made about 20 s after the previous one (`wt-002`). Since the fix, each mesh is
   made in a short-lived child process, and the same rehearsal that failed before passes. The cause was found from a
   matrix of thread cases (`spikes/timing/gmsh-threads.md`).
-- **A lone `P` or `U` in text Dr. Kiro writes can be reported by the scan.** At Dr. Kiro level, a single letter `P`
-  or `U` matches a file-name pattern (case-insensitive), so a quote or note with such a letter alone is a finding.
-  This is a known limit, not changed, because it needs a change of the scan rules, which the user decides
-  (requirements Decision 44). It did not stop `wt-004`.
+- **Some file-name stems can match ordinary words at Dr. Kiro level.** The scan matches each source file's full
+  name and its stem (the part before the first dot). Since lab-bench Requirement 20 (the user's decision of
+  2026-11-16), a one-character stem (`P`, `U`) is not matched, and a stem on the stop list is not matched, so a bare
+  `P` or `U` is no longer a finding. The stems `geometry`, `mesh`, `constants` and `monitors` are not on the stop
+  list, so those words alone in a quote or a note of Dr. Kiro are still findings, until the user decides whether to
+  stop-list them. The full file names are always matched.
 - **A session is not reproducible as a whole.** The trials are (same machine and image build, above), but Dr. Kiro's
   choice of experiments is not fixed by the session seed. The record of `wt-004` is what happened once.
 

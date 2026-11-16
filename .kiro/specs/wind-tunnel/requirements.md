@@ -972,7 +972,9 @@ reading check failed.
     text, a quote of Dr. Kiro's file) cannot be swept; quotes are Dr. Kiro level (paths and credentials only). Open
     risk, not changed (it needs a change of the scan rules, which the user decides): a lone `P` or `U` in text at
     Dr. Kiro level is a file name finding (`0/p.in`, `0/U.in`), for example in a quote or a note that Dr. Kiro
-    writes. The rehearsal now also checks a point range refusal, the corrected registration, and an invalid
+    writes. Resolved on 2026-11-16 by the user's decision recorded in lab-bench Requirement 20: a stem of one
+    character is no longer a file-name finding. The common-word stems `geometry`, `mesh`, `constants` and `monitors`
+    are still found at Dr. Kiro level; the user decides later whether to stop-list them. The rehearsal now also checks a point range refusal, the corrected registration, and an invalid
     experiment file (a refusal, session open). Changed: `stop-list.txt`, `hypotheses.py`, `session.py` (text),
     their tests, `rehearse_session.py`, `README.md` (`bench-stop` before a new session). Design Decision 31.
 
