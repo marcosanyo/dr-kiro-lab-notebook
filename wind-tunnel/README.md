@@ -110,6 +110,8 @@ calls it before any run of an experiment. With `h` = min(1, `aspect`) and `c` = 
 accepted, because a piece of length zero is absent, not short. Any other value is accepted only when the arc is at
 least `min_arc` = 0.0314 and the straight side is at least `min_line` = 0.0025 (`model/constants.toml`). The limits
 apply to the corner arcs and straight sides only, never to the plate (`splitter`) or to another knob.
+A separate rule refuses a positive `splitter` below 1e-6 (below about 2.5e-8 the shape cannot be built; 1e-6 was run
+to convergence, see the section below).
 
 The refusal message is one line in Dr. Kiro's terms: knob names and values only. For example, from
 `extreme-runs.json`: "corner 0.001 is not accepted: corner must be 0, 1, or between 0.04 and 0.997 when aspect is
@@ -119,6 +121,14 @@ The same measurements are the reason for the `angle` range [0, 15]. At angle 15 
 knobs settled, and at angle 20 to 30 some combinations did not settle by the settling rule
 (`spikes/timing/extreme-v2-summary.md`, Part B1). The range was chosen by the user from these data.
 
+## A very small plate is refused
+A positive `splitter` below 1e-6 is refused before the run, with no budget used (the user's decision of 2026-11-16,
+requirements Decision 45). `splitter` = 0 (no plate) and every value from 1e-6 up are accepted. The reason is not
+physical: a plate thinner than about 2.5e-8 cannot be built as a shape, so the run would fail and end the session
+(measured: 1e-9 and 1e-8 fail, 3e-8 builds). The floor is the value that was run to convergence (1e-6: cd 1.27591 at
+45.0 s; 1e-4: cd 1.27574 at 43.9 s; aspect 1.75, corner 0.5, angle 5). The message is, for example, "splitter 1e-09 is
+not accepted: splitter must be 0 or at least 1e-06". The four near-end cases of `splitter` (0.003, 0.03, 2.97, 2.997)
+are above the floor, and `extreme-runs.json` is unchanged.
 ## Checks and results
 
 **Circle check** (`circle-check.json`, written by `wind-tunnel-circle-check`): a circle (`aspect` 1, `corner` 1,
@@ -179,9 +189,9 @@ The blind scan covers terms, paths and credentials only.
 - **Some file-name stems can match ordinary words at Dr. Kiro level.** The scan matches each source file's full
   name and its stem (the part before the first dot). Since lab-bench Requirement 20 (the user's decision of
   2026-11-16), a one-character stem (`P`, `U`) is not matched, and a stem on the stop list is not matched, so a bare
-  `P` or `U` is no longer a finding. The stems `geometry`, `mesh`, `constants` and `monitors` are not on the stop
-  list, so those words alone in a quote or a note of Dr. Kiro are still findings, until the user decides whether to
-  stop-list them. The full file names are always matched.
+  `P` or `U` is no longer a finding. The stems `geometry`, `constants` and `monitors` are on the stop list (Decision 46), so
+  those words alone are no finding. `mesh` is not, because it is a solver word, so a bare `mesh` in a quote or a note
+  of Dr. Kiro is still a finding. The full file names are always matched.
 - **A session is not reproducible as a whole.** The trials are (same machine and image build, above), but Dr. Kiro's
   choice of experiments is not fixed by the session seed. The record of `wt-004` is what happened once.
 

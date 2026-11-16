@@ -140,10 +140,10 @@ flowchart TD
   - A test compares the four texts, with the thickness filled in, with Requirement 3.2 read from the spec file
     (skipped with a visible reason where `.kiro/` is absent), so that spec and code cannot drift.
 - Input check: `WindAdapter.check_inputs(inputs) -> str | None`, the optional hook of `lab-bench` (Requirement 19). It
-  calls `corner_refusal` of `input_rule.py` (section 2) with `aspect` and `corner` and looks at no other knob. It is
-  a pure function, so the same inputs always give the same answer. `run_trial` calls the same function in its
-  validation and raises `InputRuleError` for a refused corner, so a refused value can never run when the hook was
-  not called (no fallback).
+  calls `input_refusal` of `input_rule.py` (section 2), which applies the corner rule to `aspect` and `corner` and
+  the splitter floor to `splitter`; `angle` is not looked at. It is a pure function, so the same inputs always give
+  the same answer. `run_trial` calls the same function in its validation and raises `InputRuleError` for a refused
+  corner or splitter, so a refused value can never run when the hook was not called (no fallback).
 - Two factories: `WindAdapter()` (checks the environment, section 6) and `scan_adapter()` (the same declaration, no
   `run_trial`, no check). `scan_sources.toml` names `scan_adapter` as its `adapter`. A test asserts that both give
   equal declarations. The scan therefore needs no Docker (13.5, 14.4).
@@ -188,7 +188,12 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   error of an exact bound, as 1 - 0.0025 / 0.5 = 0.995). A corner of exactly 0 or 1 is accepted; any other is
   accepted when `lo <= corner <= hi`, so the band that the message tells is the band that is tested and is never
   wider than the rule. The message is `corner <c> is not accepted: corner must be 0, 1, or between <lo> and <hi>
-  when aspect is <a>`. The plate and every other knob are not looked at.
+  when aspect is <a>`. The minimum lengths never apply to the plate.
+  The splitter floor (Requirement 6.11, Decision 32): `splitter_accepted(splitter, settings)` is true when `splitter`
+  is 0 or at least `settings.body.min_splitter` (1e-6); `splitter_refusal` gives `splitter <s> is not accepted:
+  splitter must be 0 or at least 1e-06` (the numbers written with `:.12g`, as in the corner message), and
+  `input_refusal(aspect, corner, splitter, settings)` joins the refusals of every refused knob, the corner first,
+  with "; " (None when nothing is refused).
 
 ### 3. Mesh (Req 6.8, 7.2) in `wind_tunnel_model/mesh.py`
 
@@ -603,6 +608,15 @@ the band. Examples pin the measured data: aspect 1.75 and corner 0.04 (arc 0.031
 (straight side 0.002) are refused. `check_inputs` of the adapter gives the same answers whatever `splitter` and
 `angle` are, and a refused `corner` that reaches `run_trial` raises.
 **Validates: Requirements 3.3, 6.11**
+### Property 18: Splitter floor
+For all `splitter` in [0, 3] (ends included, and values from 0 to 1e-5 drawn often): the verdict is `accept` if and
+only if `splitter` = 0 or `splitter` >= 1e-6; a refused value is refused by `splitter_refusal`, by `input_refusal` and by
+`check_inputs`, and an accepted value is not; every accepted `splitter` gives an outline that the real `GmshMesher`
+builds (a limited number of examples, because each build takes about 0.2 s). Examples: 0, 1e-6, 2e-6 and 3 are
+accepted; 1e-9, 1e-8 and 9.99e-7 are refused; the message of 1e-9 is `splitter 1e-09 is not accepted: splitter must
+be 0 or at least 1e-06`, and the messages of several inputs hold none of the derived terms at builder level. A
+refused `splitter` that reaches `run_trial` raises `InputRuleError`.
+**Validates: Requirements 3.3, 6.11**
 ## Error Handling
 
 | Situation | Outcome | Where it is seen |
@@ -754,7 +768,7 @@ Made by the builder in this design; none changes a requirement.
     single `min_edge` is replaced by `min_arc` = 0.0314 (shortest corner arc) and `min_line` = 0.0025 (shortest
     straight side of the body), because the data (`spikes/timing/extreme-v2-summary.md`) put the two limits an order
     of magnitude apart: one value would refuse the high side about 12 times more than needed, or accept arcs that
-    hit the limit. Neither applies to the plate. The refusal is a pure function of `aspect` and `corner` in
+    hit the limit. Neither applies to the plate (the floor of Decision 32 is a different rule). The refusal is a pure function of `aspect` and `corner` in
     `wind_tunnel_model/input_rule.py`, called by `WindAdapter.check_inputs` (before any trial of an experiment, no
     budget used) and again by `run_trial`, which raises for a refused corner. Choice: not in the geometry, because
     the geometry is a drawing of the body for any knob values and the rule is a limit of the solver on this machine;
@@ -813,6 +827,18 @@ Made by the builder in this design; none changes a requirement.
     each needs its own scan sources (`wind-tunnel/adapter`, `body-lab/adapter`); the collector is shared in
     `bench/tests/message_sweep.py`. The bench is not changed to scan less.
 
+32. **Splitter floor in the input rule** (Requirements Decision 45). Alternatives: refuse at the mesh (a bench failure
+    that ends the session), clip a small value to the floor (a fallback, and it changes what Dr. Kiro asked for), or
+    refuse only below 2.5e-8, the edge of what builds (a value that was never run to convergence). Chosen: refuse
+    `0 < splitter < 1e-6` before the run, next to the corner rule, with the floor as the named setting
+    `body.min_splitter` and its data in a comment of `constants.toml`. `input_refusal` joins the messages of the
+    refused knobs so that Dr. Kiro learns every refused knob in one answer. It is an exception to Decision 23 ("neither
+    applies to the plate") for a reason that is not physical: the shape cannot be built, the same idea as the refusal
+    of corner values near the ends.
+33. **Stop-list stems** (Requirements Decision 46). Alternatives: keep all four stems forbidden (a bare ordinary word
+    in a note of Dr. Kiro is a finding), or list all four. Chosen: list `geometry`, `constants` and `monitors`, and keep
+    `mesh` off, judged by what each listing removes from the derived terms (Requirements Decision 46). The full file
+    names are always matched, and a test pins that.
 ## Open questions
 
 One item is open, and it does not block the tasks: the user confirms the sheet layout of Decision 16 (proposal)

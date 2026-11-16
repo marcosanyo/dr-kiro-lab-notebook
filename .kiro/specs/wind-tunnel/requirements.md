@@ -152,9 +152,9 @@ I can vary the system knowingly.
    the angle. None says what the knob does. The number 0.08 in the `splitter` text SHALL be written into the text
    from the plate thickness in `wind-tunnel/model/` (Requirement 6.3), not typed a second time.
 3. WHEN the bench passes computed inputs, THE adapter SHALL accept every combination of values inside the four
-   ranges, ends included, that the corner rule of Requirement 6.11 accepts, and SHALL build the body for it
-   (Requirement 6) or fail with the reason (Requirement 8). A combination that the corner rule refuses never
-   reaches a run (Requirement 6.11).
+   ranges, ends included, that the corner rule and the splitter floor of Requirement 6.11 accept, and SHALL build
+   the body for it (Requirement 6) or fail with the reason (Requirement 8). A combination that either rule refuses
+   never reaches a run (Requirement 6.11).
 4. THE adapter SHALL NOT clip, round or default a knob value; the bench has already refused values outside a range
    (`lab-bench` Requirement 4.6).
 5. THE knob texts SHALL be reviewed against Requirement 12 in the reviewed list (Requirement 12.3), and SHALL pass
@@ -290,7 +290,8 @@ system and the solver values never reach a `lab/` folder.
     x (1 - `c`). A `corner` of exactly 0 or exactly 1 SHALL be accepted: a piece of length zero is absent, not
     short. Any other `corner` SHALL be accepted only when the arc is at least `min_arc` = 0.0314 and the straight
     side is at least `min_line` = 0.0025 (both settings of `constants.toml`). The two limits apply to the corner
-    arcs and the straight sides of the body only, and NEVER to the plate (`splitter`) or to any other knob. THE
+    arcs and the straight sides of the body only, and NEVER to the plate (`splitter`) or to any other knob; the
+    floor of the next sentence is a different rule. THE
     refusal message SHALL be one line in Dr. Kiro's terms (knob names and values only; no solver, mesh, piece,
     file or time) and SHALL say which values of `corner` are accepted for the given `aspect`, in the form "corner
     must be 0, 1, or between <lo> and <hi> when aspect is <a>", where `lo` is the lower limit rounded up and `hi`
@@ -300,6 +301,16 @@ system and the solver values never reach a `lab/` folder.
     and a refused combination SHALL use no budget. The geometry (Requirement 6.1-6.4) SHALL NOT refuse a piece for
     being short; a refused `corner` that nevertheless reaches `run_trial` SHALL raise (a bench failure), never
     run. Reasons and data: Decision 35.
+
+    THE adapter SHALL also refuse, before any run and through the same `check_inputs`, a positive `splitter`
+    below the floor `min_splitter` = 1e-6 (a setting of `constants.toml`): `splitter` = 0 and every `splitter` of at
+    least 1e-6 (1e-6 itself included) SHALL be accepted. This is not a judgement about the plate's physics. It
+    refuses a value for which the shape cannot be built, the same idea as the refusal of corner values near the
+    ends. The refusal message SHALL be one line in Dr. Kiro's terms, knob name and values only, in the form
+    "splitter <s> is not accepted: splitter must be 0 or at least 1e-06", with the numbers written as the corner
+    message writes them. WHEN both rules refuse, THE message SHALL name every refused knob, the corner first,
+    separated by "; ". The rule SHALL live once, next to the corner rule in `input_rule.py`, and a refused
+    `splitter` that reaches `run_trial` SHALL raise (a bench failure), never run. Reasons and data: Decision 45.
 
 ### Requirement 7: The solver environment
 
@@ -660,7 +671,8 @@ shown to work.
    other three knobs at the middle of their ranges (16 runs). The values are computed from the declared ranges and
    not typed. THE corner rule of Requirement 6.11 refuses the near-end corner values that are too close to 0 or
    1 (before a run, through `check_inputs`); such a case is recorded as `refused` with the message and is not
-   run. THE geometry SHALL NOT refuse any case.
+   run. THE splitter floor of Requirement 6.11 refuses no near-end case: the near-end `splitter` values (0.003,
+   0.03, 2.97, 2.997) are far above 1e-6. THE geometry SHALL NOT refuse any case.
 3. ONE full Dr. Kiro session of 24 runs SHALL be run by the user on his Mac, in Kiro CLI, only after the gate of
    17.6 has passed or the user has decided what to do about it. THE user starts and finishes it himself, and
    records the screen; he acts as the experimenter only (Decision 39). Pass: the record is sealed
@@ -850,7 +862,8 @@ reading check failed.
     rule on `cd`), at 15 all 8 end combinations settle, the slowest in 95.2 s (`spikes/timing/extreme-v2-summary.md`).
     The brief says [0, 30]; this decision overrides it for this spec, and `docs/brief.md` is not edited. Requirement
     3.1, the declaration, the tests and `product.md` carry [0, 15].
-35. **Corner rule: two limits, plate exempt, refusal before the run** (the user's decision). `min_edge` of
+35. **Corner rule: two limits, plate exempt from them, refusal before the run** (the user's decision; the splitter
+    floor of Decision 45 is a different rule and does not change that the minimum lengths never apply to the plate). `min_edge` of
     `constants.toml` is replaced by `min_arc` = 0.0314 and `min_line` = 0.0025. Data (`extreme-v2-summary.md`, the
     new setup): arcs settled from 0.03142 (94.7 s and 78.7 s) and not at 0.02749 (123.3 s); straight sides settled
     from 0.0025 (111.6 s and 99.9 s) and hit the limit at 0.002. One value for both would refuse the high side
@@ -974,10 +987,57 @@ reading check failed.
     Dr. Kiro level is a file name finding (`0/p.in`, `0/U.in`), for example in a quote or a note that Dr. Kiro
     writes. Resolved on 2026-11-16 by the user's decision recorded in lab-bench Requirement 20: a stem of one
     character is no longer a file-name finding. The common-word stems `geometry`, `mesh`, `constants` and `monitors`
-    are still found at Dr. Kiro level; the user decides later whether to stop-list them. The rehearsal now also checks a point range refusal, the corrected registration, and an invalid
+    were still found at Dr. Kiro level; the user delegated the choice, and Decision 46 records it. The rehearsal now also checks a point range refusal, the corrected registration, and an invalid
     experiment file (a refusal, session open). Changed: `stop-list.txt`, `hypotheses.py`, `session.py` (text),
     their tests, `rehearse_session.py`, `README.md` (`bench-stop` before a new session). Design Decision 31.
 
+45. **Splitter floor: a positive `splitter` below 1e-6 is refused before the run** (the user's decision of
+    2026-11-16). Found when a very small plate was tried: a positive `splitter` below about 2.5e-8 cannot be
+    meshed (the shape is refused with "Unknown curve in extruded surface"; the point tolerance of Gmsh is 1e-8).
+    Measured: `splitter` 1e-9 and 1e-8 fail, 3e-8 builds; 1e-6 and 1e-4 were run to convergence (cd 1.27574 at
+    43.9 s and cd 1.27591 at 45.0 s; aspect 1.75, corner 0.5, angle 5). A failed mesh is a bench failure and ends the
+    session, so Dr. Kiro could end a session by writing a very small number. Chosen: refuse before the run, through
+    `WindAdapter.check_inputs` (`lab-bench` Requirement 19, no budget used), `0 < splitter < 1e-6`. Accepted:
+    `splitter` = 0 and `splitter` >= 1e-6 (1e-6 itself is accepted). The floor is the value that was run to
+    convergence (`min_splitter` = 1e-6 in `constants.toml`), not the edge of what builds (2.5e-8). **Reason, and
+    how this fits Decision 35:** Decision 35 and 6.11 say the minimum arc and line lengths do not apply to the
+    plate, because plate lengths of 0.001 to 0.1 settled; that stays true. This floor is an exception for a
+    different reason: it is not a physical judgement about the plate. It only refuses a value for which the
+    shape cannot be built, the same idea as the refusal of corner values near the ends. The message is
+    `splitter <s> is not accepted: splitter must be 0 or at least 1e-06`, with the numbers written by `:.12g` as the
+    corner message writes them (`1e-09`, `1e-06`; the form `1e-06` was kept because it is the same form as the
+    value Dr. Kiro wrote and it passes the scan). When both rules refuse, the message names every refused knob (corner
+    first, separated by "; "); one rule refusing gives the one line it gave before. A refused `splitter` that reaches
+    `run_trial` raises `InputRuleError`, as a refused corner does. Checked: the near-end cases of the 32 runs
+    (`splitter` 0.003, 0.03, 2.97, 2.997) are far above the floor and `wind-tunnel/extreme-runs.json` is not
+    changed; the message passes the blind scan at builder level with the real scan sources and the real stop list
+    and holds none of the derived terms (`wind-tunnel/adapter/tests/test_message_sweep.py`); the rehearsal refuses
+    `splitter` 1e-9 as a normal refusal and runs `splitter` 1e-6 (Design Decision 32, Property 18). Changed:
+    `constants.toml`, `settings.py`, `input_rule.py`, `adapter.py`, `rehearse_session.py`, their tests, `README.md`.
+46. **Stems of builder-chosen file names on the stop list** (the user delegated the choice, 2026-11-16, after
+    `lab-bench` Requirement 20). Rule: put on `.kiro/blind-scan/stop-list.txt` the words Dr. Kiro could write in an
+    ordinary sentence. Listing a word also removes it as a derived term (bench output, told text and lab text), so
+    each candidate was judged on two points: (a) which single-token derived terms the listing removes, and (b)
+    whether the word is an ordinary English word whose removal does not hide a solver or mesh identifier. Evidence:
+    the derived term list built at scan time from both applications (210 terms), by `Scanner.terms`. The multi-word
+    terms that start with a candidate (`GeometryError`, `MeshError`, `MeshTimeout`, `MESH_FILE`) stay forbidden, and
+    full file names are always matched.
+    - `geometry`: **listed.** The only single-token term it removes comes from the file name `geometry.py` (the
+      class `GeometryError` is two tokens and stays). The word is ordinary, the builder chose the file name, and the
+      geometry of the body is told to Dr. Kiro as definitions (Decision 19).
+    - `constants`: **listed.** The only single-token term it removes comes from the file name `constants.toml`. The
+      word is ordinary and the builder chose the file name.
+    - `monitors`: **listed.** It removes the single-token term `monitors`, from the file name `monitors.in` and from
+      the `#include "monitors"` line of `controlDict.in`, where it names the builder's own file, not an OpenFOAM
+      keyword. The word is ordinary and says nothing about the structure of the body.
+    - `mesh`: **not listed.** It removes the single-token term `mesh`, which comes from the `[mesh]` section of
+      `constants.toml`, the `mesh` settings variable of the mesh recipe, and the file name `mesh.py`, so it is a
+      name of the solver setup, not only a file stem. The mesh is a solver detail that Dr. Kiro must not learn
+      (`rules.md` section 1), so a bare `mesh` stays a finding at both levels.
+    The full file names `geometry.py`, `constants.toml`, `monitors.in` and `mesh.py` are still found at both levels
+    (test in `bench/tests/unit/test_scan.py`); the bare words `geometry`, `constants` and `monitors` pass at the Dr.
+    Kiro level and at the builder level, and a bare `mesh` is found at both. A comment with the date and this
+    Decision is in the stop list file. Design Decision 33.
 ## Open questions
 
 One item is open, and it is a confirmation, not a block for the tasks:
