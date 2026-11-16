@@ -4,6 +4,18 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 経緯は git と各 spec の tasks・Decisions にあります。
 
 最終更新: ローカル、タスク 21（最後のチェックポイント）と、2026-11-16 のユーザーの 2 つの決定（Decision 45、46）の後。`wind-tunnel` のタスク 1〜21 完了。
+
+## brief の改訂（ブランチ `docs/brief-final-edit`）
+- `docs/brief.md` を今の方針に合わせた: 題は Dr. Kiro's Lab Notebook、決め台詞は The experiment gets the final edit.。ノートは発見した spec の表が中心
+  （ベンチの状態の語 4 つを文字で出す）。新しい spec `build-from-spec`（4.5）を足し、publish は 4.6 になった。`angle` [0, 15]°、画像は PNG の画像シート、
+  MCP は決定済み、レイアウトは今のフォルダーに合わせた。`.kiro/steering/product.md` も合わせた。
+- **次の一手:** `lab-notebook` の要件を作る（brief 4.4。残る DECIDE は、走らせた条件の区切り方と body-lab での見せ方）。その後に `build-from-spec` の要件を作る（4.5）。
+- **残っている件:** Dr. Kiro の雛形（`bench/src/bench/drkiro/files/workflow.md` と各ラボの `lab/.kiro/steering/workflow.md`）に
+  「否定された規則は表から消さず、`rejected` の行として残す」の 1 文を足す。`partly` と `rejected` のどちらに書くかは Dr. Kiro に任せたまま。
+  `impl/wind-tunnel` が main に入ってから別に直す。次のセッションから条件が変わることを、その時 `dr-kiro` の spec の Decisions に残す。
+  封印済みの body-1 と wt-004 は書き換えない。
+- リプレイで取り消し線が出るのが、途中のスナップショットに表がある時だけかどうかは、`lab-notebook` の spec で確かめる。
+
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。

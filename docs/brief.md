@@ -1,22 +1,22 @@
-# Brief: Dr. Kiro Frankenstein
+# Brief: Dr. Kiro's Lab Notebook
 
 This document is the input for the specs. It says what we want, the rules, and what we already know from an earlier prototype. It does not say how to build it; that is your design. `[DECIDE: …]` marks things that are not settled: ask, do not pick silently.
 
 ## 1. What we are building
-A lab where a Kiro custom agent ("Dr. Kiro") experiments on a system it has no description of, and writes that system's spec from evidence. Tagline: **Discover the Spec. Don't Just Follow It.**
+A lab where a Kiro custom agent ("Dr. Kiro") experiments on a system it has no description of, and writes that system's spec from evidence. Tagline: **The experiment gets the final edit.**
 
 One skeleton, two applications (hackathon category: Skeleton Crew).
 
 | | body-lab | wind-tunnel |
 |---|---|---|
 | System | A legged body in MuJoCo with unlabeled control channels | 2D flow around a body in OpenFOAM |
-| What Dr. Kiro controls | One function of time per channel, values in [-1, 1] | Four knobs: `aspect` [0.5, 3], `corner` [0, 1], `splitter` [0, 3], `angle` [0, 30]° |
+| What Dr. Kiro controls | One function of time per channel, values in [-1, 1] | Four knobs: `aspect` [0.5, 3], `corner` [0, 1], `splitter` [0, 3], `angle` [0, 15]° |
 | One trial | 5 s of simulated time | One solver run |
 | Budget per session | 40 trials | 24 runs |
 | Measurements | Where the body ended up and which way it faces; poses over time | `cd`, `cl_mean`, `cl_amp`, `strouhal`, `shedding` |
-| Picture | Overhead frames of the motion | Vorticity animation |
+| Picture | Overhead frames of the motion, in one PNG image sheet | Vorticity frames, in one PNG image sheet |
 
-Two Kiros. **You are the builder**: you build the lab from specs in the root `.kiro/`. **Dr. Kiro is the experimenter**: a custom agent that opens only an application's `lab/` folder and uses that folder's own `.kiro/`.
+Three Kiros. **You are the builder**: you build the lab from specs in the root `.kiro/`. **Dr. Kiro is the experimenter**: a custom agent that opens only an application's `lab/` folder and uses that folder's own `.kiro/`. **The reader** is used in `build-from-spec` (section 4.5): it never sees the experiments and works from Dr. Kiro's spec alone.
 
 ## 2. Rules for everything you build (make these steering)
 **Blind.** Dr. Kiro must never learn how the system works except by experiment.
@@ -35,14 +35,21 @@ Two Kiros. **You are the builder**: you build the lab from specs in the root `.k
 
 ## 3. Repository layout
 ```
-/.kiro/            your specs, steering, hooks
+/.kiro/            your specs, steering, hooks; blind-scan/ holds the reviewed stop list
 /bench/            the skeleton
 /body-lab/         application 1 (adapter/, model/, lab/)
 /wind-tunnel/      application 2 (same shape)
 /notebook/         the lab notebook (static site)
+/build-from-spec/  the reader's requests and the script that starts its runs
 /infra/            AWS CDK
 /sessions/         published session records
+/bench-run/        builder-side files of a running session; git-ignored
 /docs/brief.md     this file
+/docs/ja/          Japanese reference translations of the specs
+/docs/status.md    the current step and open questions, for handing over between sessions
+/docs/requests/    the user's requests for specs
+/scripts/          repository scripts
+/spikes/           scratch area, not part of the product
 ```
 - Each application runs on its own. body-lab needs no Docker.
 - `body-lab/model/` is supplied by the user (made in the earlier prototype). Do not edit it.
@@ -61,9 +68,13 @@ Two Kiros. **You are the builder**: you build the lab from specs in the root `.k
 - After every run the bench keeps a snapshot of Dr. Kiro's three spec files, so that a session can be replayed.
 - A session ends as a sealed record that the notebook can be built from.
 - Dr. Kiro's task in every lab runs in this order: map the system → state rules → test the rules by predicting conditions never run → use the rules to predict the best point.
-- Dr. Kiro's `design.md` ends with a `## Discovered spec` table: one rule per row, with its scope, the experiments behind it, the predictions that tested it, and a status.
+- Dr. Kiro's `design.md` ends with a `## Discovered spec` table, one rule per row, with the columns id, rule, scope, experiments, predictions, status and replaced by. The status is one of four words, and the bench refuses to end the session unless the word agrees with the record:
+  - `validated`: every cited prediction hit, and at least one hit was on conditions never run (the bench's condition class for that prediction is a new combination or outside the tried range).
+  - `partly`: the row cites at least one hit and at least one miss.
+  - `observed`: the row cites at least one experiment and no missed prediction.
+  - `rejected`: the row cites at least one miss, and "replaced by" names the row that replaces it.
 - An application plugs in by providing only: its knobs, how to run one trial, what is measured, one picture, and its budget.
-- `[DECIDE after the MCP spike: the bench is an MCP server and Dr. Kiro has no shell; or the bench is one command and Dr. Kiro's shell allows only that.]`
+- Decided after the MCP spike (`lab-bench` Requirement 17): the bench is an MCP server over stdio and Dr. Kiro has no shell. Dr. Kiro's tools are file read and write, limited to its lab by a pre-tool hook, and the bench tools.
 
 **What we know from the prototype.**
 - Gates written only in the prompt drifted; gates in the bench held.
@@ -81,7 +92,7 @@ Two Kiros. **You are the builder**: you build the lab from specs in the root `.k
 - Channels are numbers, not names. Dr. Kiro is told how many there are and nothing else.
 - Measurements are what a camera above the body could measure, so that hardware could meet the same contract later.
 - Renders without a display. Installs with `uv` only.
-- Each trial yields a short animation for the notebook.
+- Each trial yields one PNG image sheet of overhead frames, which the notebook plays frame by frame.
 
 **Done when.** One full Dr. Kiro session (40 trials) completes; an automated scan shows that nothing in `lab/` or in any bench output reveals the model.
 
@@ -106,32 +117,59 @@ Two Kiros. **You are the builder**: you build the lab from specs in the root `.k
 ### 4.4 `lab-notebook`
 **Why.** A judge should understand in 60 seconds what Dr. Kiro discovered, and that every line of it has evidence.
 
+**The centre: the discovered spec table.** The notebook is built around Dr. Kiro's `## Discovered spec` table (section 4.1). It shows the table as the sealed record holds it and never makes up a status, a row or a replacement.
+- Every row shows its status as the bench's word, written out: `validated`, `partly`, `observed` or `rejected`. Colour may add to the word, never replace it.
+- `rejected`: the row is struck through, and the row named in "replaced by" stands beside it. Shown when the table has such rows.
+- `partly`: the cited predictions that missed are shown in red, and named as misses in words.
+- `observed`: explained in the words of the bench's check: seen in experiments; no cited prediction missed; Dr. Kiro does not claim `validated`. Opening the row shows the condition class of each cited prediction, from the record.
+- The scope is shown as Dr. Kiro wrote it. Beside it, the notebook shows what the record says was run: the range of the trials the row cites, and the conditions that no trial in the session ran. Both come mechanically from the record, never from reading the scope text. `[DECIDE: how the conditions are divided into run and not run; how this is shown for body-lab, whose inputs are functions of time.]`
+- Pressing a row opens the experiments and predictions behind it.
+- A session whose record holds no table (body-1) shows "no table" as it is. The table is never filled in by hand.
+
 **The feel (design direction, not a stylesheet).**
-- A scientist's paper notebook, not a dashboard. Photos of experiments are pinned like instant photos; verdicts are rubber stamps; side notes are sticky notes.
+- A scientist's paper notebook, not a dashboard. Photos of experiments are pinned like instant photos; side notes are sticky notes.
 - Three inks with fixed meanings, used everywhere: one for Dr. Kiro's own words, one for our commentary, pencil for measurements.
-- Quiet first screen: little text, moving pictures do the talking, details open on demand.
-- Halloween only as a light touch (the dark theme), never at the cost of legibility.
+- Quiet first screen: little text, moving pictures do the talking, details open on demand. A moving picture is a trial's image sheet played frame by frame.
+- One theme, with no switch. Halloween only as a light touch, never at the cost of legibility.
 - Propose the visual system yourself and write it as steering, so later parts stay consistent. The user will compare the result with a reference and tell you what to change.
 
 **What a visitor can do.**
-- **Cover:** read one real prediction Dr. Kiro registered, then press to reveal what happened; see three lines of the discovered spec; choose a lab.
-- **A session:** the highlight (a contrast and the best result, as moving pictures), the progress, the discovered spec, Dr. Kiro's plan, and every experiment with its hypothesis, prediction, measurement, verdict and moving picture.
-- **Discovered spec card:** each rule with its stamp, scope and evidence; pressing a rule shows the pair of moving pictures behind it (where it holds, where it does not).
+- **Cover:** see one prediction that missed: the prediction and what happened; when the table has rows, also the row that cites it and the row that replaces it, if there is one. A session with no missed prediction says so. Choose a lab.
+- **A session:** the highlight (a contrast and the best result, as moving pictures), the discovered spec table, the progress, Dr. Kiro's plan, and every experiment with its hypothesis, prediction, measurement, verdict and moving picture.
 - **Replay:** step or play through the session one experiment at a time; everything on the page shows the state as of that experiment; a rejected rule is struck through and its replacement appears. Labelled as a replay, never as live.
-- **Prediction chart:** for each prediction on untried conditions, the registered range and the measured value. Misses are as visible as hits.
+- **Prediction chart:** for each prediction on conditions never run, the registered range and the measured value. Misses are as visible as hits.
 - **How the lab works:** the two levels of spec (yours and Dr. Kiro's), what Dr. Kiro can and cannot touch, the two applications side by side, and how often the bench refused and why.
+- **Built from the spec:** every `build-from-spec` run (section 4.5): the request, the pass condition committed beforehand, the spec rows the reader relied on, the measured result, and pass or fail, with the runs of the same request in the other two setups beside it. Runs that failed are shown like the others. Until a run is committed, this part says that there are none yet.
 - Link straight to one experiment of one session.
 
-**What must be true.** Static site built only from sealed session records. Works on a phone. No third-party requests. Text written by Dr. Kiro is shown as written and escaped.
+The notebook has no chat box and no control that starts an experiment. Checking a rule again happens on the Kiro side (Run all on the lab's `tasks.md`); the notebook shows the result once the next record is committed.
 
-**Done when.** Sessions from both labs render; replay matches the snapshots at every step (tested); the user accepts the first screen.
+**What must be true.** Static site built only from sealed session records, and for `build-from-spec`, its sealed run records and the committed requests. Works on a phone. No third-party requests. Text written by Dr. Kiro is shown as written and escaped.
 
-### 4.5 `publish` (AWS)
+**Done when.** Sessions from both labs render; every row of every discovered spec table shows its status word; replay matches the snapshots at every step (tested); the user accepts the first screen.
+
+### 4.5 `build-from-spec`
+**Why.** To show that the discovered spec is useful: a Kiro that never saw the experiments reads only the spec and does what a request asks.
+
+**What must be true.**
+- The reader gets Dr. Kiro's three spec files (`requirements.md`, `design.md`, `tasks.md`) of one ended session, taken from the final snapshot in its sealed record, never from the lab's working files, and one request in words (for example, walk an arc of a given radius to the right). It does not see the experiment files, pictures, records, the model or the notebook.
+- The user writes the request and its pass condition, and commits them before the run. The pass condition is a range of numbers. Each request is one file in `build-from-spec/requests/`, with the ranges in a form a program reads. The commit hash of the request file is recorded with every run.
+- Before it runs anything, the reader names the spec rows it relies on.
+- The reader works through the same bench. The budget is 12 trials in body-lab; the wind-tunnel budget is decided in the `build-from-spec` spec. Each run is recorded in the same form as a session and sealed, and the notebook shows it (section 4.4).
+- Pass or fail is decided mechanically, by comparing the measured values with the committed ranges. No person judges a run.
+- Every run is shown, including the ones that failed.
+- For comparison, the same request is run in three setups: with the spec, with no spec, and with the raw session record only. Tools, agent configuration and budget are the same in all three.
+- One script starts every run. It makes an empty working folder, puts in it only what that setup allows, and records the setup, the request and the session the spec or record came from. The working folder passes the blind scan before every run.
+- The blind rules (section 2) apply to the reader as they do to Dr. Kiro.
+
+**Done when.** At least one request has been run in all three setups; the records are sealed and pass verification; pass or fail is decided mechanically; the notebook shows every run, including the ones that failed.
+
+### 4.6 `publish` (AWS)
 **Why.** The notebook at a public URL, reproducible from code, with nothing published that breaks the blind.
 
 **What must be true.**
 - Private S3 bucket behind CloudFront, HTTPS only, defined in CDK, with a budget alarm.
-- Publishing a session scans it first and refuses, naming the file and line, if it finds the model, solver files, part names or anything like a credential. The same scan runs as a hook on your side.
+- Publishing a session or a `build-from-spec` run scans it first and refuses, naming the file and line, if it finds the model, solver files, part names or anything like a credential. The same scan runs as a hook on your side.
 - Deployed from a developer machine with short-lived credentials. No long-lived keys anywhere.
 - Access control at the edge that one setting turns on and off (on until submission).
 - If AWS MCP servers for documentation or CDK are available to you, use them and note what for.
@@ -143,9 +181,10 @@ Two Kiros. **You are the builder**: you build the lab from specs in the root `.k
 2. `lab-bench` with a fake application.
 3. `body-lab`, then one full session.
 4. `wind-tunnel`, then one full session.
-5. `lab-notebook` against those sessions.
-6. `publish`.
-7. README: the two levels of spec first; the two applications side by side; how to reproduce; limits; what was brought in from the prototype; what was tried and dropped.
+5. `lab-notebook` against those sessions, with the place for `build-from-spec` runs.
+6. `build-from-spec`, then its runs.
+7. `publish`.
+8. README: the two levels of spec first; the two applications side by side; how to reproduce; limits; what was brought in from the prototype; what was tried and dropped.
 
 ## 6. Prompts
 - **Steering:** "Read docs/brief.md sections 1–3. Create steering for product, tech and structure, so that every later spec follows the rules in section 2. Ask me about anything unclear."
