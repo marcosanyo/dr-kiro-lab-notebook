@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `6ac63243f54ba3f7e87d2f7c7cf1647d471bfbd5414d031abddc0aefefd2cde3`
+> 原文 SHA-256: `697c50c59a8423c8dad16851cafe7c400fd08225c4cdf6a167a0d8f03e1e3a1c`
 
 # タスク: lab-bench
 
@@ -287,3 +287,12 @@ import する唯一の場所です。
 - **34. 全体チェック、スキャン、リハーサル** — 完了
   - `sh bench/scripts/check.sh`（506 passed、ruff クリーン）、`wind-tunnel` の model と adapter のテストと ruff、body-lab アダプターのテスト（golden ファイルは変更なし、`git diff --stat body-lab/` は空）、`wind-tunnel/lab` と `sessions/wind-tunnel/wt-002`、`wt-003`、`wt-004` の `bench-scan`（これまでどおり指摘なし）、body-lab のラボと `sessions/body-lab` の `bench-scan`、封印済みの 3 フォルダーの `bench-verify`、最後のコード変更の後の本物の Docker での `wind-tunnel/rehearse_session.py`。
   - _要件: 20.6_
+
+## 改訂: 最終仕様の写し（要件 15.10、15.11）
+
+`dr-kiro` の最終仕様の写しについてのユーザーの決定（`dr-kiro` 要件 8、決定事項 9〜12）で追加した。
+
+- **35. 写しと、ラボの中のテンプレートのブラインドスキャン** — 完了
+  - `scan/levels.py`: `copy_pieces`。`scan/scan.py`: `source.json` のあるフォルダーを写しとしてスキャンし、テンプレートのバイトを持つラボのファイルをビルダーレベルにする（設計 11.3）。
+  - `bench/tests/unit/test_spec_copy.py` のテスト（`dr-kiro` タスク 6）: 写しが通る。ハッシュの合わない編集されたファイルと余分なファイルはスキャンを失敗させる。写したファイルの中のパスが見つかる。テンプレートのバイトを持つラボのファイルは語についてスキャンされる。`sh bench/scripts/check.sh` が通る。
+  - _要件: 15.10, 15.11_

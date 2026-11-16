@@ -351,6 +351,22 @@ def main() -> int:
             ["bench-scan", "--config", str(SCAN_SOURCES), "--stop-list", str(STOP_LIST), str(sealed)]
         ).strip()
     )  # fmt: skip
+    # The copy of Dr. Kiro's final spec (dr-kiro Requirement 8): written from the sealed record, checked
+    # against it, and scanned, as `README.md` ("Running a session") says.
+    discovered = root / "discovered"
+    discovered.mkdir()
+    print(run(["bench-export-spec", str(sealed), str(discovered)]).strip())
+    print(run(["bench-check-discovered", str(sessions), str(discovered)]).strip())
+    copy = discovered / "wind-tunnel" / SESSION_ID
+    check(
+        (copy / "design.md").read_bytes() == design.read_bytes(),
+        "the copy of design.md is not the file Dr. Kiro ended the session with",
+    )
+    print(
+        run(
+            ["bench-scan", "--config", str(SCAN_SOURCES), "--stop-list", str(STOP_LIST), str(copy)]
+        ).strip()
+    )  # fmt: skip
     print(f"rehearsal passed; folder {root}")
     return 0
 

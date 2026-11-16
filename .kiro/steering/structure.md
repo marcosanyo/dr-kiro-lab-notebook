@@ -16,6 +16,7 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 /notebook/         the lab notebook (static site)
 /infra/            AWS CDK
 /sessions/         published session records
+/discovered/       Dr. Kiro's final spec of each ended session, copied from its sealed record
 /bench-run/        builder-side files of a running session (session config, hook log); git-ignored
 /docs/brief.md     the brief
 /docs/ja/          Japanese reference translations of the specs (see japanese-translations.md)

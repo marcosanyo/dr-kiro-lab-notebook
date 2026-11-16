@@ -2,10 +2,12 @@
 
 - In a `lab/` folder: the files matched by the lab's `dr_kiro` globs are Dr. Kiro level, all others builder.
 - In a session record (a folder with `log.jsonl`): the author recorded on each text field and blob.
+- In a copy of a final spec (a folder with `source.json`): Dr. Kiro's three files, checked by hash.
 - Anywhere else: a sidecar `<file>.authors.json` listing character ranges by author.
 A file with no level source fails the scan.
 """
 
+import hashlib
 import json
 import re
 from collections.abc import Iterator
@@ -131,6 +133,46 @@ def record_pieces(folder: Path) -> list[Piece]:
         except UnicodeDecodeError as error:
             raise ScanError(f"{path}: text blob is not UTF-8") from error
         pieces.append(Piece(text, AUTHOR_LEVEL[author], str(path), 1))
+    return pieces
+
+
+COPY_SOURCE = "source.json"
+COPY_FILES = ("requirements.md", "design.md", "tasks.md")
+
+
+def copy_pieces(folder: Path) -> list[Piece]:
+    """Every piece of text in a copy of a final spec (a folder with `source.json`, dr-kiro design 7.3).
+
+    The three spec files are Dr. Kiro's text only while their bytes are the ones `source.json` names; the
+    scan checks the SHA-256 and fails otherwise. `source.json` is the bench's text. Whether the hashes are the
+    record's is checked by `bench-check-discovered`, not here."""
+    source = folder / COPY_SOURCE
+    try:
+        text = source.read_text(encoding="utf-8")
+        data = json.loads(text)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ScanError(f"{source}: not valid JSON ({error})") from error
+    files = data.get("files") if isinstance(data, dict) else None
+    if not isinstance(files, dict) or set(files) != set(COPY_FILES):
+        raise ScanError(f"{source}: files must name exactly {', '.join(COPY_FILES)}")
+    names = sorted(p.name for p in folder.iterdir())
+    extra = [n for n in names if n not in (*COPY_FILES, COPY_SOURCE)]
+    if extra:
+        raise ScanError(f"{folder / extra[0]}: not part of a spec copy, so it has no level source")
+    # Hashes are skipped, as in a record; every other key and value is the bench's text.
+    pieces = [Piece(t, level, str(source), 1, one_line=True) for t, level in entry_strings(data)]
+    for name in COPY_FILES:
+        path = folder / name
+        if not path.is_file():
+            raise ScanError(f"{path}: missing from the spec copy")
+        data_bytes = path.read_bytes()
+        if hashlib.sha256(data_bytes).hexdigest() != files[name]:
+            raise ScanError(f"{path}: does not match its SHA-256 in {COPY_SOURCE}, so its author is unknown")
+        try:
+            content = data_bytes.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise ScanError(f"{path}: not UTF-8 text; the scan cannot read it") from error
+        pieces.append(Piece(content, "dr-kiro", str(path), 1))
     return pieces
 
 

@@ -351,3 +351,15 @@ session. Design: "Amendment: file-name stems" (C1-C5). Commit `d6d7371` holds th
     lab and `sessions/body-lab`; `bench-verify` on the three sealed folders; `wind-tunnel/rehearse_session.py` with real
     Docker, after the last code change.
   - _Requirements: 20.6_
+
+## Amendment: copies of the final spec (Requirements 15.10, 15.11)
+
+Added on the user's decision of the `dr-kiro` final-spec copies (`dr-kiro` Requirement 8, Decisions 9-12).
+
+- [x] 35. Blind scan of a copy and of a template in a lab
+  - `scan/levels.py`: `copy_pieces`; `scan/scan.py`: a folder with `source.json` is scanned as a copy, and a lab
+    file with a template's bytes is builder level (design 11.3).
+  - Tests in `bench/tests/unit/test_spec_copy.py` (`dr-kiro` task 6): a copy passes, an edited file without a
+    matching hash and an extra file fail the scan, a path in a copied file is found; a lab file with a template's
+    bytes is scanned for terms. `sh bench/scripts/check.sh` passes.
+  - _Requirements: 15.10, 15.11_

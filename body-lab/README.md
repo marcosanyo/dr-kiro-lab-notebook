@@ -78,6 +78,16 @@ line has `"end":"ended"`, and Dr. Kiro names only `method.md` and `workflow.md`.
 continue lines you sent. If the session does not end on its own: quit Kiro CLI and run
 `bench-stop $R/body-1.toml --reason <text>`.
 
+For a later session that ends, write and check the copy of Dr. Kiro's final spec, and commit it with the sealed
+folder:
+
+```sh
+bench-export-spec sessions/body-lab/<session-id> discovered
+bench-check-discovered sessions discovered
+```
+
+body-1 has no copy: it was sealed before the bench recorded the spec files at the end (`discovered/README.md`).
+
 ## Limits
 
 - The same inputs give the same results on the same machine. MuJoCo results can differ slightly between machines

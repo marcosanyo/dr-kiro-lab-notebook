@@ -26,7 +26,9 @@ TEMPLATES = {
     "design.md": ".kiro/specs/lab/design.md",
     "tasks.md": ".kiro/specs/lab/tasks.md",
 }
-GITIGNORE = "experiments/\npictures/\n.kiro/specs/\n"
+# Dr. Kiro's lab spec files are not ignored: the lab keeps them in git in their template state, and the final
+# spec of each ended session is kept in `discovered/` (dr-kiro Requirement 5.4, 8).
+GITIGNORE = "experiments/\npictures/\n"
 
 
 def make_lab(lab: Path) -> list[Path]:

@@ -54,7 +54,8 @@ Two levels, by who wrote the text:
 A guess written by Dr. Kiro, such as "this channel acts like a leg", is a hypothesis, not a leak. Text keeps the
 level of its author wherever it is copied: snapshots in `sessions/`, the notebook build output, anything published.
 
-Scope: every `lab/` folder, all bench output, `sessions/`, the notebook build output, and anything published.
+Scope: every `lab/` folder, all bench output, `sessions/`, `discovered/`, the notebook build output, and anything
+published.
 Publishing refuses if the scan fails.
 
 ## 2. Fail fast, no fallbacks

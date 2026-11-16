@@ -16,6 +16,18 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   封印済みの body-1 と wt-004 はこの文なしで作られており、書き換えない。
 - リプレイで取り消し線が出るのが、途中のスナップショットに表がある時だけかどうかは、`lab-notebook` の spec で確かめる。
 
+## Dr. Kiro の spec の写し（ブランチ `feat/discovered-spec-export`）
+- 終わった各セッションの Dr. Kiro の 3 ファイルを、封印された記録の最後のスナップショットから `discovered/<app>/<session>/` に写す
+  （`bench-export-spec`）。`source.json` に元のエントリーと各ファイルの SHA-256 を書く。`bench-check-discovered sessions discovered` が
+  全部の写しを記録と照らす（公開の前に実行し、テストでも動く）。`wt-004` の写しはコミット済み。body-1 は終了スナップショットがないので写しなし
+  （`discovered/README.md` に理由）。`dr-kiro` 要件 5.4・8、Decisions 9〜12、`lab-bench` 要件 15.10・15.11。
+- ラボの `.gitignore` から `.kiro/specs/` を外し、ラボの 3 ファイルはテンプレートの状態で git に入れた。
+- **セッションが終わったら:** `bench-verify` と `bench-scan` の後に `bench-export-spec sessions/<app>/<id> discovered` と
+  `bench-check-discovered sessions discovered` を実行し、封印済みフォルダーと写しを一緒にコミットする。
+- **ローカルの作業ツリーの注意:** `body-lab/lab` と `wind-tunnel/lab` の `.kiro/specs/lab/` は、前のセッションの Dr. Kiro の内容のまま
+  「変更あり」と表示される（git にはテンプレートが入っている）。次の `bench-new-session` がテンプレートに戻す。この 6 ファイルはコミットしない。
+- 次の体のセッション（2 回目）は、新しいセッション id で始める。そのセッションには写しが作れる。
+
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。

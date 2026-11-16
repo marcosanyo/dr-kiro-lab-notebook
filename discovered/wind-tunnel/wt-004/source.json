@@ -1,0 +1,14 @@
+{
+  "application": "wind-tunnel",
+  "files": {
+    "design.md": "93820fdaa5fac321b2f0821f65d974fc840b195d3d3fce39777c27a9125893a0",
+    "requirements.md": "604219a568d44d113e79b3c3b91f4635e02fb9ab213b94f9f09c70d5ebcb78ab",
+    "tasks.md": "ae65e053f6032db32af9b420ae4b1b4dabe558dbfe536bd664566a47acabd7b9"
+  },
+  "seal": "542e743c50a4e1565fd05df3dd38392bd839d5be45072096cb14ffb371e003a5",
+  "session": "wt-004",
+  "snapshot": {
+    "hash": "d01a94810a95092954d9abb1b92e178da6ceabb1394a11e4132fc53a21773421",
+    "seq": 68
+  }
+}
