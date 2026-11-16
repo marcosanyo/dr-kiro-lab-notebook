@@ -35,6 +35,12 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   表は 14 行（`validated` 2、`observed` 4、`rejected` 8）。写しは `discovered/body-lab/body-2/`。結果は `body-lab` タスク 6 に記録した。
 - body-1 のラボの最後の 3 ファイルの控えは `bench-run/body-1/lab-final/`（git 管理外、この Mac だけ）。
 
+## build-from-spec（ブランチ `spec/build-from-spec`、worktree `.worktrees/build-from-spec`）
+- 要件は承認済み、設計まで完成（訳も `docs/ja/build-from-spec/`）。元のセッションは `sessions/body-lab/body-2`。
+- 依頼 2 つをコミット済み: `build-from-spec/requests/straight-ahead.toml`（最初に走らせる）、`turn-right.toml`（時間があれば）。範囲は走らせた後に変えない。
+- **次の一手:** ユーザーに声をかけてから、元のフォルダーで実装する。最初に lab-bench の 2 つの修正（`discovered_table` 設定、`check_copies` が `sessions/build-from-spec/` を飛ばす）。
+- 実装時に確かめること: 設計 9 節（headless の `kiro-cli chat --no-interactive` で確認が出ないか、`--resume`、ハッシュ名の画像が開けるか など）。
+
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。

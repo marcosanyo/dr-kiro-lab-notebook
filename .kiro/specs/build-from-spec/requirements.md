@@ -35,8 +35,9 @@ Each requirement says which Kiro it is about:
 - The notebook pages that show the runs (`lab-notebook` spec). This spec states only the constraint the notebook
   must meet (Requirement 18.3).
 - wind-tunnel runs. The wind-tunnel budget for the reader is decided when wind-tunnel is added (Open items).
-- The bench change that lets a session end without a `## Discovered spec` table (Requirement 12) is stated here and
-  made as a `lab-bench` amendment at implementation time, not in this spec's code.
+- The bench change that lets a session end without a `## Discovered spec` table (Requirement 12) and the bench
+  change that makes `bench-check-discovered` skip the run records (Requirement 13.7) are stated here and made as
+  `lab-bench` amendments at implementation time, not in this spec's code.
 
 ## Glossary
 
@@ -92,7 +93,7 @@ applications stay unchanged and the parts are easy to find.
    adapter it wraps, by path. `bench/` and each application's `uv` project SHALL NOT depend on `build-from-spec`,
    and their existing tests SHALL pass in their own projects without it.
 3. THE `build-from-spec/` code SHALL require no change to `bench/` or `body-lab/`, except the `lab-bench`
-   amendment of Requirement 12.
+   amendments of Requirement 12 and Requirement 13.7.
 
 ### Requirement 2: Request file
 
@@ -243,7 +244,8 @@ same way Dr. Kiro is told its goal.
    its result unchanged. A failure of the wrapped adapter SHALL be passed on unchanged, so that the bench handles it
    as for Dr. Kiro.
 3. THE bench tool descriptions the reader receives SHALL be built by `bench-mcp` from the wrapping adapter's
-   declaration only, as for Dr. Kiro (`lab-bench` Requirement 17.4).
+   declaration and the discovered spec setting of Requirement 12 only, as for Dr. Kiro (`lab-bench`
+   Requirement 17.4, amended by Requirement 12.9).
 4. THE goal of the wrapping adapter and the content of `request.md` SHALL each be byte-identical to the request's
    `words`.
 5. IF the session config does not name the wrapped application, the request or the budget, THEN THE wrapping
@@ -357,12 +359,16 @@ that the reader is not pushed to invent rows and a normal end does not read as a
 4. Every existing session config, and every config `bench-new-session` writes for Dr. Kiro, SHALL state that the
    table is required.
 5. THE change SHALL be made as a `lab-bench` amendment in the main folder at implementation time, with its own
-   tests, and SHALL stay small: the setting, its check at start, its value in the start entry, and the one branch
-   in `end`.
+   tests, and SHALL stay small: the setting, its check at start, its value in the start entry, the one branch
+   in `end`, and the one sentence of the `end_session` tool description (Requirement 12.9).
 6. IF the setting is missing or has a value other than the two allowed values, THEN THE bench SHALL refuse to start,
    naming the setting.
 7. THE bench SHALL record the value of the setting in the start entry of the sealed record.
 8. Records sealed before the amendment SHALL stay valid for `bench-verify` and `final_spec()`.
+9. WHILE the setting says the table is not required, THE `end_session` tool description built by `bench-mcp` SHALL
+   leave out the sentence that says ending needs the `## Discovered spec` table, and SHALL otherwise be unchanged.
+   WHILE the setting says the table is required, THE description SHALL be unchanged. THE description SHALL depend
+   on the declaration and this setting only, so that it is byte-identical in the three setups of one request.
 
 ### Requirement 13: Sealed run record
 
@@ -373,8 +379,8 @@ verify, scan and show it.
 
 1. THE bench SHALL write each run record to `<sessions_dir>/<application>/<run-id>/`, which with the sessions folder
    `sessions/build-from-spec` and the application `body-lab` is `sessions/build-from-spec/body-lab/<run-id>/`, in
-   the same form as a session record, with the reader's spec snapshots. No further bench amendment SHALL be made
-   for this path.
+   the same form as a session record, with the reader's spec snapshots. No bench amendment other than
+   Requirement 13.7 SHALL be made for this path.
 2. Every run record SHALL be sealed, and `bench-verify` SHALL pass on it.
 3. Every run record and its run file SHALL be committed, each added by name, whether the run ended, stopped, failed
    or was not counted. A committed run record SHALL NOT be deleted or overwritten, and no run SHALL be rerun under
@@ -385,6 +391,11 @@ verify, scan and show it.
    builder SHALL report the run id, the file and the line to the user and stop.
 6. IF the reader's Kiro CLI exits while the session is open and the builder will not continue it, THEN THE builder
    SHALL stop the session with `bench-stop`, with a reason in bench terms that contains no forbidden term.
+7. THE `check_copies` check of `bench-check-discovered` SHALL skip `sessions/build-from-spec/`, because run records
+   are not Dr. Kiro session records and get no copy in `discovered/`. THE change SHALL be a second small
+   `lab-bench` amendment, made with the amendment of Requirement 12 in the main folder at implementation time,
+   with its own test. At the same time, THE builder SHALL amend the wording of `dr-kiro` Requirement 8.4 (every
+   ended record in `sessions/` has a copy in `discovered/`) to cover Dr. Kiro session records only.
 
 ### Requirement 14: Run file
 
@@ -628,6 +639,21 @@ exactly as recorded.
   (Requirement 17.4)
 - **K24 Notebook constraint.** Every run with a run file is shown; a run record without a valid run file fails the
   notebook build. (Requirement 18.3)
+- **K25 Run records skipped by `bench-check-discovered` (amends approved requirements).** The design (section 11,
+  C1) found that `check_copies` reads every folder under `sessions/<x>/` as a Dr. Kiro session record, so
+  `bench-check-discovered` would fail from the first committed run in `sessions/build-from-spec/`. Under the
+  detail decisions the user delegated, Kiro chose option (a): a second small `lab-bench` amendment that skips
+  `sessions/build-from-spec/`, with its own test, and `dr-kiro` Requirement 8.4 reworded at implementation to cover
+  Dr. Kiro session records only. Option (a) keeps every sealed record under `sessions/`, which the blind scan and
+  the notebook already cover; option (b), a folder outside `sessions/`, would change more requirements and
+  steering. This amends Requirements 1.3 and 13.1 and adds Requirement 13.7.
+- **K26 `end_session` text without the table sentence (amends approved requirements).** The design (section 11,
+  C2) found that the `end_session` tool description tells every agent that ending needs the `## Discovered spec`
+  table, which is false for the reader when the table is not required, and Requirements 8.3 and 12.5 left no room
+  for another text. Under the detail decisions the user delegated, Kiro chose option (a): the description leaves
+  out that one sentence when the table is not required, so the reader is told only true things. The description
+  stays built from the declaration and the setting only, and is identical in the three setups. This amends
+  Requirements 8.3 and 12.5 and adds Requirement 12.9.
 
 ## Open items
 
