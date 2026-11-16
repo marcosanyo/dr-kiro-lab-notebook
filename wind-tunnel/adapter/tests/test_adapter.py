@@ -65,6 +65,8 @@ def test_a_case_folder_that_already_exists_stops_the_trial_and_is_left_alone(set
         adapter.run_trial(KNOBS, 7)
     assert (leftover / "marker").read_text(encoding="utf-8") == "kept"
     assert runner.calls == []
+
+
 def test_settled_run_passes_check_result_and_moves_the_case_to_the_trash(settings, tmp_path):
     adapter, runner = make(settings, tmp_path)
     result = adapter.run_trial(KNOBS, 7)

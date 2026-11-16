@@ -37,6 +37,8 @@ def test_lab_has_the_same_builder_files_as_body_lab() -> None:
 def test_blind_scan_of_the_lab_reports_nothing() -> None:
     scanner = Scanner.from_config([ADAPTER / "scan_sources.toml"], STOP_LIST)
     assert scanner.scan_paths([LAB]) == []
+
+
 def test_dr_kiro_files_are_ignored_and_builder_changes_are_detected(tmp_path: Path) -> None:
     lab = tmp_path / "lab"
     lab.mkdir()
