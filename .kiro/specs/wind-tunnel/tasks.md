@@ -462,7 +462,7 @@ Tasks 17 and 19 need the user (Requirement 18.1, 18.3). Task 18 is a builder ste
 after the user says that task 17 is done (Decision 39). A sub-agent does not run these tasks before that, and does
 not tick them.
 
-- [ ] 17. **User step:** start and finish the 24-run session in Kiro CLI
+- [x] 17. **User step:** start and finish the 24-run session in Kiro CLI
   - The user does this himself and records the screen (Decision 39). On the Mac: install the commands, create the
     session with `bench-new-session` (application `wind-tunnel`,
     adapter `wind_tunnel.adapter:WindAdapter`, seed and session id of the user's choice), export the two variables,
@@ -471,14 +471,14 @@ not tick them.
     session ends with the budget used (24 runs) or ends by Dr. Kiro's own `end_session`.
   - _Requirements: 17.3, 18.1_
 
-- [ ] 18. **Builder step after task 17:** seal check and commit of the session
+- [x] 18. **Builder step after task 17:** seal check and commit of the session
   - Run only after the user says that task 17 is done. Run `bench-verify sessions/wind-tunnel/<session-id>` and
     `bench-scan` on `wind-tunnel/lab` and on the sealed folder. Only if both pass, commit
     `sessions/wind-tunnel/<session-id>/` by name, in the environment where it was made (`handoff.md`). A record
     that fails either check is not committed (Requirement 17.5).
   - _Requirements: 17.3, 17.5, 18.1_
 
-- [ ] 19. **User step:** report the connection time
+- [x] 19. **User step:** report the connection time
   - The user tells the builder the wall-clock time from the approval of the requirements to the start of the first
     full session. The builder records it in `wind-tunnel/numbers.md` with the words "self-reported by the user" and
     does not estimate it (Requirement 16.1).
@@ -486,7 +486,7 @@ not tick them.
 
 ## After the user steps
 
-- [ ] 20. Record the session result
+- [x] 20. Record the session result
   - Run only after tasks 17-19 are done. Update `wind-tunnel/README.md` and `wind-tunnel/numbers.md` with the
     sealed session (id, 24 runs, `ended`), the verified result of `bench-verify` and `bench-scan`, and the
     self-reported connection time, as the brief's "done when" asks. Update `docs/status.md` (in Japanese) and the

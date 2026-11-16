@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/wind-tunnel/design.md`](../../../.kiro/specs/wind-tunnel/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `584dcfd8734c6aec8e39172229785f6adf4b1ee7da53f409cd337f2c735904db`
+> 原文 SHA-256: `4269d437cd3b1db567a0619bc461662704b7c0b621d7a6672245a24c2e405ce6`
 # Design: wind-tunnel
 
 要件 1-18 を対象とします。設定は `wind-tunnel/model/constants.toml`、`wind-tunnel/model/image-lock.toml` とケースのテンプレートから、読み込み時に読みます。ソルバー設定の値は 2 か所に書きません。まだ存在しない値は、`<not yet recorded>` のように山括弧で書いた目に見えるプレースホルダーで、それぞれを埋めるタスクがあります（`rules.md` 4、Honest）。結果ではなく最初の選択である値（メッシュサイズ、最初の時間刻み、色の上限）は、数値と「starting value（初期値）」であること、それを確認するタスクを述べるコメントつきで書きます。アダプター契約は `bench/src/bench/adapter.py`（`lab-bench` 設計 4）、アダプターの手本は `body-lab/adapter`（`body-lab` 設計 1-5）です。
@@ -241,7 +241,7 @@ PNG の画像シート 1 枚で、`body-lab` の画像と同じ形です（`body
 
 - `Outline`: `Line` と `Arc` の点の組の、順序づけられた閉じたタプル。`GeometryError(reason, knobs)`。
 - `ForceSeries`: `t`、`fx`、`fy`。同じ長さの `numpy` 配列で、落ち着いた部分だけ、有限。
-- `SolverFailure(kind, reason, detail)`、`FailureKind`: `not_settled`、`incomplete`、`timeout`。
+- `SolverFailure(kind, reason, detail)`、`FailureKind`: `incomplete`、`timeout`（落ち着かなかった実行は失敗ではなく結果、Decision 25）。
 - `SettleResult(ok, reason)`。
 - `environment.jsonl` の 1 行: `{image, digest, image_id, gmsh, numpy, platform}`。
 - `circle-check.json`: セクション 10。

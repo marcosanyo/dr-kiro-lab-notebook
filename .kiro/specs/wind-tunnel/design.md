@@ -443,7 +443,7 @@ Other records:
 
 - `Outline`: ordered closed tuple of `Line` and `Arc` with point pairs; `GeometryError(reason, knobs)`.
 - `ForceSeries`: `t`, `fx`, `fy` as `numpy` arrays of equal length, only the settled part, finite.
-- `SolverFailure(kind, reason, detail)`; `FailureKind`: `not_settled`, `incomplete`, `timeout`.
+- `SolverFailure(kind, reason, detail)`; `FailureKind`: `incomplete`, `timeout` (a run that does not settle is a result, not a failure, Decision 25).
 - `SettleResult(ok, reason)`.
 - `environment.jsonl` line: `{image, digest, image_id, gmsh, numpy, platform}`.
 - `circle-check.json`: section 10.
