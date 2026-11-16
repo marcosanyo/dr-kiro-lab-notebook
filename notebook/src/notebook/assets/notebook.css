@@ -1,0 +1,356 @@
+/* The notebook's one theme. Every colour is a custom property on :root (.kiro/steering/notebook-visual.md). */
+
+:root {
+  --paper: #fbf7ec;
+  --rule-line: #dfe6ef;
+  --sticky: #fff1a8;
+  --photo-frame: #ffffff;
+  --tab: #f1e9d2;
+
+  --ink-drkiro: #1f3a8a;
+  --ink-pencil: #3d3d3d;
+  --ink-commentary: #2b2118;
+  --miss-red: #b3261e;
+
+  --stamp-validated: #1d5e3a;
+  --stamp-partly: #7a4b00;
+  --stamp-observed: #3a4a5c;
+  --stamp-rejected: #5b2a6e;
+
+  --pin-brass: #b08d3c;
+  --graphite: #3d3d3d;
+  --shadow: rgba(43, 33, 24, 0.22);
+
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+
+  --line: 1.5;
+  --cell-interval: 500ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+}
+
+body {
+  margin: 0;
+  color: var(--ink-commentary);
+  background-color: var(--paper);
+  background-image: linear-gradient(to bottom, transparent calc(1.5rem - 1px), var(--rule-line) calc(1.5rem - 1px));
+  background-size: 100% 1.5rem;
+  font-family: var(--font-sans);
+  line-height: var(--line);
+}
+
+.page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* The three inks. */
+
+.ink-k {
+  color: var(--ink-drkiro);
+  font-family: var(--font-serif);
+  font-style: normal;
+  white-space: pre-wrap;
+}
+
+.ink-p {
+  color: var(--ink-pencil);
+  font-family: var(--font-mono);
+  font-style: normal;
+}
+
+.ink-c {
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 0.95em;
+}
+
+.block-k,
+.code-k {
+  margin: var(--space-3) 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 2px solid var(--ink-drkiro);
+  color: var(--ink-drkiro);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.block-k {
+  font-family: var(--font-serif);
+}
+
+.code-k {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.block-label {
+  display: block;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+}
+
+/* Miss red: only missed predictions and their measured values, always with the word "miss". */
+
+.miss,
+.miss-value {
+  color: var(--miss-red);
+  font-weight: bold;
+}
+
+.miss-mark {
+  fill: var(--miss-red);
+  stroke: var(--miss-red);
+}
+
+/* The bench stamp. */
+
+.stamp {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  color: var(--ink-pencil);
+  font-family: var(--font-sans);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.stamp-validated {
+  color: var(--stamp-validated);
+}
+
+.stamp-partly {
+  color: var(--stamp-partly);
+}
+
+.stamp-observed {
+  color: var(--stamp-observed);
+}
+
+.stamp-rejected {
+  color: var(--stamp-rejected);
+}
+
+.stamp-label {
+  display: block;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 0.75em;
+}
+
+/* Instant photos. */
+
+.photo {
+  position: relative;
+  display: inline-block;
+  margin: var(--space-4) var(--space-2);
+  padding: 8px 8px 28px;
+  background: var(--photo-frame);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.photo::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--pin-brass);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.photo img,
+.photo canvas {
+  display: block;
+}
+
+.photo figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.85em;
+}
+
+.photo-large {
+  max-width: 40rem;
+}
+
+.photo-small {
+  max-width: 18rem;
+}
+
+.tilt-0 {
+  transform: rotate(-1.5deg);
+}
+
+.tilt-1 {
+  transform: rotate(-0.75deg);
+}
+
+.tilt-2 {
+  transform: rotate(0deg);
+}
+
+.tilt-3 {
+  transform: rotate(0.75deg);
+}
+
+.tilt-4 {
+  transform: rotate(1.5deg);
+}
+
+.photo-controls button {
+  margin-right: var(--space-1);
+  font-family: var(--font-sans);
+}
+
+/* Sticky notes. */
+
+.sticky {
+  display: block;
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--sticky);
+  color: var(--ink-commentary);
+  box-shadow: 0 2px 6px var(--shadow);
+  transform: rotate(1deg);
+}
+
+.sticky-stamp {
+  border: 2px solid var(--ink-pencil);
+  border-radius: 6px;
+}
+
+.sticky-stamp .sticky-heading {
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The discovered spec table. */
+
+.table-box {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.spec-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.spec-table th,
+.spec-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--rule-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.row-rejected td {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--graphite);
+}
+
+.tab {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  background: var(--tab);
+  border-radius: 0 6px 6px 0;
+  text-decoration: none;
+}
+
+.tab .rule-small {
+  font-size: 0.8em;
+}
+
+.replaces {
+  display: block;
+  font-size: 0.85em;
+}
+
+/* Layout: one column; table with margin and side panel from 1000px. */
+
+.margin {
+  display: block;
+}
+
+.deco {
+  display: none;
+  pointer-events: none;
+}
+
+@media (min-width: 1000px) {
+  body {
+    padding-left: 96px;
+  }
+
+  .with-margin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    gap: var(--space-4);
+  }
+
+  .deco {
+    display: block;
+    position: fixed;
+    top: var(--space-3);
+    left: var(--space-3);
+    width: 64px;
+    height: auto;
+  }
+}
+
+/* Footer and legend link. */
+
+.footer {
+  margin-top: var(--space-5);
+  font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
