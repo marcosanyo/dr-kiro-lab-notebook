@@ -107,7 +107,9 @@ Short sections, each a few bullets:
   predictions behind it, and a status. The four statuses and when each applies (`lab-bench` Requirement 12.3), in
   plain words: `observed` if no cited prediction missed; `validated` only if every cited prediction hit and at
   least one was on untried conditions; `partly` if some hit and some missed; `rejected` if one missed, with the id
-  of the rule that replaces it. Then call `end_session`; if it refuses, fix the table as it says.
+  of the rule that replaces it. One sentence follows the definitions (Req 3.7, Decision 8): a refuted rule is not
+  removed from the table; it stays as a row with the status `rejected`. Then call `end_session`; if it refuses,
+  fix the table as it says.
 
 ### 5.3 Examples (Req 3.6)
 
@@ -218,3 +220,9 @@ Approved by the user before this spec was written:
 5. Examples with visible placeholders, in the `lab-bench` formats (Req 3.6).
 6. The wording check of `rules.md` is dropped as excessive; nothing about it goes into Dr. Kiro's files.
 7. Minimal verification: a few automated tests and one short fake session (Req 7).
+8. A refuted rule stays in the discovered spec table as a `rejected` row (Req 3.7). The notebook is centred on that
+   table (`docs/brief.md`, the notebook section), and a deleted refuted rule would leave no trace of it. The
+   workflow template gets one sentence after the definition of `rejected`; it says nothing on whether a half-right
+   rule is `partly` or `rejected`. This changes Dr. Kiro's conditions from the next session on. The sealed sessions
+   `body-1` and `wt-004` were made without the sentence and are not rewritten. Requested by the user
+   (`docs/status.md`, the brief revision).

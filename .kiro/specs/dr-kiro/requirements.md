@@ -89,6 +89,9 @@ the bench expects and spend my budget well.
 6. THE lab steering SHALL show one example of each format Dr. Kiro writes (a hypothesis with its prediction block,
    a compare experiment with a flag parameter, a sweep experiment, and the discovered spec table), with visible
    placeholders such as `<low>` in place of every value (`rules.md`, Honest).
+7. THE workflow SHALL say, right after the definition of `rejected`, that a refuted rule is not removed from the
+   `## Discovered spec` table and stays as a row with the status `rejected`. It SHALL NOT say whether a half-right
+   rule is `partly` or `rejected`; that stays Dr. Kiro's judgement.
 
 ### Requirement 4: Templates
 
