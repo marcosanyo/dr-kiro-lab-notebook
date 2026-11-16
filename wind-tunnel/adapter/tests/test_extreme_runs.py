@@ -288,3 +288,14 @@ def test_extreme_runs_survey():
         for r in records
     ]
     write_result(public, adapter._settings)
+
+
+def test_the_near_end_splitter_cases_are_not_refused_by_the_splitter_floor():
+    """Not slow: splitter at 0.001 and 0.01 of its range from each end (0.003, 0.03, 2.97, 2.997) is far above
+    the floor of 1e-6 (Decision 45), so all four runs stay."""
+    knobs = declared_knobs()
+    adapter = WindAdapter.__new__(WindAdapter)
+    adapter._settings = Settings.load()
+    cases = [c for c in near_end_cases(knobs) if c["label"].startswith("splitter/")]
+    assert sorted(c["knobs"]["splitter"] for c in cases) == pytest.approx([0.003, 0.03, 2.97, 2.997])
+    assert all(adapter.check_inputs(c["knobs"]) is None for c in cases)

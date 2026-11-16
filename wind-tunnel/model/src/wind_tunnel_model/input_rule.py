@@ -1,4 +1,5 @@
-"""The corner rule: which values of ``corner`` are accepted for a given ``aspect`` (Requirement 6.11).
+"""The input rules: the corner rule and the splitter floor (Requirement 6.11).
+The corner rule: which values of ``corner`` are accepted for a given ``aspect``.
 
 Pure arithmetic on two knob values and two settings; no mesher and no solver. The limits come from the 140 s
 runs of ``spikes/timing/extreme-v2-summary.md`` with the margin rule of the user's decision (Decision 34 of
@@ -7,7 +8,10 @@ the requirements): the worst wall-clock time of a run inside the declared ranges
 With ``h = min(1, aspect)`` and ``c = corner``, the body has corner arcs of length ``(pi / 4) * h * c`` and
 straight sides, the shortest of length ``h * (1 - c)``. A corner of exactly 0 or exactly 1 is accepted: a
 piece of length zero is absent, not short. Any other corner is accepted when the arc is at least ``min_arc``
-and the shortest straight side is at least ``min_line``. The rule never looks at the plate (``splitter``).
+and the shortest straight side is at least ``min_line``. The minimum lengths never apply to the plate.
+The splitter floor is a different rule (Decision 45), not a physical judgement: a ``splitter`` of exactly 0
+(no plate) or at least ``min_splitter`` is accepted; a positive value below it is refused because the shape
+cannot be built, the same idea as the refusal of corner values near the ends.
 
 The accepted band is written with 3 decimals, ``lo`` rounded up and ``hi`` rounded down, so that the band
 told in a refusal is never wider than the rule allows. The band is also what is tested.
@@ -25,7 +29,7 @@ _EPS = 1e-9
 
 
 class InputRuleError(ValueError):
-    """A corner value that the rule refuses, reached a place that must never run it. Builder side."""
+    """A corner or splitter value that a rule refuses reached a place that must never run it. Builder side."""
 
 
 def corner_band(aspect: float, settings: Settings) -> tuple[float, float]:
@@ -51,3 +55,28 @@ def corner_refusal(aspect: float, corner: float, settings: Settings) -> str | No
     lo, hi = corner_band(aspect, settings)
     accepted = "0 or 1" if lo > hi else f"0, 1, or between {lo:g} and {hi:g}"
     return f"corner {corner:.12g} is not accepted: corner must be {accepted} when aspect is {aspect:.12g}"
+
+
+def splitter_accepted(splitter: float, settings: Settings) -> bool:
+    return splitter == 0.0 or splitter >= settings.body.min_splitter
+
+
+def splitter_refusal(splitter: float, settings: Settings) -> str | None:
+    """None when ``splitter`` is accepted, else one line in Dr. Kiro's terms."""
+    if splitter_accepted(splitter, settings):
+        return None
+    return (
+        f"splitter {splitter:.12g} is not accepted: "
+        f"splitter must be 0 or at least {settings.body.min_splitter:.12g}"
+    )
+
+
+def input_refusal(aspect: float, corner: float, splitter: float, settings: Settings) -> str | None:
+    """None when every knob is accepted, else one line that names every refused knob, the corner first,
+    separated by "; "."""
+    lines = [
+        line
+        for line in (corner_refusal(aspect, corner, settings), splitter_refusal(splitter, settings))
+        if line is not None
+    ]
+    return "; ".join(lines) if lines else None
