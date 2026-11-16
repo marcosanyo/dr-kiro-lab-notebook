@@ -282,7 +282,7 @@
   - タスク 17-19 が終わった後にだけ走らせる。`wind-tunnel/README.md` と `wind-tunnel/numbers.md` を、封印されたセッション（ID、24 回、`ended`）、`bench-verify` と `bench-scan` の検証結果、自己申告の接続時間で更新する。brief の「done when」が求めるとおり。`docs/status.md`（日本語）と、変えた spec テキストの訳を更新する。
   - _要件: 16.1, 16.4, 17.3, 17.4_
 
-- **21. 最後のチェックポイント** — 未着手
+- **21. 最後のチェックポイント** — 完了
   - Ensure all tests pass, ask the user if questions arise。`model/`、`adapter/`、`bench/` のチェック。`sessions/wind-tunnel/<session-id>` への `bench-verify` と `bench-scan`。`wind-tunnel/lab` への `bench-scan`。形の知識の一覧が埋まっている。`sh scripts/ja-check.sh` が古い訳なしと報告する。
 
 ## Notes

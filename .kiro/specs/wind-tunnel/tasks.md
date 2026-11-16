@@ -493,7 +493,7 @@ not tick them.
     translations of any spec text changed.
   - _Requirements: 16.1, 16.4, 17.3, 17.4_
 
-- [ ] 21. Final checkpoint
+- [x] 21. Final checkpoint
   - Ensure all tests pass, ask the user if questions arise. Run the checks of `model/`, `adapter/` and `bench/`;
     `bench-verify` and `bench-scan` on `sessions/wind-tunnel/<session-id>`; `bench-scan` on `wind-tunnel/lab`; the
     form-knowledge list is filled; `sh scripts/ja-check.sh` reports nothing stale.
