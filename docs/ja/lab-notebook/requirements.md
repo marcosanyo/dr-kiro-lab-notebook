@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `d37d58418833b413ec07b18f0956e785b28a4039846cc66781fda363e21d0000`
+> 原文 SHA-256: `061ae20fc78e34b08f59fd8e1b2a52de68b367f136c58486ce60921839de1a54`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -250,7 +250,7 @@ Spec: `lab-notebook`。
 2. THE page SHALL say what Dr. Kiro can and cannot touch: its lab folder's spec and experiment files, the four bench tools, no shell, no other folder。
 3. THE page SHALL show the two applications side by side, from the declaration in each record: knobs and ranges, measurements, budget, picture kind and goal. IF records of one application hold different declarations, THEN THE page SHALL show each distinct declaration with its session ids。
 4. THE page SHALL show, per session, how often the bench refused and why: the count of refusals by action, and each refusal's reason as recorded (with "a path outside the lab" where the record has it)。
-5. THE page's commentary SHALL NOT quote builder spec files, and SHALL name no file or folder outside a lab except one the user approves under Open question 2, which SHALL pass the blind scan at the builder level。
+5. THE page's commentary SHALL NOT quote builder spec files, and SHALL name or link no file or folder outside a lab, including the repository's root `.kiro/` (Decision 43)。
 ### Requirement 19: Built from the spec
 **対象:** 訪問者。実行は `build-from-spec` がリーダーで行う。この spec はそれを見せるだけ。
 **User Story:** 訪問者として、発見された spec だけを読んだ Kiro が、リクエストが求めたことを、spec なしの場合や生の記録だけの場合と比べて、うまくできたかを見たい。失敗した実行も含めて。
@@ -291,7 +291,7 @@ Spec: `lab-notebook`。
 5. THE session page of body-2 SHALL show its 8 `rejected` rows struck through, each with its "replaced by" tab (8.3) and each replacing row with its reverse links (8.10), and R13 SHALL carry the refused-end note (10.11); a test SHALL check this on the real body-2 record. The strike-through at a middle replay step stays tested with the fixture of 16.11, because every middle step of body-2 has an empty table。
 ---
 ## Decisions
-項目 1-13 は、この要件が書かれる前のセッションでユーザーが決めました。項目 14-31 は、ユーザーの委任のもとでビルダーが決めました（ユーザーの項目 14: "any remaining details: the builder decides and writes the decision into the requirements"）。項目 32-41 は、body-2 の記録が封印された後にユーザーが決めました。各項目に "(user)" と付けてあり、委任のもとでビルダーが決めた部分にはそう書いてあります。ここにあるものは、どの規則にも例外を作りません。
+項目 1-13 は、この要件が書かれる前のセッションでユーザーが決めました。項目 14-31 は、ユーザーの委任のもとでビルダーが決めました（ユーザーの項目 14: "any remaining details: the builder decides and writes the decision into the requirements"）。項目 32-44 は、body-2 の記録が封印された後にユーザーが決めました。各項目に "(user)" と付けてあり、委任のもとでビルダーが決めた部分にはそう書いてあります。ここにあるものは、どの規則にも例外を作りません。
 1. **What was run, per row**（user）。行が引用する実験のすべての試行。そのうち、行が引用する予測の試行を強調する。どちらも行が引用するものから来る（要件 9.1、9.3）。
 2. **Prediction chart**（user）。すべての予測を見せる。条件クラスはベンチの言葉で "classified at registration" と付けて見せ、Dr. Kiro のラベルは Dr. Kiro のインクで隣に置く。違いはそのまま見せる（要件 17）。
 3. **Frame layout**（user）。ノートブックは、アプリケーションごとの小さな表（フレーム、行、列）を持ち、各アプリケーションの spec を出典として名指しする。ピクセルサイズがレイアウトで割り切れないシートは、ビルドを失敗させる。`bench/` は変更しない（要件 7）。
@@ -339,6 +339,7 @@ Spec: `lab-notebook`。
 40. **Order of delivery**（user）。設計とタスクのため。最初のマイルストーン: 実際の記録から描画した、カバーと発見された spec の表。それから止まって、画面をユーザーに見せる。2 番目: 実験の一覧と動く画像、停止したセッション、"How the lab works"、走行バンド。最後: 予測チャート、リプレイ、等しい試行の一覧、入力の時系列の線。「Built from the spec」の実装（要件 19.2-19.7）はこれらの後に来る。
 41. **README limits line**（user）。ベンチが引用結果の要約を書き手 `dr-kiro` の引用として記録するという事実（項目 34）は、README のステップのために、制限の節の 1 行として記録する。オーケストレーターが `docs/status.md` に書き留める。
 42. **Adapters installed for the scan**（user）。ベンチのブラインドスキャンは、各アプリケーションの宣言をインポートして許可リストを読む（`bench/src/bench/scan/terms.py`、`load_app`）。このインポートはアダプターパッケージを（それを通じて MuJoCo の Python パッケージと `wind-tunnel-model` も）インポートする。そのためノートブックは、ベンチと両方のアダプターパッケージにパスで依存する。それらをインストールするが、シミュレーター、ソルバー、Docker は動かさない（設計の以前の Open question 1 の選択肢 A）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（ビルドはプロセスを起動せず、サイトはスキャンの前にディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）（要件 1.5）。
+43. **No link to the root `.kiro/`**（user）。"How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがない。ノートブックはラボの外のファイルやフォルダーを名指しせず、リンクもしない。この問いは README を書くとき（README のステップ、`docs/brief.md` セクション 5 項目 8）に改めて決める。これにより以前の Open question 2 は解決して削除される（要件 18.5）。
+44. **Rescanning the written site for `publish`**（user）。`publish` が書き出されたサイトをどう再走査するか（ベンチのフォルダースキャンはすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する）は、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを 1 つ書き（要件 20.3）、書き出す前の自前のスキャンも残る（要件 20.1、20.2）。
 ## Open questions
 1. 項目 18: 途中のステップでベンチのリーダーが読めない表は、書かれたとおりに、ラベルつきの文とともに見せる。ユーザーは、代わりにビルドが失敗することを望むかもしれない。
-2. 要件 18.1: "How the lab works" が公開リポジトリのルートの `.kiro/` へリンクするかどうかは、設計上の問いである。リンクはラボの外のパスを名指しするので、ビルダーレベルのブラインドスキャンを通らなければならない。通らなければ、ビルダーはユーザーに尋ねる。

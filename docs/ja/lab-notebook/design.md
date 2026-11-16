@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `1637ca51e28d227a638370dd87fc534a91346d1fe2080f2f8046a45329139724`
+> 原文 SHA-256: `3a56f1e7c39094293cb7ae852243a144d02a00c7969d326115a349b5eec35429`
 
 # Design: lab-notebook
 
@@ -260,7 +260,7 @@ HTML は、シート全体の `<img>`（JavaScript なしで動き、「シー�
 `scan.Scanner` は `bench.scan.scan.Scanner.from_config(scan_configs, stop_list)` である。書き出しの前に 2 回の走査を行う:
 
 1. すべてのセグメント: `scanner.scan_text(seg.text, level, seg.source)`。レベルはそのスキャンの書き手から取る。検出はソースのファイルと行を名指しする（20.2）。
-2. 完成したすべてのテキストファイル: `(text, ranges)` から、`sidecar_pieces` がまったく同じ作り方で作る断片を使う。サイトが持つエスケープ後の形が、`publish` が走らせるのと同じスキャンを通る。
+2. 完成したすべてのテキストファイル: `(text, ranges)` から、`sidecar_pieces` がまったく同じ作り方で作る断片を使う。サイトが持つエスケープ後の形が、サイドカーが記述するスキャンを通る（`publish` がどうスキャンするかは N25）。
 
 画像はフェーズ 1 で `check_picture` を通す（20.4）。スキャナーは、このマシンのホームフォルダーとリポジトリのパス（`local_paths`）にも印をつけ、絶対パスについての要件 21.1 を守る。
 
@@ -552,7 +552,7 @@ trial = "T1"
 | 15 | Components 3、8、Property 5 |
 | 16 | Components 2、3、9、Property 9 |
 | 17 | Components 9、Property 14 |
-| 18 | Components 9。Open question 3 |
+| 18 | Components 9。N24 |
 | 19 | Delivery order 4、N22 |
 | 20 | Components 8、11、12、Property 2、16 |
 | 21 | Data Models（順序）、Components 12、Property 15 |
@@ -585,10 +585,12 @@ trial = "T1"
 - **N21 Plots.** 軌跡の経路は、x と y の縮尺を等しく保ち、その試行自身の軌跡に合わせ、開始点に印をつける。入力の線は固定の [-1, 1] の軸を使う。SVG の座標は小数 2 桁で書式化するので、出力は安定する。
 - **N22 Built from the spec.** `build-from-spec` が記録を定義するまで、実行のための CLI オプションはない。ページは、まだ実行がないと述べる。
 - **N23 Adapters installed for the scan (user, option A).** ベンチのスキャンは、各アプリケーションの宣言を import して許可リストを読む（`load_app` は、`mujoco` を import する `body_lab.adapter` と、`wind_tunnel_model` を import する `wind_tunnel.declaration` を import する）。ノートブックは両方のアダプターパッケージにパスで依存する。MuJoCo の Python パッケージはインストールされるが、何もシミュレートも解きもせず、Docker も要らない（要件 1.5、要件の Decision 42）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（プロセスの起動が要り、N1 が禁じている。またスキャンの前にサイトのステージングがディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）。
+- **N24 No link to the root `.kiro/` (user).** "How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがなく、ラボの外のファイルやフォルダーを名指ししたりリンクしたりする解説もない。この問いは README のステップ（`docs/brief.md` セクション 5 項目 8）で改めて決める（要件 18.5、要件の Decision 43）。以前の Open question 3 だったもの。
+- **N25 Rescanning the written site is decided in `publish` (user).** ラボの外のフォルダーに対する `bench-scan` はすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する（`bench/src/bench/scan/scan.py`、`scan_file`）。`publish` がサイトをどうスキャンするかは、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを書き（要件 20.3）、書き出す前の自前の 2 回のスキャンも残る（Components 11、N7）（要件の Decision 44）。以前の Open question 4 だったもの。
 
 ## Open questions
 
-以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として決めました。以前の参照が合うように、以下の番号は保っています。
+以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。以前の参照が合うように、以下の番号は保っています。
 
 2. **Unreadable middle-step table**（要件の Open question 1）: 設計どおり、書かれたとおりに、ラベルつきの文とともに見せる。ユーザーは、ビルドの失敗を望むかもしれない。
 3. **Link to the root `.kiro/`**（要件の Open question 2）: ユーザーが承認するまで、"How the lab works" にそのリンクはない。承認されれば、それは解説であり、ビルダーレベルのスキャンを通る。

@@ -358,7 +358,7 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
 1. Every segment: `scanner.scan_text(seg.text, level, seg.source)` with the level from its scan author. Findings
    name the source file and line (20.2).
 2. Every finished text file: the pieces built from its `(text, ranges)` exactly as `sidecar_pieces` builds them,
-   so the escaped forms the site holds pass the same scan `publish` will run.
+   so the escaped forms the site holds pass the scan that the sidecars describe (how `publish` scans is N25).
 
 Pictures pass `check_picture` in phase 1 (20.4). The scanner also flags this machine's home folder and the
 repository path (`local_paths`), which guards Requirement 21.1 against absolute paths.
@@ -752,7 +752,7 @@ pair from the CSS.
 | 15 | Components 3, 8, Property 5 |
 | 16 | Components 2, 3, 9, Property 9 |
 | 17 | Components 9, Property 14 |
-| 18 | Components 9; Open question 3 |
+| 18 | Components 9; N24 |
 | 19 | Delivery order 4, N22 |
 | 20 | Components 8, 11, 12, Property 2, 16 |
 | 21 | Data Models (ordering), Components 12, Property 15 |
@@ -814,17 +814,20 @@ changes `bench/`.
   environment as a separate process (needs a process start, which N1 forbids, and a staging site on disk before
   the scan); C, changing the bench so the scan can take the declaration from elsewhere (a `bench/` change, and the
   allow list must come from the application's own declaration, `rules.md` 1).
+- **N24 No link to the root `.kiro/` (user).** "How the lab works" has no link to the repository's root `.kiro/`,
+  and no commentary names or links a file or folder outside a lab. The question is decided again in the README step
+  (`docs/brief.md` section 5 item 8) (Requirement 18.5, requirements Decision 43). This was the former Open
+  question 3.
+- **N25 Rescanning the written site is decided in `publish` (user).** `bench-scan` on a folder outside a lab reads
+  every file as text, so the PNG files of the site would fail it (`bench/src/bench/scan/scan.py`, `scan_file`). How
+  `publish` scans the site is decided in the `publish` spec when it is written. The notebook still writes a sidecar
+  for every text file (Requirement 20.3, Components 12), and its own two scan passes before writing stay
+  (Components 11, N7) (requirements Decision 44). This was the former Open question 4.
 
 ## Open questions
 
-The former Open question 1 (adapters for the scan) was decided by the user as N23; the numbers below are kept so
-that earlier references still match.
+The former Open question 1 (adapters for the scan) was decided by the user as N23, the former Open question 3 as
+N24, and the former Open question 4 as N25; the number below is kept so that earlier references still match.
 
 2. **Unreadable middle-step table** (requirements Open question 1): shown as written with a labelled sentence, as
    designed; the user may prefer a build failure.
-3. **Link to the root `.kiro/`** (requirements Open question 2): "How the lab works" has no such link until the user
-   approves one; if approved, it is commentary and goes through the builder-level scan.
-4. **Rescanning the written site, for `publish`.** `bench-scan` on a folder outside a lab reads every file as text,
-   so the PNG files of the site would fail it (`bench/src/bench/scan/scan.py`, `scan_file`). The notebook writes
-   sidecars for every text file and checks pictures itself; `publish` will have to pass the text files only, or the
-   bench needs a change. This does not block the notebook; it is raised here for the `publish` spec.

@@ -353,7 +353,7 @@ writes nothing into a `lab/` folder.
       experiment files, the four bench tools, no shell, no other folder); the two applications side by side from
       each record's declaration (knobs and ranges, measurements, budget, picture kind, goal; distinct declarations
       with their session ids); per session the refusal counts by action and each reason as recorded. No link to the
-      root `.kiro/` (design Open question 3), no builder spec quoted, no file or folder outside a lab named.
+      root `.kiro/` (design N24), no builder spec quoted, no file or folder outside a lab named.
     - Unit tests on the real records: body-2 shows 1 `register` and 2 `end` refusals; both applications' budgets
       come from the declarations.
     - Verified by: the checks.

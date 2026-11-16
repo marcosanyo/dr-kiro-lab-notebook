@@ -611,8 +611,8 @@ trusted.
    THE page SHALL show each distinct declaration with its session ids.
 4. THE page SHALL show, per session, how often the bench refused and why: the count of refusals by action, and each
    refusal's reason as recorded (with "a path outside the lab" where the record has it).
-5. THE page's commentary SHALL NOT quote builder spec files, and SHALL name no file or folder outside a lab except
-   one the user approves under Open question 2, which SHALL pass the blind scan at the builder level.
+5. THE page's commentary SHALL NOT quote builder spec files, and SHALL name or link no file or folder outside a lab,
+   including the repository's root `.kiro/` (Decision 43).
 
 ### Requirement 19: Built from the spec
 
@@ -703,7 +703,7 @@ rebuilt and compared byte for byte.
 
 Items 1-13 were decided by the user in the session before these requirements were written. Items 14-31 were
 decided by the builder under the user's delegation (the user's item 14: "any remaining details: the builder decides
-and writes the decision into the requirements"). Items 32-41 were decided by the user after the body-2 record was
+and writes the decision into the requirements"). Items 32-44 were decided by the user after the body-2 record was
 sealed; each is marked "(user)", and a part decided by the builder under delegation says so. Nothing here makes an
 exception to a rule.
 
@@ -845,11 +845,16 @@ exception to a rule.
     environment as a separate process (the build starts no process, and the site would have to be on disk before
     the scan); C, changing the bench so the scan can take the declaration from elsewhere (a `bench/` change, and the
     allow list must come from the application's own declaration, `rules.md` 1) (Requirement 1.5).
+43. **No link to the root `.kiro/`** (user). "How the lab works" has no link to the repository's root `.kiro/`; the
+    notebook names and links no file or folder outside a lab. The question is decided again when the README is
+    written (README step, `docs/brief.md` section 5 item 8). This resolves the former Open question 2, which is
+    removed (Requirement 18.5).
+44. **Rescanning the written site for `publish`** (user). How `publish` scans the written site again (the bench's
+    folder scan reads every file as text, so the site's PNG files would fail it) is decided in the `publish` spec
+    when it is written. The notebook still writes one sidecar per text file (Requirement 20.3), and its own scan
+    before writing stays (Requirement 20.1, 20.2).
 
 ## Open questions
 
 1. Item 18: a table that the bench's reader cannot read at a middle step is shown as written with a labelled
    sentence. The user may prefer that the build fails instead.
-2. Requirement 18.1: whether "How the lab works" links to the public repository's root `.kiro/` is a design
-   question. A link names a path outside a lab, so it must pass the blind scan at the builder level; if it does not,
-   the builder asks the user.
