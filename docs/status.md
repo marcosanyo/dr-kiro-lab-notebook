@@ -3,11 +3,11 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: 2026-11-17（ローカル、最終リハーサル後）。`wind-tunnel` のタスク 16 まで完了。次はタスク 17（ユーザーの実セッション）。
+最終更新: ローカル、タスク 20 の後。`wind-tunnel` のタスク 20 まで完了。次はタスク 21（最後のチェックポイント）。
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
-- `wind-tunnel`: タスク 1〜16 完了（`model/`、`adapter/`、`lab/`、Docker での測定、チェックポイント）。
+- `wind-tunnel`: タスク 1〜20 完了（`model/`、`adapter/`、`lab/`、Docker での測定、チェックポイント、実セッション `wt-004`、結果の記録）。
   最後のコード変更の後、本物の Docker で最終リハーサル（`wind-tunnel/rehearse_session.py`、約 4 分）が通った。
   同じリハーサルは、古いコードでは間を置いた後の呼び出しで失敗する。
 - `body-lab`: タスク 1〜5 完了。最初のセッション `sessions/body-lab/body-1` は 40 試行で `ended` として封印され、
@@ -16,46 +16,47 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   受け付けられた `end()` は検査した 3 ファイルを `"for": "end"` のスナップショットとして封印の前に記録する。
   stop のときは取らない（ユーザーの決定）。body-1 は表なしのまま残す。ノートでの見せ方は `lab-notebook` で決める。
 - `docs/ja` の訳は `sh scripts/ja-check.sh` が通る状態（`wind-tunnel` の Decision 43、設計の Decision 30 を含む）。
-## タスク 17 の状況（ユーザーの作業）
-- 最初の実試行は 2 回とも失敗し、原因を直した:
-  - `wt-001`: 最初の `run_experiment` で失敗。Gmsh がワーカースレッドで動いた（シグナル）。封印のスキャンが `application` と `image` を指摘した。どちらも直した（Decision 41、42）。
-  - `wt-002`: E1 を 3 試行で実行。その後、前の呼び出しの約 20 秒後の呼び出しで、`gmsh::initialize` の SIGSEGV により `bench-mcp` が落ちた。
-    メッシュを子プロセスで作るようにして直した（Decision 43、設計の Decision 30）。スレッドの行列は `spikes/timing/gmsh-threads.md`。
-  - どちらのセッションも封印もコミットもしていない。状態のフォルダーは `bench-run/wind-tunnel/state`（git 管理外）に残り、id は再利用できない。
-  - 残ったケースフォルダー `bench-run/wind-tunnel/9fe3f7e964ddc328` は `wt-002` の試行 4 のもの。
-  - `wt-003`: 最初の操作（H1 の登録）で終わった。予測 P2 の `range = [1, 1]` は通常の拒否になるはずだったが、拒否の文に
-    `empty`（OpenFOAM の patch 型でもある語）が入っていて、`Session._finish` のスキャンで bench failure になった（Decision 44）。
-    `empty` ほか 4 語を stop list に入れ、ベンチ自身の文を全部スキャンするテスト（掃引）を足した。
-  - `wt-002` と `wt-003` は `stopped` として封印済み（`sessions/wind-tunnel/`、コミットしていない）。id は再利用できない。
-- `wt-003` の後の修正（最後のコード変更）: `range` の下限が上限以上のときの拒否文を、Dr. Kiro が直せる文に変えた
-  （下限は上限より厳密に小さくする、1 つの値は範囲として受け付けない、値がちょうど 1 つの数なら `[0.5, 1.5]`（値 1 の場合）のような小さな範囲を書く）。
-  `bench/src/bench/specfiles/hypotheses.py`、テストは `bench/tests/unit/test_hypotheses.py` と、本物の Session を通す
-  `wind-tunnel/adapter/tests/test_register_refusal.py`（通常の拒否で、ベンチ障害ではない）。コミット `fc85e5e`。
-  この変更の後、本物の Docker で最終リハーサルが通り、封印、`bench-verify`、`bench-scan` も問題なし。`docs/ja` の訳も最新（`ja-check` 通過）。
-- `wind-tunnel/lab` には `wt-003` の残りがある（`bench-new-session` が初期化する）。
-- 次のセッションは `wt-004`、シード `20261118`。コマンドは `wind-tunnel/README.md` の「Running a session」。
-  前のセッションがクラッシュして封印されていない場合は、`bench-new-session` の前に
-  `bench-stop <設定ファイル> --reason <理由>` で閉じる（理由はビルダーの文としてスキャンされる。ソルバーやメッシュの語を入れない）。
+## タスク 17〜20 の状況
+- **セッション `wt-004`**（シード 20261118、コミット `cbe5d54`）: `ended` で封印。Dr. Kiro 自身の `end_session` で終わった。
+  24 試行のうち 18 を使用（予算の残り 6）。予算を使い切ったのではない（24 回は行っていない）。合格条件（要件 17.3）は
+  「予算を使い切る、または Dr. Kiro 自身の `end_session`」で、後者で満たした。
+  実験 6（E1〜E6）、仮説 6、記録 69 エントリ、blob 41。`bench-verify` は verified、`bench-scan`（`wind-tunnel/lab` と封印済みフォルダー）は検出なし。
+  予測結果 17 件、的中 16、外れ 1（E5）。5 つの測定がすべて `not_settled` だった試行が 1 件（E4、aspect 3 / corner 1 / splitter 1 / angle 0）。
+  拒否 1 件（1 つの値の範囲）。
+- 停止した前の試行: `wt-001`（封印できず。git 管理外の `bench-run/wind-tunnel/state` にだけある）、`wt-002`（`e1c7565`、3 試行、`bench-mcp` の落下）、
+  `wt-003`（`7c0ab08`、最初の操作で導出語が拒否文に入った）。修正は、メッシュを子プロセスで作ること、除外リストの語の追加、掃引テスト。
+- **接続時間（タスク 19）**: 約 57 時間 30 分、ユーザーの自己申告（「57 時間 30 分程度」）。開始 2026-11-13 23:24:59 +0900（要件の承認を記録したコミット `2a8c62a` の時刻。
+  実際の承認は数分前で、正確な記録はない）、終了 2026-11-16 08:55:00 +0900（`wt-004` の作成）。「最初の完全なセッション」は `wt-004` と読む。
+  実時間で、睡眠や他の作業を含み、作業時間の合計ではない。ビルダーは計算も修正もしていない。
+- タスク 20: `wind-tunnel/numbers.md` と `wind-tunnel/README.md` を更新した。コード行数は `count_lines.py` で数え直した:
+  `adapter/` 1037、`model/` 1277、合計 2314（テストファイルを除く）、テストファイルは `adapter/` 2013、`model/` 1227。
+  `design.md` の古い 1 行（`FailureKind` は `incomplete` と `timeout` の 2 種類）を直した。`docs/ja` も更新済み（`ja-check` 通過）。
 - 掃引: ベンチ自身の文字列（`bench/tests/message_sweep.py` の固定ルール、1006 個）を、両アプリの導出語と本物の stop list でスキャンする。
   `wind-tunnel/adapter/tests/test_message_sweep.py` と `body-lab/adapter/tests/test_message_sweep.py`。
-- 未決: Dr. Kiro レベルの文に単独の `P` や `U` があると、ファイル名パターン（`0/p.in`、`0/U.in`）に当たる。スキャン規則の変更になるので、あなたの判断を待つ（Decision 44）。
-- タスク 17 の後、ビルダーがタスク 18、次にタスク 19（ユーザー）、20、21 を行う。
+- 新しいセッションの手順は `wind-tunnel/README.md` の「Running a session」。前のセッションが封印されていない場合は、
+  `bench-new-session` の前に `bench-stop <設定ファイル> --reason <理由>` で閉じる（理由はスキャンされる。ソルバーやメッシュの語を入れない）。
 ## ユーザーが片づけるもの
 - git の worktree `/private/tmp/wt-old`、`wt-old2`、`wt-old3`: `git worktree list` で確認し、それぞれ `git worktree remove --force <path>`、最後に `git worktree prune`。
+- `.worktrees/`: 追跡されていないフォルダー（コミットしていない）。不要なら片づける。
+- 一時フォルダー: `bench-run/wind-tunnel/` の中の古いケースフォルダー（`9fe3f7e964ddc328` ほか）や、`/private/tmp` の一時ファイル。`bench-run/` は git 管理外。
 - `spikes/sheet/check-sheet.png`: 追跡されていない。私たちがコミットするものではない。
 - 古い Kiro CLI のプロセス（5 個、残っていれば）。
 ## 次の一手
-1. **あなた:** タスク 17（`wt-003` で 24 回のセッション）。その後、封印の確認とコミット。
-2. Kiro: タスク 18。あなた: タスク 19（接続時間の自己申告）。その後タスク 20、21。
-3. Kiro: `lab-bench` のタスク 23-26 が終わっているか、`wind-tunnel` のタスク 1.1 が確認する（以前からの項目）。
-4. **`lab-notebook` の spec の項目（まだ書いていない）:** ノートブックの動く画像。`body-lab` と `wind-tunnel` は同じ画像シートの形なので、シートのフレームを順に見せる方法を両方のラボについて 1 回、その spec で決める（`wind-tunnel` 要件の Decision 25）。
+1. Kiro: タスク 21（最後のチェックポイント）。モデル、アダプター、ベンチのチェック、`wt-004` の `bench-verify` と `bench-scan`、`wind-tunnel/lab` のスキャン、`sh scripts/ja-check.sh`。
+2. Kiro: `lab-bench` のタスク 23-26 が終わっているか、`wind-tunnel` のタスク 1.1 が確認する（以前からの項目）。
+3. **`lab-notebook` の spec の項目（まだ書いていない）:** ノートブックの動く画像。`body-lab` と `wind-tunnel` は同じ画像シートの形なので、シートのフレームを順に見せる方法を両方のラボについて 1 回、その spec で決める（`wind-tunnel` 要件の Decision 25）。
+## 残っているリスク
+- **Dr. Kiro レベルの文に単独の `P` や `U` があると、ファイル名パターン（`0/p.in`、`0/U.in`）に当たる。** スキャン規則の変更になるので、あなたの判断を待つ（Decision 44）。`wt-004` では起きていない。README の限界に書いた。
+- 再現性は同じ Mac と同じイメージのビルドに限る。セッション全体（Dr. Kiro の実験の選び方）は再現しない。
+- 収束しない試行（`wt-004` の E4 など）は結果として扱う。時間のばらつきがあり、115 秒は範囲選びの規則で、1 回の実行の保証ではない。
+- 接続時間は自己申告で、開始時刻はコミット時刻に合わせた値。
 ## 未決の質問（あなたへ）
 1. **クラッシュ後に残ったケースフォルダーの扱い。** 再開したセッションは同名のフォルダーとぶつかり、`FileExistsError` で失敗する（失敗を隠さない設計）。
    ユーザーが `mv` で脇へ移す。自動では扱わない。
 2. **試行の失敗はセッションを終える**（タイムアウト、不完全、メッシュ）。収束しない試行は結果として扱う（Decision 37）ので終わらない。
 3. 予算 24 は `docs/brief.md` の値。
 4. `docs/brief.md` は `angle` を [0, 30] とし、spec は [0, 15]（ユーザーの決定、Decision 34）。
-5. 接続時間（タスク 19）はユーザーの自己申告である。
+5. 接続時間（タスク 19）はユーザーの自己申告である（記録済み）。
 6. 同じ実行の時間にはばらつきがある（12〜35 秒、最も遅い実行は 100.6 秒、上限は 140 秒）。
 ## 調べたこと（質問 2、コードは変えていない）
 
@@ -88,4 +89,4 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   body-1 の埋まった表の控えは `bench-run/body-1/design-final.md`（git 管理外、この Mac だけ。参照用でノートには使わない）。
   Dr. Kiro はラボのフォルダーで `kiro-cli chat --agent dr-kiro` から起動し、`export` は同じターミナルで行う。
 - **共通**: セッション記録（`sessions/`）は作った環境ですぐコミットする。
-- 停止した wind-tunnel セッション `wt-002` と `wt-003` は、失敗した試行の記録としてコミット済み。`wt-001` は封印できず、git 管理外の `bench-run/` の状態フォルダーにだけある。
+- 停止した wind-tunnel セッション `wt-002` と `wt-003` は、失敗した試行の記録としてコミット済み。`wt-001` は封印できず、git 管理外の `bench-run/` の状態フォルダーにだけある。`wt-004` は `ended` でコミット済み（`cbe5d54`）。
