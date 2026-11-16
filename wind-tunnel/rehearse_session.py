@@ -54,6 +54,10 @@ NOT_SETTLING = [2.57819, 0.953007, 1.241, 0.83314]
 AFTER_FIRST_PAUSE = [2.4972687512204645, 0.5573374874286193, 0.979711167045421, 6.023658250024145]
 AFTER_SECOND_PAUSE = [0.9286822076960304, 0.6660281565539226, 1.3490318781932036, 11.569592935649059]
 REFUSED = [1.75, 0.01, 1.5, 5.0]
+# Decision 45: a positive splitter below 1e-6 is refused before the run; 1e-6 itself is accepted and settles
+# (cd 1.27591 at 45.0 s in the measurement, aspect 1.75, corner 0.5, angle 5).
+REFUSED_SPLITTER = [1.75, 0.5, 1e-9, 5.0]
+SPLITTER_FLOOR = [1.75, 0.5, 1e-6, 5.0]
 # Longer than the idle time of anyio's worker threads, so that the next call runs in a new thread.
 PAUSE_S = float(WorkerThread.MAX_IDLE_TIME) + 5.0
 KNOBS = ("aspect", "corner", "splitter", "angle")
@@ -96,6 +100,7 @@ def hypothesis_block(point_range: bool = False) -> str:
         f"```prediction\n{prediction('P1', SETTLED)}{second}```\n"
         + later_hypothesis("H2", "P3", AFTER_FIRST_PAUSE)
         + later_hypothesis("H3", "P4", AFTER_SECOND_PAUSE)
+        + later_hypothesis("H4", "P5", SPLITTER_FLOOR)
     )
 
 
@@ -117,16 +122,30 @@ def text(result) -> str:
     return "".join(part.text for part in result.content if part.type == "text")
 
 
-async def after_pause(client, lab: Path, hid: str, number: int, remaining: int, when: list[float]) -> None:
-    """Wait longer than the idle time of anyio's worker threads, then run one real trial in a new thread."""
-    print(f"pause of {PAUSE_S:.0f} s (idle time of anyio's worker threads is {WorkerThread.MAX_IDLE_TIME} s)")
-    await anyio.sleep(PAUSE_S)
+async def after_pause(
+    client,
+    lab: Path,
+    hid: str,
+    number: int,
+    remaining: int,
+    when: list[float],
+    *,
+    pause: bool = True,
+    file_name: str | None = None,
+) -> None:
+    """Wait longer than the idle time of anyio's worker threads, then run one real trial in a new thread.
+    With `pause=False` the trial runs at once (the run at the splitter floor)."""
+    if pause:
+        print(
+            f"pause of {PAUSE_S:.0f} s (idle time of anyio's worker threads is {WorkerThread.MAX_IDLE_TIME} s)"
+        )
+        await anyio.sleep(PAUSE_S)
     registered = await client.call_tool("register_hypothesis", {"id": hid})
     check(
         not registered.is_error,
         f"register_hypothesis {hid} refused: {text(registered)}",
     )
-    path = f"experiments/e{number}.py"
+    path = f"experiments/{file_name or f'e{number}.py'}"
     (lab / path).write_text(experiment([when], hid), encoding="utf-8")
     started = time.monotonic()
     try:
@@ -256,14 +275,28 @@ async def drive(lab: Path, config: Path, source_root: Path | None) -> None:
             "the corner rule did not refuse corner 0.01 with aspect 1.75",
         )
         print("refusal:", text(refused))
+        # Decision 45: the splitter floor is a normal refusal too, before the run, in Dr. Kiro's terms.
+        (lab / "experiments/e5.py").write_text(experiment([REFUSED_SPLITTER], "H3"), encoding="utf-8")
+        refused_splitter = await client.call_tool("run_experiment", {"path": "experiments/e5.py"})
+        check(
+            refused_splitter.is_error and "bench stopped the session" not in text(refused_splitter),
+            f"splitter 1e-9 was not a normal refusal: {text(refused_splitter)}",
+        )
+        check(
+            "splitter 1e-09 is not accepted: splitter must be 0 or at least 1e-06" in text(refused_splitter),
+            f"unexpected refusal text: {text(refused_splitter)}",
+        )
+        print("refusal of splitter 1e-09:", text(refused_splitter))
+        # The refused calls used no budget: the run at the floor leaves 19 (after E1 two, E2 and E3 one each).
+        await after_pause(client, lab, "H4", 4, 19, SPLITTER_FLOOR, pause=False, file_name="e6.py")
         # A refusal uses no budget: a verdict-free state would refuse the next call, so the budget is read
         # from the next accepted answer, the end of the session, below.
         ended = await client.call_tool("end_session", {})
         check(not ended.is_error, f"end_session refused: {text(ended)}")
         print("end_session:", text(ended))
         check(
-            json.loads(text(ended)).get("budget_remaining") == 20,
-            "the refusal used budget",
+            json.loads(text(ended)).get("budget_remaining") == 19,
+            "a refusal used budget",
         )
 
 
