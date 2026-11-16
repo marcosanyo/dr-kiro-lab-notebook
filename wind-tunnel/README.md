@@ -4,7 +4,7 @@ The second application: a two-dimensional flow around a body in OpenFOAM, with f
 how the flow responds from experiments alone. Specs: `.kiro/specs/wind-tunnel/` (Japanese: `docs/ja/wind-tunnel/`).
 
 This file is for the builder and for readers of the repository. Every number in it comes from a tracked file named
-next to it. A number that does not exist yet is shown as `<not yet measured>`.
+next to it.
 
 | Folder or file | What it is |
 |---|---|
@@ -172,6 +172,16 @@ The blind scan covers terms, paths and credentials only.
   margin is a rule for the choice of ranges, not a guarantee for a single run.
 - **The refusal of corner values near 0 and 1** (above) removes some knob values from reach on purpose.
 - **The reviewed list is a review**, as above.
+- **The mesh runs in a child process.** In the first attempts, the mesh tool ran in a worker thread of the bench
+  server, and the server crashed in a call made about 20 s after the previous one (`wt-002`). Since the fix, each mesh is
+  made in a short-lived child process, and the same rehearsal that failed before passes. The cause was found from a
+  matrix of thread cases (`spikes/timing/gmsh-threads.md`).
+- **A lone `P` or `U` in text Dr. Kiro writes can be reported by the scan.** At Dr. Kiro level, a single letter `P`
+  or `U` matches a file-name pattern (case-insensitive), so a quote or note with such a letter alone is a finding.
+  This is a known limit, not changed, because it needs a change of the scan rules, which the user decides
+  (requirements Decision 44). It did not stop `wt-004`.
+- **A session is not reproducible as a whole.** The trials are (same machine and image build, above), but Dr. Kiro's
+  choice of experiments is not fixed by the session seed. The record of `wt-004` is what happened once.
 
 ## Docker and the image lock
 
@@ -240,17 +250,26 @@ The builder commits the sealed folder only if both pass. If the session does not
 `bench-stop $R/<session-id>.toml --reason <text>`.
 
 ## Numbers
-
 Details are in `numbers.md`.
-
 - **Code size:** counted by `count_lines.py` (non-blank, non-comment lines; lock files, virtual environments and caches
-  excluded): `adapter/` 988 lines, `model/` 1175 lines, 2163 lines in all without test files. The test files are
-  counted on their own: `adapter/` 1736 lines, `model/` 1166 lines.
-- **Connection time:** `<not yet measured>`. It is the wall-clock time from the approval of the requirements to the
-  start of the first full session, and the user reports it himself.
-- **The 24-run session:** `<not yet run>`. Its sealed record, its verification result and the scan result are added
-  here after the session exists.
-
+  excluded): `adapter/` 1037 lines, `model/` 1277 lines, 2314 lines in all without test files. The test files are
+  counted on their own: `adapter/` 2013 lines, `model/` 1227 lines.
+- **Connection time:** about 57 hours 30 minutes, **self-reported by the user** (he wrote "57 時間 30 分程度"). It is the
+  wall-clock time from the approval of the requirements (taken as the time of commit `2a8c62a`, 2026-11-13 23:24:59
+  +0900; the real approval was a few minutes earlier and has no record) to the creation of session `wt-004`
+  (2026-11-16 08:55:00 +0900), which the user reads as the first full session. It includes sleep and other work and the
+  fixes after the three stopped attempts. It is not the sum of working time. The builder did not compute or correct it.
+- **The recorded session:** `sessions/wind-tunnel/wt-004` (seed 20261118, committed as `cbe5d54`), sealed `ended`:
+  Dr. Kiro ended the session with `end_session`. 18 of the 24 trials were used (budget remaining 6), so the budget
+  was not used up; 24 runs were not done. 6 experiments (E1 to E6), 6 hypotheses, 69 entries, 41 blobs.
+  `bench-verify` verified it and `bench-scan` on `wind-tunnel/lab` and on the sealed folder found nothing.
+  Of 17 prediction outcomes, 16 were hits and 1 was a miss. One trial (E4, `aspect` 3, `corner` 1, `splitter` 1,
+  `angle` 0) came back with all five measurements `not_settled`. One registration was refused (a point range).
+- **Stopped attempts before it:** `wt-001` (not sealed; the first run failed because the mesh tool ran in a worker
+  thread, and the record scan found two common words), `wt-002` (committed `e1c7565`; the bench server crashed in a new
+  worker thread, 3 trials) and `wt-003` (committed `7c0ab08`; a derived term in a normal refusal stopped it at the first
+  action). The fixes: the mesh is made in a child process, 5 words were added to the stop list, and a sweep test scans
+  the bench's own strings.
 ## Two `.kiro` folders
 
 The root `.kiro/` is how the lab was built (specs and steering of the builder). `wind-tunnel/lab/.kiro/` is Dr. Kiro
