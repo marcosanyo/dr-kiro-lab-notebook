@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/body-lab/design.md`](../../../.kiro/specs/body-lab/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `4a80cfdea790a8e8d747716ead4f1160ded672c5af4027c86b467dd58d10eab2`
+> 原文 SHA-256: `eadf89428f757df68be3b943acd3e346a34e9dd8f2220e127a13543b4265698b`
 
 # 設計: body-lab
 
@@ -95,3 +95,4 @@ body-lab/lab`、`--adapter body_lab.adapter:BodyAdapter` とボディのスキ�
 6. `body-lab/adapter/` は独立した uv プロジェクト（ユーザー）。
 7. マシン間の違いは書面上の制限とし、MuJoCo のバージョンを記録する（ユーザー）。
 8. 最低限の検証: 4 つのテストと 40 試行のセッション 1 回（ユーザー）。
+9. 2 回目のセッション body-2 を行う。body-1 の記録には発見した spec の表が入っていないため（ユーザー。`dr-kiro` 要件 8 の最終仕様の写しの後）。body-1 は残す。body-2 は、body-1 にはなかった `rejected` の行についての workflow の文（`dr-kiro` 決定事項 8）があり、シード 2 で行う。

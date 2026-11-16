@@ -116,3 +116,6 @@ the sealed folder, the dr-kiro task 5 checks.
 6. `body-lab/adapter/` is its own uv project (user).
 7. Machine differences are a written limit; the MuJoCo version is recorded (user).
 8. Minimal verification: four tests and one 40-trial session (user).
+9. A second session, body-2, because body-1's record holds no discovered spec table (user, after the final-spec
+   copies of `dr-kiro` Requirement 8). body-1 is kept. body-2 runs with the workflow sentence on `rejected` rows
+   (`dr-kiro` Decision 8), which body-1 did not have, and with seed 2.
