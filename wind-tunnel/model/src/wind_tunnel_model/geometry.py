@@ -4,7 +4,8 @@ Pure arithmetic; no mesher is imported. Frame before the turn: the rectangle spa
 y in [-1/2, 1/2] with ``a = aspect``; the flow goes along +x, so the rear is the +x side. The outline runs
 counter-clockwise, starting at the bottom edge.
 
-Pieces whose length is exactly zero are omitted. A negative or undefined piece raises ``GeometryError``.
+Pieces whose length is exactly zero are omitted, also after the turn (both ends the same point).
+A negative or undefined piece raises ``GeometryError``.
 No piece is refused for being short: the rule of the corner values (``input_rule.py``) is applied to the
 inputs before a run, not here.
 """
@@ -132,7 +133,11 @@ def _turn(pieces: Outline, angle: float) -> Outline:
         x, y = point
         return (x * c + y * s, -x * s + y * c)
 
-    return tuple(
+    turned = tuple(
         Line(move(p.p), move(p.q)) if isinstance(p, Line) else Arc(move(p.p), move(p.centre), move(p.q))
         for p in pieces
     )
+    # A piece that is not zero before the turn can end on its own start after it (a plate shorter than the
+    # spacing of the coordinates). Its length is then exactly zero, so it is omitted like any other zero
+    # piece. Its two ends are the same point, so the neighbours still meet and the outline stays closed.
+    return tuple(p for p in turned if p.p != p.q)

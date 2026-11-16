@@ -90,3 +90,22 @@ def test_short_pieces_are_not_refused_by_the_geometry(settings):
     pieces = outline(1, 0.999, 0, 0, settings)
     assert_closed(pieces)
     assert min(math.dist(p.p, p.q) for p in pieces if isinstance(p, Line)) == pytest.approx(0.001)
+
+
+@pytest.mark.parametrize("splitter", [1e-16, 2.22e-16, 1e-12])
+@pytest.mark.parametrize("knobs", [(3.0, 0.0, 1.0), (3.0, 0.0, 0.0), (1.75, 0.5, 5.0), (0.5, 0.0, 15.0)])
+def test_a_plate_shorter_than_the_coordinate_spacing_leaves_no_zero_piece(settings, splitter, knobs):
+    # The plate length is below the spacing of the coordinates near x = 1.5, so after the turn the plate end
+    # can be the same point as its start. That piece has length exactly zero and is omitted; the outline
+    # stays closed.
+    aspect, corner, angle = knobs
+    pieces = outline(aspect, corner, splitter, angle, settings)
+    assert_closed(pieces)
+    assert all(p.p != p.q for p in pieces)
+
+
+def test_the_counterexample_of_property_1_has_no_zero_piece(settings):
+    pieces = outline(3.0, 0.0, 2.22e-16, 1.0, settings)
+    assert_closed(pieces)
+    assert all(p.p != p.q for p in pieces)
+    assert len(pieces) == 7

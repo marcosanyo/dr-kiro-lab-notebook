@@ -3,7 +3,7 @@
 import itertools
 import math
 
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
 
@@ -21,6 +21,7 @@ def knob(low, high):
 # Feature: wind-tunnel, Property 1: Outline is closed and valid for every knob value
 # **Validates: Requirements 3.3, 6.10**
 @hyp_settings(max_examples=300, deadline=None)
+@example(aspect=3.0, corner=0.0, splitter=2.22e-16, angle=1.0)
 @given(
     aspect=knob(0.5, 3.0),
     corner=knob(0.0, 1.0),
