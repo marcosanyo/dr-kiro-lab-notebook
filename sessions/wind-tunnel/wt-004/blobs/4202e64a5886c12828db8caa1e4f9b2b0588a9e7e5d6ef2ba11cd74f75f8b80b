@@ -1,0 +1,38 @@
+### H4: Splitter length of 2 suffices to stop shedding on the rounded long body, and shorter body with long plate also stops
+
+WHEN aspect is 3, corner is 1 and splitter is 2, THE system SHALL not shed and give cd below that of splitter 3 plus 0.1.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cl_amp"
+range = [0.0, 0.01]
+label = "new-combination"
+[prediction.when]
+aspect = 3.0
+corner = 1.0
+splitter = 2.0
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "cd"
+range = [0.9, 1.12]
+label = "new-combination"
+[prediction.when]
+aspect = 3.0
+corner = 1.0
+splitter = 2.0
+angle = 0.0
+
+[[prediction]]
+id = "P3"
+measurement = "cd"
+range = [0.9, 1.4]
+label = "new-combination"
+[prediction.when]
+aspect = 2.0
+corner = 1.0
+splitter = 3.0
+angle = 0.0
+```

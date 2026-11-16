@@ -1,0 +1,11 @@
+# H6: Best point has cd near 0.99 or lower with no shedding
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [2.0, 1.0, 2.2, 0.0],
+    [1.7, 1.0, 3.0, 0.0],
+    [2.5, 1.0, 3.0, 0.0],
+]

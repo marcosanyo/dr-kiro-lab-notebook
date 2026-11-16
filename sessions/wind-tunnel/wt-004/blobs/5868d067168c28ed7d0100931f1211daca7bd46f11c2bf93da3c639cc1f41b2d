@@ -1,0 +1,49 @@
+### H5: Plate keeps shorter bodies steady, and small angle adds lift and drag
+
+WHEN corner is 1 and splitter is 3, THE system SHALL stay steady at aspect 1.5 with cd between 0.9 and 1.25, and WHEN angle is 3 at aspect 2 THE system SHALL show cd above 0.993 and cl_mean above 0.1.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cl_amp"
+range = [0.0, 0.01]
+label = "new-combination"
+[prediction.when]
+aspect = 1.5
+corner = 1.0
+splitter = 3.0
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "cd"
+range = [0.9, 1.25]
+label = "new-combination"
+[prediction.when]
+aspect = 1.5
+corner = 1.0
+splitter = 3.0
+angle = 0.0
+
+[[prediction]]
+id = "P3"
+measurement = "cl_mean"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+aspect = 2.0
+corner = 1.0
+splitter = 3.0
+angle = 3.0
+
+[[prediction]]
+id = "P4"
+measurement = "cd"
+range = [0.995, 1.6]
+label = "new-combination"
+[prediction.when]
+aspect = 2.0
+corner = 1.0
+splitter = 3.0
+angle = 3.0
+```
