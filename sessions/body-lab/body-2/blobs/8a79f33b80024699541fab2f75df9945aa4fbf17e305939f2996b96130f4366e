@@ -1,0 +1,41 @@
+### H7: Constant c1 drives the body along x, with sign set by c1
+
+WHEN c1 is held at a constant level a1 and the other inputs are 0, THE system SHALL move the body along -x at a rate proportional to a1 and turn it by about +39 deg per unit a1 over 5 s, so a1 = -1 gives x near +0.23 m and heading near -39 deg.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.15, 0.32]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = -1
+a2 = 0
+a3 = 0
+a4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-50, -28]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = -1
+a2 = 0
+a3 = 0
+a4 = 0
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [-0.16, -0.07]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 0.5
+a2 = 0
+a3 = 0
+a4 = 0
+```

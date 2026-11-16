@@ -1,0 +1,62 @@
+# Requirements
+
+Parameters a0..a4 are constant levels of inputs c0..c4.
+
+### H1: Zero input leaves the body still
+
+WHEN all constant levels a0..a4 are 0 for the whole trial, THE system SHALL stay near the start pose.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "inside"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+```
+
+Result (E1): hit. x=4.8e-5. c0=1 alone: no motion. c1=1 alone: heading +39 deg, x -0.23.
+
+### H2: Inputs c2, c3, c4 each do something to the pose
+
+WHEN only one of a2, a3, a4 is 1 and the rest are 0, THE system SHALL move or turn the body measurably, with at least one of x or heading changing.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-180, -5]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 1
+a3 = 0
+a4 = 0
+```
+
+Result (E2): P1 missed (heading -0.22). Constants on c2,c3,c4 give only a brief transient.
+
+### H3: Oscillating drive on c0 produces sustained displacement
+
+WHEN c0 is a 1 Hz sine of amplitude 1 and the other inputs are 0, THE system SHALL move the body so that x ends above 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+f = 1
+```

@@ -1,0 +1,38 @@
+### H11: Square-wave c3 strokes add travel per cycle
+
+WHEN c1 = -1 and c3 is a unit square wave (sq = 1) at f Hz, THE system SHALL travel further than with the sine at the same f, because each stroke covers full amplitude for longer; and a sine at f = 2.5 SHALL fall on the plateau between 0.62 and 0.75 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.65, 1.0]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+sq = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.72, 1.1]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 3
+sq = 1
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.62, 0.75]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2.5
+sq = 0
+```

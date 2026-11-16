@@ -1,0 +1,15 @@
+### H5: Wave frequency changes forward travel
+
+WHEN all five inputs are sines of amplitude 1 with ph = 1.0 and f = 3 Hz, THE system SHALL reach x above 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 3.0]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 3
+ph = 1.0
+```

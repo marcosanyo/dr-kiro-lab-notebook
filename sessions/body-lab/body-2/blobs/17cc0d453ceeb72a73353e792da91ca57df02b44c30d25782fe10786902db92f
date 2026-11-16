@@ -1,0 +1,15 @@
+### H4: Phase-shifted travelling wave across channels moves the body forward
+
+WHEN all five inputs are 1 Hz sines of amplitude 1 with phase lag ph per channel index, THE system SHALL reach x above 0.2 m with ph = 1.5.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 3.0]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1
+ph = 1.5
+```

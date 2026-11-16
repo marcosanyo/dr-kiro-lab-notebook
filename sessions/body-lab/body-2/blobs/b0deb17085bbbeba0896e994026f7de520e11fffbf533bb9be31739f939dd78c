@@ -1,0 +1,31 @@
+# H6: c0 held constant gates or scales the wave-driven travel
+import math
+
+PHASE = "rules"
+MODE = "compare"
+PARAMS = ["a", "f", "ph", "k"]
+TRIALS = [
+    [1, 1.5, 1.0, 1],
+    [1, 1.5, 1.0, -1],
+    [1, 1.5, 1.0, 0],
+]
+
+
+def c0(t, a, f, ph, k):
+    return k
+
+
+def c1(t, a, f, ph, k):
+    return a * math.sin(2 * math.pi * f * t - ph)
+
+
+def c2(t, a, f, ph, k):
+    return a * math.sin(2 * math.pi * f * t - 2 * ph)
+
+
+def c3(t, a, f, ph, k):
+    return a * math.sin(2 * math.pi * f * t - 3 * ph)
+
+
+def c4(t, a, f, ph, k):
+    return a * math.sin(2 * math.pi * f * t - 4 * ph)
