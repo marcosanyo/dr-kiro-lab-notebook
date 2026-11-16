@@ -37,6 +37,8 @@ and predictions behind it, and a status.
 - `partly`: some cited predictions hit and some missed.
 - `rejected`: a cited prediction missed. Name the id of the rule that replaces it in `replaced by`.
 
+A rule that was refuted is not removed from the Discovered spec table; it stays as a row with the status `rejected`.
+
 ```markdown
 ## Discovered spec
 
