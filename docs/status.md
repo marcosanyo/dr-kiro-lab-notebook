@@ -10,16 +10,16 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   （ベンチの状態の語 4 つを文字で出す）。新しい spec `build-from-spec`（4.5）を足し、publish は 4.6 になった。`angle` [0, 15]°、画像は PNG の画像シート、
   MCP は決定済み、レイアウトは今のフォルダーに合わせた。`.kiro/steering/product.md` も合わせた。
 - **次の一手:** `lab-notebook` の要件を作る（brief 4.4。残る DECIDE は、走らせた条件の区切り方と body-lab での見せ方）。その後に `build-from-spec` の要件を作る（4.5）。
-- **残っている件:** Dr. Kiro の雛形（`bench/src/bench/drkiro/files/workflow.md` と各ラボの `lab/.kiro/steering/workflow.md`）に
-  「否定された規則は表から消さず、`rejected` の行として残す」の 1 文を足す。`partly` と `rejected` のどちらに書くかは Dr. Kiro に任せたまま。
-  `impl/wind-tunnel` が main に入ってから別に直す。次のセッションから条件が変わることを、その時 `dr-kiro` の spec の Decisions に残す。
-  封印済みの body-1 と wt-004 は書き換えない。
+- **済み:** Dr. Kiro の雛形（`bench/src/bench/drkiro/files/workflow.md` と各ラボの `lab/.kiro/steering/workflow.md`）に
+  「否定された規則は表から消さず、`rejected` の行として残す」の 1 文を足した。`partly` と `rejected` のどちらに書くかは Dr. Kiro に任せたまま。
+  これから始めるセッションは、この 1 文がある条件で始まる。`dr-kiro` の spec（要件 3.7、設計 5.2、Decision 8）に記録した。
+  封印済みの body-1 と wt-004 はこの文なしで作られており、書き換えない。
 - リプレイで取り消し線が出るのが、途中のスナップショットに表がある時だけかどうかは、`lab-notebook` の spec で確かめる。
 
 ## 終わったこと
 - `lab-bench`（ベンチのコアとフロントエンド）: タスク 1〜22 完了（22 は `end` での最後のスナップショット）。
 - `dr-kiro`（Dr. Kiro のエージェント、ステアリング、テンプレート、ラボを作るコマンド）: タスク 1〜5 完了。
-- `wind-tunnel`: タスク 1〜20 完了（`model/`、`adapter/`、`lab/`、Docker での測定、チェックポイント、実セッション `wt-004`、結果の記録）。
+- `wind-tunnel`: タスク 1〜21 完了（`model/`、`adapter/`、`lab/`、Docker での測定、チェックポイント、実セッション `wt-004`、結果の記録）。
   最後のコード変更の後、本物の Docker で最終リハーサル（`wind-tunnel/rehearse_session.py`、約 4 分）が通った。
   同じリハーサルは、古いコードでは間を置いた後の呼び出しで失敗する。
 - `body-lab`: タスク 1〜5 完了。最初のセッション `sessions/body-lab/body-1` は 40 試行で `ended` として封印され、
