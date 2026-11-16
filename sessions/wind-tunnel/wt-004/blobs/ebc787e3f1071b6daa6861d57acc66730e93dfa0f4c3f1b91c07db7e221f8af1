@@ -1,0 +1,27 @@
+### H2: Longer body lowers drag
+
+WHEN aspect rises from 0.5 to 3 with corner 0, splitter 0 and angle 0, THE system SHALL show falling cd, with cd at aspect 3 between 0.6 and 1.4 and cd at aspect 0.5 above 1.5.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cd"
+range = [0.6, 1.4]
+label = "new-combination"
+[prediction.when]
+aspect = 3.0
+corner = 0.0
+splitter = 0.0
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "cd"
+range = [1.5, 2.8]
+label = "new-combination"
+[prediction.when]
+aspect = 0.5
+corner = 0.0
+splitter = 0.0
+angle = 0.0
+```

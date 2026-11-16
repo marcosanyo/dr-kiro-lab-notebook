@@ -1,0 +1,11 @@
+# H2: Longer body lowers drag
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [0.5, 0.0, 0.0, 0.0],
+    [2.0, 0.0, 0.0, 0.0],
+    [3.0, 0.0, 0.0, 0.0],
+]

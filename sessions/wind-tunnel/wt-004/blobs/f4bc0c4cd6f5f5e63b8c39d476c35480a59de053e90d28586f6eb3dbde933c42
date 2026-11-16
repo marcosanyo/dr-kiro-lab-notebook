@@ -1,0 +1,11 @@
+# H3: Rounded long body with plate or angle weakens shedding
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [3.0, 1.0, 0.0, 0.0],
+    [3.0, 1.0, 3.0, 0.0],
+    [3.0, 0.0, 0.0, 8.0],
+]

@@ -1,0 +1,31 @@
+# Design
+
+## Beliefs
+
+Data so far (angle 0 unless noted; a, c, s = aspect, corner, splitter):
+
+| exp | a | c | s | angle | cd | cl_amp | shed |
+|---|---|---|---|---|---|---|---|
+| E1 | 1 | 0 | 0 | 0 | 1.55 | 0.43 | 1 |
+| E1 | 1 | 1 | 0 | 0 | 1.41 | 0.56 | 1 |
+| E1 | 1 | 0 | 2 | 0 | 1.39 | 0.63 | 1 |
+| E2 | 0.5 | 0 | 0 | 0 | 2.17 | 0.93 | 1 |
+| E2 | 2 | 0 | 0 | 0 | 1.34 | 0.21 | 1 |
+| E2 | 3 | 0 | 0 | 0 | 1.29 | 0.22 | 1 |
+| E3 | 3 | 1 | 0 | 0 | 1.11 | 0.15 | 1 |
+| E3 | 3 | 1 | 3 | 0 | 1.02 | 0 | 0 |
+| E3 | 3 | 0 | 0 | 8 | 2.01 | 0.98 | 1 |
+| E4 | 3 | 1 | 1 | 0 | not settled | | |
+| E4 | 3 | 1 | 2 | 0 | 1.03 | 0 | 0 |
+| E4 | 2 | 1 | 3 | 0 | 0.99 | 0 | 0 |
+
+- cd falls as aspect rises (2.17, 1.55, 1.34, 1.29), flattening above 2. Shedding amplitude falls with aspect up to 2.
+- Rounding corners lowers cd (1.55 to 1.41 at aspect 1; 1.29 to 1.11 at aspect 3) and cl_amp at aspect 3.
+- A splitter suppresses shedding only when long enough on a long rounded body (2 works, 1 is near the boundary); on a short square body, 2 did not stop it.
+- Angle 8 raises cd, cl_mean and cl_amp strongly. Best point is probably angle 0.
+- Steady cd is about 1.0 for the settings found; lowest so far is aspect 2, corner 1, splitter 3 (0.993).
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|

@@ -1,0 +1,27 @@
+### H1: Square body baseline sheds with high drag
+
+WHEN aspect is 1, corner is 0, splitter is 0 and angle is 0, THE system SHALL show vortex shedding with cd between 1.4 and 2.8.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cd"
+range = [1.4, 2.8]
+label = "inside"
+[prediction.when]
+aspect = 1.0
+corner = 0.0
+splitter = 0.0
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "shedding"
+range = [0.5, 1.5]
+label = "inside"
+[prediction.when]
+aspect = 1.0
+corner = 0.0
+splitter = 0.0
+angle = 0.0
+```

@@ -32,6 +32,7 @@ from bench.adapter import (
     check_declaration,
     check_failure,
     check_result,
+    input_refusal,
 )
 from bench.conditions import (
     VERDICTS,
@@ -539,8 +540,25 @@ class Session:
         needed = len(experiment.trials)
         if needed > self.state.remaining:
             raise _refuse(f"this experiment needs {needed} trials and {self.state.remaining} remain")
+        self._check_inputs(path, experiment)
         specs = self._read_specs()
         return self._run_trials(path, text, experiment, specs)
+
+    def _check_inputs(self, path: str, experiment: Experiment) -> None:
+        """Gate 9a (Requirement 19): the adapter may refuse the computed inputs of any trial, before any
+        trial runs. The first refusing trial, in order, refuses the whole experiment."""
+        for number, trial in enumerate(experiment.trials, start=1):
+            try:
+                text = input_refusal(self.config.adapter, trial.inputs)
+            except ResultError as error:
+                raise _Failure(ADAPTER_BROKE_CONTRACT, f"input check of trial {number}: {error}") from error
+            except Exception:  # noqa: BLE001 - an adapter error is a bench failure, with the full traceback logged
+                raise _Failure(
+                    ADAPTER_RAISED, f"input check of trial {number}: {traceback.format_exc()}"
+                ) from None
+            if text is not None:
+                self.store.builder_log(f"input check refused trial {number} of {path!r}: {text}")
+                raise _refuse(f"trial {number} of this experiment cannot run: {text}")
 
     def _run_trials(
         self, path: str, text: str, experiment: Experiment, specs: tuple[str, str, str]
@@ -762,7 +780,7 @@ class Session:
             parent.mkdir(exist_ok=True)
             temporary = parent / f".{self.config.session_id}.sealing"
             if temporary.exists():
-                return self._seal_failed(f"{temporary} is left from an earlier attempt; remove it by hand")
+                return self._seal_failed(f"{temporary} is left from an earlier attempt; remove it manually")
             temporary.mkdir()
             shutil.copy2(self.store.folder / LOG_NAME, temporary / LOG_NAME)
             shutil.copytree(self.store.folder / BLOB_DIR, temporary / BLOB_DIR)

@@ -70,6 +70,7 @@ Publishing refuses if the scan fails.
   3. **Bench failure**: the session stops, with the reason.
 - This applies to the builder (Kiro) too: when a tool fails, a command errors, or a requirement is unclear, stop
   and ask the user. Do not work around it.
+- **A refused command is a stop.** When a tool call or command is refused, blocked or denied (by the user, a hook, a permission setting or a sandbox), do not do the same thing by another route: no other command, interpreter, script or tool that has the same effect (for example `rm -rf` refused, then the same deletion from `python`). Stop, say which command was refused and what it was meant to do, and ask the user. This holds for every file, folder, process and network operation, and for sub-agents. A refusal is also reported when the task is finished: the report lists every refused command, even if the user later allowed it.
 
 ## 3. Reproducible
 

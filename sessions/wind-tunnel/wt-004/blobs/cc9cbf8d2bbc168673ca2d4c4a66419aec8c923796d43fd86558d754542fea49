@@ -1,0 +1,11 @@
+# H5: Plate keeps shorter bodies steady, and small angle adds lift and drag
+import math
+
+PHASE = "test"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [1.5, 1.0, 3.0, 0.0],
+    [1.0, 1.0, 3.0, 0.0],
+    [2.0, 1.0, 3.0, 3.0],
+]

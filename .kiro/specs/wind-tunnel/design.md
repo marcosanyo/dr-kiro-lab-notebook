@@ -1,6 +1,6 @@
 # Design: wind-tunnel
 
-Covers Requirements 1-18. Settings come from `wind-tunnel/model/settings.toml`, `wind-tunnel/model/image-lock.toml` and the case templates,
+Covers Requirements 1-18. Settings come from `wind-tunnel/model/constants.toml`, `wind-tunnel/model/image-lock.toml` and the case templates,
 read at load time; no value of the solver setup is written twice. Values that do not exist yet are visible placeholders in
 angle brackets, such as `<not yet recorded>`, and each has a task that fills it (`rules.md` 4, Honest). A value
 that is a starting choice and not a result (a mesh size, the first time step, the colour limit) is written as a
@@ -30,7 +30,7 @@ Highlights of the choices (details below):
 | Topic | Choice | Why |
 |---|---|---|
 | Strouhal estimator | Least-squares sinusoid fit on a fine frequency grid, refined by golden-section search; no FFT | Resolves far below the bin width 1/70 (about 8% of 0.17), works on the uneven times of an adaptive time step (5.2) |
-| Output of the solver | Function objects write `force.dat` and sampled vorticity during the run; no field dumps, no reconstruction | Short run, small disk use, the forces and the picture come from the same run |
+| Output of the solver | Function objects write `force.dat` and sampled vorticity during the run; no field dumps that are read (the solver keeps only its newest time folder), no reconstruction | Short run, small disk use, the forces and the picture come from the same run |
 | Picture | One PNG contact sheet: 6 vorticity frames in 2 rows of 3, a fixed colour ramp, numpy and `bench.pictures.encode_png`, no Pillow | Same colour scale in every trial by construction (9.1); Dr. Kiro's file tool delivers one still image (the GIF check failed); no plotting library, no text, no metadata; the form of `body-lab`'s picture |
 | Docker | `docker run` of the pinned image with a bind-mounted case folder; one script (`Allrun`) from `model/` | One command to time out and kill; the in-image commands are solver setup and live in `model/` (6.9) |
 | Environment check | At adapter construction; the scan uses a second factory that only builds the declaration | `bench-scan` must work without Docker (Kiro Web, publishing) |
@@ -45,15 +45,16 @@ wind-tunnel/
   circle-check.json               written by the circle check (15.5)
   form-knowledge-review.md        the reviewed list (12.3)
   count_lines.py                  writes the code size into numbers.md (16.2)
-  extreme-runs.json               outcome and time of the 32 end-corner and near-end runs (17.6)
+  extreme-runs.json               outcome and time of the 32 end-corner and near-end cases (17.6)
   model/                          uv project "wind-tunnel-model"; never visible from lab/
     pyproject.toml                depends on gmsh and numpy
-    settings.toml                 every number of the solver setup (6.8, 6.9)
+    constants.toml                 every number of the solver setup (6.8, 6.9)
     image-lock.toml               image digest and image id, written by the digest task (7.1)
     case/                         OpenFOAM templates (*.in, placeholders @NAME@) and Allrun
     src/wind_tunnel_model/
-      settings.py                 load and validate settings.toml; the Reynolds-number override
+      settings.py                 load and validate constants.toml; the Reynolds-number override
       geometry.py                 outline of the body from the four knobs (pure)
+      input_rule.py               the corner rule: which corner values are accepted for an aspect (pure, 6.11)
       mesh.py                     Gmsh recipe: outline -> mesh file
       casegen.py                  templates -> case folder (pure text)
       solver_output.py            parse force.dat and sampled-vorticity files
@@ -88,16 +89,15 @@ flowchart TD
     B --> C[mesh: Mesher]
     C -->|MeshError| F
     C --> D[case folder: casegen.py]
-    D --> E[Runner: Allrun in the pinned image, 140 s limit]
+    D --> E[Runner: Allrun in the pinned image, inside the 140 s limit]
     E -->|SolverFailure / timeout| F
     E --> G[force.dat + sampled vorticity]
     G --> H[estimators: five measurements]
     H --> I[settle criterion]
-    I -->|not settled| F
-    I --> J[picture: PNG sheet]
-    J --> K[TrialResult]
-    F --> L[keep case folder, detail to builder log only]
-    K --> M[remove case folder]
+    I -->|settled: five values; not settled: five not_settled| J[picture: PNG sheet, same code for both]
+    J --> K[TrialResult, if the clock is still inside 140 s; else timeout]
+    F --> L[prune case folder to log, settings, mesh, force file; detail to builder log only]
+    K --> M[case folder renamed into trash/; deleted at the start of the next trial]
 ```
 
 ## Components and Interfaces
@@ -112,9 +112,13 @@ flowchart TD
   Requirement 3.2 (read from the spec file when it exists, so the two cannot drift; skipped with a visible reason
   where `.kiro/` is absent).
 - Measurements: `cd`, `cl_mean`, `cl_amp`, `strouhal`, `shedding`, unit `1`, kind `scalar`; `strouhal` has the
-  not-measured outcome `not_shedding`.
+  not-measured outcomes `not_shedding` and `not_settled`; the other four have `not_settled` (4.5, Decision 25).
+  `NOT_SETTLED = "not_settled"` is a constant of `declaration.py`, used by the adapter too.
 - `picture = "image/png"`, `budget = 24`, `fake = False`, `goal` as in 11.2, `measured_by` as in 4.2. It says
-  "the settled part of the trial" and nothing about times (4.3). In the wording, "force" is used in the singular
+  "the settled part of the trial" and nothing about times (4.3). It ends with one sentence (4.5): when the flow
+  has not settled within the trial, none of the five is measured, each is the not-measured outcome `not_settled`,
+  and the picture is still returned (nothing about what it shows, Requirement 1.3); this says nothing about whether a longer trial would settle. It holds no
+  number of the settle rule. In the wording, "force" is used in the singular
   where the sentence allows, so that no word of the told set equals a term the solver files will give (13.8);
   the test of 13.8 decides, and what it cannot avoid goes the way of Requirements 13.4 and 13.9.
 - **The knob texts are carried in the `description` field** that `lab-bench` Requirement 18 adds to `NumberKnob`
@@ -135,6 +139,11 @@ flowchart TD
     reviewed list (Requirement 12) records this sentence by sentence.
   - A test compares the four texts, with the thickness filled in, with Requirement 3.2 read from the spec file
     (skipped with a visible reason where `.kiro/` is absent), so that spec and code cannot drift.
+- Input check: `WindAdapter.check_inputs(inputs) -> str | None`, the optional hook of `lab-bench` (Requirement 19). It
+  calls `corner_refusal` of `input_rule.py` (section 2) with `aspect` and `corner` and looks at no other knob. It is
+  a pure function, so the same inputs always give the same answer. `run_trial` calls the same function in its
+  validation and raises `InputRuleError` for a refused corner, so a refused value can never run when the hook was
+  not called (no fallback).
 - Two factories: `WindAdapter()` (checks the environment, section 6) and `scan_adapter()` (the same declaration, no
   `run_trial`, no check). `scan_sources.toml` names `scan_adapter` as its `adapter`. A test asserts that both give
   equal declarations. The scan therefore needs no Docker (13.5, 14.4).
@@ -153,7 +162,7 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   is above zero and omitted when it is exactly zero (`corner = 1` and the shorter side; at `a = 1` all four are
   omitted and the outline is four quarter arcs, a circle). Floating-point products of `corner` with powers of two
   make the exact-zero case exact.
-- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`settings.toml`) on the centre line, told in the
+- Plate (when `splitter` > 0): a rectangle of thickness `t` = 0.08 (`constants.toml`) on the centre line, told in the
   `splitter` text, from
   `x = a/2 - t` (inside the body, so there is no gap whatever the rounding) to `x = a/2 + s`. The outline is the
   union: the rear straight piece (or arc) is cut where the plate's top and bottom edges cross it, found in closed
@@ -168,28 +177,38 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
   `angle` text (Requirement 3.2) and Property 3 pins it.
   Why this sense: it is the prototype's, confirmed by the user (Decision 19 of the requirements).
 - Output: an ordered, closed list of primitives (`Line(p, q)`, `Arc(p, centre, q)`), each with exact endpoints.
-- `GeometryError` (with the knob values and the reason, builder side only) when a positive piece is shorter than
-  `min_edge`, or when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10).
-  `min_edge` is 0.0 in `settings.toml` until the user decides otherwise: the near-end cases of Requirement 17.2
-  must reach the mesher and the solver so that they can be measured, and a refusal in the geometry would hide the
-  result. With 0.0, only a negative or undefined piece is a `GeometryError`. Decision 12.
+- `GeometryError` (with the knob values and the reason, builder side only) when a piece has negative length, or
+  when `x_c` is undefined. Pieces of length exactly zero are not errors (Requirement 6.10). The geometry refuses no
+  piece for being short; Decision 12 (a geometry free of this rule) is kept, and the rule moved to `input_rule.py`
+  (Decision 23).
+- `input_rule.py` (Requirement 6.11): `corner_band(aspect, settings) -> (lo, hi)`, `corner_accepted`, and
+  `corner_refusal(aspect, corner, settings) -> str | None`. With `h = min(1, aspect)`: the arc of one corner is
+  `(pi / 4) h c` and the shortest straight side of the body is `h (1 - c)`. `lo = ceil(1000 * 4 min_arc / (pi h)) /
+  1000` and `hi = floor(1000 (1 - min_line / h)) / 1000` (a tolerance of 1e-9 on the thousandths absorbs float
+  error of an exact bound, as 1 - 0.0025 / 0.5 = 0.995). A corner of exactly 0 or 1 is accepted; any other is
+  accepted when `lo <= corner <= hi`, so the band that the message tells is the band that is tested and is never
+  wider than the rule. The message is `corner <c> is not accepted: corner must be 0, 1, or between <lo> and <hi>
+  when aspect is <a>`. The plate and every other knob are not looked at.
 
 ### 3. Mesh (Req 6.8, 7.2) in `wind_tunnel_model/mesh.py`
 
 - Gmsh Python API, built-in kernel: points, lines and `addCircleArc` from the outline; the outer rectangle with the
   domain of 6.8 (inlet 6 heights ahead of the body's centre, outlet 18 behind, 7 above and below, measured from
-  the centre; the same values as `settings.toml [domain]`); one plane surface with the body as a hole.
+  the centre; the same values as `constants.toml [domain]`); one plane surface with the body as a hole.
 - Size field: a distance-and-threshold field from the body curves (`size_body` near, growing to `size_far`) and a
   box field over the near wake (`size_wake`). Sizes are `<chosen in the mesh task, before the circle check is
   run>`; changing them afterwards is a change that may alter the circle check and needs the user (6.8).
-- Extruded one layer in z by `depth` (`settings.toml`, the unit of a force per unit depth, 1) so that OpenFOAM sees
+- Extruded one layer in z by `depth` (`constants.toml`, the unit of a force per unit depth, 1) so that OpenFOAM sees
   a 2D case; physical groups give the patches `inlet`, `outlet`, `lateral` (top and bottom), `obstacle` and
-  `frontAndBack`. The names are in `settings.toml [patches]` and used by both the recipe and the templates. They are
+  `frontAndBack`. The names are in `constants.toml [patches]` and used by both the recipe and the templates. They are
   chosen so that none is a word of the told set (13.8).
 - Written as a Gmsh `.msh` file in the case folder. Mesh generation uses no random seed; Gmsh's algorithm choice and
-  the thread count (1) are set explicitly in `settings.toml` (10.2).
-- Interface `Mesher.build(outline, settings, dest) -> None`, raising `MeshError(reason)`. `GmshMesher` is the real
-  one; `FakeMesher` writes a fixed small file for tests.
+  the thread count (1) are set explicitly in `constants.toml` (10.2).
+- Interface `Mesher.build(outline, settings, dest, *, timeout_s=None) -> None`, raising `MeshError(reason)` (and
+  `MeshTimeout`). `GmshMesher` is the real one: it runs the recipe in a short-lived child process
+  (`mesh_worker.py`), never in the bench server, because Gmsh crashes the process when it is initialised in a
+  new thread after another thread has initialised it and exited, and the front end runs adapter calls in
+  changing worker threads (Decision 30). `FakeMesher` writes a fixed small file for tests.
 
 ### 4. Case and solver (Req 6.6, 6.8, 6.9, 10.1) in `model/case/` and `casegen.py`
 
@@ -198,18 +217,18 @@ A pure function `outline(aspect, corner, splitter, angle, settings) -> Outline`.
 placeholder value, or a placeholder left over after substitution, is an error. Two calls with equal inputs write
 identical bytes (10.2).
 
-Contents of the templates (names are OpenFOAM's; values come from `settings.toml`):
+Contents of the templates (names are OpenFOAM's; values come from `constants.toml`):
 
 | File | Holds |
 |---|---|
 | `constant/transportProperties.in` | `nu = speed * height / reynolds` |
-| `constant/momentumTransport.in` | laminar |
+| `constant/turbulenceProperties.in` | laminar |
 | `system/controlDict.in` | `pimpleFoam`, end time 150, adaptive step with `maxCo` 0.8 and `maxDeltaT` (at most 0.05, section 5), no field output, function objects below |
 | `system/fvSchemes.in`, `fvSolution.in` | second-order time and convection schemes (`backward`, `linearUpwind`), pressure-velocity coupling with one outer corrector; choices to be confirmed by the circle check |
 | `system/decomposeParDict.in` | 3 subdomains, method `simple`, counts (3 1 1), fixed text (10.1) |
 | `system/changeDictionaryDict.in` | sets `frontAndBack` to `empty` after `gmshToFoam` |
 | `0/U.in`, `0/p.in` | inlet speed `(speed 0 0)`; `lateral` with `slip`; `obstacle` with `noSlip`; outlet pressure 0 |
-| `system/functions.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below) |
+| `system/monitors.in` | the force function object on `obstacle` (density 1, writes every time step), and the vorticity sampling (below); the vorticity field is computed for the sampler and never written to disk (Decision 22) |
 | `Allrun` | `set -e`; `gmshToFoam`, `changeDictionary`, `decomposePar`, `mpirun -np 3 pimpleFoam -parallel` |
 
 - The top and bottom boundaries are not specified by the brief ("walls 7 above and below"). This design takes
@@ -225,12 +244,15 @@ Contents of the templates (names are OpenFOAM's; values come from `settings.toml
 ### 5. Estimators and settle criterion (Req 4, 5, 8.3) in `model/estimators.py`, `settle.py`
 
 Inputs are the force history `(t, Fx, Fy)` of the settled part (`t >= average_from`), with uneven times. Constants:
-`ESTIMATOR_MAX_DT = 0.05`, the largest sample interval the 1% accuracy is shown for; `settings.toml` is checked to
+`ESTIMATOR_MAX_DT = 0.05`, the largest sample interval the 1% accuracy is shown for; `constants.toml` is checked to
 have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
 
-- `cd = mean(Fx) / q`, `cl = Fy / q`, `q = 0.5 * rho * speed^2 * height * depth` with the values 1 of `settings.toml`
+- `cd = mean(Fx) / q`, `cl = Fy / q`, `q = 0.5 * rho * speed^2 * height * depth` with the values 1 of `constants.toml`
   (4.2, 4.6). Means are time-weighted (trapezoid rule over the settled part divided by its length).
 - `cl_mean` is the time-weighted mean of `cl`; `cl_amp = (max(cl) - min(cl)) / 2` over the samples.
+  The mean is over the settled part, not over whole periods. A window rarely holds a whole number of periods, so
+  the leftover partial period shifts the mean by at most `amplitude / (pi * f * T)` (`f` the signal frequency, `T`
+  the length of the settled part). This is part of the bound of Requirement 5.4 (Decision 28 of the requirements).
 - `shedding = 1.0` when `cl_amp > 0.01`, else `0.0` (4.2).
 - `strouhal` (only when `shedding` is 1): remove nothing; for each frequency `f` on a grid from `5 / T` to `1.0`
   with step `1 / (10 T)` (`T` the length of the settled part), fit `a cos(2 pi f t) + b sin(2 pi f t) + c` by linear
@@ -242,12 +264,16 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   above 0.01")` for `strouhal` and does not run the estimator (4.4).
 - The accuracy range of Requirement 5.3: St in [0.08, 0.5]. The low end is the five-period rule (0.0714) with margin;
   the high end is at least twice any value expected for a bluff body, and at 0.5 and `ESTIMATOR_MAX_DT` there are 40
-  samples per period. The amplitude in 5.3/5.4 is in [0.011, 3] and the mean in [-3, 3].
+  samples per period. The amplitude in 5.3/5.4 is in [0.011, 3] and the mean in [-3, 3]. The bound of `cl_mean` in 5.4 is 1% of the mean
+  plus `amplitude / (pi * f * T)`.
 - Settle (8.3), `settled(t, cd, cl, shedding, st) -> SettleResult(ok, reason)`: split the settled part at its
   midpoint in time; `|mean cd(first) - mean cd(second)| <= 0.02 * |mean cd(whole)|`;
   `|cl_amp(first) - cl_amp(second)| <= max(0.1 * cl_amp(whole), 0.002)`; when `shedding` is 1,
   `st * speed / height * T >= 5`. Comparisons are written without division. The reason names the criterion that
-  failed (builder side).
+  failed; the adapter does not use it, because a result has no place for it (Decision 25).
+- When the criterion fails, `run_trial` returns a `TrialResult` whose five values are all
+  `NotMeasured("not_settled", "the flow had not settled within the trial")` (constant `NOT_SETTLED_REASON` in
+  `adapter.py`, fixed text, no number). `strouhal` is `not_settled`, not `not_shedding`, even when `shedding` is 0.
 
 ### 6. Environment and run (Req 7, 8.7, 10)
 
@@ -256,26 +282,41 @@ have `max_delta_t <= ESTIMATOR_MAX_DT` when it is loaded.
   digest, and `docker info` for the number of CPUs of the Docker machine (at least the 3 processes of 10.1, else
   `mpirun` cannot start). Each failure raises `EnvironmentFailure` naming which of: Docker not reachable, image
   missing, digest different, too few CPUs; what was expected; what was found. No pull, no other tag (7.4).
+- **The case mount probe** (7.7, Decision 26). After the CPU check, `_probe_case_mount` runs three times: it makes
+  `<case base>/mount-probe-<12 hex digits>` (a new random name each time), renders a case into it with
+  `render_case`, runs `DockerRunner.command(folder)[:-1] + ["test", "-x", "/case/Allrun"]` through the same
+  `CommandFunction`, and moves the folder to `trash/`; `trash/` is emptied at the end. Exit 0 is the only pass. Else
+  `EnvironmentFailure("case mount probe", ...)` with the folder and the last three lines of the output, and the
+  folder stays. `check` has a `case_base` parameter (default: the folder of the record), which `WindAdapter`
+  passes. The error is raised at construction, before the bench server starts, so Dr. Kiro never sees it.
 - It then appends one JSON line to `bench-run/wind-tunnel/environment.jsonl` (git-ignored, builder side): the image
   name, the digest, the image id, the Gmsh version, the numpy version, the platform. No time, so that
   the file is a function of the environment (7.5). The sealed record does not carry it and `measured_by` does not
   mention it.
-- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `settings.toml [image]` holds `name` and `tag`.
+- The image: `opencfd/openfoam-default:2412`, run as `name@digest`. `constants.toml [image]` holds `name` and `tag`.
   The digest and the image id are in `model/image-lock.toml`, which does not exist until the digest task has run;
   `WindAdapter` (not `scan_adapter`) fails with "image lock missing" while it is absent, so no placeholder is ever
   loaded as a value and the Docker-free parts need no digest. A task
   on the user's Mac writes both with `docker image inspect` (the digest is that of the image index; the image id is
   the one of the arm64 build, so the pair pins the platform, 7.1). No digest is invented.
 - `Runner` protocol: `run(case_dir, deadline) -> RunOutput(force_file, sample_files)`, raising `SolverFailure(kind,
-  reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> -v <case>:/case -w /case <name@digest>
-  ./Allrun` through `subprocess.run(..., timeout=remaining)`. `remaining = 140 s - (time already used by outline
-  and mesh)`. On timeout it runs `docker kill <case-name>` and raises `SolverFailure("timeout")`. A non-zero exit,
+  reason, detail)`. `DockerRunner` runs `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case <name@digest>
+  /case/Allrun` through `subprocess.run(..., timeout=remaining)`. `remaining = 140 s - (time already used by outline
+  and mesh)`. The limit covers everything up to and including the picture: after the solver step the adapter checks
+  the clock again (parse, estimators, settle, vorticity parse, picture), and a run that is at or past the limit then
+  is a `timeout` failure whatever that part found (Decision 21). On timeout it runs `docker kill <case-name>` and raises `SolverFailure("timeout")`. A non-zero exit,
   a missing output file or a non-finite value raises `SolverFailure` with the solver's last log lines in `detail`.
   The exact in-image invocation (user id, whether the image's entry point already prepares the environment) is
   confirmed in the smoke-run task (S5).
 - Case folder: `bench-run/wind-tunnel/<seed as 16 hex digits>/`, made by the adapter; `bench-run/` is git-ignored.
   The folder name uses the trial seed only as a label (Decision 3); an existing folder is a failure, not
-  overwritten. Removed after success, kept after failure, named in `detail` (10.5, 10.6).
+  overwritten. After success it is renamed at once into `bench-run/wind-tunnel/trash/` (a rename inside one file
+  system, independent of the folder size) and deleted by `empty_trash` at the start of the next `run_trial`, before the
+  clock starts (Decision 21). A trash that cannot be deleted raises and stops the session; a name already in the
+  trash is an error. After a failure it is pruned to the log (`solver.log`), the settings (the text
+  files of `system/`, `constant/` and `0/`, without `polyMesh`), the mesh file (`case.msh`) and the force file
+  (`postProcessing/forces/**/force.dat`), and named in `detail` (10.5, 10.6, Decision 20). If pruning fails, the
+  exception is not caught and the session stops.
 - `run_trial(inputs, seed)`: check that `inputs` has exactly the four names and finite numbers inside the ranges
   (otherwise `ValueError`, which the bench turns into a bench failure; nothing is clipped, 3.4); then the flow of
   the diagram above. Unexpected exceptions are not caught.
@@ -294,8 +335,7 @@ library: the sheet is built from arrays.
   for k = 0..frames-1, so the last frame is at the end of the run and the times increase. With the starting values
   this is 145, 146, ..., 150. The settings loader refuses `t_0 < average_from` (9.3) and `frames != rows * columns`.
 - Colour: `index = round(254 * (clip(omega, -L, L) + L) / (2 L))`, an integer in 0..254, with `L` =
-  `vorticity_limit` from `settings.toml` (a starting value, chosen from the vorticity range of the 32 gate runs and
-  then fixed, 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
+  `vorticity_limit` from `constants.toml` (fixed at 5.0 by task 14.4 from the 32 gate runs, Decision 24; 9.5). The colour of an index comes from one fixed table of 255 RGB entries, a diverging ramp between
   three anchor colours (a blue and a red that are not black, and white at the middle) built by linear interpolation
   in `picture.py`. A masked point gets one fixed grey that is not in the table. The table has one source and the
   same table is used in every trial (9.1).
@@ -308,7 +348,7 @@ library: the sheet is built from arrays.
 - Encoding: the array is turned into rows of RGB tuples and encoded by `bench.pictures.encode_png`, which writes no
   ancillary chunk; the same input gives the same bytes. No text is drawn. `bench.pictures.check_picture` is run on the
   bytes in the tests.
-- Settings (9.4, `settings.toml [picture]`, **proposed, the user confirms at design approval**, Decision 16):
+- Settings (9.4, `constants.toml [picture]`, **proposed, the user confirms at design approval**, Decision 16):
   `rows = 2`, `columns = 3`, `frames = 6`, `spacing = 1.0`, `cell_width = 400`, `cell_height = 200`, `gap = 4`;
   window x in [-2.5, 9.5], y in [-3, 3] (2 to 1, the shape of a cell); `vorticity_limit`.
   Why six frames at 1.0: one shedding period at a Strouhal number of about 0.17 is about 6 time units, so the
@@ -327,11 +367,11 @@ library: the sheet is built from arrays.
 
 ### 8. Failures (Req 8)
 
-`failures.py` holds the kinds and the only public texts:
+`failures.py` holds the kinds and the only public texts. There are two kinds. A run that does not settle is not
+a failure: it is a result (4.5, Decision 25), so it has no kind here.
 
 | Kind | Cause (builder side) | `public_reason` |
 |---|---|---|
-| `not_settled` | settle criterion failed | "the trial did not settle" |
 | `incomplete` | diverged, non-finite, abnormal exit, missing or unreadable output, geometry or mesh error | "the trial could not be completed" |
 | `timeout` | the 140 s limit | "the trial took too long" |
 
@@ -347,9 +387,12 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
 |---|---|---|
 | `openfoam-dict` | each `case/**/*.in` | every entry keyword, every sub-dictionary name, every bare word that is a value (scheme, solver, boundary-type and function-object names); numbers, the switch words `yes no on off true false` and the `FoamFile` header block are syntax and are left out |
 | `shell-words` | `case/Allrun` | the command names |
-| `toml-names` | `settings.toml` | keys, and string values that look like names (patch names, image name and tag) |
-| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | names of functions, classes and module-level constants; string literals that look like names |
+| `toml-names` | `constants.toml` | keys, and string values that look like names (patch names, image name and tag) |
+| `python-names` | `geometry.py`, `mesh.py`, `casegen.py`, `solver_output.py` | names of functions, classes and module-level constants; no string literals |
 
+- Every extractor drops, by two fixed rules and no other filter (Decisions item 29): the Python reserved words
+  (`keyword.kwlist`, `keyword.softkwlist`), the Python built-in names (`dir(builtins)`), and names of one character.
+  The lists are the standard library's.
 - A file that cannot be read or parsed is a `ScanError` naming file and problem (13.2). Template placeholders
   `@NAME@` are read as the bare word `NAME`.
 - Source file names and stems go into the terms by the existing code (11.1 of `lab-bench`).
@@ -381,13 +424,13 @@ Registered in `EXTRACTORS` of `terms.py`; standard library only.
 
 ## Data Models
 
-`settings.toml` (model; every row has one reader, `settings.py`, which fails on a missing, extra or placeholder
+`constants.toml` (model; every row has one reader, `settings.py`, which fails on a missing, extra or placeholder
 key):
 
 | Section | Keys | Source of the value |
 |---|---|---|
 | `[flow]` | `reynolds`, `speed`, `height`, `depth`, `density` | 150 (brief), 1, 1, 1, 1 |
-| `[body]` | `thickness`, `min_edge` | 0.08 (decisions), 0.0 (no refusal in the geometry until the user decides, Decision 12) |
+| `[body]` | `thickness`, `min_arc`, `min_line` | 0.08 (decisions), 0.0314 and 0.0025 (the corner rule, Decision 23; data in `spikes/timing/extreme-v2-summary.md`, margin 115 s) |
 | `[domain]` | `ahead`, `behind`, `above_below` | 6, 18, 7 (brief) |
 | `[time]` | `end`, `average_from`, `max_co`, `max_delta_t`, `initial_delta_t` | 150, 80, 0.8 (brief), 0.05 (the estimator limit), a starting value confirmed by the smoke-run task |
 | `[mesh]` | `size_body`, `size_far`, `size_wake`, `wake_length`, `algorithm`, `threads` | starting values chosen in the mesh task from cell counts and confirmed by the smoke run; algorithm and threads set |
@@ -400,12 +443,13 @@ Other records:
 
 - `Outline`: ordered closed tuple of `Line` and `Arc` with point pairs; `GeometryError(reason, knobs)`.
 - `ForceSeries`: `t`, `fx`, `fy` as `numpy` arrays of equal length, only the settled part, finite.
-- `SolverFailure(kind, reason, detail)`; `FailureKind`: `not_settled`, `incomplete`, `timeout`.
+- `SolverFailure(kind, reason, detail)`; `FailureKind`: `incomplete`, `timeout` (a run that does not settle is a result, not a failure, Decision 25).
 - `SettleResult(ok, reason)`.
 - `environment.jsonl` line: `{image, digest, image_id, gmsh, numpy, platform}`.
 - `circle-check.json`: section 10.
-- Force file: columns `time`, `(total_x total_y total_z)`, `(pressure ...)`, `(viscous ...)`; lines starting `#`
-  are comments. Only the total is read.
+- Force file: ten plain numbers per line without parentheses: `time`, `total_x total_y total_z`, `pressure_x pressure_y
+  pressure_z`, `viscous_x viscous_y viscous_z` (confirmed in task 14.1); lines starting `#` are comments. Only
+  the total is read.
 
 ## Correctness Properties
 
@@ -416,9 +460,9 @@ Docker, OpenFOAM or a display. Property 1-3 and 13 need no Gmsh either.
 
 ### Property 1: Outline is closed and valid for every knob value
 
-For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 30] (ends included), the
-outline is either a closed, continuous loop in which no straight piece has length zero, or a `GeometryError`
-that names the piece shorter than `min_edge`.
+For all `aspect` in [0.5, 3], `corner` in [0, 1], `splitter` in [0, 3], `angle` in [0, 15] (ends included), the
+outline is a closed, continuous loop in which no straight piece has length zero. The geometry refuses no short
+piece; the corner rule is Property 17.
 
 **Validates: Requirements 3.3, 6.10**
 
@@ -452,7 +496,8 @@ of St.
 ### Property 5: Amplitude and mean accuracy
 
 For all such signals, and for amplitude 0, `cl_amp` is within 1% of the amplitude (absolute 1e-6 at 0) and
-`cl_mean` is within 1% of the mean (absolute 1e-6 at 0).
+`cl_mean` is within 1% of the mean plus `amplitude / (pi * f * T)` (absolute 1e-6 when amplitude and mean are 0),
+with `f` the signal frequency and `T` the length of the settled part.
 
 **Validates: Requirements 5.4**
 
@@ -482,8 +527,8 @@ periods, it says not settled; scaling `cd` by a positive constant does not chang
 
 ### Property 9: Failure mapping
 
-For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout, not settled)
-and all knob values, the `TrialFailure` has one of the three fixed public reasons, the reason is the same for the
+For all failure causes (solver failure kinds, geometry error, mesh error, non-finite value, timeout) and all knob
+values, the `TrialFailure` has one of the two fixed public reasons, the reason is the same for the
 same kind whatever the inputs, it has no term of a fixed list of solver words, and the `detail` holds the cause.
 
 **Validates: Requirements 8.1, 8.4, 8.5, 8.8**
@@ -491,9 +536,11 @@ same kind whatever the inputs, it has no term of a fixed list of solver words, a
 ### Property 10: Result contract and seed independence
 
 For all in-range knob values and two seeds, `run_trial` with the fake mesher and fake runner returns a result that
-passes `bench.adapter.check_result` for the declaration, and the two results are equal.
+passes `bench.adapter.check_result` for the declaration, and the two results are equal. This holds for a run that
+settles and for a run that does not: in the second case all five values are `not_settled` and the picture is a
+PNG sheet.
 
-**Validates: Requirements 3.3, 3.4, 10.2, 17.1**
+**Validates: Requirements 3.3, 3.4, 4.5, 8.3, 10.2, 17.1**
 
 ### Property 11: Case generation is deterministic and complete
 
@@ -546,6 +593,16 @@ differ by `spacing`, and the first is not before `average_from`; settings whose 
 
 **Validates: Requirements 9.3, 9.4**
 
+### Property 17: Corner rule
+For all `aspect` in [0.5, 3] and `corner` in [0, 1] (ends included): the answer of `corner_refusal` is the same on
+two calls; a `corner` of 0 or 1 is accepted; an accepted `corner` gives a corner arc of at least `min_arc` and a
+straight side of at least `min_line` (up to a relative 1e-9); a refused `corner` lies outside the band told in its
+message, and either breaks the rule or lies within one thousandth of the band's end; the message holds both ends of
+the band. Examples pin the measured data: aspect 1.75 and corner 0.04 (arc 0.031416) and aspect 0.5 and corner 0.995
+(straight side 0.0025) are accepted; aspect 0.5 and corner 0.07 (arc 0.02749) and aspect 1.75 and corner 0.998
+(straight side 0.002) are refused. `check_inputs` of the adapter gives the same answers whatever `splitter` and
+`angle` are, and a refused `corner` that reaches `run_trial` raises.
+**Validates: Requirements 3.3, 6.11**
 ## Error Handling
 
 | Situation | Outcome | Where it is seen |
@@ -554,12 +611,13 @@ differ by `spacing`, and the first is not before `average_from`; settings whose 
 | Geometry or mesh cannot be made | `TrialFailure` `incomplete` | Dr. Kiro sees the fixed reason; builder sees the knob values |
 | Solver exits abnormally, non-finite value, missing output | `TrialFailure` `incomplete` | same |
 | 140 s exceeded | container killed, `TrialFailure` `timeout` | same |
-| Settle criterion fails | `TrialFailure` `not_settled` | same |
+| Settle criterion fails | not a failure: `TrialResult` with `not_settled` for all five measurements and the picture | Dr. Kiro sees the result; a prediction on it is `not-checkable` |
 | Result breaks the contract | bench failure by `check_result` | Builder |
-| Placeholder left in `settings.toml`, missing key | error at load | Builder |
+| Placeholder left in `constants.toml`, missing key | error at load | Builder |
 | Programming error in the adapter | exception, a bench failure with a fixed text | Builder |
 
-A `TrialFailure` stops the session (`lab-bench` 2.7 and 11.3); none of these is retried or repaired.
+A `TrialFailure` stops the session (`lab-bench` 2.7 and 11.3); none of these is retried or repaired. A run that does
+not settle does not stop the session (Decision 25).
 
 ## Testing Strategy
 
@@ -570,10 +628,10 @@ tests and the reviewed list.
 
 | Kind | Tests | Runs where |
 |---|---|---|
-| Properties 1-16 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
+| Properties 1-17 | `hypothesis`, one test each, tagged `Feature: wind-tunnel, Property N` | Kiro Web and local |
 | Examples | the declaration passes `check_declaration`; both factories give equal declarations; knob texts equal Requirement 3.2; the 13.8 overlap check on the real files; the circle literature value at Reynolds 100 is 0.164335 within 1e-6 and the band is 0.1561 to 0.1726; `max_delta_t <= ESTIMATOR_MAX_DT`; the Reynolds-override walk | Kiro Web and local |
 | Gmsh | the mesher on the corners of the knob ranges gives a mesh file with the five named groups; marked `needs_gmsh`, skipped with a visible reason where Gmsh cannot be imported (the task checks this in Kiro Web first, as `body-lab` did for rendering) | where Gmsh imports |
-| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the sheet reading check on a real sheet (9.10, run by the builder, recorded in `spikes/sheet/results.md`); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the stop of 17.6 | Local Mac only |
+| Slow (marker `slow`, excluded by default, Docker) | the circle check (15); same input twice gives identical measurements and picture (10.4); the sheet reading check on a real sheet (9.10, run by the builder, recorded in `spikes/sheet/results.md`); the 16 end-corner runs and the 16 near-end runs, written to `extreme-runs.json`, with the refusals of 6.11 and the stop of 17.6 (a run over 115 s stops too) | Local Mac only |
 | Review | `form-knowledge-review.md` (12.3) | By reading |
 
 The ordinary suite uses `FakeMesher` and `FakeRunner`, which writes a synthetic `force.dat` and vorticity files from
@@ -585,7 +643,8 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 |---|---|
 | `declaration.py`, `told_set.py`, the knob `description` field (`lab-bench` 18) | 1, 2, 3, 4.1-4.4, 11 |
 | `geometry.py` | 3.3, 6.1-6.5, 6.10 |
-| `mesh.py`, `casegen.py`, `model/case/`, `settings.toml` | 6.6-6.9, 9.5, 10.1 |
+| `input_rule.py`, `WindAdapter.check_inputs` (`lab-bench` 19) | 3.3, 6.11, 17.2, 17.6 |
+| `mesh.py`, `casegen.py`, `model/case/`, `constants.toml` | 6.6-6.9, 9.5, 10.1 |
 | `environment.py`, `runner.py` | 7, 8.7, 8.8, 10.3, 10.5, 10.6 |
 | `estimators.py`, `settle.py` | 4.2-4.6, 5, 8.3 |
 | `failures.py` | 8.1-8.6 |
@@ -596,7 +655,8 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
 | `lab/`, the install steps in `README.md` | 14.3, 17.3 |
 | Extreme and near-end runs, `extreme-runs.json`, and the stops | 17.2, 17.6, 18.5, 13.9 |
 | Tests | 5, 8, 10.4, 13.7, 17.1, 17.2 |
-| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3) | 9.7-9.10, 18 |
+| Order of work (tasks): sheet reading gate first (9.7-9.9), hands-on steps last (18.3); the seal check and commit (task 18) are the builder's, after the user's session (Decision 39) | 9.7-9.10, 17.3, 18 |
+| Case mount probe in `environment.py` | 7.7 |
 
 ## What would make me stop and ask
 
@@ -606,7 +666,7 @@ a known sinusoid, so `run_trial` is tested end to end without Docker.
   the `lab-bench` spec.
 - S4. Mesh or solver settings that I must change after the circle check was run (6.8); a circle check outside 5%
   (15.7); two runs of one input that differ (10.4); a run slower than 140 s or six runs that do not fit in 900 s
-  (8.7); any of the 32 end-corner and near-end runs that times out, fails to mesh, fails or does not settle (17.2, 17.6).
+  (8.7); any of the 32 end-corner and near-end runs that is not refused and times out, fails to mesh, fails, does not settle or takes more than 115 s (17.2, 17.6).
 - S5. An OpenFOAM spelling, an in-image command or a Docker option that I cannot confirm in the smoke run (for
   example the function-object time window, the sampler output layout, the user id in the container).
 - S6. A derived term of the solver files that collides with the told set or with a builder text and cannot be
@@ -640,16 +700,16 @@ Made by the builder in this design; none changes a requirement.
 
 10. **Estimators and settle criterion live in `model/`** (Decision 14).
 11. **The image digest and image id are in `model/image-lock.toml`**, written by the digest task, so that
-    `settings.toml` never holds a placeholder that a loader must refuse.
-12. **`min_edge` is 0.0** until the near-end runs have been measured (Requirement 17.2, 17.6). The geometry then
-    refuses nothing before the mesher; whatever the mesher and the solver do is the measurement. The near-end
-    distances (0.001 and 0.01 of the range) are the builder's proposal.
+    `constants.toml` never holds a placeholder that a loader must refuse.
+12. **The geometry refuses no short piece.** (Until the near-end runs were measured, `min_edge` was 0.0; it is now
+    replaced by the corner rule of Decision 23, applied to the inputs before a run.) The near-end distances (0.001
+    and 0.01 of the range) are the builder's proposal, accepted by the user.
 13. **Stop-list proposals** for OpenFOAM keywords are a stop with a written proposal (Requirement 13.9). The builder
     renames its own identifiers and rewords first.
 14. **Sign of the angle.** A positive angle moves the front end toward +y (clockwise with the flow along +x and +y
     up, as in the prototype, confirmed by the user), written once in `geometry.py`; the estimators sit in `model/` so
     that they are written before the sheet reading gate that stops adapter code (Requirement 9.9).
-15. **The plate thickness in the `splitter` text is formatted from `settings.toml`**, not typed again.
+15. **The plate thickness in the `splitter` text is formatted from `constants.toml`**, not typed again.
 16. **Picture sheet layout: PROPOSED, the user confirms at design approval.** One PNG, 6 frames in 2 rows of 3, each
     cell 400 by 200, frames at t = 145, ..., 150 (spacing 1.0, a setting), a fixed 4 pixel gap in black, so the sheet
     is 1208 by 404 (1200 by 400 if the gap is 0). Reasons: section 7. The sampling grid equals the cell, so no
@@ -657,6 +717,101 @@ Made by the builder in this design; none changes a requirement.
 17. **No Pillow.** The GIF writer and the resize were the only uses; `bench.pictures.encode_png` encodes the sheet.
 18. **The notebook's moving picture** is a `lab-notebook` decision for both labs (Decision 25 of the requirements);
     nothing in this design prepares it.
+19. **Spellings confirmed or changed in task 14.1 (smoke run, image `opencfd/openfoam-default:2412`, arm64).**
+    The image entry point starts every command in the home directory and ignores `-w`, and `mpirun` refuses to
+    run as root. The command is therefore `docker run --rm --name <case-name> --user <uid>:<gid> -v <case>:/case
+    <name@digest> /case/Allrun`, and `Allrun` begins with `cd /case`. The constant-folder file is
+    `turbulenceProperties` (v2412 does not read `momentumTransport`). The force file has ten plain numbers per line
+    without parentheses. The solver writes at every frame spacing (`adjustableRunTime`, `purgeWrite 1`) so that
+    the sampler's frames fall exactly on 145 to 150; without it the first frame was written at 144.997. The
+    starting mesh sizes were too slow (310 s for one run at `size_body` 0.02, `size_wake` 0.08); they are now 0.04
+    and 0.16 (one circle run, 102 s). The circle check of task 14.2 has not yet been run, so this is allowed
+    (Requirement 6.8).
+20. **A failed run's case folder is pruned** (the user's decision). It keeps only the log, the settings, the mesh
+    file and the force file; processor folders, time directories, sampled output and the mesh folder are deleted
+    by `prune_case_folder`, called on every failure path that has a case folder. Reason: a kept failed case folder
+    was 4.6 to 8.3 GB. Pruning that fails raises and stops the session (no fallback). Requirements Decision 31.
+21. **The 140 s limit covers mesh, solver and post-processing; the deletion is outside it** (the user's decision, task
+    14.4). `run_trial` checks the deadline again after the work that follows the solver. A successful run's case
+    folder is renamed into `trash/` and deleted at the start of the next trial, before the clock starts. Reason: the
+    measured deletion of a 5 GB folder took about 15 s, which would count against the 6 runs of one 900 s call
+    (Requirement 8.7). Choice: the deletion happens in the next trial's own call, so no background process exists and
+    a failure to delete is raised in the foreground. The trash holds at most one folder, because it is emptied before
+    each trial. The last run's folder stays in the trash until the next trial; with the reduced output (Decision 22)
+    it is about 54 MB. Requirements Decision 32.
+22. **The solver output is reduced to what the adapter reads** (the user's decision, option 3(b), task 14.4). The
+    vorticity function object was given `writeFields no`, which is not a keyword of that object and was ignored: the
+    field was written to a time folder of each processor at every step (about 12 400 files and 1.6 GB per processor).
+    It now has `writeControl none`: computed for the sampler, not written. The force file and the sampled vorticity
+    (80 000 points per frame, 6 frames) are unchanged. Measured, circle at Reynolds 150: 4.90 GB to 54 MB per run, no
+    `processor*` folders left. Shown, not claimed: for the circle and for `aspect=1.5, corner=0.5, splitter=1.0,
+    angle=10.0` (seed 0, same machine and image digest) the five measurements, the picture bytes and the force file
+    hash are byte-identical before and after (`spikes/timing/reference-before.json`, `reference-after.json`,
+    `reference.py compare`). Requirements Decision 33.
+
+23. **Corner rule outside the geometry** (the user's decisions, task 14.4 stage 3b; Requirements Decisions 34 and 35).
+    The margin rule is a worst wall-clock time of 115 s inside the declared ranges; the angle range is [0, 15]. The
+    single `min_edge` is replaced by `min_arc` = 0.0314 (shortest corner arc) and `min_line` = 0.0025 (shortest
+    straight side of the body), because the data (`spikes/timing/extreme-v2-summary.md`) put the two limits an order
+    of magnitude apart: one value would refuse the high side about 12 times more than needed, or accept arcs that
+    hit the limit. Neither applies to the plate. The refusal is a pure function of `aspect` and `corner` in
+    `wind_tunnel_model/input_rule.py`, called by `WindAdapter.check_inputs` (before any trial of an experiment, no
+    budget used) and again by `run_trial`, which raises for a refused corner. Choice: not in the geometry, because
+    the geometry is a drawing of the body for any knob values and the rule is a limit of the solver on this machine;
+    the message is one line in Dr. Kiro's terms. The band is rounded inward to 3 decimals, and that band is what is
+    tested.
+
+24. **The colour limit is fixed at 5.0** (task 14.4, Requirement 9.5; Requirements Decision 36). The rule, fixed
+    beforehand: the largest of the per-run 99th percentiles of the absolute vorticity over the six frames, over the
+    settled runs of the 32 gate cases, rounded up to an integer. The 29 settled runs (3 of the 32 cases were refused
+    by the corner rule) gave 4.5979 at most (aspect 3, corner 0, splitter 3, angle 15), so L = 5. The per-run
+    maximum of the absolute vorticity is up to 54.5, so a few points near the body saturate the colour, which is the
+    intention of a limit set from the 99th percentile.
+
+25. **A flow that does not settle within the trial is a result, not a failure** (the user's decision; Requirements
+    Decision 37). The `not_settled` failure kind is removed; `failures.py` has two kinds. In `_evaluate` the picture
+    sheet is drawn before the settle verdict is used, so the code path is the same; when the verdict is not ok the
+    five values are `NotMeasured("not_settled", NOT_SETTLED_REASON)` (declared for all five measurements, with
+    `not_shedding` kept for `strouhal`), and the case folder goes to `trash/` like a settled run's. The time-out
+    check still comes first: a late run is a time-out whatever it found. Reasons: a failure ends the session, 2 of 30
+    random points did not settle, not settling is a finding about the specimen, and the bench already judges a
+    prediction on a not-measured value `not-checkable`; `bench/` is unchanged (its contract check accepts five
+    not-measured values). Cost: the failed settle rule is no longer logged, because a result has no builder-side
+    detail field.
+26. **A case mount probe in the environment check** (Requirements Decision 38). Reason: five runs of the
+    measurement pass ended with exit code 127 at once, and the reproduction (`spikes/timing/env-127.md`) showed
+    containers that do not see the mount when a folder name is created again right after it was deleted (84 of
+    1000), and none with new names (0 of 1000). A session uses new names, so the runner stays as it is. The probe
+    uses new names too, so that it does not cause the fault; it catches a mount that is not visible at all. Cost:
+    about one second at start (three container starts).
+27. **`measured_by` does not describe the picture** (Requirements Decision 40). The sentence on a flow that has not
+    settled says that the picture is still returned, and nothing about what it shows (Requirement 1.3).
+28. **`gmsh.initialize(interruptible=False)`** (Requirements Decision 41). Alternatives: run the mesh in the main
+    thread (the front end would have to change, which `lab-bench` does not allow for one application), or
+    install the signal handler ourselves (no gain). With `interruptible=False` Gmsh makes no handler, and the
+    output is byte-identical. The calls are still serialised by the front end's lock, so Gmsh's global state is
+    not used from two threads at once.
+29. **Stop-list words and the rehearsal** (Requirements Decision 42). `application` and `image` are added to the
+    stop list; the scan code is unchanged. The rehearsal is a script and not a pytest test, because it needs the
+    MCP client, the adapter and Docker in one Python, which only the installed tool has; it uses the installed
+    commands, as Kiro CLI does.
+30. **The mesh is built in a child process** (Requirements Decision 43). Alternatives: keep Gmsh in the bench
+    process and change the front end to one fixed thread (which `lab-bench` does not allow for one application),
+    or keep one long-lived mesh process (more state, and a restart after a crash would be a fallback). Chosen:
+    one short-lived child per mesh, so that Gmsh always starts in the main thread of a fresh interpreter and a
+    crash ends only the child. Cost: the start of one Python interpreter and the Gmsh import per run, small
+    against a run of minutes. `GmshMesher.build` passes the time left of the run to the child as a time-out
+    (`MeshTimeout`). The `interruptible=False` call of Decision 28 stays (it is harmless in the main thread).
+    Case folders of a crashed session stay on disk; the adapter never deletes or renames a leftover folder
+    (`create_case_folder` raises `FileExistsError`), and the builder moves it aside before a resume.
+31. **Sweep of the bench's own text** (Requirements Decision 44). Alternatives: scan only the strings that reach
+    Dr. Kiro (needs a list of constructions that goes stale when a message moves), or catch the finding in
+    `_finish` and turn it into a refusal (a fallback, and it would hide the word from the builder). Chosen: one
+    exclusion rule that errs towards scanning too much (all strings except docstrings, dictionary keys, subscripts,
+    comparison operands and regular expression arguments), and a stop list or a rewording for every finding, so
+    that no bench message can end a session by its words. The test lives in each application's own tests because
+    each needs its own scan sources (`wind-tunnel/adapter`, `body-lab/adapter`); the collector is shared in
+    `bench/tests/message_sweep.py`. The bench is not changed to scan less.
 
 ## Open questions
 

@@ -293,3 +293,61 @@ sealed and unchanged.
   - Update the Japanese translation under `docs/ja/wind-tunnel/` as `japanese-translations.md` requires. Run
     `sh scripts/ja-check.sh` if it applies.
   - _Requirements: wind-tunnel 12.3_
+
+## Amendment: adapter input check (Requirement 19)
+
+Added for the `wind-tunnel` spec (its task 14.4): a refusal before any trial for values the solver cannot settle.
+Design: "Amendment: adapter input check" (B1-B6). Commit `d6089fc` holds the code and tests of tasks 29-31.
+
+- [x] 29. Optional adapter method and gate 9a
+  - `adapter.py`: add `CHECK_INPUTS_METHOD`, `INPUT_REFUSAL_MAX = 400`, `check_input_refusal` and `input_refusal`
+    (design B1). `core/session.py`: add `Session._check_inputs`, called after the budget check and before the spec
+    files are read (design B2); a refusal is outcome 2 with the builder-log line; a bad message or an exception is a
+    bench failure.
+  - No change to `describe.py`, `declaration_record`, the fake application or body-lab.
+  - Verified by: `sh bench/scripts/check.sh` passes, and the body-lab adapter tests (golden comparison) pass unchanged.
+  - _Requirements: 19.1-19.3, 19.5, 19.7, 19.8_
+
+- [x] 30. Unit tests
+  - `bench/tests/unit/test_input_check.py`: a refusal in the second trial refuses the experiment, runs no trial, uses no
+    budget, appends only a `refusal` entry and writes the builder-log line; the same first row runs afterwards; a sweep
+    is checked in full; an adapter without the method and a method that returns nothing refuse nothing; a raising
+    method is a bench failure with the traceback in the detail only; bad messages (empty, spaces, line break, tab,
+    401 characters, not text) are bench failures; a message with a derived term is withheld.
+  - _Requirements: 19.1-19.6_
+
+- [x] 31. Property tests and full check
+  - `bench/tests/properties/test_input_check.py`: P25-P29 (design B4), at least 100 examples each, tagged
+    `Feature: lab-bench, Property N`.
+  - Run `sh bench/scripts/check.sh` (500 passed, ruff clean), the body-lab adapter tests (7 passed, golden files
+    unchanged), and the `wind-tunnel/adapter` and `wind-tunnel/model` tests (127 passed 1 skipped; 121 passed).
+  - _Requirements: 19.7, 19.9_
+
+## Amendment: file-name stems (Requirement 20)
+
+Added on the user's decision of 2026-11-16: a bare `P` or `U` in Dr. Kiro's text must not end the sealing of a
+session. Design: "Amendment: file-name stems" (C1-C5). Commit `d6d7371` holds the code and tests of tasks 32-33.
+
+- [x] 32. File-name patterns skip one-character and stop-listed stems
+  - `scan/patterns.py`: `Patterns` takes the stop list and skips a stem of one character and a stem on the stop list
+    (token form); the full name is always matched, a name without a dot included. `scan/scan.py`: `Scanner` passes
+    its stop list. Nothing else changes.
+  - Verified by: `sh bench/scripts/check.sh` passes, and the body-lab adapter tests (golden comparison) pass unchanged.
+  - _Requirements: 20.1-20.6_
+
+- [x] 33. Tests
+  - `bench/tests/unit/test_scan.py`: a bare `P` and `U` are not found; `p.in`, `U.in`, `mesh.py` and `geometry.py` are
+    found in full; a stop-listed stem is not found in any case; `geometry` is still found; a dotless name is found even
+    when short or stop-listed; the same at the builder level and the Dr. Kiro level.
+  - `bench/tests/properties/test_file_name_stems.py`: P30 (design C3), at least 100 examples, tagged
+    `Feature: lab-bench, Property 30`.
+  - The new tests fail on the code before the change (`['P', 'U']` was found) and pass after it.
+  - _Requirements: 20.7_
+
+- [x] 34. Full check, scans and rehearsal
+  - `sh bench/scripts/check.sh` (506 passed, ruff clean); the `wind-tunnel` model and adapter tests and ruff; the
+    body-lab adapter tests (golden files unchanged, `git diff --stat body-lab/` empty); `bench-scan` on
+    `wind-tunnel/lab` and `sessions/wind-tunnel/wt-002`, `wt-003`, `wt-004` (no findings, as before) and on the body-lab
+    lab and `sessions/body-lab`; `bench-verify` on the three sealed folders; `wind-tunnel/rehearse_session.py` with real
+    Docker, after the last code change.
+  - _Requirements: 20.6_

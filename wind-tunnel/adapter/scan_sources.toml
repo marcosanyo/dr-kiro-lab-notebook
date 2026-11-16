@@ -1,0 +1,55 @@
+# Blind scan sources of wind-tunnel (wind-tunnel design 9, Requirement 13.5). Paths are relative to this file.
+adapter = "wind_tunnel.declaration:scan_adapter"
+
+[lab]
+path = "../lab"
+dr_kiro = ["experiments/**", ".kiro/specs/**"]
+
+[[source]]
+path = "../model/case/0/U.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/0/p.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/constant/turbulenceProperties.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/constant/transportProperties.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/changeDictionaryDict.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/controlDict.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/decomposeParDict.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/monitors.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/fvSchemes.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/system/fvSolution.in"
+extractor = "openfoam-dict"
+[[source]]
+path = "../model/case/Allrun"
+extractor = "shell-words"
+[[source]]
+path = "../model/constants.toml"
+extractor = "toml-names"
+[[source]]
+path = "../model/src/wind_tunnel_model/geometry.py"
+extractor = "python-names"
+[[source]]
+path = "../model/src/wind_tunnel_model/mesh.py"
+extractor = "python-names"
+[[source]]
+path = "../model/src/wind_tunnel_model/casegen.py"
+extractor = "python-names"
+[[source]]
+path = "../model/src/wind_tunnel_model/solver_output.py"
+extractor = "python-names"

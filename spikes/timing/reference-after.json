@@ -1,0 +1,338 @@
+{
+  "label": "after",
+  "image_digest": "sha256:1ba02114b1c025c370f2e269a07677c16c9bea8d990fcd75ac8378aff9d41b50",
+  "runs": {
+    "circle_re150": {
+      "knobs": {
+        "aspect": 1.0,
+        "corner": 1.0,
+        "splitter": 0.0,
+        "angle": 0.0
+      },
+      "seed": 0,
+      "values": {
+        "cd": 1.410365639653,
+        "cl_mean": -0.004803186839115194,
+        "cl_amp": 0.5608987999999999,
+        "strouhal": 0.1882614706277389,
+        "shedding": 1.0
+      },
+      "values_repr": {
+        "cd": "1.410365639653",
+        "cl_mean": "-0.004803186839115194",
+        "cl_amp": "0.5608987999999999",
+        "strouhal": "0.1882614706277389",
+        "shedding": "1.0"
+      },
+      "picture_kind": "image/png",
+      "picture_sha256": "04c1bedc4c3a35924b0a92ccfb598e6133e7484c4c2a75d3700c67f92b79f4c8",
+      "picture_bytes": 131158,
+      "case_bytes": 54218752,
+      "listing": {
+        "0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "constant": {
+          "bytes": 1318912,
+          "files": 11
+        },
+        "constant/polyMesh": {
+          "bytes": 1310720,
+          "files": 9
+        },
+        "constant/polyMesh/sets": {
+          "bytes": 49152,
+          "files": 1
+        },
+        "postProcessing": {
+          "bytes": 31399936,
+          "files": 8
+        },
+        "postProcessing/forces": {
+          "bytes": 4325376,
+          "files": 2
+        },
+        "postProcessing/forces/0": {
+          "bytes": 4325376,
+          "files": 2
+        },
+        "postProcessing/vorticityFrames": {
+          "bytes": 27074560,
+          "files": 6
+        },
+        "postProcessing/vorticityFrames/145": {
+          "bytes": 4509696,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/146": {
+          "bytes": 4513792,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/147": {
+          "bytes": 4513792,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/148": {
+          "bytes": 4513792,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/149": {
+          "bytes": 4513792,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/150": {
+          "bytes": 4509696,
+          "files": 1
+        },
+        "processor0": {
+          "bytes": 942080,
+          "files": 21
+        },
+        "processor0/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor0/150": {
+          "bytes": 376832,
+          "files": 8
+        },
+        "processor0/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor0/constant": {
+          "bytes": 557056,
+          "files": 11
+        },
+        "processor0/constant/polyMesh": {
+          "bytes": 557056,
+          "files": 11
+        },
+        "processor1": {
+          "bytes": 937984,
+          "files": 21
+        },
+        "processor1/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor1/150": {
+          "bytes": 385024,
+          "files": 8
+        },
+        "processor1/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor1/constant": {
+          "bytes": 544768,
+          "files": 11
+        },
+        "processor1/constant/polyMesh": {
+          "bytes": 544768,
+          "files": 11
+        },
+        "processor2": {
+          "bytes": 921600,
+          "files": 21
+        },
+        "processor2/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor2/150": {
+          "bytes": 368640,
+          "files": 8
+        },
+        "processor2/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor2/constant": {
+          "bytes": 544768,
+          "files": 11
+        },
+        "processor2/constant/polyMesh": {
+          "bytes": 544768,
+          "files": 11
+        },
+        "system": {
+          "bytes": 2547712,
+          "files": 7
+        }
+      },
+      "force_file_sha256": "2c19fd65bcc2fd2491d8f425e1d805b57a72b6dc8d06426ee44e1d30154fa0b9",
+      "force_file_bytes": 1692649,
+      "force_file": "postProcessing/forces/0/force.dat",
+      "remove_s": 0.005722625000089465,
+      "run_trial_s": 58.36344583299979
+    },
+    "plate_1.5_0.5_1.0_10": {
+      "knobs": {
+        "aspect": 1.5,
+        "corner": 0.5,
+        "splitter": 1.0,
+        "angle": 10.0
+      },
+      "seed": 0,
+      "values": {
+        "cd": 1.2455029285378572,
+        "cl_mean": -0.28860562216845714,
+        "cl_amp": 0.21525308,
+        "strouhal": 0.1569628848184988,
+        "shedding": 1.0
+      },
+      "values_repr": {
+        "cd": "1.2455029285378572",
+        "cl_mean": "-0.28860562216845714",
+        "cl_amp": "0.21525308",
+        "strouhal": "0.1569628848184988",
+        "shedding": "1.0"
+      },
+      "picture_kind": "image/png",
+      "picture_sha256": "5e0d529151eb972475d83c4b024f464cc9ddd5e816e4c59198bee2063bef4f68",
+      "picture_bytes": 116424,
+      "case_bytes": 51974144,
+      "listing": {
+        "0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "constant": {
+          "bytes": 1388544,
+          "files": 11
+        },
+        "constant/polyMesh": {
+          "bytes": 1380352,
+          "files": 9
+        },
+        "constant/polyMesh/sets": {
+          "bytes": 53248,
+          "files": 1
+        },
+        "postProcessing": {
+          "bytes": 30998528,
+          "files": 8
+        },
+        "postProcessing/forces": {
+          "bytes": 4325376,
+          "files": 2
+        },
+        "postProcessing/forces/0": {
+          "bytes": 4325376,
+          "files": 2
+        },
+        "postProcessing/vorticityFrames": {
+          "bytes": 26673152,
+          "files": 6
+        },
+        "postProcessing/vorticityFrames/145": {
+          "bytes": 4444160,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/146": {
+          "bytes": 4444160,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/147": {
+          "bytes": 4444160,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/148": {
+          "bytes": 4448256,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/149": {
+          "bytes": 4448256,
+          "files": 1
+        },
+        "postProcessing/vorticityFrames/150": {
+          "bytes": 4444160,
+          "files": 1
+        },
+        "processor0": {
+          "bytes": 987136,
+          "files": 21
+        },
+        "processor0/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor0/150": {
+          "bytes": 393216,
+          "files": 8
+        },
+        "processor0/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor0/constant": {
+          "bytes": 585728,
+          "files": 11
+        },
+        "processor0/constant/polyMesh": {
+          "bytes": 585728,
+          "files": 11
+        },
+        "processor1": {
+          "bytes": 983040,
+          "files": 21
+        },
+        "processor1/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor1/150": {
+          "bytes": 397312,
+          "files": 8
+        },
+        "processor1/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor1/constant": {
+          "bytes": 577536,
+          "files": 11
+        },
+        "processor1/constant/polyMesh": {
+          "bytes": 577536,
+          "files": 11
+        },
+        "processor2": {
+          "bytes": 970752,
+          "files": 21
+        },
+        "processor2/0": {
+          "bytes": 8192,
+          "files": 2
+        },
+        "processor2/150": {
+          "bytes": 389120,
+          "files": 8
+        },
+        "processor2/150/uniform": {
+          "bytes": 12288,
+          "files": 3
+        },
+        "processor2/constant": {
+          "bytes": 573440,
+          "files": 11
+        },
+        "processor2/constant/polyMesh": {
+          "bytes": 573440,
+          "files": 11
+        },
+        "system": {
+          "bytes": 2547712,
+          "files": 7
+        }
+      },
+      "force_file_sha256": "01e1619d5cfb259e3df44ccbf5a5fc1c278c680773e35086cecf55a5bd6b23ca",
+      "force_file_bytes": 1456050,
+      "force_file": "postProcessing/forces/0/force.dat",
+      "remove_s": 0.0062169169996195706,
+      "run_trial_s": 48.88609391600039
+    }
+  }
+}

@@ -25,3 +25,54 @@ rubber
 # body-lab: other names
 floor
 top
+
+# wind-tunnel: the user approved these 19 derived terms in task 12.4 (2026-11-14, see wind-tunnel/blind-scan-findings.md).
+# They are general words and say nothing about the structure of the body. The derived terms Arc, Line, Point, move
+# and _turn are stored in the scan's token form (arc, line, point, move, turn).
+body
+flow
+height
+depth
+speed
+density
+gap
+picture
+settings
+time
+end
+number
+arc
+line
+point
+move
+turn
+value
+forces
+# wind-tunnel lab: the user approved these words in task 13.1 ("settings" was already listed; they are general words that say nothing about the
+# structure of the body).
+name
+none
+run
+raw
+field
+keep
+p
+functions
+include
+method
+replace
+behind
+points
+# wind-tunnel session: the first real session (wt-001) failed sealing on these two words, found in the bench's own
+# record entries. "application" is the key of the start entry (and an OpenFOAM keyword in controlDict); "image" is the
+# name of the "image/png" media type and of a section of constants.toml. Both are general words and say nothing about
+# the structure of the body. Approved under the user's standing policy for common-word findings (Decision 42).
+application
+image
+# wind-tunnel session wt-003: "empty" ended the session at its first action (a refusal said "range is empty");
+# the sweep of the bench's own text found the others (wind-tunnel Decision 44). Common English words.
+empty
+columns
+rows
+default
+domain

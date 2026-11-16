@@ -1,0 +1,71 @@
+# Settings of the wind-tunnel model. One reader: src/wind_tunnel_model/settings.py, which refuses a
+# missing, extra or placeholder key and a wrong type. Nothing here is read from the environment.
+
+[flow]
+reynolds = 150.0  # brief
+speed = 1.0
+height = 1.0
+depth = 1.0
+density = 1.0
+
+[body]
+thickness = 0.08  # Decision 8 of the design (plate thickness)
+# The two limits of the corner rule (input_rule.py), from the 140 s runs of spikes/timing/extreme-v2-summary.md,
+# with the margin rule of the user's decision (Decision 34): the worst wall-clock time of a run inside the
+# declared ranges is at most 115 s. Both apply to the body's corner arcs and straight sides only, never to the
+# plate, and a piece of length zero is absent, not short.
+min_arc = 0.0314  # shortest corner arc length: 0.031416 settled in 94.7 s, 0.02749 took 123.3 s
+min_line = 0.0025  # shortest straight side of the body: 0.0025 settled in 111.6 s, 0.002 hit the limit
+
+[domain]
+ahead = 6.0  # brief, measured from the centre of the body
+behind = 18.0
+above_below = 7.0
+
+[time]
+end = 150.0  # brief
+average_from = 80.0  # brief
+max_co = 0.8  # brief
+max_delta_t = 0.05  # the estimator limit (ESTIMATOR_MAX_DT)
+initial_delta_t = 0.005  # confirmed by task 14.1: the first steps stay at Courant 0.4 to 0.8, the step then adapts
+
+[mesh]
+# Chosen in the mesh task (4.1) and set by task 14.1 so that one run fits in 140 s on the arm64 image (0.02 and
+# 0.08 took 310 s); changing them after the circle check needs the user (6.8).
+size_body = 0.04
+size_far = 0.5
+size_wake = 0.16
+wake_length = 12.0
+algorithm = 6  # Gmsh 2D algorithm: Frontal-Delaunay
+threads = 1
+
+[run]
+processes = 3
+timeout_s = 140.0
+decomposition = "simple (3 1 1)"
+
+[image]
+name = "opencfd/openfoam-default"
+tag = "2412"
+
+[patches]
+inlet = "inlet"
+outlet = "outlet"
+lateral = "lateral"
+obstacle = "obstacle"
+front_and_back = "frontAndBack"
+
+[picture]
+# The layout is a proposal until the user confirms it (Decision 16).
+rows = 2
+columns = 3
+frames = 6
+spacing = 1.0
+cell_width = 400
+cell_height = 200
+gap = 4
+window = [-2.5, 9.5, -3.0, 3.0]  # x_min, x_max, y_min, y_max
+# Fixed by task 14.4 (9.5, Decision 24 of the design): the largest of the per-run 99th percentiles of |omega| over
+# the six frames, over the 29 settled runs of wind-tunnel/extreme-runs.json (4.5979, run 3/0/3/15), rounded up to
+# an integer. Changing it later needs the user.
+vorticity_limit = 5.0

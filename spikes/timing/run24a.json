@@ -1,0 +1,138 @@
+{
+  "name": "run24a",
+  "knobs": {
+    "aspect": 1.75,
+    "corner": 0.99,
+    "splitter": 1.5,
+    "angle": 15.0
+  },
+  "outcome": "TrialResult",
+  "total_run_trial_s": 134.8500045420369,
+  "stages_s": {
+    "outline": 0.0003704159753397107,
+    "render_case": 0.03724350000265986,
+    "mesh": 0.21887904102914035,
+    "runner.run_total": 116.05610124999657,
+    "docker_run_call": 115.97548283298966,
+    "force_parse": 0.03168970800470561,
+    "estimators(measure)": 0.12779108399990946,
+    "settle": 0.0002496249508112669,
+    "vorticity_parse": 0.6325130008626729,
+    "picture": 0.2887219169642776,
+    "remove_case_folder": 15.050366124953143,
+    "prune_case_folder": 0
+  },
+  "solver_log": {
+    "steps": 12440,
+    "last_simulated_time": 150.0,
+    "last_step_execution_time_s": 113.57,
+    "last_step_clock_time_s": 114.0,
+    "first_step_clock_time_s": 2.0
+  },
+  "extra": {
+    "min_free_bytes": 5334011904,
+    "case_folder_bytes_before_removal": 5098729472,
+    "case_folder_top_level_bytes": {
+      "0": 8192,
+      "Allrun": 4096,
+      "case.msh": 1515520,
+      "constant": 1413120,
+      "postProcessing": 29982720,
+      "processor0": 1712562176,
+      "processor1": 1666064384,
+      "processor2": 1669287936,
+      "system": 2547712
+    },
+    "instrument_overhead_s": 2.4000843750545755
+  },
+  "events": [
+    [
+      "outline",
+      0.0,
+      0.0
+    ],
+    [
+      "render_case",
+      0.0,
+      0.038
+    ],
+    [
+      "mesh",
+      0.038,
+      0.257
+    ],
+    [
+      "docker.run",
+      0.257,
+      116.232
+    ],
+    [
+      "runner.run",
+      0.257,
+      116.313
+    ],
+    [
+      "parse_force_file",
+      116.313,
+      116.344
+    ],
+    [
+      "measure",
+      116.347,
+      116.474
+    ],
+    [
+      "settled",
+      116.474,
+      116.475
+    ],
+    [
+      "parse_vorticity_file",
+      116.475,
+      116.584
+    ],
+    [
+      "parse_vorticity_file",
+      116.584,
+      116.688
+    ],
+    [
+      "parse_vorticity_file",
+      116.688,
+      116.795
+    ],
+    [
+      "parse_vorticity_file",
+      116.795,
+      116.902
+    ],
+    [
+      "parse_vorticity_file",
+      116.902,
+      117.006
+    ],
+    [
+      "parse_vorticity_file",
+      117.006,
+      117.107
+    ],
+    [
+      "picture_sheet",
+      117.107,
+      117.396
+    ],
+    [
+      "remove_case_folder",
+      119.8,
+      134.85
+    ]
+  ],
+  "first_event_after_start_s": 1.508404966443777e-05,
+  "values": {
+    "cd": 1.4201569601577144,
+    "cl_mean": 0.6862710414994286,
+    "cl_amp": 0.4005023,
+    "strouhal": 0.15243351500199068,
+    "shedding": 1.0
+  }
+}

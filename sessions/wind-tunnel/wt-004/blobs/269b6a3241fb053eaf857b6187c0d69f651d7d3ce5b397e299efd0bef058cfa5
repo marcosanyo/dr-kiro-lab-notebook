@@ -1,0 +1,11 @@
+# H4: Splitter length of 2 suffices to stop shedding on the rounded long body, and shorter body with long plate also stops
+import math
+
+PHASE = "rules"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [3.0, 1.0, 1.0, 0.0],
+    [3.0, 1.0, 2.0, 0.0],
+    [2.0, 1.0, 3.0, 0.0],
+]

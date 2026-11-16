@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/requirements.md`](../../../.kiro/specs/lab-bench/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `066602411b05601554adc0cc70a5ffc9ccb97685efca20f349a7b6da28605ee6`
+> 原文 SHA-256: `3ad63a0c3ef07708dc8b4afc861177c0454da9b9f9920195cc2fe3aa0b7e0a66`
 
 # 要件: lab-bench
 
@@ -357,3 +357,45 @@ MCP スパイク（`spikes/mcp/results.md`）の後にユーザーが決定し�
 7. THE bench SHALL scan every description at the builder level, with the rest of the tool descriptions, when the front end starts (design F3), and SHALL scan the declaration in the record at the builder level when the session is sealed（要件 13.1）。THE words of a description SHALL NOT be added to the allow list; the allow list stays the declared names（要件 15.3）。
 8. WHERE an application declares no description、THE bench SHALL give a told text and a session record that are byte-identical to those of the bench before this amendment。これは説明を宣言しない body-lab について成り立ち、body-lab の伝えるテキストと記録された宣言を、変更前のベンチから作ったファイルと比べるテストで SHALL be shown。
 9. FOR ALL declarations, with and without descriptions, THE told text SHALL contain each non-empty description exactly as declared, on the line of its own knob, and SHALL contain no description of another knob on that line。
+
+### 要件 19: アダプターの入力チェック（改訂）
+
+**改訂。** 要件 1-18 を実装しテストした後に、`wind-tunnel` spec の求め（そのタスク 14.4 と要件 17.6 の選択肢 1。ユーザーが決定した: そのような値を Dr. Kiro の言葉のメッセージで拒否するベンチのルール）で加えました。既存の要件は番号の振り直しも書き換えもしません。この要件はアダプターに任意の関数を 1 つ、実行に 1 つのゲートを加えます。これは `rules.md` セクション 2 の結果 2（ラボのルールによる拒否）であり、`rules.md` のルールは何も変わりません。
+
+**ユーザーストーリー:** アプリケーションのビルダーとして、アダプターが、アプリケーションが実行できない計算済み入力を、実験の試行が 1 つも走る前に拒否できるようにしたい。実験の途中でセッションが止まる代わりに、Dr. Kiro が何を変えるべきかを費用なしで伝えられるようにするためである。body-lab とフェイクアプリケーションのビルダーとして、そのような関数を与えないアダプターでは何も変わらないようにしたい。
+
+**対象:** ビルダーとアダプターの作者。Dr. Kiro が見るのは拒否メッセージだけです。
+
+#### 受け入れ基準
+
+1. THE adapter contract SHALL let an adapter provide an optional function `check_inputs` that takes the computed inputs of one trial and returns either nothing or one refusal message。これはその入力だけの純粋関数である: 同じ入力には同じ答えを返し、アプリケーションを実行しない。An adapter without it SHALL refuse nothing。
+2. WHEN an experiment has passed the gates up to and including the budget check（要件 7.5）、THE bench SHALL call `check_inputs` for the computed inputs of every trial of the experiment, in trial order (all variants of a compare, all points of a sweep), BEFORE any trial runs。
+3. WHEN `check_inputs` returns a message for any trial、THE bench SHALL refuse the whole experiment with that message, naming the number of the first such trial within the experiment, and SHALL stop calling it。THE refusal SHALL run no trial, record no experiment or trial, use no budget, and change nothing but its own refusal entry（要件 9.2）。THE bench SHALL also write the refusal and the trial number to the builder-side log。
+4. THE bench SHALL check the message: it is text, not empty, has no line break or other control character, has no space at its start or end, and has at most 400 characters。IF the message breaks one of these、THEN THE bench SHALL treat it as a bench failure（要件 2.6）。
+5. IF `check_inputs` raises、THEN THE bench SHALL treat it as a bench failure with the bench's fixed text for an error in the application, and SHALL write the traceback to the builder-side log only。THE bench SHALL NOT go on to run the trials, and SHALL NOT substitute an answer。
+6. THE refusal message SHALL be bench output: THE bench SHALL scan it at the builder level before it returns it（要件 15.8）。したがって、パス、識別子、バージョン、導出された用語を含むメッセージはベンチ障害であり、その内容は Dr. Kiro に何も示されない。アダプターの作者は、メッセージを Dr. Kiro の言葉（ノブ、範囲、実験ファイル、予算）で書く。
+7. THE bench SHALL NOT change the told text, the tool descriptions, the declaration, the record's declaration or any existing refusal for an adapter that gives no `check_inputs`。これは body-lab とフェイクアプリケーションについて成り立ち、要件 18.8 の golden 比較が変更なしで通り続けることで SHALL be shown。
+8. THE gate SHALL come after the budget check and before the lab spec files are read for the snapshot（設計 6.1、ステップ 9a）。これにより、先のチェックの順序とその理由は変わらない。
+9. THE tests SHALL check, over random experiments and random sets of refused inputs, that: a refusal uses no budget and writes only a refusal entry; a refusal in any planned trial (first, middle or last, compare or sweep) refuses the whole experiment before any trial runs; an adapter without the function refuses nothing; a message that breaks 19.4, and a function that raises, are bench failures; a message with a derived term is a bench failure and is not shown。
+
+### 要件 20: ファイル名のステムと除外リスト（改訂）
+
+**改訂。** 要件 1-19 の実装とテストの後、2026-11-16 のユーザーの決定で加えた（ブラインドスキャンのファイル名の照合の変更。`rules.md` セクション 1 によりユーザーが決める）。既存の要件の番号は変えず、文言も変えない。この要件は、15.1、15.4、15.5 が「ファイル名」と呼ぶものを狭める。
+
+**ユーザーストーリー:** ビルダーとして、Dr. Kiro の文にある単独の `P` や `U` をファイル名として指摘してほしくない。1 文字でセッションの封印が終わらないようにしつつ、ソースファイルを名指すパスやファイル名は、両方のレベルで引き続き見つけたい。
+
+**関係者:** ビルダーとベンチ。Dr. Kiro には、スキャンがすでに返している指摘だけが見える。
+
+#### 受け入れ基準
+
+1. THE blind scan SHALL match the file name of every source file of an application in full, and its stem (the part before the first dot), as file-name findings（要件 15.4、15.5）。
+2. THE blind scan SHALL NOT match a stem of one character as a file name。
+3. THE blind scan SHALL NOT match a stem of two or more characters as a file name when it is on the stop list（`.kiro/blind-scan/stop-list.txt`）。THE comparison SHALL be the one the stop list has for terms: the stem is compared in token form, so case does not matter。
+4. THE blind scan SHALL always match the full name of a file。ドットのない名前には別のステムがない: それはフルの名前であり、1 文字であっても、除外リストにあっても、照合される。
+5. THE rules of 20.2-20.4 SHALL apply at both levels（ビルダーレベルと Dr. Kiro レベル）and in the same way。THE stop list SHALL still change only with the user's approval。除外リストにないステム（たとえば `geometry`、`mesh`、`constants`、`monitors`）は引き続き見つかる。それらを除外リストに入れるかどうかは、ユーザーが別に決める。
+6. THE blind scan SHALL NOT change otherwise: 導出された用語（15.2、15.3）、パス、認証情報、body-lab のスキャンと golden ファイルは変わらない。
+7. THE tests SHALL check, over random file names and random stop lists, at both levels, that: a one-character stem is not found; a stop-listed stem is not found in any case; a stem that is not stop-listed is found; the full name is always found; a name without a dot is found even when it is one character or is stop-listed。
+
+#### 決定（ユーザーが承認、2026-11-16）
+
+**ファイル名のステムと除外リスト。** ファイル名のパターン（`bench/src/bench/scan/patterns.py` の `Patterns`）は、各ソースファイルのフルの名前とそのステム（最初のドットの前の部分）を照合する。1 文字のステムはファイル名として照合しない: 情報を持たないためである（`p.in` と `U.in` のステムである `P` と `U` が、Dr. Kiro レベルのメモを通じてセッションの封印を終わらせうることが、最初に分かった）。2 文字以上のステムは、レビュー済みの除外リストにあれば照合しない。比較は、除外リストが用語に対して行う比較と同じく、大文字小文字を区別しない。ファイルのフルの名前は常に照合する。除外リストは、引き続きユーザーの承認があるときだけ変える。両方のレベルに両方の規則が適用される。body-lab のスキャンと golden ファイルは変わらない。理由: Dr. Kiro の文にある単独の `P` や `U` はファイル名として指摘され、除外リストはファイル名のパターンに適用されなかったので、それを取り除けなかった。

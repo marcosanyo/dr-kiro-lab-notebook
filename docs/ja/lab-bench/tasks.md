@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `096bc7d7ca45889bbe6e531dfa7e64b42d50f61b8026c12dce068d3018a2946e`
+> 原文 SHA-256: `6ac63243f54ba3f7e87d2f7c7cf1647d471bfbd5414d031abddc0aefefd2cde3`
 
 # タスク: lab-bench
 
@@ -253,3 +253,37 @@ import する唯一の場所です。
   - `.kiro/specs/wind-tunnel/requirements.md` の要件 12.3（Dr. Kiro が読む文のレビュー済みリスト）に 1 行を加える: body-lab の伝えるテキスト（宣言の文、`measured_by`、エラー）は、エンジン、ライブラリ、バージョンを名指す文（実行時に埋め込まれる文を含む）がないか、人が確認する。自動のチェックは加えない。
   - `japanese-translations.md` の求めに従って、`docs/ja/wind-tunnel/` の日本語訳を更新する。当てはまるなら `sh scripts/ja-check.sh` を走らせる。
   - _要件: wind-tunnel 12.3_
+
+## 改訂: アダプターの入力チェック（要件 19）
+
+`wind-tunnel` spec のために加えた（そのタスク 14.4）: 解が定まらない値に対する、試行の前の拒否。設計: 「改訂: アダプターの入力チェック」（B1-B6）。タスク 29-31 のコードとテストはコミット `d6089fc` にある。
+
+- **29. 任意のアダプターメソッドとゲート 9a** — 完了
+  - `adapter.py`: `CHECK_INPUTS_METHOD`、`INPUT_REFUSAL_MAX = 400`、`check_input_refusal`、`input_refusal` を加える（設計 B1）。`core/session.py`: `Session._check_inputs` を加え、予算チェックの後、spec ファイルを読む前に呼ぶ（設計 B2）。拒否はビルダーログの行を伴う結果 2 であり、不正なメッセージや例外はベンチ障害である。
+  - `describe.py`、`declaration_record`、フェイクアプリケーション、body-lab は変えない。
+  - 確認方法: `sh bench/scripts/check.sh` が通り、body-lab アダプターのテスト（golden 比較）が変更なしで通る。
+  - _要件: 19.1-19.3, 19.5, 19.7, 19.8_
+- **30. 単体テスト** — 完了
+  - `bench/tests/unit/test_input_check.py`: 2 番目の試行での拒否は実験を拒否し、試行を走らせず、予算を使わず、`refusal` エントリだけを追加し、ビルダーログの行を書く。その後、同じ最初の行は走る。sweep は全体が検査される。メソッドを持たないアダプターと何も返さないメソッドは何も拒否しない。例外を送出するメソッドは、トレースバックが詳細だけにあるベンチ障害である。不正なメッセージ（空、空白、改行、タブ、401 文字、テキストでない）はベンチ障害である。導出された用語を含むメッセージは示されない。
+  - _要件: 19.1-19.6_
+- **31. 性質テストと全体チェック** — 完了
+  - `bench/tests/properties/test_input_check.py`: P25-P29（設計 B4）。それぞれ 100 例以上、`Feature: lab-bench, Property N` のタグ付き。
+  - `sh bench/scripts/check.sh`（500 passed、ruff クリーン）、body-lab アダプターのテスト（7 passed、golden ファイルは変更なし）、`wind-tunnel/adapter` と `wind-tunnel/model` のテスト（127 passed 1 skipped、121 passed）を走らせる。
+  - _要件: 19.7, 19.9_
+
+## 改訂: ファイル名のステム（要件 20）
+
+2026-11-16 のユーザーの決定で加えた: Dr. Kiro の文にある単独の `P` や `U` で、セッションの封印が終わってはならない。設計: 「改訂: ファイル名のステム」（C1-C5）。タスク 32-33 のコードとテストはコミット `d6d7371` にある。
+
+- **32. ファイル名パターンが 1 文字と除外リストのステムをスキップする** — 完了
+  - `scan/patterns.py`: `Patterns` が除外リストを受け取り、1 文字のステムと除外リストにあるステム（トークン形式）をスキップする。フルの名前は常に照合し、ドットのない名前も含む。`scan/scan.py`: `Scanner` が除外リストを渡す。それ以外は変えない。
+  - 確認方法: `sh bench/scripts/check.sh` が通り、body-lab アダプターのテスト（golden 比較）が変更なしで通る。
+  - _要件: 20.1-20.6_
+- **33. テスト** — 完了
+  - `bench/tests/unit/test_scan.py`: 単独の `P` と `U` は見つからない。`p.in`、`U.in`、`mesh.py`、`geometry.py` はフルの名前で見つかる。除外リストにあるステムは、どの大文字小文字でも見つからない。`geometry` は今も見つかる。ドットのない名前は、短くても除外リストにあっても見つかる。ビルダーレベルと Dr. Kiro レベルで同じ。
+  - `bench/tests/properties/test_file_name_stems.py`: P30（設計 C3）。100 例以上、`Feature: lab-bench, Property 30` のタグ付き。
+  - 新しいテストは、変更前のコードでは失敗し（`['P', 'U']` が見つかった）、変更後は通る。
+  - _要件: 20.7_
+- **34. 全体チェック、スキャン、リハーサル** — 完了
+  - `sh bench/scripts/check.sh`（506 passed、ruff クリーン）、`wind-tunnel` の model と adapter のテストと ruff、body-lab アダプターのテスト（golden ファイルは変更なし、`git diff --stat body-lab/` は空）、`wind-tunnel/lab` と `sessions/wind-tunnel/wt-002`、`wt-003`、`wt-004` の `bench-scan`（これまでどおり指摘なし）、body-lab のラボと `sessions/body-lab` の `bench-scan`、封印済みの 3 フォルダーの `bench-verify`、最後のコード変更の後の本物の Docker での `wind-tunnel/rehearse_session.py`。
+  - _要件: 20.6_

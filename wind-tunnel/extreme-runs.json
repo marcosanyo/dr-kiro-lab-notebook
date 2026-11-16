@@ -1,0 +1,569 @@
+{
+  "min_arc": 0.0314,
+  "min_line": 0.0025,
+  "time_limit_s": 140.0,
+  "margin_s": 115.0,
+  "runs": [
+    {
+      "group": "end-corner",
+      "label": "low/low/low/low",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 0.0,
+        "splitter": 0.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 55.159114499998395,
+      "vorticity": {
+        "abs_max": 45.4202,
+        "abs_p99": 3.6190201000000006,
+        "abs_p99_9": 8.790953230000069,
+        "points": 476532
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/low/low/high",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 0.0,
+        "splitter": 0.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 64.75578120800492,
+      "vorticity": {
+        "abs_max": 54.5071,
+        "abs_p99": 3.8418362,
+        "abs_p99_9": 9.960320380000445,
+        "points": 476670
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/low/high/low",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 0.0,
+        "splitter": 3.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 60.248731375002535,
+      "vorticity": {
+        "abs_max": 35.1515,
+        "abs_p99": 2.9013052000000004,
+        "abs_p99_9": 7.900519850002402,
+        "points": 475332
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/low/high/high",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 0.0,
+        "splitter": 3.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 59.24144683299528,
+      "vorticity": {
+        "abs_max": 40.939,
+        "abs_p99": 3.335539000000005,
+        "abs_p99_9": 8.671432500000966,
+        "points": 475068
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/high/low/low",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 1.0,
+        "splitter": 0.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 63.454923874996894,
+      "vorticity": {
+        "abs_max": 47.5863,
+        "abs_p99": 3.62735,
+        "abs_p99_9": 10.242480000001565,
+        "points": 476976
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/high/low/high",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 1.0,
+        "splitter": 0.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 59.433835290998104,
+      "vorticity": {
+        "abs_max": 44.4305,
+        "abs_p99": 3.5050161999999943,
+        "abs_p99_9": 9.880738100000187,
+        "points": 477042
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/high/high/low",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 1.0,
+        "splitter": 3.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 59.492901375000656,
+      "vorticity": {
+        "abs_max": 35.1975,
+        "abs_p99": 2.832455,
+        "abs_p99_9": 8.400558500001141,
+        "points": 475776
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "low/high/high/high",
+      "knobs": {
+        "aspect": 0.5,
+        "corner": 1.0,
+        "splitter": 3.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 53.95674087500083,
+      "vorticity": {
+        "abs_max": 31.4051,
+        "abs_p99": 3.1971351999999955,
+        "abs_p99_9": 9.379221990000072,
+        "points": 475440
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/low/low/low",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 0.0,
+        "splitter": 0.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 53.77590258300188,
+      "vorticity": {
+        "abs_max": 33.3376,
+        "abs_p99": 3.0854705000000004,
+        "abs_p99_9": 7.943386890000063,
+        "points": 459600
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/low/low/high",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 0.0,
+        "splitter": 0.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 62.40286783299962,
+      "vorticity": {
+        "abs_max": 37.0468,
+        "abs_p99": 4.105748999999998,
+        "abs_p99_9": 9.312791200002879,
+        "points": 460008
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/low/high/low",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 0.0,
+        "splitter": 3.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 47.91144787500525,
+      "vorticity": {
+        "abs_max": 32.7305,
+        "abs_p99": 2.9578861000000054,
+        "abs_p99_9": 7.97611,
+        "points": 458400
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/low/high/high",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 0.0,
+        "splitter": 3.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 100.57356879200233,
+      "vorticity": {
+        "abs_max": 36.3062,
+        "abs_p99": 4.597943700000004,
+        "abs_p99_9": 10.05092170000004,
+        "points": 458400
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/high/low/low",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 1.0,
+        "splitter": 0.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 73.82175774999632,
+      "vorticity": {
+        "abs_max": 25.2893,
+        "abs_p99": 3.1645116999999905,
+        "abs_p99_9": 9.975313800000132,
+        "points": 461160
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/high/low/high",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 1.0,
+        "splitter": 0.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 61.78410579100455,
+      "vorticity": {
+        "abs_max": 31.6914,
+        "abs_p99": 3.72222399999999,
+        "abs_p99_9": 10.157359500000382,
+        "points": 461466
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/high/high/low",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 1.0,
+        "splitter": 3.0,
+        "angle": 0.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 34.812930457999755,
+      "vorticity": {
+        "abs_max": 26.125,
+        "abs_p99": 3.11598,
+        "abs_p99_9": 9.85391,
+        "points": 459960
+      }
+    },
+    {
+      "group": "end-corner",
+      "label": "high/high/high/high",
+      "knobs": {
+        "aspect": 3.0,
+        "corner": 1.0,
+        "splitter": 3.0,
+        "angle": 15.0
+      },
+      "outcome": "settled",
+      "wall_clock_s": 66.84124970899575,
+      "vorticity": {
+        "abs_max": 33.817,
+        "abs_p99": 4.088059899999993,
+        "abs_p99_9": 10.269930300000485,
+        "points": 459858
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "aspect/low/0.001",
+      "knobs": {
+        "aspect": 0.5025,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 49.55967120800051,
+      "vorticity": {
+        "abs_max": 46.6733,
+        "abs_p99": 2.8422669000000016,
+        "abs_p99_9": 8.2909173000008,
+        "points": 475950
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "aspect/low/0.01",
+      "knobs": {
+        "aspect": 0.525,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 58.12906820799981,
+      "vorticity": {
+        "abs_max": 42.0009,
+        "abs_p99": 2.8078600000000002,
+        "abs_p99_9": 7.987751000000069,
+        "points": 475776
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "aspect/high/0.001",
+      "knobs": {
+        "aspect": 2.9975,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 57.818063083002926,
+      "vorticity": {
+        "abs_max": 31.973,
+        "abs_p99": 3.6150975,
+        "abs_p99_9": 8.920200750001182,
+        "points": 459576
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "aspect/high/0.01",
+      "knobs": {
+        "aspect": 2.975,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 54.081311333000485,
+      "vorticity": {
+        "abs_max": 39.4773,
+        "abs_p99": 3.5052473999999956,
+        "abs_p99_9": 8.687818880000016,
+        "points": 459714
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "corner/low/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.001,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "refused",
+      "wall_clock_s": null,
+      "message": "corner 0.001 is not accepted: corner must be 0, 1, or between 0.04 and 0.997 when aspect is 1.75"
+    },
+    {
+      "group": "near-end",
+      "label": "corner/low/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.01,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "refused",
+      "wall_clock_s": null,
+      "message": "corner 0.01 is not accepted: corner must be 0, 1, or between 0.04 and 0.997 when aspect is 1.75"
+    },
+    {
+      "group": "near-end",
+      "label": "corner/high/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.999,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "refused",
+      "wall_clock_s": null,
+      "message": "corner 0.999 is not accepted: corner must be 0, 1, or between 0.04 and 0.997 when aspect is 1.75"
+    },
+    {
+      "group": "near-end",
+      "label": "corner/high/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.99,
+        "splitter": 1.5,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 56.47631212499982,
+      "vorticity": {
+        "abs_max": 27.2122,
+        "abs_p99": 2.924960399999991,
+        "abs_p99_9": 9.859798630001205,
+        "points": 468954
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "splitter/low/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 0.003,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 53.97408037499554,
+      "vorticity": {
+        "abs_max": 41.4192,
+        "abs_p99": 3.253324399999995,
+        "abs_p99_9": 9.070659200000046,
+        "points": 468702
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "splitter/low/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 0.03,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 59.10230658300134,
+      "vorticity": {
+        "abs_max": 41.2819,
+        "abs_p99": 3.2416675999999978,
+        "abs_p99_9": 8.935610540001678,
+        "points": 468690
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "splitter/high/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 2.997,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 60.502607417001855,
+      "vorticity": {
+        "abs_max": 38.8021,
+        "abs_p99": 3.149543200000012,
+        "abs_p99_9": 8.828114500000318,
+        "points": 467100
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "splitter/high/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 2.97,
+        "angle": 7.5
+      },
+      "outcome": "settled",
+      "wall_clock_s": 61.049779415996454,
+      "vorticity": {
+        "abs_max": 38.8164,
+        "abs_p99": 3.1195502000000026,
+        "abs_p99_9": 8.893045140000154,
+        "points": 467112
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "angle/low/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 0.015
+      },
+      "outcome": "settled",
+      "wall_clock_s": 53.03589354099677,
+      "vorticity": {
+        "abs_max": 32.7646,
+        "abs_p99": 2.951017399999988,
+        "abs_p99_9": 8.69961596000742,
+        "points": 467904
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "angle/low/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 0.15
+      },
+      "outcome": "settled",
+      "wall_clock_s": 52.25519466699916,
+      "vorticity": {
+        "abs_max": 32.9385,
+        "abs_p99": 2.9503578999999998,
+        "abs_p99_9": 8.497882710000127,
+        "points": 467808
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "angle/high/0.001",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 14.985
+      },
+      "outcome": "settled",
+      "wall_clock_s": 60.464985833001265,
+      "vorticity": {
+        "abs_max": 39.7874,
+        "abs_p99": 3.236418000000003,
+        "abs_p99_9": 9.042389650000386,
+        "points": 467886
+      }
+    },
+    {
+      "group": "near-end",
+      "label": "angle/high/0.01",
+      "knobs": {
+        "aspect": 1.75,
+        "corner": 0.5,
+        "splitter": 1.5,
+        "angle": 14.85
+      },
+      "outcome": "settled",
+      "wall_clock_s": 57.07576483400044,
+      "vorticity": {
+        "abs_max": 37.7899,
+        "abs_p99": 3.2484005000000016,
+        "abs_p99_9": 9.182974050001198,
+        "points": 467886
+      }
+    }
+  ]
+}

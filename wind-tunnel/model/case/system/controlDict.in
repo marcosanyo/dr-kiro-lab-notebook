@@ -1,0 +1,33 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+
+application     pimpleFoam;
+
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         @END@;
+
+deltaT          @INITIAL_DELTA_T@;
+adjustTimeStep  yes;
+maxCo           @MAX_CO@;
+maxDeltaT       @MAX_DELTA_T@;
+
+// The solver writes at every frame spacing so that the time step lands exactly on every frame time (the
+// sampler below would otherwise write its first frame at the step before it). purgeWrite keeps only the
+// newest time folder; no result is read from it.
+writeControl    adjustableRunTime;
+writeInterval   @FRAME_SPACING@;
+purgeWrite      1;
+writeFormat     ascii;
+runTimeModifiable no;
+
+functions
+{
+    #include "monitors"
+}

@@ -55,7 +55,8 @@ class Scanner:
     ) -> None:
         if not apps:
             raise ScanError("the scan needs at least one application's sources")
-        stop = {term_tokens(w) for w in stop_list}
+        stop_words = list(stop_list)
+        stop = {term_tokens(w) for w in stop_words}
         terms: dict[tuple[str, ...], str] = {}
         for app in apps:
             allow = {term_tokens(a) for a in app.allow}
@@ -78,6 +79,7 @@ class Scanner:
             [f for a in apps for f in a.file_names],
             [d for a in apps for d in a.solver_dirs],
             local_paths,
+            stop_words,
         )
         self.labs: list[LabLayout] = [a.lab for a in apps if a.lab is not None]
 

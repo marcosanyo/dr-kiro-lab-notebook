@@ -260,7 +260,7 @@ def parse_hypothesis(text: str, hypothesis_id: str, decl: Declaration, file: str
                 file, line, f"{where} must have exactly the keys id, measurement, range, label and when"
             )
         if not isinstance(local, str) or not ids.is_local_prediction_id(local):
-            raise _refuse(file, line, f'{where}: id must be P<n>, such as "P1"')
+            raise _refuse(file, line, f'{where}: id must be numbered like "P1", "P2", "P3"')
         if local in seen:
             raise _refuse(file, line, "prediction ", Quote(local, file, line), " is listed twice")
         seen.add(local)
@@ -285,7 +285,16 @@ def parse_hypothesis(text: str, hypothesis_id: str, decl: Declaration, file: str
             raise _refuse(file, line, f"{local}: range must be [low, high] with two finite numbers")
         low, high = float(bounds[0]) + 0.0, float(bounds[1]) + 0.0
         if not low < high:
-            raise _refuse(file, line, f"{local}: range is empty or reversed; low must be below high")
+            raise _refuse(
+                file,
+                line,
+                (
+                    f"{local}: range low must be strictly below high; "
+                    "a single value is not accepted as a range. "
+                    "For a value that is exactly one number, give a small range around it, "
+                    "such as [0.5, 1.5] for the value 1"
+                ),
+            )
         label = raw["label"]
         if label not in LABELS:
             raise _refuse(file, line, f"{local}: label must be one of {', '.join(LABELS)}")

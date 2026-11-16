@@ -1,0 +1,26 @@
+[project]
+name = "wind-tunnel-model"
+version = "0.1.0"
+description = "wind-tunnel: the settings, geometry, mesh recipe and estimators of the 2D flow model."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "gmsh",
+    "numpy",
+]
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+[tool.uv.build-backend]
+module-name = "wind_tunnel_model"
+[dependency-groups]
+dev = ["hypothesis", "pytest", "ruff"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["needs_gmsh: builds a real mesh with Gmsh (skipped where Gmsh cannot be imported)"]
+addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
+pythonpath = ["tests"]
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "BLE", "SIM"]

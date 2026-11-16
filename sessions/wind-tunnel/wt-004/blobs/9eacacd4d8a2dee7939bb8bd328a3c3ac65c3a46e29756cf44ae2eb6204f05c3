@@ -1,0 +1,38 @@
+### H6: Best point has cd near 0.99 or lower with no shedding
+
+WHEN corner is 1, angle is 0 and the splitter is 2.2 at aspect 2, or 3 at aspect 1.7 or 2.5, THE system SHALL be steady with cd below 1.02.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "cd"
+range = [0.9, 1.02]
+label = "new-combination"
+[prediction.when]
+aspect = 2.0
+corner = 1.0
+splitter = 2.2
+angle = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "cd"
+range = [0.9, 1.02]
+label = "new-combination"
+[prediction.when]
+aspect = 1.7
+corner = 1.0
+splitter = 3.0
+angle = 0.0
+
+[[prediction]]
+id = "P3"
+measurement = "cd"
+range = [0.9, 1.02]
+label = "new-combination"
+[prediction.when]
+aspect = 2.5
+corner = 1.0
+splitter = 3.0
+angle = 0.0
+```

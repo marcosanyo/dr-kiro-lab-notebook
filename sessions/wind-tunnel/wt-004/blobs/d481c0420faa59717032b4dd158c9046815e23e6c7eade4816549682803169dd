@@ -1,0 +1,11 @@
+# H1: Square body baseline sheds with high drag
+import math
+
+PHASE = "map"
+MODE = "compare"
+PARAMS = ["aspect", "corner", "splitter", "angle"]
+TRIALS = [
+    [1.0, 0.0, 0.0, 0.0],
+    [1.0, 1.0, 0.0, 0.0],
+    [1.0, 0.0, 2.0, 0.0],
+]

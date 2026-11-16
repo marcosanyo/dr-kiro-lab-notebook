@@ -1,0 +1,10 @@
+# Tasks
+
+Budget: 24 trials.
+
+- [ ] Map: baseline (H1)
+- [ ] Map: corner, splitter, aspect, angle one at a time
+- [ ] Rules
+- [ ] Test (new-combination / outside)
+- [ ] Best: lowest cd with shedding 0
+- [ ] Fill Discovered spec, end_session
