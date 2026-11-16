@@ -9,7 +9,18 @@ uv sync --extra frontend            # the front end needs the MCP SDK (the `fron
 sh scripts/check.sh                 # tests, ruff check and ruff format, as counts on one line
 ```
 
-Commands: `bench-scan`, `bench-verify`, `bench-mcp`, `bench-stop`, `bench-lab-hooks`.
+Commands: `bench-scan`, `bench-verify`, `bench-mcp`, `bench-stop`, `bench-lab-hooks`, `bench-make-lab`,
+`bench-new-session`, `bench-export-spec`, `bench-check-discovered`.
+
+After a session sealed as `ended`, the builder writes the copy of Dr. Kiro's final spec and checks every copy
+(dr-kiro Requirement 8), from the repository root:
+
+```sh
+bench-export-spec sessions/<application>/<session-id> discovered
+bench-check-discovered sessions discovered
+```
+
+The copy goes into `discovered/<application>/<session-id>/` and is committed with the sealed folder.
 
 ## Manual check in Kiro CLI (task 21)
 

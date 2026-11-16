@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `3440ff1b627e70b9f7312f0c111a81afe411ff9a0b5eba84912179487de07d5d`
+> 原文 SHA-256: `d0757ac949fc1fba361f24ca90ca32b5aa0f87bc434718e09e3bfb3722294438`
 
 # 設計: lab-bench（コア）
 
@@ -344,6 +344,8 @@ def <function knob name>(t, amp, period):
 - 記録の中では、各テキストフィールドと各 blob に記録された作成者に従います。
 - その他の生成ファイル（ノートブックのビルド出力、公開ファイル）は、作成者ごとの文字範囲を列挙したサイドカー `<file>.authors.json` を持たなければなりません。これは `lab-notebook` 仕様が生成します。スキャン対象のファイルにレベルの情報源がなければ、スキャンは失敗します (15.7)。
 - `lab/` フォルダー内の画像（`.png`、`.gif`、`.webp`）はテキストとして読まれません。拡張子が示すメディアタイプについて `check_picture`（セクション 4）を通り、失敗は種類 `picture` の検出になります (15.9)。
+- `dr_kiro` の glob に当てはまるラボのファイルで、バイトが `bench.drkiro` のパッケージデータにある 3 つのテンプレートのどれかと等しいものは、ビルダーレベルです（`scan/scan.py` の `TEMPLATE_BYTES`、15.11）。
+- `source.json` のあるフォルダーは最終仕様の写しです（`scan/levels.py` の `copy_pieces`、15.10）: 3 つのファイルは、SHA-256 が `source.json` の示すものと等しいとき Dr. Kiro のレベルで、`source.json` の文字列はビルダーレベルです（記録と同じくハッシュは飛ばす）。不一致、欠けたファイル、それ以外のファイルはスキャンを失敗させます。ハッシュが記録のものかどうかは、スキャンではなく `bench-check-discovered`（`dr-kiro` 設計 7.3）が確認します。
 - `bench-scan <paths...>` は検出ごとに `file:line: kind: match` を出力し、検出が 1 つでもあれば 0 以外の終了コードで終了します。
 
 ### 11.4 Dr. Kiro への出力 (15.8)

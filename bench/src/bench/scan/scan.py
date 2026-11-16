@@ -9,15 +9,30 @@ import argparse
 import sys
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 
 from bench.core.outcome import Message, Quote
 from bench.pictures import PictureError, check_picture
-from bench.scan.levels import LEVELS, SIDECAR_SUFFIX, Piece, record_pieces, sidecar_pieces
+from bench.scan.levels import (
+    COPY_SOURCE,
+    LEVELS,
+    SIDECAR_SUFFIX,
+    Piece,
+    copy_pieces,
+    record_pieces,
+    sidecar_pieces,
+)
 from bench.scan.patterns import Patterns
 from bench.scan.terms import AppSources, LabLayout, ScanError, load_app, load_stop_list
 from bench.scan.tokens import term_tokens, tokenize
 
+# The templates of Dr. Kiro's three spec files, as `bench-new-session` writes them into a lab. A lab file with
+# exactly these bytes is scanned at the builder level, whatever the lab's `dr_kiro` globs say.
+TEMPLATE_BYTES = frozenset(
+    (resources.files("bench.drkiro") / "files" / name).read_bytes()
+    for name in ("requirements.md", "design.md", "tasks.md")
+)
 PICTURE_SUFFIXES = {".png": "image/png", ".gif": "image/gif", ".webp": "image/webp"}
 
 # Files in a bench state folder that are never part of a record and are not scanned as one.
@@ -168,6 +183,9 @@ class Scanner:
         except UnicodeDecodeError as error:
             raise ScanError(f"{path}: not UTF-8 text; the scan cannot read it") from error
         level = self._lab_level(path)
+        if level == "dr-kiro" and text.encode("utf-8") in TEMPLATE_BYTES:
+            # A template not yet changed by Dr. Kiro is the builder's text (dr-kiro design 6).
+            level = "builder"
         if level is not None:
             return self.scan_text(text, level, str(path))
         findings: list[Finding] = []
@@ -178,6 +196,12 @@ class Scanner:
     def scan_record(self, folder: Path) -> list[Finding]:
         findings: list[Finding] = []
         for piece in record_pieces(folder):
+            findings += self.scan_piece(piece)
+        return findings
+
+    def scan_copy(self, folder: Path) -> list[Finding]:
+        findings: list[Finding] = []
+        for piece in copy_pieces(folder):
             findings += self.scan_piece(piece)
         return findings
 
@@ -193,6 +217,8 @@ class Scanner:
         if path.is_dir():
             if (path / "log.jsonl").is_file():
                 return self.scan_record(path)
+            if (path / COPY_SOURCE).is_file():
+                return self.scan_copy(path)
             findings: list[Finding] = []
             for child in sorted(path.iterdir()):
                 if child.name.endswith(SIDECAR_SUFFIX):

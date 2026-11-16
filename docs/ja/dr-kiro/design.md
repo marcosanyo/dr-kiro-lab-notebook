@@ -1,9 +1,9 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/design.md`](../../../.kiro/specs/dr-kiro/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `f1ea8e62a2f9f71515390135106c34f19df4567d3fe36bf2597a694e82342539`
+> 原文 SHA-256: `e2b5899ee02a3c5e0f94ffbc9420abc44b9371dc4e9c62aaf983a10789c91c88`
 
 # 設計: dr-kiro
 
-Requirements 1-7 を扱います。`lab-bench`（コア、フロントエンド F1-F12）の上に成り立ちます。ユーザーとともに行った決定は末尾に挙げています。
+Requirements 1-8 を扱います。`lab-bench`（コア、フロントエンド F1-F12）の上に成り立ちます。ユーザーとともに行った決定は末尾に挙げています。
 
 ## 1. ラボの構成
 
@@ -15,14 +15,15 @@ Requirements 1-7 を扱います。`lab-bench`（コア、フロントエンド 
     steering/method.md           how to work with the bench (builder, always included)
     steering/workflow.md         the four phases and the discovered spec (builder, always included)
     hooks/                       confine.py, calllog.py and three hook files (builder, bench-lab-hooks)
-    specs/lab/requirements.md    Dr. Kiro's files, written from the templates by bench-new-session
+    specs/lab/requirements.md    Dr. Kiro's files, written from the templates by bench-new-session; tracked in git
+                                 in their template state
     specs/lab/design.md
     specs/lab/tasks.md
   experiments/                   Dr. Kiro's experiment files (git-ignored)
   pictures/                      written by the bench (git-ignored)
 ```
 
-セッション設定はラボの外の `bench-run/<application>/<session id>.toml` に置きます（git の管理対象外、`structure.md`）。
+セッション設定はラボの外の `bench-run/<application>/<session id>.toml` に置きます（git の管理対象外、`structure.md`）。終わった各セッションの最終仕様は、次のセッションの Dr. Kiro が読めないように、ラボの外の `discovered/<application>/<session id>/` に写します（セクション 7.3）。
 
 ## 2. パッケージ構成
 
@@ -98,11 +99,13 @@ tasks.md          # Tasks / - [ ] Map the system / - [ ] State rules / - [ ] Tes
 
 空の表はすべてのスナップショットに通り、`end_session` でだけ拒否されます（`lab-bench` 12.5）。
 
+テンプレートはビルダーの文章です。ラボの中では Dr. Kiro のファイルの置き場所にあります（`.kiro/specs/**` はラボの `dr_kiro` の glob に含まれる）。そのため、ブラインドスキャンは、テンプレートとバイト単位で同じ内容のラボのファイルをビルダーの段階で読みます（`lab-bench` 15.11）。`body-lab` と `wind-tunnel` のアダプターのテストは、それぞれの語でテンプレートをビルダーの段階でスキャンします。フェイクアプリケーションについては `bench/tests/unit/test_spec_copy.py` が行います。ラボはテンプレートを git に入れておくので、チェックアウトすると Dr. Kiro が何から始めるかが見えます。
+
 ## 7. コマンド (Req 5)
 
 ### 7.1 `bench-make-lab <lab>`
 
-エージェントファイルとプロンプトを `.kiro/agents/` に、2 つのステアリングファイルを `.kiro/steering/` にコピーし、`bench-lab-hooks` のインストーラーを実行します。上書きするのはそれらのファイルだけです。`experiments/` がなければ作成し、ラボの `.gitignore`（`experiments/`、`pictures/`、`.kiro/specs/`）を書きます。
+エージェントファイルとプロンプトを `.kiro/agents/` に、2 つのステアリングファイルを `.kiro/steering/` にコピーし、`bench-lab-hooks` のインストーラーを実行します。上書きするのはそれらのファイルだけです。`experiments/` がなければ作成し、ラボの `.gitignore`（`experiments/`、`pictures/`）を書きます。`.kiro/` の下は何も無視しません（Req 5.4）。
 
 ### 7.2 `bench-new-session`
 
@@ -120,6 +123,16 @@ bench-new-session --application <name> --adapter <module:factory> --scan-sources
 5. 3 つのテンプレートを `.kiro/specs/lab/` にコピーする。
 6. 与えられた値で `Session.start` を実行する。拒否されたらそれを表示し、コマンドは失敗する。
 7. 設定ファイル（`lab-bench` F7 のフィールド、パスはそのファイルからの相対パス）を `resume = true` で書き、セッションを閉じる。
+
+### 7.3 最終仕様の写し (Req 8)
+
+`bench/src/bench/record/spec_copy.py`:
+
+- `final_spec(record)` は封印済みの記録を検証し（`bench-verify` の確認）、`"for": "end"` のスナップショットのエントリー 1 つを取り、3 つのファイルのバイトを、アプリケーション、セッション、スナップショットの番号とハッシュ、封印のハッシュとともに返します。検証に通らない記録、`stopped` の封印、終了スナップショットのない `ended` の封印（body-1）では、どれであるかを述べて失敗します。`build-from-spec` は reader の仕様をこれで読みます。
+- `bench-export-spec <sealed session folder> <discovered folder>` は `<discovered>/<application>/<session id>/requirements.md`、`design.md`、`tasks.md` と `source.json` を書きます（`json.dumps` を `indent=2` とキーの並べ替えで使い、改行で終える。バイトは記録だけで決まる）。フォルダーがすでにあれば拒否します。写しを書き直すときは、先に削除します。
+- `bench-check-discovered <sessions folder> <discovered folder>` は `<sessions>/<application>/<session id>/` のすべての記録を読みます。終了スナップショットのある ended の記録では、写しのファイルを `bench-export-spec` が書く内容と比べます。それ以外では写しがないことを求めます。`discovered` フォルダーにあるそれ以外のファイルやフォルダーは、`README.md` と `README.md.authors.json` を除いて報告します。セッションごとに 1 行を表示し、問題があれば一覧にして終了コード 1 で終わります。
+- `ended` としてセッションが封印された後、ビルダーは両方のコマンドを実行し、写しを封印済みフォルダーとともにコミットします（`bench/README.md`、各アプリケーションの README）。公開の前に、リポジトリ全体に対して `bench-check-discovered` を実行します。同じことをテストも行います。
+- ブラインドスキャンは、`source.json` のあるフォルダーを写しとして読みます（`lab-bench` 15.10）: 3 つのファイルは SHA-256 が `source.json` と一致する間は Dr. Kiro の段階で、`source.json` はハッシュを除いてビルダーの段階で読みます。`discovered/README.md` には、ラボと記録の外にある他のビルダーのファイルと同じく、作者サイドカー（bench）があります。
 
 ## 8. セッションの実行 (Req 6)
 
@@ -150,6 +163,7 @@ kiro-cli chat --agent dr-kiro                     # then type the start line
 | フェンス付きの各例が、プレースホルダーをフェイクの宣言に合うテスト用の値に置き換えたとき、`parse_hypothesis`、`prepare`/`compute`、`parse_table` に受け付けられる。 | 3.6, 7.2 |
 | エージェントファイルが、`lab-bench` F10 にセクション 3 のフィールドを加えたものに等しい。 | 2.1 |
 | `bench-new-session` が、開いているセッションがあると拒否する。実行後のラボにはビルダーのファイルとテンプレートだけがあり、セッションが開いていて、設定には `resume = true` がある。 | 5.2, 5.3, 7.3 |
+| `bench/tests/unit/test_spec_copy.py`: wt-004 の最終仕様がその終了スナップショットである。body-1 と wt-002 は拒否される。編集されたファイル、余分なファイル、欠けたファイル、記録のない写しが報告される。リポジトリの `discovered/` が `sessions/` と一致する。写しはハッシュでスキャンされる。ラボの中のテンプレートはビルダーの段階でスキャンされる。 | 7.5, 8 |
 
 手動（Req 7.4）: Kiro CLI で、`bench-run/fake/` にあるフェイクアプリケーションのラボを使い、予算 12 試行でセッションを 1 つ行います。ビルダーが送るのは開始の一文と、必要なら再開の一文だけです。合格条件: 記録が `ended` の封印で終わり、封印済みフォルダーに対する `bench-scan` が何も報告しないこと。
 
@@ -164,6 +178,7 @@ kiro-cli chat --agent dr-kiro                     # then type the start line
 | `session.py` | 5.2, 5.3 |
 | `bench/README.md` | 6 |
 | `bench/tests/drkiro/`, 手動セッション | 7 |
+| `record/spec_copy.py`, `discovered/README.md`, `test_spec_copy.py` | 5.4, 7.5, 8 |
 
 ## 11. 作業を止めて相談する条件
 
@@ -183,3 +198,7 @@ kiro-cli chat --agent dr-kiro                     # then type the start line
 6. `rules.md` の文言チェックは過剰なため取りやめます。それについては Dr. Kiro のファイルに何も入れません。
 7. 検証は最小限です: いくつかの自動テストと、短いフェイクセッション 1 つです (Req 7)。
 8. 否定されたルールは、発見した spec の表に `rejected` の行として残します (Req 3.7)。ノートブックはこの表を中心に作られており（`docs/brief.md` のノートブックの節）、否定されたルールを消すとその痕跡が残らないためです。workflow の雛形に、`rejected` の定義の後へ 1 文を足します。半分だけ正しいルールを `partly` と `rejected` のどちらにするかには触れません。これは次のセッションから Dr. Kiro の条件を変えます。封印済みセッション `body-1` と `wt-004` はこの文なしで作られており、書き換えません。ユーザーの依頼です（`docs/status.md`、brief の改訂）。
+9. Dr. Kiro の最終仕様は、ふつうの Markdown として `discovered/<application>/<session id>/` で git に保管します (Req 5.4, 8)。ユーザーの依頼です: 大会の規則は `.kiro` やその下のフォルダーを `.gitignore` に挙げることを禁じており、Dr. Kiro が書いた仕様こそが成果物で、リポジトリで読めるようにするためです。写しはラボの外にあるので、次のセッションの Dr. Kiro は以前の結論を読めません。また記録のフォルダーの外にあるので、記録は封印されたままです。
+10. ラボの 3 つの仕様ファイルは、テンプレートの状態で追跡します（ユーザーが 2 つの案から選択）。セッションの後、作業ツリーでは次の `bench-new-session` がテンプレートを書き直すまで変更された状態になります。その状態ではコミットしません。
+11. ラボの中のテンプレートは、バイトでビルダーの段階としてスキャンします（`lab-bench` 15.11）。代案: パッケージのテンプレートだけをスキャンする。採らなかった理由: ラボで追跡されている写しが Dr. Kiro の段階でスキャンされたままになるためです。
+12. body-1 には写しを作りません: その記録には終了スナップショットがなく、最後に持っていた表は記録にないためです。`bench-export-spec` はそれを拒否し、`discovered/README.md` が理由を述べます。体の 2 回目のセッションを後で行います（ユーザーの決定）。前のセッションが写されたかを `bench-new-session` の前に確認することはしません: 写しはいつでも記録から書けるので、代わりに公開の前に確認します（ユーザーの決定）。

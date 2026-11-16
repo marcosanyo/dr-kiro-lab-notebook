@@ -256,9 +256,12 @@ back to the repository root and runs:
 bench-verify sessions/wind-tunnel/<session-id>
 bench-scan --config wind-tunnel/adapter/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
   wind-tunnel/lab sessions/wind-tunnel/<session-id>
+bench-export-spec sessions/wind-tunnel/<session-id> discovered
+bench-check-discovered sessions discovered
 ```
 
-The builder commits the sealed folder only if both pass. If the session does not end on its own, quit Kiro CLI and run
+The builder commits the sealed folder and its copy in `discovered/` only if all of them pass. A stopped session
+has no copy. If the session does not end on its own, quit Kiro CLI and run
 `bench-stop $R/<session-id>.toml --reason <text>`.
 
 ## Numbers

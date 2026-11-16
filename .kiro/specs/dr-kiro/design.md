@@ -1,6 +1,6 @@
 # Design: dr-kiro
 
-Covers Requirements 1-7. Builds on `lab-bench` (core, front end F1-F12). Decisions taken with the user are listed
+Covers Requirements 1-8. Builds on `lab-bench` (core, front end F1-F12). Decisions taken with the user are listed
 at the end.
 
 ## 1. Lab layout
@@ -13,7 +13,8 @@ at the end.
     steering/method.md           how to work with the bench (builder, always included)
     steering/workflow.md         the four phases and the discovered spec (builder, always included)
     hooks/                       confine.py, calllog.py and three hook files (builder, bench-lab-hooks)
-    specs/lab/requirements.md    Dr. Kiro's files, written from the templates by bench-new-session
+    specs/lab/requirements.md    Dr. Kiro's files, written from the templates by bench-new-session; tracked in git
+                                 in their template state
     specs/lab/design.md
     specs/lab/tasks.md
   experiments/                   Dr. Kiro's experiment files (git-ignored)
@@ -21,7 +22,8 @@ at the end.
 ```
 
 Session configs live outside the lab, in `bench-run/<application>/<session id>.toml` (git-ignored,
-`structure.md`).
+`structure.md`). The final spec of each ended session is copied outside the lab, into
+`discovered/<application>/<session id>/` (section 7.3), so that the next session's Dr. Kiro cannot read it.
 
 ## 2. Package layout
 
@@ -129,13 +131,19 @@ tasks.md          # Tasks / - [ ] Map the system / - [ ] State rules / - [ ] Tes
 
 The empty table passes every snapshot and is refused only by `end_session` (`lab-bench` 12.5).
 
+The templates are builder text. In a lab they sit where Dr. Kiro's files go (`.kiro/specs/**` is in the lab's
+`dr_kiro` globs), so the blind scan reads a lab file that holds exactly a template's bytes at the builder level
+(`lab-bench` 15.11). The adapter tests of `body-lab` and `wind-tunnel` scan the templates at the builder level with
+their own terms; `bench/tests/unit/test_spec_copy.py` does it for the fake application. The lab keeps the
+templates in git, so a checkout shows what Dr. Kiro starts from.
+
 ## 7. Commands (Req 5)
 
 ### 7.1 `bench-make-lab <lab>`
 
 Copies the agent file and prompt into `.kiro/agents/`, the two steering files into `.kiro/steering/`, and runs
 the `bench-lab-hooks` installer. Overwrites those files only. It creates `experiments/` if missing and writes the
-lab's `.gitignore` (`experiments/`, `pictures/`, `.kiro/specs/`).
+lab's `.gitignore` (`experiments/`, `pictures/`). Nothing under `.kiro/` is ignored (Req 5.4).
 
 ### 7.2 `bench-new-session`
 
@@ -155,6 +163,30 @@ All arguments are required (`rules.md` 2). Steps, each failing with a message an
 5. Copy the three templates into `.kiro/specs/lab/`.
 6. `Session.start` with the given values; a refusal is printed and the command fails.
 7. Write the config file (`lab-bench` F7 fields, paths relative to it) with `resume = true`, and close the session.
+
+### 7.3 Copies of the final spec (Req 8)
+
+`bench/src/bench/record/spec_copy.py`:
+
+- `final_spec(record)` verifies the sealed record (`bench-verify`'s check), takes the one snapshot entry with
+  `"for": "end"`, and returns the three files' bytes with the application, the session, the snapshot's sequence
+  number and hash, and the seal's hash. It fails, saying which, for a record that does not verify, a `stopped`
+  seal, or an `ended` seal without an end snapshot (body-1). `build-from-spec` reads the reader's spec through it.
+- `bench-export-spec <sealed session folder> <discovered folder>` writes
+  `<discovered>/<application>/<session id>/requirements.md`, `design.md`, `tasks.md` and `source.json`
+  (`json.dumps` with `indent=2` and sorted keys, then a newline, so the bytes depend only on the record). It refuses
+  an existing folder; a copy is written again by deleting it first.
+- `bench-check-discovered <sessions folder> <discovered folder>` reads every record in
+  `<sessions>/<application>/<session id>/`. For an ended record with an end snapshot it compares the copy's files
+  with what `bench-export-spec` would write; for the others it requires that there is no copy. It reports any
+  other file or folder in the discovered folder, except `README.md` and `README.md.authors.json`. It prints one
+  line per session and exits 1 with the list of problems.
+- After a session is sealed as `ended`, the builder runs both commands and commits the copy with the sealed folder
+  (`bench/README.md`, the application READMEs). Before publishing, `bench-check-discovered` runs on the whole
+  repository; a test does the same.
+- The blind scan reads a folder with `source.json` as a copy (`lab-bench` 15.10): the three files at the Dr. Kiro
+  level while their SHA-256 match `source.json`, and `source.json` at the builder level without its hashes.
+  `discovered/README.md` has an author sidecar (bench) like any other builder file outside a lab and a record.
 
 ## 8. Running a session (Req 6)
 
@@ -186,6 +218,7 @@ Example tests, in `bench/tests/drkiro/`:
 | Each fenced example, with placeholders replaced by test values that fit the fake declaration, is accepted by `parse_hypothesis`, `prepare`/`compute` and `parse_table`. | 3.6, 7.2 |
 | The agent file equals `lab-bench` F10 plus the fields of section 3. | 2.1 |
 | `bench-new-session` refuses with an open session; afterwards the lab holds builder files and templates only, and the session is open with `resume = true` in the config. | 5.2, 5.3, 7.3 |
+| `bench/tests/unit/test_spec_copy.py`: the final spec of wt-004 is its end snapshot; body-1 and wt-002 are refused; an edited, extra or missing file and a copy without a record are reported; the repository's `discovered/` matches `sessions/`; a copy is scanned by hash; a template in a lab is scanned at the builder level. | 7.5, 8 |
 
 Manual (Req 7.4): one session in Kiro CLI with the fake application's lab in `bench-run/fake/` and a budget of
 12 trials. The builder sends only the start line and, if needed, the continue line. Pass: the record ends with an
@@ -202,6 +235,7 @@ Manual (Req 7.4): one session in Kiro CLI with the fake application's lab in `be
 | `session.py` | 5.2, 5.3 |
 | `bench/README.md` | 6 |
 | `bench/tests/drkiro/`, manual session | 7 |
+| `record/spec_copy.py`, `discovered/README.md`, `test_spec_copy.py` | 5.4, 7.5, 8 |
 
 ## 11. What would make me stop and ask
 
@@ -226,3 +260,16 @@ Approved by the user before this spec was written:
    rule is `partly` or `rejected`. This changes Dr. Kiro's conditions from the next session on. The sealed sessions
    `body-1` and `wt-004` were made without the sentence and are not rewritten. Requested by the user
    (`docs/status.md`, the brief revision).
+9. Dr. Kiro's final spec is kept in git as plain Markdown, in `discovered/<application>/<session id>/` (Req 5.4, 8).
+   Requested by the user: the competition rules forbid listing `.kiro` or its folders in `.gitignore`, and the spec
+   Dr. Kiro wrote is the product, to be read in the repository. The copies sit outside the lab, so the next
+   session's Dr. Kiro cannot read an earlier conclusion, and outside the record folders, which stay as sealed.
+10. The lab's three spec files are tracked in their template state (user's choice of two options). A session
+    leaves them changed in the working tree until the next `bench-new-session` writes the templates again; they
+    are never committed in that state.
+11. A template in a lab is scanned at the builder level, by its bytes (`lab-bench` 15.11). Alternative: scan the
+    package templates only. Not chosen: the tracked copies in the lab would then be scanned at the Dr. Kiro level.
+12. body-1 gets no copy: its record has no end snapshot, and the table it held at the end is not in the record.
+    `bench-export-spec` refuses it and `discovered/README.md` says why. A second body-lab session will be run
+    (user's decision). No check before `bench-new-session` that the previous session was copied: a copy can be
+    written from the record at any time; the check runs before publishing instead (user's decision).

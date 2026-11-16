@@ -1,9 +1,9 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/tasks.md`](../../../.kiro/specs/dr-kiro/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `4b7d036c05f8a439d9d6d4c9662806db6967986297d2662b67e07efe78628459`
+> 原文 SHA-256: `7a11f5e04f6eb42fd7ea819934171aae7420b2d7b47a550cf2818ca87e4382f7`
 
 # タスク: dr-kiro
 
-要件 1〜7（設計セクション 1〜9）のタスクです。各タスクは `sh bench/scripts/check.sh` が通る（テスト、ruff check、ruff format）ことで終わります。検証は要件 7 の最低限にとどめ、設計セクション 9 の 4 つ以外のテストは作りません。
+要件 1〜8（設計セクション 1〜9）のタスクです。各タスクは `sh bench/scripts/check.sh` が通る（テスト、ruff check、ruff format）ことで終わります。検証は要件 7 の最低限にとどめ、設計セクション 9 の 4 つ以外のテストは作りません。
 
 - **1. ビルダーのファイルとテンプレート** — 完了
   - `bench/src/bench/drkiro/files/` を書く: `dr-kiro.json`（設計 3）、`dr-kiro-prompt.md`（設計 4）、`inclusion: always` のフロントマターと、空欄付きのフェンス内の例を持つ `method.md` と `workflow.md`（設計 5）、そして 3 つのテンプレート（設計 6）。英語で書き、パス、部位の名前、実行から得た数字を含めない。
@@ -32,3 +32,14 @@
   - フェイクセッションの手順は、ビルダーのファイルを変えた後の簡単な確認用として `bench/README.md` に残す。
   - 最初の実行の結果（body-1、macOS、2026-11-13）: 再開の一文なしで、予算の残り 0 で `ended` として封印された。`bench-verify` は 117 件を検証した。ラボと封印済みフォルダーに対する `bench-scan` は、フックを `python -B` で起動するよう変えた後に、検出なしと報告した（ラボ内の `.pyc` がスキャンを止めていた）。Dr. Kiro が挙げたステアリングは `method` と `workflow` だけだった。
   - _要件: 7.4_
+
+- **6. 最終仕様の写し** — 完了
+  - `bench/src/bench/record/spec_copy.py` と、コンソールスクリプト `bench-export-spec` と `bench-check-discovered`（設計 7.3）。`bench-make-lab` はラボの `.gitignore` を `.kiro/specs/` なしで書く。2 つのラボの `.gitignore` もそれに合わせ、ラボは `.kiro/specs/lab/` の 3 つのテンプレートを追跡する。
+  - ブラインドスキャン: `source.json` のあるフォルダーは写しであり、ラボの中のテンプレートはビルダーの文章である（`lab-bench` 15.10、15.11、タスク 35）。
+  - 作者サイドカー付きの `discovered/README.md` と、`bench-export-spec` で書いた `wt-004` の写し。
+  - `bench/README.md`、`body-lab/README.md`、`wind-tunnel/README.md`: セッションが終わった後の 2 つのコマンド。
+  - テスト: `bench/tests/unit/test_spec_copy.py`、および `body-lab` と `wind-tunnel` のアダプターの `tests/test_templates.py`。
+  - _要件: 5.4, 7.5, 8_
+- **7. 全体の確認、スキャン、リハーサル** — 完了
+  - `sh bench/scripts/check.sh`。`body-lab` のアダプターのテストと、`wind-tunnel` のモデルとアダプターのテスト、ruff。封印済みのすべてのフォルダーに対する `bench-verify`。`bench-check-discovered sessions discovered`。両方のラボ、`sessions/`、`discovered/` に対する `bench-scan`。本物の Docker での `wind-tunnel/rehearse_session.py`（そのセッションの写しを書き、確認し、スキャンするようになった）。
+  - _要件: 7.5, 8_

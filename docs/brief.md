@@ -43,6 +43,7 @@ Three Kiros. **You are the builder**: you build the lab from specs in the root `
 /build-from-spec/  the reader's requests and the script that starts its runs
 /infra/            AWS CDK
 /sessions/         published session records
+/discovered/       Dr. Kiro's final spec of each ended session, copied from its sealed record
 /bench-run/        builder-side files of a running session; git-ignored
 /docs/brief.md     this file
 /docs/ja/          Japanese reference translations of the specs

@@ -5,7 +5,7 @@
 Dr. Kiro is the experimenter: a Kiro custom agent that works only in an application's `lab/` folder, uses the bench
 tools, and writes the spec of a system it knows nothing about, from evidence. This spec covers what makes Dr. Kiro
 itself: its agent definition (name, description, prompt), its lab steering, the templates of its lab spec files,
-and the commands that make a lab and start a session.
+the commands that make a lab and start a session, and the copies of Dr. Kiro's final spec in `discovered/`.
 
 It builds on `lab-bench`, which already provides the bench, the MCP server, the two lab hooks and the mechanical
 part of the agent definition (`lab-bench` design F10). The formats Dr. Kiro writes (hypothesis and prediction
@@ -121,8 +121,10 @@ so that no session starts from a half-reset lab.
    the picture files and the three lab spec files), write the templates, start the session with the core
    (`Session.start`), and write the session config outside the lab with `resume = true`, so that `bench-mcp`
    always reopens the session it was given.
-4. Dr. Kiro's files in a lab (the experiments and pictures folders and `.kiro/specs/`) SHALL be ignored by git;
-   the sealed record holds them. The builder files and the templates (package data) stay tracked.
+4. The experiments and pictures folders of a lab SHALL be ignored by git; the sealed record holds their files.
+   Nothing under `.kiro/` SHALL be listed in a `.gitignore`: Dr. Kiro's three lab spec files are tracked in their
+   template state, and the final spec of each ended session is kept in `discovered/` (Requirement 8). The builder
+   files and the templates (package data) stay tracked.
 
 ### Requirement 6: Running a session
 
@@ -148,3 +150,32 @@ depends on what a person types.
    holds only builder files and templates and the session is open.
 4. ONE manual session with the fake application in Kiro CLI SHALL show: the session reaches `end_session` without
    help, is sealed as `ended`, and the sealed record passes the blind scan. Nothing else is judged in that session.
+5. THE tests SHALL check Requirement 8 against the sealed records in `sessions/`: a final spec is read from an
+   ended record with an end snapshot and refused for the others; a copy that is edited, has an extra file or misses
+   a file is reported; the repository's `discovered/` matches its records.
+
+### Requirement 8: Copies of the final spec
+
+**User story:** As a reader of the repository, I want the spec Dr. Kiro wrote in each ended session as plain
+Markdown files, so that I can read what it discovered without opening the sealed record.
+
+#### Acceptance criteria
+
+1. THE final spec of a session SHALL be the three files of its end snapshot (`lab-bench` 10.4), read from the
+   sealed record after its hash chain is verified. IF the record does not verify, was sealed as `stopped`, or was
+   sealed as `ended` without an end snapshot, THEN reading it SHALL fail, saying which.
+2. THE reading of 8.1 SHALL be the one source of the final spec for every use: the copies here and the reader's
+   spec in `build-from-spec`.
+3. THE command `bench-export-spec <sealed session folder> <discovered folder>` SHALL write
+   `<discovered>/<application>/<session-id>/` with the three files byte for byte and `source.json`, which names the
+   application, the session, the end snapshot's sequence number and hash, the seal's hash, and the SHA-256 of each
+   file. IF that folder exists, THEN it SHALL fail, naming it, and change nothing.
+4. THE command `bench-check-discovered <sessions folder> <discovered folder>` SHALL list each sealed session and
+   what it found, and SHALL fail, naming each problem, unless: every session sealed as `ended` with an end snapshot
+   has a copy whose files equal, byte for byte, what 8.3 writes; a session sealed as `stopped`, or as `ended`
+   without an end snapshot, has no copy; and the discovered folder holds nothing else except `README.md` and its
+   author sidecar.
+5. THE check of 8.4 SHALL run before publishing (the `publish` spec) and in the tests.
+6. `discovered/README.md` SHALL say what the copies are, that the sealed record stays the source, and why a
+   session has no copy.
+7. THE blind scan SHALL scan the copies (`lab-bench` 15.10).

@@ -445,6 +445,13 @@ output or in the records that reveals the model, so that the blind holds by cons
    check it with the picture check of the adapter contract (design section 4: the format's signature, and no text
    or metadata chunks) instead of reading it as text, and SHALL report a picture that fails the check as a finding.
    Any other file that is not UTF-8 text still fails the scan (15.7).
+10. WHERE a folder holds `source.json` (a copy of a final spec, `dr-kiro` Requirement 8), THE blind scan SHALL
+    scan each of the three spec files at the Dr. Kiro level only while its SHA-256 equals the one `source.json`
+    names, and `source.json` at the builder level without its hashes. IF a file does not match, is missing, or is
+    not one of the four, THEN THE blind scan SHALL fail, naming the file (15.7).
+11. WHERE a file in a lab matches the lab's Dr. Kiro globs and holds exactly the bytes of one of Dr. Kiro's
+    templates (`dr-kiro` Requirement 4), THE blind scan SHALL scan it at the builder level: the template is the
+    builder's text until Dr. Kiro changes it.
 
 ### Requirement 16: Property-based tests of the gates
 

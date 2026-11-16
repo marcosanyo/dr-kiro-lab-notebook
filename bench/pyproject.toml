@@ -13,6 +13,8 @@ bench-stop = "bench.frontend.stop:main"
 bench-lab-hooks = "bench.frontend.labhooks:main"
 bench-make-lab = "bench.drkiro.lab:main"
 bench-new-session = "bench.drkiro.session:main"
+bench-export-spec = "bench.record.spec_copy:export_main"
+bench-check-discovered = "bench.record.spec_copy:check_main"
 
 [project.optional-dependencies]
 frontend = [

@@ -457,6 +457,13 @@ that is not here, that is a change to this spec, not a second source.
   source fails the scan (15.7).
 - A picture in a `lab/` folder (`.png`, `.gif`, `.webp`) is not read as text. It goes through `check_picture`
   (section 4) for the media type its extension names, and a failure is a finding of kind `picture` (15.9).
+- A lab file in the `dr_kiro` globs whose bytes equal one of the three templates in `bench.drkiro` package data
+  is builder level (`TEMPLATE_BYTES` in `scan/scan.py`, 15.11).
+- A folder with `source.json` is a copy of a final spec (`copy_pieces` in `scan/levels.py`, 15.10): the three
+  files are Dr. Kiro level when their SHA-256 equal the ones `source.json` names, and the strings of
+  `source.json` are builder level, with hashes skipped as in a record. Any mismatch, missing file or other file
+  fails the scan. Whether the hashes are the record's is checked by `bench-check-discovered` (`dr-kiro` design
+  7.3), not by the scan.
 - `bench-scan <paths...>` prints `file:line: kind: match` for each finding and exits non-zero if there are any.
 
 ### 11.4 Output to Dr. Kiro (15.8)

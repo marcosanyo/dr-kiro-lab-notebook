@@ -1,6 +1,6 @@
 # Tasks: dr-kiro
 
-Tasks for Requirements 1-7 (design sections 1-9). Each task ends with `sh bench/scripts/check.sh` passing (tests,
+Tasks for Requirements 1-8 (design sections 1-9). Each task ends with `sh bench/scripts/check.sh` passing (tests,
 ruff check, ruff format). Verification is kept to the minimum of Requirement 7: no tests beyond the four in design
 section 9.
 
@@ -46,3 +46,21 @@ section 9.
     findings, after hooks were changed to run with `python -B` (a `.pyc` in the lab had stopped the scan); Dr.
     Kiro named only `method` and `workflow` as its steering.
   - _Requirements: 7.4_
+
+- [x] 6. Copies of the final spec
+  - `bench/src/bench/record/spec_copy.py` and the console scripts `bench-export-spec` and `bench-check-discovered`
+    (design 7.3). `bench-make-lab` writes the lab's `.gitignore` without `.kiro/specs/`; the two labs' `.gitignore`
+    files follow it, and the labs track the three templates in `.kiro/specs/lab/`.
+  - The blind scan: a folder with `source.json` is a copy, and a template in a lab is builder text (`lab-bench`
+    15.10, 15.11, task 35).
+  - `discovered/README.md` with its author sidecar, and the copy of `wt-004`, written with `bench-export-spec`.
+  - `bench/README.md`, `body-lab/README.md` and `wind-tunnel/README.md`: the two commands after a session ends.
+  - Tests: `bench/tests/unit/test_spec_copy.py`, and `tests/test_templates.py` in the `body-lab` and `wind-tunnel`
+    adapters.
+  - _Requirements: 5.4, 7.5, 8_
+- [x] 7. Full check, scans and rehearsal
+  - `sh bench/scripts/check.sh`; the `body-lab` adapter tests and the `wind-tunnel` model and adapter tests, with
+    ruff; `bench-verify` on every sealed folder; `bench-check-discovered sessions discovered`; `bench-scan` on both
+    labs, `sessions/` and `discovered/`; `wind-tunnel/rehearse_session.py` with real Docker, which now also writes,
+    checks and scans the copy of its session.
+  - _Requirements: 7.5, 8_
