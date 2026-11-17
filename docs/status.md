@@ -9,13 +9,22 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 - `docs/brief.md` を今の方針に合わせた: 題は Dr. Kiro's Lab Notebook、決め台詞は The experiment gets the final edit.。ノートは発見した spec の表が中心
   （ベンチの状態の語 4 つを文字で出す）。新しい spec `build-from-spec`（4.5）を足し、publish は 4.6 になった。`angle` [0, 15]°、画像は PNG の画像シート、
   MCP は決定済み、レイアウトは今のフォルダーに合わせた。`.kiro/steering/product.md` も合わせた。
-- **次の一手:** `lab-notebook` の要件を作る（brief 4.4。残る DECIDE は、走らせた条件の区切り方と body-lab での見せ方）。その後に `build-from-spec` の要件を作る（4.5）。
+- **次の一手:** `lab-notebook` の設計、続いてタスク（下の「ラボノートブック」を参照）。その後に `build-from-spec` の要件を作る（4.5）。
 - **済み:** Dr. Kiro の雛形（`bench/src/bench/drkiro/files/workflow.md` と各ラボの `lab/.kiro/steering/workflow.md`）に
   「否定された規則は表から消さず、`rejected` の行として残す」の 1 文を足した。`partly` と `rejected` のどちらに書くかは Dr. Kiro に任せたまま。
   これから始めるセッションは、この 1 文がある条件で始まる。`dr-kiro` の spec（要件 3.7、設計 5.2、Decision 8）に記録した。
   封印済みの body-1 と wt-004 はこの文なしで作られており、書き換えない。
 - リプレイで取り消し線が出るのが、途中のスナップショットに表がある時だけかどうかは、`lab-notebook` の spec で確かめる。
 
+## ラボノートブック（ブランチ `spec/lab-notebook`、worktree `.worktrees/lab-notebook`）
+- 要件、設計、タスクを書き、それぞれの日本語の参考訳（`docs/ja/lab-notebook/`）まで済み。body-2 を含む封印済み記録が前提。
+- **次の一手:** ローカルの Mac でタスク 1 から Run all。納品の順序は Decision 40: まずカバーと発見された spec の表を実際の記録から描く。
+  タスク 11 は停止点で、カバーと表の画面をユーザーに見せ、答えを `docs/status.md` に記録するまでマイルストーン 2 に進まない。
+- **ユーザーの決定（要件 Decision 42）:** ブラインドスキャンが各アダプターの宣言を import するので、ノートブックは `bench` と両方のアダプターにパスで依存する
+  （MuJoCo と `wind-tunnel-model` はインストールされるが、シミュレーターもソルバーも Docker も動かさない）。
+- 途中の段で読めない表は書かれたまま出す（ユーザーが確定、要件 Decision 18、設計 N26）。未決の質問はなし。
+- ルート `.kiro/` へのリンクは置かない（README を書くときに決める）。公開時のサイトの再スキャン方法は publish の spec で決める。
+- **README のステップへ:** README の限界に 1 行: ベンチの end 拒否文の中の引用 `H11.P3: hit/not-comparable` は、記録では書き手が Dr. Kiro になっている（ベンチの意図、`bench/src/bench/specfiles/discovered.py` の `_summary`）。ノートは記録どおり Dr. Kiro のインクで出し、注記を添える。ベンチは直さない（ユーザーの決定）。
 ## Dr. Kiro の spec の写し（ブランチ `feat/discovered-spec-export`）
 - 終わった各セッションの Dr. Kiro の 3 ファイルを、封印された記録の最後のスナップショットから `discovered/<app>/<session>/` に写す
   （`bench-export-spec`）。`source.json` に元のエントリーと各ファイルの SHA-256 を書く。`bench-check-discovered sessions discovered` が
