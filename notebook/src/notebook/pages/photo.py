@@ -12,14 +12,12 @@ from dataclasses import dataclass
 
 from bench.core import ids
 
-from notebook import html, text
+from notebook import addresses, html, text
 from notebook.errors import NotebookError
 from notebook.ink import Segment, pencil
 from notebook.layouts import Layout, check_sheet
 from notebook.pages.parts import say_text
 from notebook.records import RecordModel, Trial
-
-PICTURE_DIR = "p"
 
 # The tilt class of a photo comes from the trial number: `.tilt-<n mod 5>` (visual steering, instant photo).
 TILTS = 5
@@ -52,7 +50,7 @@ def picture_file(record: RecordModel, trial: Trial) -> PictureFile:
             trial.picture.source,
             f"the picture of {trial.id} has SHA-256 {digest}, not its blob hash {trial.picture.digest}",
         )
-    return PictureFile(f"{PICTURE_DIR}/{digest}.png", trial.picture.data)
+    return PictureFile(addresses.picture(digest, trial.picture.source), trial.picture.data)
 
 
 def _image_size(data: bytes) -> tuple[int, int]:
@@ -61,16 +59,14 @@ def _image_size(data: bytes) -> tuple[int, int]:
 
 
 def photo(
-    record: RecordModel, trial: Trial, layout: Layout, root: str, size: str = ""
+    record: RecordModel, trial: Trial, layout: Layout, size: str = ""
 ) -> tuple[list[Segment], PictureFile]:
     """The instant photo of one trial and the picture file it shows.
 
-    `root` is the relative path from the page to the site root (`""`, `"../"` or `"../../"`). `size` is `""`,
-    `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
+    Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
+    `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
     sheet that does not divide into whole cells fails the build, naming the record and the trial
     (Requirement 7.3)."""
-    if root not in ("", "../", "../../"):
-        raise ValueError(f"not a relative path to the site root: {root!r}")
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -96,7 +92,7 @@ def photo(
     img = html.void(
         "img",
         {
-            "src": f"{root}{picture.path}",
+            "src": picture.path,
             "width": str(width),
             "height": str(height),
             "alt": text.PHOTO_ALT,

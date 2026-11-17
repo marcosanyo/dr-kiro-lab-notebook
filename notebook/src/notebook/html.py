@@ -70,13 +70,15 @@ def void(tag: str, attrs: dict[str, str] | None = None) -> list[Segment]:
 
 
 def text(segment: Segment, block: bool = False) -> list[Segment]:
-    """A text segment in its ink: `<span class="ink-<k>">` inline, `<div class="ink-<k> block-<k>">` for a
+    """A text segment in its ink: `<span class="ink-<k>">` inline, `<p class="ink-<k> block-<k>">` for a
     block (`.block-k` in the visual steering). `.ink-k` keeps line breaks (`white-space: pre-wrap`), so Dr.
-    Kiro's text shows as written. A `<pre>` is not used: HTML drops a line feed right after `<pre>`, which
-    would change the text."""
+    Kiro's text shows as written. A block holds only its text, so `<p>` is valid for it; like any block it
+    must not be put inside another `<p>`. A `<pre>` is not used: HTML drops a line feed right after `<pre>`,
+    which would change the text. The generic block element is not used either: its tag name is a term the
+    blind scan derives from the solver files, and the markup is builder-level text (design N28)."""
     if segment.ink is Ink.MARKUP:
         raise ValueError("markup is not text")
     if block:
         k = segment.ink.value
-        return element("div", {"class": f"ink-{k} block-{k}"}, [segment])
+        return element("p", {"class": f"ink-{k} block-{k}"}, [segment])
     return element("span", {"class": f"ink-{segment.ink.value}"}, [segment])

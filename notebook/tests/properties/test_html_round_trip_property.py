@@ -66,7 +66,7 @@ def test_drkiro_text_round_trips(text, block):
     parser = _Collector()
     parser.feed(written)
     parser.close()
-    assert parser.tags == (["div"] if block else ["span"])
+    assert parser.tags == (["p"] if block else ["span"])
     assert parser.depth == 0
     assert "".join(parser.text) == text
 

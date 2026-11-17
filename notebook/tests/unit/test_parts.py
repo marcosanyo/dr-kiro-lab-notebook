@@ -33,7 +33,15 @@ def test_a_bad_row_id_is_never_put_in_a_link() -> None:
         parts.row_link('R1" onclick="x', "fixture", [])
 
 
-def test_legend_link_is_relative() -> None:
-    assert 'href="../../legend.html"' in _html(parts.legend_link("../../"))
-    with pytest.raises(ValueError):
-        parts.legend_link("/")
+def test_legend_link_is_relative_at_the_site_root() -> None:
+    page = _html(parts.legend_link())
+    assert '<footer class="footer"><a href="legend.html">' in page
+    assert ".." not in page and "/" not in page.split('href="', 1)[1].split('"', 1)[0]
+
+
+def test_sticky_note_and_blocks_use_no_generic_block_element() -> None:
+    page = _html(parts.sticky([], stamped=True))
+    assert page == '<aside class="sticky sticky-stamp"></aside>'
+    page = _html(parts.drkiro_block(Segment("\nfirst line kept", Ink.DRKIRO, "fixture")))
+    assert '<p class="ink-k block-k">\nfirst line kept</p>' in page
+    assert "<div" not in page

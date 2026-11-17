@@ -1,4 +1,6 @@
-"""The session page, `<app>/<session>/index.html` (Requirements 10, 14.5, 14.6, 17). Tasks 7.5 and 12.1.
+"""The session page, `<app>-<session>.html` at the site root (design 9, N28).
+
+Requirements 10, 14.5, 14.6, 17; tasks 7.5 and 12.1.
 
 Task 7.5 writes the first section, the discovered spec table as a notebook page (Requirement 10.1):
 
@@ -17,11 +19,12 @@ from collections.abc import Callable
 
 from bench.specfiles.discovered import Row, Table
 
-from notebook import html, numbers, refusals, tables
+from notebook import addresses, html, numbers, refusals, tables
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
+from notebook.pages import parts
 from notebook.pages.parts import chosen, drkiro_block, row_link, say_text, stamp, sticky, tab
 from notebook.records import Outcome, Prediction, RecordModel, Snapshot, Trial
 from notebook.views import View
@@ -95,7 +98,7 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
     for rv in tv.rows:
         row = rv.row
         source = f"{snapshot.design.source} line {row.line}"
-        rid = html.check_id("row", row.id, source)
+        row_anchor = addresses.row(row.id, source)
         id_cell = html.text(_cell(snapshot, row, row.id))
         reverse = tv.reverse_ids(rv)
         if reverse:
@@ -121,7 +124,7 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
             stamp(_status(snapshot, row), label),
             replaced,
         ]
-        attrs = {"id": f"row-{rid}"}
+        attrs = {"id": row_anchor}
         if rv.struck:
             attrs["class"] = "row-rejected"
         body += html.element("tr", attrs, [s for c in cells for s in html.element("td", None, c)])
@@ -135,7 +138,7 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         {"class": "spec-table"},
         [*html.element("thead", None, head), *html.element("tbody", None, body)],
     )
-    return html.element("div", {"class": "table-box"}, grid)
+    return html.element("section", {"class": "table-box"}, grid)
 
 
 def _status(snapshot: Snapshot, row: Row) -> Segment:
@@ -182,9 +185,9 @@ def _miss(view: View, outcome: Outcome, predictions: dict[str, Prediction]) -> l
     prediction = predictions.get(outcome.prediction)
     if prediction is None:
         raise NotebookError(source, f"the outcome names {outcome.prediction}, which no hypothesis registered")
-    experiment = html.check_id("experiment", outcome.experiment, source)
     pid = html.check_id("prediction", outcome.prediction, source)
-    link = html.element("a", {"href": f"#{experiment}-{pid}"}, html.text(pencil(pid, source)))
+    target = addresses.here(addresses.outcome(outcome.experiment, pid, source))
+    link = parts.link(target, html.text(pencil(pid, source)))
     where = f"{source}: prediction {pid}"
     if outcome.value is not None:
         value = html.element(
@@ -269,7 +272,7 @@ def _pinned(view: View, choice: Choice, name: str, pin: Pin | None) -> list[Segm
         source = _entry_source(view.record, trial.seq)
         checked = html.check_id("trial", tid, source)
         content = pin(trial) if pin is not None else html.text(pencil(checked, source))
-        out += html.element("div", {"class": "pinned", "data-trial": checked}, content)
+        out += html.element("figure", {"class": "pinned", "data-trial": checked}, content)
     return [*out, *chosen()]
 
 
@@ -313,7 +316,7 @@ def table_section(view: View, choices: Choices, pin: Pin | None = None) -> list[
         else:
             content = _table(view, snapshot, read)
     page = html.element(
-        "div", {"class": "table-page"}, [*html.element("h2", None, say_text("TABLE_HEADING")), *content]
+        "section", {"class": "table-page"}, [*html.element("h2", None, say_text("TABLE_HEADING")), *content]
     )
     return html.element(
         "section", {"class": "with-margin", "id": "table"}, [*page, *_margin(view, choices, pin)]

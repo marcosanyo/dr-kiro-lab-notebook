@@ -1,13 +1,12 @@
 """Shared page parts: stamp, sticky note, tab, legend link (design 9). Task 7.5.
 
 Every part returns a list of segments. Commentary comes only from `text.py` (`say`); record text keeps the ink
-of its recorded author. Ids put in an `href` or `id` attribute are checked against the bench patterns first
-(`html.check_id`).
+of its recorded author. Every `href` comes from `addresses.py`, which checks the ids it puts in an address.
 """
 
 from bench.specfiles.discovered import STATUSES
 
-from notebook import html, text
+from notebook import addresses, html, text
 from notebook.ink import Segment, commentary
 
 
@@ -21,14 +20,14 @@ def say_text(name: str) -> list[Segment]:
     return html.text(say(name))
 
 
-def anchor(kind: str, ident: str, source: str, children: list[Segment], prefix: str = "") -> list[Segment]:
-    """A link to `#<prefix><id>` on the same page; the id is checked as a bench id of `kind`."""
-    return html.element("a", {"href": f"#{prefix}{html.check_id(kind, ident, source)}"}, children)
+def link(href: str, children: list[Segment]) -> list[Segment]:
+    """`<a href>`; `href` comes from `addresses.py`, the one place that builds the site's addresses."""
+    return html.element("a", {"href": href}, children)
 
 
 def row_link(row_id: str, source: str, children: list[Segment]) -> list[Segment]:
     """A link to a row of the table on the same page (`#row-<id>`)."""
-    return anchor("row", row_id, source, children, prefix="row-")
+    return link(addresses.here(addresses.row(row_id, source)), children)
 
 
 def stamp(status: Segment, label: str) -> list[Segment]:
@@ -47,7 +46,7 @@ def stamp(status: Segment, label: str) -> list[Segment]:
 
 def sticky(children: list[Segment], *, stamped: bool = False) -> list[Segment]:
     """A sticky note in commentary ink; `stamped` gives the stamp border of the refused-end note."""
-    return html.element("div", {"class": "sticky sticky-stamp" if stamped else "sticky"}, children)
+    return html.element("aside", {"class": "sticky sticky-stamp" if stamped else "sticky"}, children)
 
 
 def tab(target_id: Segment, target_rule: Segment, source: str) -> list[Segment]:
@@ -131,10 +130,6 @@ def decoration() -> list[Segment]:
     )
 
 
-def legend_link(root: str) -> list[Segment]:
-    """The footer link to the ink legend; `root` is the relative path from the page to the site root, such
-    as `""` or `"../../"` (Requirement 4.5)."""
-    if root not in ("", "../", "../../"):
-        raise ValueError(f"not a relative path to the site root: {root!r}")
-    link = html.element("a", {"href": f"{root}legend.html"}, say_text("LEGEND_LINK"))
-    return html.element("footer", {"class": "footer"}, link)
+def legend_link() -> list[Segment]:
+    """The footer link to the ink legend (Requirement 4.5). Every page is at the site root (design N28)."""
+    return html.element("footer", {"class": "footer"}, link(addresses.LEGEND, say_text("LEGEND_LINK")))

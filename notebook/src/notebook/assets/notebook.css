@@ -316,6 +316,10 @@ a {
   display: block;
 }
 
+.pinned {
+  margin: 0 0 var(--space-3);
+}
+
 /* The inline Halloween decoration (pages/parts.py), drawn in currentColor. */
 
 .deco {
