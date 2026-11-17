@@ -1,0 +1,15 @@
+id = "straight-ahead"
+application = "body-lab"
+words = "Move straight ahead, in the direction the body faces at the start, by at least 0.5 m, and end facing within 15 degrees of the start heading."
+
+[[pass]]
+measurement = "x"
+range = [0.5, 1.7]
+
+[[pass]]
+measurement = "heading"
+range = [-15.0, 15.0]
+
+[[pass]]
+measurement = "y"
+range = [-0.3, 0.3]

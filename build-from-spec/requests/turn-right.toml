@@ -1,0 +1,15 @@
+id = "turn-right"
+application = "body-lab"
+words = "Turn to the right by about 30 degrees while staying nearly in place."
+
+[[pass]]
+measurement = "heading"
+range = [-40.0, -20.0]
+
+[[pass]]
+measurement = "x"
+range = [-0.05, 0.25]
+
+[[pass]]
+measurement = "y"
+range = [-0.15, 0.15]

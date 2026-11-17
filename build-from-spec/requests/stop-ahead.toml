@@ -1,0 +1,15 @@
+id = "stop-ahead"
+application = "body-lab"
+words = "Move ahead by about 0.45 m and stop there, keeping the heading within 12 degrees of the start heading."
+
+[[pass]]
+measurement = "x"
+range = [0.36, 0.54]
+
+[[pass]]
+measurement = "heading"
+range = [-12.0, 12.0]
+
+[[pass]]
+measurement = "y"
+range = [-0.15, 0.15]

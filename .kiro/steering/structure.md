@@ -13,6 +13,7 @@ Source: `docs/brief.md` section 3. The rules in `rules.md` apply to every folder
 /bench/            the skeleton
 /body-lab/         application 1 (adapter/, model/, lab/)
 /wind-tunnel/      application 2 (same shape)
+/build-from-spec/  the reader's requests (requests/), its agent files and the script that starts its runs
 /notebook/         the lab notebook (static site)
 /infra/            AWS CDK
 /sessions/         published session records
