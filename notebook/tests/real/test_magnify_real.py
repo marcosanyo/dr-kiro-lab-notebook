@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from notebook import layouts, png, records
+from notebook import ink, layouts, png, records
 from notebook.layouts import check_sheet
 from notebook.pages import photo
 
@@ -28,9 +28,26 @@ def table() -> dict[str, layouts.Layout]:
     return layouts.load(LAYOUTS)
 
 
+def _body_lab(loaded: list[records.RecordModel]) -> list[records.RecordModel]:
+    return [r for r in loaded if r.application == "body-lab"]
+
+
+def test_every_body_lab_trial_has_a_magnified_picture_and_no_wind_tunnel_trial_does(loaded, table) -> None:
+    kinds = set()
+    for record in loaded:
+        kinds.add(record.application)
+        for trial in record.trials:
+            figure, pictures = photo.photo(record, trial, table[record.application])
+            if record.application == "body-lab":
+                assert len(pictures) == 2 and "photo-magnified" in ink.join(figure)[0]
+            else:
+                assert len(pictures) == 1 and "photo-magnified" not in ink.join(figure)[0]
+    assert kinds == {"body-lab", "wind-tunnel"}
+
+
 def test_every_trial_has_a_magnified_picture_that_decodes_and_fits_the_layout(loaded, table) -> None:
     checked = 0
-    for record in loaded:
+    for record in _body_lab(loaded):
         layout = table[record.application]
         for trial in record.trials:
             _, pictures = photo.photo(record, trial, layout)
@@ -43,11 +60,11 @@ def test_every_trial_has_a_magnified_picture_that_decodes_and_fits_the_layout(lo
             assert image.height // layout.rows >= cells.height
             assert recorded.data == trial.picture.data
             checked += 1
-    assert checked == sum(len(r.trials) for r in loaded) > 0
+    assert checked == sum(len(r.trials) for r in _body_lab(loaded)) > 0
 
 
 def test_each_magnified_picture_is_named_by_the_sha256_of_its_bytes(loaded, table) -> None:
-    for record in loaded:
+    for record in _body_lab(loaded):
         for trial in record.trials:
             _, (_, magnified) = photo.photo(record, trial, table[record.application])
             digest = hashlib.sha256(magnified.data).hexdigest()
@@ -58,7 +75,7 @@ def test_the_recorded_sheets_are_byte_identical_to_their_blob_files(loaded, tabl
     for record in loaded:
         for trial in record.trials:
             blob = SESSIONS / record.application / record.session / "blobs" / trial.picture.digest
-            _, (recorded, _) = photo.photo(record, trial, table[record.application])
+            _, (recorded, *_) = photo.photo(record, trial, table[record.application])
             assert blob.read_bytes() == trial.picture.data == recorded.data
             assert hashlib.sha256(blob.read_bytes()).hexdigest() == trial.picture.digest
 

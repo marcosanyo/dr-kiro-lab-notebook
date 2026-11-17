@@ -22,6 +22,9 @@ from notebook.records import RecordModel, Trial
 # The tilt class of a photo comes from the trial number: `.tilt-<n mod 5>` (visual steering, instant photo).
 TILTS = 5
 SIZES = ("", "large", "small")
+# Only body-lab trials get a magnified picture; in wind-tunnel the flow moves through the whole sheet, so a
+# magnified region would show nothing the sheet does not (Requirement 7.9, Decision 50).
+MAGNIFIED_APPLICATIONS = ("body-lab",)
 _CONTROLS = (
     ("play", "PHOTO_PLAY"),
     ("pause", "PHOTO_PAUSE"),
@@ -92,9 +95,10 @@ def photo(
     `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
     sheet that does not divide into whole cells fails the build, naming the record and the trial
     (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
-    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default: every
-    moving picture except the lab cards, Requirement 7.9) the photo is shown beside its magnified picture in
-    one row; the returned files are the recorded sheet, then the magnified picture."""
+    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default) a
+    body-lab photo, except on the lab cards, is shown beside its magnified picture in one row (Requirement
+    7.9); the returned files are the recorded sheet, then the magnified picture. A wind-tunnel photo has no
+    magnified picture."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -137,7 +141,7 @@ def photo(
         *html.element("span", {"class": "photo-controls"}, buttons),
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
-    if not magnified:
+    if not magnified or record.application not in MAGNIFIED_APPLICATIONS:
         return figure, [picture]
     # The magnified picture beside the moving picture, in one row that wraps on a narrow screen (visual
     # steering, "Magnified picture"). It is a static picture: the whole magnified sheet, no script.
@@ -172,8 +176,9 @@ class Pins:
         return self.figure(trial, "small")
 
     def figure(self, trial: Trial, size: str = "") -> list[Segment]:
-        """The instant photo of `trial` in `size` (see `photo`), beside its magnified picture; both picture
-        files are kept in `files`. The highlight and the experiment entries use this (task 12.1)."""
+        """The instant photo of `trial` in `size` (see `photo`), beside its magnified picture for a body-lab
+        trial; the picture files are kept in `files`. The highlight and the experiment entries use this
+        (task 12.1)."""
         figure, pictures = photo(self.record, trial, self.layout, size)
         self.files.extend(pictures)
         return figure
