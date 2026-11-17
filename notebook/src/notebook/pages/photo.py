@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from bench.core import ids
 
-from notebook import addresses, html, text
+from notebook import addresses, html, magnify, text
 from notebook.errors import NotebookError
 from notebook.ink import Segment, pencil
 from notebook.layouts import Layout, check_sheet
@@ -58,16 +58,43 @@ def _image_size(data: bytes) -> tuple[int, int]:
     return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
 
 
+# The magnified sheets already made in this build, by blob hash, layout and cell size. The magnification is a
+# pure function of these, so a trial shown on several pages is decoded once (N32).
+_MAGNIFIED: dict[tuple[str, Layout, int, int], magnify.Magnified] = {}
+
+
+def magnified_file(
+    record: RecordModel, trial: Trial, layout: Layout, cell_width: int, cell_height: int
+) -> PictureFile:
+    """The magnified picture of a trial's sheet, named by the SHA-256 of its bytes (Requirements 7.7, 7.9;
+    design N32). The recorded sheet is only read; it is not changed."""
+    source = _source(record, trial)
+    key = (trial.picture.digest, layout, cell_width, cell_height)
+    if key not in _MAGNIFIED:
+        _MAGNIFIED[key] = magnify.magnify(trial.picture.data, layout, cell_width, cell_height, source)
+    data = _MAGNIFIED[key].data
+    digest = hashlib.sha256(data).hexdigest()
+    return PictureFile(addresses.picture(digest, source), data)
+
+
 def photo(
-    record: RecordModel, trial: Trial, layout: Layout, size: str = "", *, trial_word: bool = True
-) -> tuple[list[Segment], PictureFile]:
-    """The instant photo of one trial and the picture file it shows.
+    record: RecordModel,
+    trial: Trial,
+    layout: Layout,
+    size: str = "",
+    *,
+    trial_word: bool = True,
+    magnified: bool = True,
+) -> tuple[list[Segment], list[PictureFile]]:
+    """The instant photo of one trial and the picture files it shows.
 
     Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
     `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
     sheet that does not divide into whole cells fails the build, naming the record and the trial
     (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
-    cover, whose visible commentary is limited, Requirement 13.6)."""
+    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default: every
+    moving picture except the lab cards, Requirement 7.9) the photo is shown beside its magnified picture in
+    one row; the returned files are the recorded sheet, then the magnified picture."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -110,7 +137,25 @@ def photo(
         *html.element("span", {"class": "photo-controls"}, buttons),
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
-    return figure, picture
+    if not magnified:
+        return figure, [picture]
+    # The magnified picture beside the moving picture, in one row that wraps on a narrow screen (visual
+    # steering, "Magnified picture"). It is a static picture: the whole magnified sheet, no script.
+    enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
+    enlarged_width, enlarged_height = _image_size(enlarged.data)
+    enlarged_img = html.void(
+        "img",
+        {
+            "src": enlarged.path,
+            "width": str(enlarged_width),
+            "height": str(enlarged_height),
+            "alt": text.PHOTO_MAGNIFIED_ALT,
+        },
+    )
+    # No caption: the alt text says what the picture is, and the cover's visible commentary is limited (13.6).
+    enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_img)
+    row = html.element("section", {"class": "photo-pair"}, [*figure, *enlarged_figure])
+    return row, [picture, enlarged]
 
 
 class Pins:
@@ -127,8 +172,8 @@ class Pins:
         return self.figure(trial, "small")
 
     def figure(self, trial: Trial, size: str = "") -> list[Segment]:
-        """The instant photo of `trial` in `size` (see `photo`); its picture file is kept in `files`. The
-        highlight and the experiment entries use this (task 12.1)."""
-        figure, picture = photo(self.record, trial, self.layout, size)
-        self.files.append(picture)
+        """The instant photo of `trial` in `size` (see `photo`), beside its magnified picture; both picture
+        files are kept in `files`. The highlight and the experiment entries use this (task 12.1)."""
+        figure, pictures = photo(self.record, trial, self.layout, size)
+        self.files.extend(pictures)
         return figure

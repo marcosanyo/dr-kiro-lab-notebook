@@ -219,7 +219,7 @@ def _miss(
         raise NotebookError(_source(record, outcome.seq), f"the miss of {miss.prediction} names no trial")
     hypothesis, prediction = _prediction(record, miss.prediction, where)
     trial = _trial(record, outcome.trial, where)
-    figure, picture = photo(
+    figure, pictures = photo(
         record, trial, layout_for(layouts, record.application, record.name), "large", trial_word=False
     )
     # The photo and the track are siblings in one row container (visual steering, "Cover layout").
@@ -268,7 +268,7 @@ def _miss(
         {"class": "cover-miss", "id": "miss"},
         [*evidence, *html.element("section", {"class": "cover-claim"}, claim)],
     )
-    return section, [picture]
+    return section, pictures
 
 
 # The lab cards
@@ -279,8 +279,14 @@ def _card(
 ) -> tuple[list[Segment], PictureFile]:
     record = _record(records, card.application, card.session, card.source)
     trial = _trial(record, card.trial, f"{card.source} trial")
-    figure, picture = photo(
-        record, trial, layout_for(layouts, record.application, record.name), "small", trial_word=False
+    # A lab card is exempt from the magnified picture (Requirement 7.9).
+    figure, (picture,) = photo(
+        record,
+        trial,
+        layout_for(layouts, record.application, record.name),
+        "small",
+        trial_word=False,
+        magnified=False,
     )
     source = _source(record, 1)
     heading = html.element(

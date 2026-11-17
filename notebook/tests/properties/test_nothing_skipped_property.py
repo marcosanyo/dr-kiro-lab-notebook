@@ -62,7 +62,8 @@ class _Page(HTMLParser):
         elif tag == "section" and "trial" in classes:
             self.trials.append(a.get("id") or "")
             self.photos_in_trial.append(0)
-        elif tag == "figure" and "photo" in classes:
+        elif tag == "figure" and "photo" in classes and "photo-magnified" not in classes:
+            # A magnified picture (Requirement 7.9) is not a moving picture, so it is not counted here.
             self.photos += 1
             if any(t == "section" and "trial" in c for t, c in self._stack):
                 self.photos_in_trial[-1] += 1

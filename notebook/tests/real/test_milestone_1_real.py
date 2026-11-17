@@ -431,11 +431,13 @@ def test_no_stamp_label_sits_inside_a_struck_element(site, loaded):
 def test_cover_photo_and_track_are_siblings_in_one_row(site):
     evidence = _parse(site / "index.html").find(cls="cover-evidence")
     children = evidence.elements()
-    assert [(c.tag, "photo-large" in c.classes or "track" in c.classes) for c in children] == [
-        ("figure", True),
+    # The photo pair (the moving picture and its magnified picture, Requirement 7.9) and the track.
+    assert [(c.tag, "photo-pair" in c.classes or "track" in c.classes) for c in children] == [
+        ("section", True),
         ("figure", True),
     ]
-    assert "photo-large" in children[0].classes and "track" in children[1].classes
+    assert "photo-pair" in children[0].classes and "track" in children[1].classes
+    assert children[0].find("figure", "photo-large") is not None
     css = CSS.read_text(encoding="utf-8")
     rule = css[css.index(".cover-evidence {") :]
     rule = rule[: rule.index("}")]

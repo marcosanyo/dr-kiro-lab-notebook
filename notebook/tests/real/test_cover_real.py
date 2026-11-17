@@ -73,7 +73,8 @@ def test_cover_cards_and_labels(loaded, built) -> None:
     page = ink.join(segments)[0]
     t31 = _trial(_by_session(loaded, "body-2"), "T31")
     wt_t1 = _trial(_by_session(loaded, "wt-004"), "T1")
-    assert [p.path for p in pictures[1:]] == [f"p/{t31.picture.digest}.png", f"p/{wt_t1.picture.digest}.png"]
+    # The miss shows its recorded sheet and its magnified picture first (Requirement 7.9), then the cards.
+    assert [p.path for p in pictures[2:]] == [f"p/{t31.picture.digest}.png", f"p/{wt_t1.picture.digest}.png"]
     assert page.count("photo-small") == 2
     assert 'href="body-lab.html"' in page and 'href="wind-tunnel.html"' in page
     assert page.count("chosen by a person") >= 2
@@ -101,9 +102,12 @@ def test_session_margin_pins_the_chosen_trials_as_photos(loaded, table) -> None:
     page = ink.join(session.table_section(views.full(record), chosen, pins))[0]
     margin = page[page.index('<aside class="margin">') :]
     pinned = re.findall(
-        r'<figure class="pinned" data-trial="(T\d+)"><figure class="photo tilt-\d photo-small"', margin
+        r'<figure class="pinned" data-trial="(T\d+)"><section class="photo-pair">'
+        r'<figure class="photo tilt-\d photo-small"',
+        margin,
     )
     assert pinned == ["T25", "T30", "T36"]
-    assert [p.path for p in pins.files] == [
-        f"p/{_trial(record, tid).picture.digest}.png" for tid in ("T25", "T30", "T36")
-    ]
+    # Each pin keeps its recorded sheet, then its magnified picture (Requirement 7.9).
+    recorded = [p.path for p in pins.files[::2]]
+    assert recorded == [f"p/{_trial(record, tid).picture.digest}.png" for tid in ("T25", "T30", "T36")]
+    assert len(pins.files) == 6

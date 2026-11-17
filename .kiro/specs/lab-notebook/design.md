@@ -385,10 +385,10 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
 500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
 `prefers-reduced-motion: reduce`, it starts paused on cell 0.
 
-Beside each full-size picture (not the lab-card pictures) the page shows an enlarged picture of the range of the track
+Beside each moving picture, except the lab cards, the page shows a magnified picture of the body's range of motion
 (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as
-`p/<sha256>-x<magnification>.png` with the alt text "Magnified view of the picture beside it", and leaves the recorded
-PNG file untouched.
+`p/<sha256>.png` (the SHA-256 of its bytes) with the alt text "Magnified view of the picture beside it", and leaves the
+recorded PNG file untouched.
 
 ### 11. Scan (Requirement 20)
 
@@ -922,11 +922,18 @@ changes `bench/`.
 - **N31 Rejected-row tab open by default (user, 2026-11-17).** The "replaced by" `<details>` of a `rejected` row
   whose cell names exactly one other row of the table is written with `open`; its content and link are unchanged. A
   visitor can close it (Requirement 8.13, requirements Decision 49).
-- **N32 Enlarged picture (user, 2026-11-17).** The build decodes the recorded PNG with `zlib` (no new dependency),
-  cuts the area of each cell that the body's track covers over the trial, enlarges it by a whole number with nearest
-  neighbour, and writes a new PNG beside the recorded one; the exact crop and magnification are decided in the task
-  for it and recorded here then. The recorded file is copied byte for byte as before (7.7); the derived file is
-  deterministic and passes the picture check and the scan (Requirement 7.9, requirements Decision 50).
+- **N32 Enlarged picture (user, 2026-11-17).** The build decodes the recorded PNG with `zlib` and `struct` (no new
+  dependency; `notebook/src/notebook/png.py` reads 8-bit RGB and RGBA, unfiltered or with the five row filters, and
+  writes filter type 0). The crop is chosen from the sheet's pixels, not from the track: a pixel is moving when its
+  colour differs from the first frame's pixel at the same place in some frame; the box round all moving pixels, with
+  a margin of 4 pixels clipped to the cell, is cut out of every frame in the sheet's layout (no moving pixel: the
+  whole cell). Each cut-out is enlarged by one whole number, nearest neighbour, the smallest that makes the enlarged
+  box at least as large as the cell in both directions. The magnified sheet keeps the layout and has no gap
+  (`notebook/src/notebook/magnify.py`). It is named by the SHA-256 of its own bytes, as every picture (7.7). It is
+  shown beside the moving picture in one row that wraps on a narrow screen. Every moving picture gets one except the
+  lab cards (`photo(..., magnified=False)`, 7.9). The recorded file is copied byte for byte as before (7.7); the
+  derived file is deterministic and passes the bench's picture check and the scan (Requirement 7.9, requirements
+  Decision 50).
 
 ## Open questions
 

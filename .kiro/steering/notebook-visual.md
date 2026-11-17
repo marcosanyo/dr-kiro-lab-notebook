@@ -69,6 +69,15 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Caption below the picture (`figcaption`), in commentary ink or pencil.
 - The cover's large photo adds `.photo-large`; lab cards use `.photo-small`.
 
+## Magnified picture (Requirement 7.9, design N32)
+
+- Beside each moving picture, except the lab cards, one magnified picture of the body, in one row with it (class
+  `.photo-pair`, a wrapping flex row). On a narrow screen the magnified picture moves below the moving picture.
+- The magnified picture is framed like an instant photo (class `.photo .photo-magnified`) with no tilt class, no
+  caption and no controls. It is the whole magnified sheet, a still picture; its pixels are drawn without smoothing
+  (`image-rendering: pixelated`).
+- Its alt text is "Magnified view of the picture beside it".
+
 ## Cover layout (Requirements 13.1, 13.7; user, checkpoint 11)
 
 - The large photo and the recorded track are siblings in one row (`.cover-evidence`, a wrapping flex row): from

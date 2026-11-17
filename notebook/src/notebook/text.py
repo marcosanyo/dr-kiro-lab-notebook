@@ -112,6 +112,10 @@ PHOTO_PLAY = "play"
 PHOTO_PAUSE = "pause"
 PHOTO_STEP = "step one cell"
 PHOTO_SHEET = "whole sheet"
+# The magnified picture beside a moving picture (Requirement 7.9, design N32). The alt text is the sentence
+# the requirement gives; the picture has no visible caption, because the cover's visible commentary is limited
+# to 60 words (Requirement 13.6).
+PHOTO_MAGNIFIED_ALT = "Magnified view of the picture beside it"
 
 # Overhead track of a trial (Requirements 10.10, 13.7; design N21).
 TRACK_CAPTION = "recorded track seen from above, equal scale on both axes; the circle marks the start"

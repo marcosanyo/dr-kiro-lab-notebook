@@ -104,8 +104,10 @@ def test_every_experiment_trial_and_outcome_has_its_address(site, loaded):
                 assert f"{experiment.id}-{tid}" in inner
         for outcome in record.outcomes:
             assert f"{outcome.experiment}-{outcome.prediction}" in ids
+        # One moving picture per trial; a magnified picture is not one (Requirement 7.9).
         figures = page.find("section", "entries", id="experiments").find_all("figure", "photo")
-        assert len(figures) == len(record.trials), record.name
+        moving = [f for f in figures if "photo-magnified" not in f.attrs["class"]]
+        assert len(moving) == len(record.trials), record.name
 
 
 def test_wt_002_predictions_never_run_have_their_own_addresses(site, loaded):
@@ -123,7 +125,9 @@ def test_highlight_pictures_show_their_measured_values(site, loaded):
 
     # The approved choices (Decision 37): contrast T25 and T30, best T36.
     def trial_id(section: Node) -> str:
-        return section.find("figure", "photo").find("figcaption").find("span", "ink-p").text()
+        # The first photo of a trial is its moving picture; its magnified picture follows (Requirement 7.9).
+        moving = section.find_all("figure", "photo")[0]
+        return moving.find("figcaption").find("span", "ink-p").text()
 
     assert [trial_id(s) for s in shown] == ["T25", "T30", "T36"]
     for section in shown:

@@ -221,6 +221,24 @@ a {
   max-width: 18rem;
 }
 
+/* The moving picture and its magnified picture in one row; the magnified picture wraps below on a narrow
+   screen (Requirement 7.9). Each figure may shrink to the width of the row. */
+.photo-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 var(--space-3);
+}
+
+.photo-pair > .photo {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.photo-magnified img {
+  image-rendering: pixelated;
+}
+
 .tilt-0 {
   transform: rotate(-1.5deg);
 }

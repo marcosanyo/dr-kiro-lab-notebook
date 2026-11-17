@@ -39,9 +39,10 @@ class _Figure(HTMLParser):
         self.actions: list[str | None] = []
 
     def handle_starttag(self, tag, attrs) -> None:
-        if tag == "figure":
+        # The first figure and picture are the recorded sheet; the magnified one follows (Requirement 7.9).
+        if tag == "figure" and not self.figure:
             self.figure = dict(attrs)
-        elif tag == "img":
+        elif tag == "img" and not self.img:
             self.img = dict(attrs)
         elif tag == "button":
             self.actions.append(dict(attrs)["data-action"])
@@ -65,7 +66,8 @@ class _Figure(HTMLParser):
 def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expected) -> None:
     record = loaded[session_id]
     trial = _trial(record, tid)
-    segments, picture = photo.photo(record, trial, table[record.application])
+    segments, pictures = photo.photo(record, trial, table[record.application])
+    picture = pictures[0]
     parser = _Figure()
     parser.feed(ink.join(segments)[0])
     assert {key[5:]: value for key, value in parser.figure.items() if key.startswith("data-")} == expected
@@ -78,7 +80,7 @@ def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expe
 def test_every_picture_is_named_by_the_sha256_of_its_bytes(loaded, table) -> None:
     for record in loaded.values():
         for trial in record.trials:
-            _, picture = photo.photo(record, trial, table[record.application])
+            _, (picture, _) = photo.photo(record, trial, table[record.application])
             assert picture.data == trial.picture.data
             assert picture.path == f"p/{hashlib.sha256(picture.data).hexdigest()}.png"
 
