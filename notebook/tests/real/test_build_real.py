@@ -1,7 +1,7 @@
 """One full build of the committed records through the command line into `tmp_path` (task 9.2).
 
-The paths asserted are the pages that exist so far; later tasks add `built.html` (22.1)
-and the replay steps (18.1). Links to those pages are listed in `NOT_YET_WRITTEN`.
+The paths asserted are the pages that exist so far; later tasks add `built.html` (22.1). Links to those pages
+are listed in `NOT_YET_WRITTEN`. The replay pages (18.1) are listed from the records' steps.
 """
 
 import re
@@ -10,11 +10,18 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import SIDECAR_SUFFIX
 
-from notebook import cli
+from notebook import addresses, cli, records, views
+from real.test_milestone_1_real import SESSIONS
 
 ROOT = Path(__file__).resolve().parents[3]
 # Pages that pages link to but later tasks write.
 NOT_YET_WRITTEN: set[str] = set()
+# One replay page per step of every real record (Requirement 16.1), named as `addresses.replay` names them.
+REPLAY_PAGES = {
+    addresses.replay(r.application, r.session, step.number, r.name)
+    for r in records.load(SESSIONS)
+    for step in views.steps(r)
+}
 PAGES = {
     "index.html",
     "legend.html",
@@ -26,8 +33,9 @@ PAGES = {
     "wind-tunnel-wt-002.html",
     "wind-tunnel-wt-003.html",
     "wind-tunnel-wt-004.html",
-}
-_HREF = re.compile(r'(?:href|src)="([^"#]*)(?:#[^"]*)?"')
+} | REPLAY_PAGES
+# The file part of a link: the query (`?play=1` on replay play links) and the fragment are not part of it.
+_HREF = re.compile(r'(?:href|src)="([^"#?]*)(?:[?#][^"]*)?"')
 
 
 def _argv(out: Path) -> list[str]:

@@ -16,11 +16,12 @@ Task 7.5 writes the first section, the discovered spec table as a notebook page 
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from bench.conditions import NOT_RUN
 from bench.specfiles.discovered import Row, Table
 
-from notebook import addresses, html, numbers, refusals, tables
+from notebook import addresses, html, numbers, refusals, tables, views
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
@@ -106,7 +107,7 @@ def _refused_end(note: refusals.RefusedEndNote) -> list[Segment]:
 def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
     tv = tables.table_view(table)
     notes = refusals.refused_end_notes(table, view.refusals)
-    label = "CHECKED" if view.checked else "NOT_CHECKED"
+    label = _label(view)
     head = html.element(
         "tr", None, [s for name in _COLUMNS for s in html.element("th", None, say_text(name))]
     )
@@ -396,10 +397,19 @@ def _unreadable(view: View, snapshot: Snapshot, unreadable: tables.Unreadable) -
     )
     out += html.element("p", None, say_text("UNREADABLE"))
     if not view.checked:
-        out += html.element(
-            "p", None, html.element("span", {"class": "stamp-label"}, say_text("NOT_CHECKED"))
-        )
+        out += html.element("p", None, html.element("span", {"class": "stamp-label"}, say_text(_label(view))))
     return out
+
+
+def _label(view: View) -> str:
+    """The label of a table's status words: "checked by the bench" for the accepted `end` snapshot; "not yet
+    checked by the bench" at a replay step (Requirement 16.3); "not checked by the bench" for the last
+    snapshot of a stopped session (Requirement 10.7)."""
+    if view.checked:
+        return "CHECKED"
+    if view.replay:
+        return "NOT_YET_CHECKED"
+    return "NOT_CHECKED"
 
 
 # Misses
@@ -478,8 +488,8 @@ def _miss_note(view: View, choices: Choices) -> list[Segment]:
     (pid,) = choice.value
     found = [o for o in view.outcomes if o.prediction == pid and o.outcome == "miss"]
     if not found:
-        # Only a replay step before the miss can lack it; task 18.1 shows that step's commentary.
-        return []
+        # Only a replay step before the miss can lack it (Requirement 16.2): the note says so.
+        return sticky([*say_text("REPLAY_NOT_RUN"), *chosen()])
     predictions = _predictions(view.record)
     lines = [
         s
@@ -498,7 +508,8 @@ def _pinned(view: View, choice: Choice, name: str, pin: Pin | None) -> list[Segm
     for tid in choice.value:
         trial = by_id.get(tid)
         if trial is None:
-            # Only a replay step before the trial can lack it; task 18.1 shows that step's commentary.
+            # Only a replay step before the trial can lack it (Requirement 16.2): the step says so.
+            out += html.element("p", None, say_text("REPLAY_NOT_RUN"))
             continue
         source = _entry_source(view.record, trial.seq)
         checked = html.check_id("trial", tid, source)
@@ -654,7 +665,8 @@ def _highlight_choice(view: View, choice: Choice, name: str, pins: Pins) -> list
     for tid in choice.value:
         trial = by_id.get(tid)
         if trial is None:
-            # Only a replay step before the trial can lack it; task 18.1 shows that step's commentary.
+            # Only a replay step before the trial can lack it (Requirement 16.2): the step says so.
+            shown += html.element("p", None, say_text("REPLAY_NOT_RUN"))
             continue
         shown += _highlight_trial(view, trial, pins)
     return [*heading, *html.element("section", {"class": "side-by-side"}, shown), *chosen()]
@@ -1119,6 +1131,88 @@ def _refusals(view: View) -> list[Segment]:
     )
 
 
+@dataclass(frozen=True)
+class Nav:
+    """The controls of one replay step (Requirement 16.8). `forward` is None on the last step, where play
+    stops; `back` is the step before, or the session page on the first step."""
+
+    number: int
+    total: int
+    end: bool
+    back: str
+    forward: str | None
+    session: str
+
+
+def _replay_steps(record: RecordModel) -> list[Segment]:
+    """Requirement 16.1 and 10.1: the steps of the record as links, the play link from the first step, or the
+    sentence of Requirement 16.9 when the record has no step."""
+    steps = views.steps(record)
+    if not steps:
+        return html.element("p", {"class": "no-replay"}, say_text("NO_STEP"))
+    start = _entry_source(record, 1)
+    items: list[Segment] = []
+    for step in steps:
+        href = addresses.replay(record.application, record.session, step.number, start)
+        label = [
+            *say_text("REPLAY_STEP"),
+            *html.text(pencil(str(step.number), start)),
+            *say_text("REPLAY_STEP_OF"),
+            *html.text(pencil(str(len(steps)), start)),
+            *say_text("REPLAY_AT_END" if step.end else "REPLAY_AFTER_VERDICT"),
+        ]
+        items += html.element("li", None, link(href, label))
+    first = addresses.replay(record.application, record.session, 1, start)
+    return [
+        *html.element("p", None, say_text("REPLAY_INTRO")),
+        *html.element("p", None, link(first + "?play=1", say_text("REPLAY_PLAY"))),
+        *html.element("ol", {"class": "steps"}, items),
+    ]
+
+
+def _replay_list(record: RecordModel) -> list[Segment]:
+    """The replay section of the session page (Requirement 16)."""
+    return html.element(
+        "section",
+        {"class": "replay", "id": "replay"},
+        [*html.element("h2", None, say_text("REPLAY_HEADING")), *_replay_steps(record)],
+    )
+
+
+def _replay_head(record: RecordModel, nav: Nav) -> list[Segment]:
+    """The heading of a replay step: the label "replay of a sealed record" (Requirement 16.7), the step's
+    number, the controls back, forward and play (Requirement 16.8), and the link back to the session page."""
+    start = _entry_source(record, 1)
+    position = [
+        *say_text("REPLAY_STEP"),
+        *html.text(pencil(str(nav.number), start)),
+        *say_text("REPLAY_STEP_OF"),
+        *html.text(pencil(str(nav.total), start)),
+        *say_text("REPLAY_AT_END" if nav.end else "REPLAY_AFTER_VERDICT"),
+    ]
+    controls: list[Segment] = [
+        *html.element("a", {"href": nav.back, "data-replay": "back"}, say_text("REPLAY_BACK")),
+    ]
+    if nav.forward is not None:
+        # Play follows the forward link every 3 seconds (script); play stops on the last step, which has no
+        # forward link.
+        controls += [
+            markup(" "),
+            *html.element("a", {"href": nav.forward, "data-replay": "forward"}, say_text("REPLAY_FORWARD")),
+            markup(" "),
+            *html.element(
+                "a", {"href": nav.forward + "?play=1", "data-replay": "play"}, say_text("REPLAY_PLAY")
+            ),
+        ]
+    return [
+        *html.element("p", {"class": "replay-label"}, say_text("REPLAY_LABEL")),
+        *html.element("p", None, link(nav.session, say_text("REPLAY_TO_SESSION"))),
+        *html.element("h1", None, [*say_text("SESSION_HEADING"), *html.text(pencil(record.session, start))]),
+        *html.element("p", {"class": "replay-position"}, position),
+        *html.element("nav", {"class": "replay-controls", "aria-label": "replay"}, controls),
+    ]
+
+
 # The page
 
 
@@ -1170,19 +1264,29 @@ def _no_snapshot_page(record: RecordModel) -> list[Segment]:
     return parts.page("SESSION_TITLE", body)
 
 
-def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple[PictureFile, ...]]:
+def page(
+    view: View, choices: Choices, pins: Pins, nav: Nav | None = None
+) -> tuple[list[Segment], tuple[PictureFile, ...]]:
     """The session page as of `view` and the pictures it shows, in the section order of Requirement 10.1:
     the table with its margin, the highlight, the progress, Dr. Kiro's plan, every experiment entry; then the
-    hypotheses never run and the refusals. Tasks 14-19 add the sections that follow (14.5, 16, 17).
+    hypotheses never run, the refusals and the replay section (Requirements 14.5 and 17 follow in later
+    tasks).
 
-    A record without a snapshot (wt-003) gets the page of Requirement 14.6 instead, with no picture."""
+    `nav` is given for a replay step (Requirement 16): the page then starts with the replay heading and its
+    controls, and has no replay section of its own. A record without a snapshot (wt-003) gets the page of
+    Requirement 14.6 instead, with no picture."""
     record = view.record
     if choices.record != record.name:
         raise NotebookError(choices.file, f"the choice file is for {choices.record}, not {record.name}")
     if not record.snapshots:
         return _no_snapshot_page(record), ()
+    if nav is not None and not view.replay:
+        raise NotebookError(record.name, "a replay page needs the view of a replay step")
+    if nav is None and view.replay:
+        raise NotebookError(record.name, "the view of a replay step needs its replay controls")
+    head = _top(record) if nav is None else _replay_head(record, nav)
     body = [
-        *_top(record),
+        *head,
         *table_section(view, choices, pins),
         *_highlight(view, choices, pins),
         *_progress(view),
@@ -1190,7 +1294,10 @@ def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple
     ]
     anchors = _Anchors(record)
     body += [*_entries(view, pins, anchors), *_never_run(view, anchors), *_refusals(view)]
+    if nav is None:
+        body += _replay_list(record)
     unique: dict[str, PictureFile] = {}
     for picture in pins.files:
         unique.setdefault(picture.path, picture)
-    return parts.page("SESSION_TITLE", body), tuple(unique.values())
+    title = "SESSION_TITLE" if nav is None else "REPLAY_LABEL"
+    return parts.page(title, body), tuple(unique.values())

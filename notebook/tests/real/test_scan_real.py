@@ -11,7 +11,7 @@ import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 
 from notebook import choices, ink, layouts, plots, records, refusals, scan, views
-from notebook.pages import cover, how, lab, parts, photo, session
+from notebook.pages import cover, how, lab, parts, photo, replay, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
@@ -88,6 +88,23 @@ def test_every_record_passes_both_scan_passes_and_links_stay_in_the_site(scanner
     for name, (written, _) in joined.items():
         _links_stay_in_the_site(name, written)
         assert "<div" not in written
+
+
+def test_every_replay_page_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
+    # Requirement 16 and 20: the step pages are scanned at the builder level and the Dr. Kiro level, like the
+    # session pages, and their links stay in the flat site (task 18.1).
+    chosen = choices.load(CHOICES, loaded)
+    table = layouts.load(LAYOUTS)
+    pages = {}
+    for r in loaded:
+        steps = replay.step_pages(r, table[r.application], chosen[(r.application, r.session)])
+        pages.update({name: segments for name, (segments, _) in steps.items()})
+    assert len(pages) == sum(len(views.steps(r)) for r in loaded)
+    joined = scan.check(scanner, pages)
+    assert sorted(joined) == sorted(pages)
+    for name, (written, _) in joined.items():
+        _links_stay_in_the_site(name, written)
+        assert "<div" not in written and "xmlns" not in written and "http" not in written, name
 
 
 def test_every_refusal_message_and_choice_reason_passes_at_its_authors_level(scanner, loaded) -> None:

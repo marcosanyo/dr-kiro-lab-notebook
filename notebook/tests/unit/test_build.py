@@ -14,7 +14,7 @@ import pytest
 from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
 from fixtures.session import FAKE_SOURCES, STOP_LIST, Lab, accepted_session
-from notebook import build, cli, records, site, text
+from notebook import build, cli, records, site, text, views
 from notebook.errors import NotebookError
 from notebook.ink import markup
 from notebook.inputs import Inputs
@@ -72,6 +72,8 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
     # Pictures shown: every trial's, in its experiment entry (Requirement 10.8), which includes the cover's
     # and the margin's.
     pictures = {f"p/{hashlib.sha256(t.picture.data).hexdigest()}.png" for t in record.trials}
+    # One replay page per step of the fixture record (Requirement 16.1), counted by the step model.
+    replays = {f"fake-s1-replay-{step.number}.html" for step in views.steps(record)}
     texts = {
         "index.html",
         "fake.html",
@@ -80,7 +82,7 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
         "fake-s1.html",
         "a/notebook.css",
         "a/notebook.js",
-    }
+    } | replays
     expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures
     assert _all_files(built) == expected
     for path in pictures:

@@ -45,6 +45,7 @@ class View:
     snapshots: tuple[Snapshot, ...]
     shown: Snapshot | None  # the snapshot whose table, plan and requirements are shown
     checked: bool  # True only when `shown` is the accepted `end` snapshot
+    replay: bool  # True for a replay step (16.3): a table that is not the accepted `end` is "not yet checked"
 
     @property
     def remaining(self) -> int:
@@ -55,12 +56,28 @@ class View:
         return self.state.trials_run
 
 
+@dataclass(frozen=True)
+class Step:
+    """One replay step (Requirement 16.1): a snapshot taken after a verdict, or the accepted `end` snapshot.
+
+    `number` is 1-based in record order; `seq` is the entry of the snapshot, which the step's view ends
+    with."""
+
+    number: int
+    seq: int
+    end: bool
+    snapshot: Snapshot
+
+
 def _upto(items: tuple[Any, ...], upto: int) -> tuple[Any, ...]:
     return tuple(item for item in items if item.seq <= upto)
 
 
-def view(record: RecordModel, upto: int) -> View:
-    """The session as of entry `upto`: entries with `seq` 1 to `upto`, replayed through the bench."""
+def view(record: RecordModel, upto: int, *, replay: bool = False) -> View:
+    """The session as of entry `upto`: entries with `seq` 1 to `upto`, replayed through the bench.
+
+    `replay` marks a replay step, so its table is labelled as the step's table (16.3); the session page uses
+    `replay=False`."""
     total = len(record.entries)
     if isinstance(upto, bool) or not isinstance(upto, int) or not 1 <= upto <= total:
         raise NotebookError(record.name, f"a view must end at an entry between 1 and {total}, not {upto!r}")
@@ -97,12 +114,25 @@ def view(record: RecordModel, upto: int) -> View:
         snapshots=snapshots,
         shown=shown,
         checked=shown is not None and shown.for_ == "end",
+        replay=replay,
     )
 
 
 def full(record: RecordModel) -> View:
     """The view of the whole record, for the session page."""
     return view(record, len(record.entries))
+
+
+def steps(record: RecordModel) -> list[Step]:
+    """The replay steps (Requirement 16.1): one per `verdict` snapshot in record order, plus the `end`
+    snapshot if the record has one. Snapshots taken after a run are not steps."""
+    chosen = [s for s in record.snapshots if s.for_ in ("verdict", "end")]
+    return [Step(number=i + 1, seq=s.seq, end=s.for_ == "end", snapshot=s) for i, s in enumerate(chosen)]
+
+
+def step_view(record: RecordModel, step: Step) -> View:
+    """The view of one replay step: the record entries up to and including the step's snapshot (16.2)."""
+    return view(record, step.seq, replay=True)
 
 
 def evidence(v: View) -> Evidence:
