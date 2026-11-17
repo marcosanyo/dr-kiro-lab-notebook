@@ -29,8 +29,9 @@ from notebook.pages.parts import chosen, drkiro_block, row_link, say_text, stamp
 from notebook.records import Outcome, Prediction, RecordModel, Snapshot, Trial
 from notebook.views import View
 
-# The pinned picture of one chosen trial. Tasks 8.1 and 8.2 give `table_section` a function that returns the
-# trial's instant photo (`<figure class="photo">`); until then the margin names each chosen trial only.
+# The pinned picture of one chosen trial: `pages.photo.Pins(record, layout)` returns the trial's instant
+# photo (`<figure class="photo">`) and keeps its picture file. Without a pin the margin names each chosen
+# trial only.
 Pin = Callable[[Trial], list[Segment]]
 
 _COLUMNS = (
@@ -299,7 +300,7 @@ def table_section(view: View, choices: Choices, pin: Pin | None = None) -> list[
     """The discovered spec table as a notebook page, with its margin (Requirement 10.1).
 
     `view` is the session page's view (`views.full`). `choices` is the record's choice file. `pin` returns the
-    pinned picture of a chosen trial (tasks 8.1 and 8.2); without it the margin names each chosen trial."""
+    pinned picture of a chosen trial (`pages.photo.Pins`); without it the margin names each chosen trial."""
     record = view.record
     if choices.record != record.name:
         raise NotebookError(choices.file, f"the choice file is for {choices.record}, not {record.name}")

@@ -110,3 +110,19 @@ def photo(
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
     return figure, picture
+
+
+class Pins:
+    """The session page's `Pin` hook (`pages/session.py`, `table_section`): each chosen trial in the margin
+    as a small instant photo. Every picture it shows is kept in `files`, in the order shown, for the site
+    writer (Requirement 10.1; task 8.2)."""
+
+    def __init__(self, record: RecordModel, layout: Layout) -> None:
+        self.record = record
+        self.layout = layout
+        self.files: list[PictureFile] = []
+
+    def __call__(self, trial: Trial) -> list[Segment]:
+        figure, picture = photo(self.record, trial, self.layout, "small")
+        self.files.append(picture)
+        return figure

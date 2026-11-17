@@ -95,3 +95,30 @@ PHOTO_SHEET = "whole sheet"
 # Overhead track of a trial (Requirements 10.10, 13.7; design N21).
 TRACK_CAPTION = "recorded track seen from above, equal scale on both axes; the circle marks the start"
 TRACK_NOT_MEASURED = "No track is drawn: the recorded series is not measured. "
+# The cover's short caption; the cover explains the drawing in full inside its details (Requirement 13.6).
+TRACK_CAPTION_COVER = "track from above"
+
+# The cover, `index.html` (Requirement 13). The commentary visible before any detail is opened is at most 60
+# words (13.6), so the visible strings are short and the explanations sit inside `<details>`.
+SITE_TITLE = "Dr. Kiro's Lab Notebook"
+TAGLINE = "The experiment gets the final edit."
+COVER_RANGE = " range "
+COVER_MEASURED = " measured "
+COVER_MISS_NONE = "This session has no missed prediction."
+COVER_NO_ROW = "No row cites it."
+COVER_DETAILS = "details"
+COVER_ABOUT = (
+    "Dr. Kiro registered this prediction, with its range, before the trial ran. "
+    "The bench ran the trial, recorded the measured value and recorded the outcome."
+)
+COVER_HYPOTHESIS = "hypothesis "
+COVER_CONDITIONS = "conditions: "
+COVER_CLASS = "condition class, classified at registration: "
+COVER_FULL_VALUE = "measured value as recorded: "
+COVER_ROWS = (
+    "The rows of the discovered spec table that cite this prediction, each with the row that replaces it "
+    "when it is rejected. The status words are checked by the bench."
+)
+COVER_OUTCOME_LINK = "this prediction's outcome in its experiment entry"
+COVER_TABLE_LINK = "the session's discovered spec table"
+COVER_CARDS = "One trial of each lab, chosen by a person. Each card opens the list of that lab's sessions."

@@ -73,9 +73,10 @@ def _not_measured(record: RecordModel, trial: Trial, name: str, value: NotMeasur
     ]
 
 
-def track(record: RecordModel, trial: Trial) -> list[Segment]:
+def track(record: RecordModel, trial: Trial, caption: str = "TRACK_CAPTION") -> list[Segment]:
     """The overhead track of one trial as a small figure in pencil, or the not-measured outcome by name and
-    reason. A trial without track series gives no segments."""
+    reason. A trial without track series gives no segments. `caption` is the name of the caption in
+    `text.py` (the cover uses a shorter one and explains the drawing in its details)."""
     if not has_track(record, trial):
         return []
     series = _series(trial)
@@ -123,5 +124,5 @@ def track(record: RecordModel, trial: Trial) -> list[Segment]:
     return html.element(
         "figure",
         {"class": "track ink-p"},
-        [*svg, *html.element("figcaption", None, say_text("TRACK_CAPTION"))],
+        [*svg, *html.element("figcaption", None, say_text(caption))],
     )

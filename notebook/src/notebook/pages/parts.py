@@ -7,7 +7,7 @@ of its recorded author. Every `href` comes from `addresses.py`, which checks the
 from bench.specfiles.discovered import STATUSES
 
 from notebook import addresses, html, text
-from notebook.ink import Segment, commentary
+from notebook.ink import Segment, commentary, markup
 
 
 def say(name: str) -> Segment:
@@ -133,3 +133,30 @@ def decoration() -> list[Segment]:
 def legend_link() -> list[Segment]:
     """The footer link to the ink legend (Requirement 4.5). Every page is at the site root (design N28)."""
     return html.element("footer", {"class": "footer"}, link(addresses.LEGEND, say_text("LEGEND_LINK")))
+
+
+def page(title: str, children: list[Segment]) -> list[Segment]:
+    """A whole page at the site root: the head with the stylesheet, the decoration, `children` in the content
+    column, the footer link to the ink legend, and the page script. `title` is the name of a string in
+    `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an ink element."""
+    head = html.element(
+        "head",
+        None,
+        [
+            *html.void("meta", {"charset": "utf-8"}),
+            *html.void("meta", {"name": "viewport", "content": "width=device-width, initial-scale=1"}),
+            *html.element("title", None, [say(title)]),
+            *html.void("link", {"rel": "stylesheet", "href": addresses.STYLESHEET}),
+        ],
+    )
+    body = html.element(
+        "body",
+        None,
+        [
+            *decoration(),
+            *html.element("main", {"class": "page"}, children),
+            *legend_link(),
+            *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),
+        ],
+    )
+    return [markup("<!doctype html>\n"), *html.element("html", {"lang": "en"}, [*head, *body]), markup("\n")]

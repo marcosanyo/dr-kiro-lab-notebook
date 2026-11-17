@@ -320,6 +320,52 @@ a {
   margin: 0 0 var(--space-3);
 }
 
+/* The cover (pages/cover.py). */
+.cover-head h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.cover-tagline {
+  margin: 0 0 var(--space-4);
+}
+
+.cover-evidence,
+.cover-claim {
+  display: block;
+}
+
+.cover-rows {
+  margin: var(--space-3) 0;
+  padding-left: var(--space-3);
+}
+
+.cover-rows li {
+  margin-bottom: var(--space-2);
+}
+
+.cover-rows .row-rejected > a,
+.cover-rows .row-rejected > .cover-rule {
+  text-decoration: line-through 2px var(--graphite);
+}
+
+.cover-replaced {
+  display: block;
+  margin-left: var(--space-3);
+}
+
+.cover-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.card-heading {
+  margin: 0;
+}
+
 /* The inline Halloween decoration (pages/parts.py), drawn in currentColor. */
 
 .deco {
@@ -337,6 +383,13 @@ a {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 18rem;
     gap: var(--space-4);
+  }
+
+  .cover-miss {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--space-4);
+    align-items: start;
   }
 
   .deco {

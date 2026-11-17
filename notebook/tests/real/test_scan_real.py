@@ -12,7 +12,7 @@ from bench.scan.levels import AUTHOR_LEVEL, SIDECAR_SUFFIX, sidecar_pieces
 from bench.scan.scan import Scanner
 
 from notebook import choices, ink, layouts, plots, records, views
-from notebook.pages import parts, photo, session
+from notebook.pages import cover, parts, photo, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
@@ -98,3 +98,33 @@ def test_every_record_passes_both_scan_passes_and_links_stay_in_the_site(scanner
         names.append(record.name)
     assert [str(f) for f in findings] == []
     assert len(names) == 5
+
+
+def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded, tmp_path) -> None:
+    segments, _ = cover.page(loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS))
+    findings = []
+    for segment in segments:
+        level = AUTHOR_LEVEL[ink.SCAN_AUTHOR[segment.ink]]
+        findings += scanner.scan_text(segment.text, level, segment.source)
+    written, ranges = ink.join(segments)
+    path = tmp_path / "index.html"
+    path.write_text(written, encoding="utf-8")
+    path.with_name(path.name + SIDECAR_SUFFIX).write_text(
+        json.dumps({"ranges": ranges}, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    for piece in sidecar_pieces(path, written):
+        findings += scanner.scan_piece(piece)
+    assert [str(f) for f in findings] == []
+    parser = _Links()
+    parser.feed(written)
+    parser.close()
+    assert parser.links
+    for link in parser.links:
+        assert ".." not in link and not link.startswith("/") and ":" not in link, link
+    assert "<div" not in written and "xmlns" not in written and "http" not in written
+
+
+def test_the_stylesheet_passes_the_builder_level_scan(scanner) -> None:
+    css = ROOT / "notebook" / "src" / "notebook" / "assets" / "notebook.css"
+    assert scanner.scan_text(css.read_text(encoding="utf-8"), AUTHOR_LEVEL["bench"], str(css)) == []
