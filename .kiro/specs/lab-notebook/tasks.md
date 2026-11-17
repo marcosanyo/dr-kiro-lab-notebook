@@ -47,8 +47,8 @@ writes nothing into a `lab/` folder.
 
 ### Milestone 1: the cover and the discovered spec table
 
-- [ ] 1. Project
-  - [ ] 1.1 Create the `notebook/` uv project and the command line
+- [x] 1. Project
+  - [x] 1.1 Create the `notebook/` uv project and the command line
     - `notebook/pyproject.toml` as in design "Dependencies": project `lab-notebook`, Python `>=3.12,<3.13`,
       dependencies `lab-bench`, `body-lab-adapter`, `wind-tunnel-adapter` by editable path (no extras), console
       script `notebook-build`, dev group `pytest`, `hypothesis`, `ruff`. Ruff config with the bench's
@@ -62,20 +62,22 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 1.3, 1.4, 1.5, 3.2, 3.3, 21.3_
 
-- [ ] 2. Visual system
-  - [ ] 2.1 Write the visual steering file and the stylesheet
+- [x] 2. Visual system
+  - [x] 2.1 Write the visual steering file and the stylesheet
     - Write `.kiro/steering/notebook-visual.md` (in this worktree) from design "Visual system": paper, the three
       inks, miss red, stamp colours, instant photo, sticky note, strike-through, type, spacing, 360 px layout,
       Halloween decoration rules, motion rate. Then `notebook/src/notebook/assets/notebook.css` with the colours as
-      CSS custom properties, and `deco.svg` (no text, `aria-hidden` where used).
+      CSS custom properties, written without the words the scan derives (rewording, never the stop list; design N28).
+      The Halloween decoration is inline SVG in the markup (`pages/parts.py`), with no `xmlns`, no text and
+      `aria-hidden`; there is no `deco.svg`.
     - Unit tests: every foreground/background pair named in the steering file reaches 4.5:1 by the WCAG formula,
       read from the CSS custom properties; each ink class differs in `font-family` or `font-style`; the miss red
       variable is used only by the miss classes.
     - Verified by: the checks.
     - _Requirements: 4.5, 4.6, 6.1-6.5_
 
-- [ ] 3. Ink, escaping and numbers
-  - [ ] 3.1 Write `ink.py` and `html.py`
+- [x] 3. Ink, escaping and numbers
+  - [x] 3.1 Write `ink.py` and `html.py`
     - `Ink`, `Segment`, `Authored` mapping to ink (design 8); `html.text` escaping (`html.escape(quote=True)`,
       `\r` to `&#13;`), Dr. Kiro text only in element content with `pre-wrap`; other C0 control characters fail
       naming the source; id checks with `bench.core.ids` patterns; `ink.join` returning text and merged author
@@ -84,25 +86,25 @@ writes nothing into a `lab/` folder.
       a bad id fails; ranges of a three-segment page.
     - Verified by: the checks.
     - _Requirements: 4.1, 4.3, 20.3_
-  - [ ] 3.2 Write property test for the HTML round trip
+  - [x] 3.2 Write property test for the HTML round trip
     - **Property 1: Dr. Kiro's text round-trips through the HTML**
     - **Validates: Requirements 4.3, 4.4**
-  - [ ] 3.3 Write `numbers.py`
+  - [x] 3.3 Write `numbers.py`
     - `short(v)` (`.4g`) and `full(v)` (`repr`); not-measured values give the outcome name and reason, never a
       number (design "Number formatting").
     - Unit tests: values across the exponent boundary, negative zero, a not-measured object.
     - Verified by: the checks.
     - _Requirements: 5.3, 5.4_
-  - [ ] 3.4 Write property test for number formatting
+  - [x] 3.4 Write property test for number formatting
     - **Property 13: Numbers are rounded to 4 significant digits and shown in full when opened**
     - **Validates: Requirements 5.3**
-  - [ ] 3.5 Write property test for author ranges
+  - [x] 3.5 Write property test for author ranges
     - **Property 2: Author ranges cover each file and the bench accepts them** (with
       `bench.scan.levels.sidecar_pieces`)
     - **Validates: Requirements 20.1, 20.3**
 
-- [ ] 4. Records and views
-  - [ ] 4.1 Write `records.py`
+- [x] 4. Records and views
+  - [x] 4.1 Write `records.py`
     - Load `sessions/<application>/<session-id>/` in code-point order; any other file fails; `chain.verify(sealed=True)`
       with `VerifyError` re-raised naming the entry or file; start entry matches the folder names; no fake
       declaration or trial unless `allow_fake`; strict key sets per entry kind (design N2); every shown text read as
@@ -112,7 +114,7 @@ writes nothing into a `lab/` folder.
       line and in a blob, a missing seal, a fake trial, an extra key, an unknown entry kind, a stray file.
     - Verified by: the checks.
     - _Requirements: 1.1, 1.2, 2.2, 2.3, 2.8, 4.2, 21.2_
-  - [ ] 4.2 Write the synthesized record generator
+  - [x] 4.2 Write the synthesized record generator
     - `tests/fixtures/synth.py`: hypothesis strategies for entry lists in the bench's shapes (declaration,
       experiments with parameter name sets, trials, predictions with condition classes, outcomes, verdicts, flags,
       refusals with text and quote parts, snapshots with a `## Discovered spec` table, seal), chained with
@@ -121,7 +123,7 @@ writes nothing into a `lab/` folder.
     - Unit tests: 100 generated records verify and load through `records.load(..., allow_fake=True)`.
     - Verified by: the checks.
     - _Requirements: 2.3, 5.2_
-  - [ ] 4.3 Write `views.py` with the bench state and Evidence
+  - [x] 4.3 Write `views.py` with the bench state and Evidence
     - `view(record, upto)` replays `entries[0:upto]` through `bench.core.state.apply`; gives prefix entries,
       `remaining`, `trials_run`, the shown snapshot (end, else last) and whether it is checked by the bench;
       `evidence(view)` built as `Session.evidence` does (design 2, N3).
@@ -132,8 +134,8 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 2.4, 10.5, 10.7_
 
-- [ ] 5. Frame layouts
-  - [ ] 5.1 Write `layouts.toml` and `layouts.py`
+- [x] 5. Frame layouts
+  - [x] 5.1 Write `layouts.toml` and `layouts.py`
     - `notebook/layouts.toml` exactly as design "Data Models" (body-lab 10 / 2 / 5 / gap 0; wind-tunnel 6 / 2 / 3 /
       gap 4, each with its `source`). `load` with exact keys and `frames == rows * columns`; `check_sheet`: media
       `image/png`, `bench.pictures.check_picture`, IHDR size divisible into whole cells; a missing application
@@ -142,12 +144,12 @@ writes nothing into a `lab/` folder.
       400 x 200. Fixture tests: a wrong media type, a sheet one pixel too wide, a missing entry.
     - Verified by: the checks.
     - _Requirements: 7.1, 7.2, 7.3, 7.5, 20.4_
-  - [ ] 5.2 Write property test for layouts and sheet sizes
+  - [x] 5.2 Write property test for layouts and sheet sizes
     - **Property 12: Layouts and sheet sizes**
     - **Validates: Requirements 7.2, 7.3**
 
-- [ ] 6. Choice files, cover file and the commentary word list
-  - [ ] 6.1 Write `choices.py`
+- [x] 6. Choice files, cover file and the commentary word list
+  - [x] 6.1 Write `choices.py`
     - `load(folder, records)` and `load_cover(folder, records)` per design 7 and "Data Models": exact keys,
       `<key>_reason` exactly with `"none"`, reasons 1-300 characters, contrast two different trial ids, ids in the
       record, missed outcome is miss, "none" for the miss accepted only with a reason, wt-003-style records need
@@ -156,7 +158,7 @@ writes nothing into a `lab/` folder.
     - Unit tests: each refusal case names the file and the key.
     - Verified by: the checks.
     - _Requirements: 12.1, 12.3-12.6, 13.5_
-  - [ ] 6.2 Write the committed choice and cover files
+  - [x] 6.2 Write the committed choice and cover files
     - `notebook/choices/body-lab/body-1.toml`, `body-2.toml`, `wind-tunnel/wt-002.toml`, `wt-003.toml`,
       `wt-004.toml` with exactly the content of requirements Decision 37, and `notebook/choices/cover.toml` with
       Decision 36 (miss body-2 H4.P1; cards body-lab body-2 T31, wind-tunnel wt-004 T1). Write nothing the user
@@ -165,10 +167,10 @@ writes nothing into a `lab/` folder.
       the content.
     - Verified by: the checks.
     - _Requirements: 12.1, 12.2, 13.5_
-  - [ ] 6.3 Write property test for choice and cover validation
+  - [x] 6.3 Write property test for choice and cover validation
     - **Property 11: Choice and cover validation matches the rules**
     - **Validates: Requirements 12.1, 12.3, 12.4, 12.5, 12.6, 13.5**
-  - [ ] 6.4 Propose the commentary word list and write the word check — **Stop and ask**
+  - [x] 6.4 Propose the commentary word list and write the word check — **Stop and ask**
     - `words.py` per design "Data Models" (lowercase letter tokens, suffixes `s`, `es`, `ed`, `ing`, `#` comments).
       Propose the content of `notebook/commentary-words.txt` (words that suggest human injury or disability for
       motion) in a report to the user in Japanese, and wait. Commit the file only with the words the user approves.
@@ -177,21 +179,21 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks; the committed list equals the approved list.
     - _Requirements: 5.5_
 
-- [ ] 7. The discovered spec table
-  - [ ] 7.1 Write `tables.py`
-    - `read(snapshot)` through `bench.specfiles.discovered.parse_table` (`Unreadable` at a middle step, failure at
-      the end); `check_end(record)` with `check_table` and `evidence`; body-1 (no `end` snapshot) is not checked;
+- [x] 7. The discovered spec table
+  - [x] 7.1 Write `tables.py`
+    - `read(snapshot)` through `bench.specfiles.discovered.parse_table` (`Unreadable(section, message)` at any snapshot the reader does not accept, including a table with no rows;
+      failure at the end); `check_end(record)` with `check_table` and `evidence`; body-1 (no `end` snapshot) is not checked;
       `TableView` with `target`, `tab`, `note` and `reverse` exactly as design 3 (N12).
     - Unit tests on the real records: body-2 end table has 14 rows in order with the statuses and replaced-by
       targets of the introduction; wt-004 R1-R6 pass `check_end`; a fixture with an altered status fails naming the
       row.
     - Verified by: the checks.
     - _Requirements: 2.4, 2.5, 2.6, 8.1, 8.4, 8.10_
-  - [ ] 7.2 Write property test for rows, tabs and reverse links
+  - [x] 7.2 Write property test for rows, tabs and reverse links
     - **Property 4: Each row once, tabs and reverse links exact** (on `TableView`; the rendering part is asserted in
       7.6)
     - **Validates: Requirements 8.1, 8.3, 8.4, 8.10, 8.11, 8.12, 16.4, 16.5**
-  - [ ] 7.3 Write `refusals.py`
+  - [x] 7.3 Write `refusals.py`
     - Refusal message parts as segments in the ink of their recorded author (nothing parsed); the commentary note
       on quotes covering every quote part (design 5, N13); the refused-end note: rows whose id equals a quote part
       of an `end` refusal exactly, N counted in refusal entries.
@@ -199,40 +201,42 @@ writes nothing into a `lab/` folder.
       no other row gets the note.
     - Verified by: the checks.
     - _Requirements: 10.11, 10.12, 10.13_
-  - [ ] 7.4 Write property test for the refused-end note
+  - [x] 7.4 Write property test for the refused-end note
     - **Property 8: The refused-end note attaches by exact equality** (the replay part is checked again in 18.3)
     - **Validates: Requirements 10.11, 10.12, 16.12**
-  - [ ] 7.5 Render the table section of the session page
+  - [x] 7.5 Render the table section of the session page
     - `text.py` (the commentary strings used so far), `pages/parts.py` (stamp, sticky note, tab, legend link) and the
       table section of `pages/session.py`: each row once, seven cells as read, stamp with "checked by the bench" or
       "not checked by the bench", strike-through only for exactly `rejected`, the "replaced by" `<details>` tab with
       the target's rule text and `#row-<id>` link, reverse links, the note for a cell naming no row, the refused-end
-      note; "no table" with commentary and the list of every missed prediction (body-1); the sticky note to the chosen
+      note; "no table" with commentary and the list of every missed prediction only for an ended session without an
+      `end` snapshot (body-1); the section as written, the reader's message in pencil and "the bench's table reader
+      did not accept this table" for a table the reader does not accept (10.14); the sticky note to the chosen
       miss and the pinned chosen pictures in the margin (pictures from task 8.1, wired in 8.2). Every commentary
       string passes the word check.
     - Unit tests on body-1: "no table" and its 8 misses.
     - Verified by: the checks.
-    - _Requirements: 8.1-8.4, 8.10, 8.11, 10.1, 10.2, 10.7, 10.9, 10.11, 12.7, 15.2_
-  - [ ] 7.6 Write property test for status words and labels
+    - _Requirements: 8.1-8.4, 8.10, 8.11, 10.1, 10.2, 10.7, 10.9, 10.11, 10.14, 12.7, 15.2_
+  - [x] 7.6 Write property test for status words and labels
     - **Property 5: Every row shows its status word with the right label, and verdicts stay apart** (the verdict
       part is asserted once experiment entries exist, task 12.1; here: no verdict appears in a stamp)
     - **Validates: Requirements 8.2, 10.7, 15.1, 15.2, 16.3, 22.2**
-  - [ ] 7.7 Write property test for ink by author
+  - [x] 7.7 Write property test for ink by author
     - **Property 3: Ink follows the recorded author**
     - **Validates: Requirements 4.1, 4.2**
 
-- [ ] 8. Moving pictures, cover and lab pages
-  - [ ] 8.1 Write the moving picture and the track plot
-    - The `<figure class="photo">` part with the whole-sheet `<img>` and `data-` layout attributes;
+- [x] 8. Moving pictures, cover and lab pages
+  - [x] 8.1 Write the moving picture and the track plot
+    - The `<figure class="photo">` part with the whole-sheet `<img>` and `data-` layout attributes (`data-tile-width`, `data-tile-height`, design N28);
       `assets/notebook.js` per design 10 (canvas, one cell per 500 ms in reading order, pause, step, whole sheet,
       reduced motion starts paused on cell 0; opens the `<details>` named by the address); pictures copied as
-      `p/<sha256>.png`. `plots.py` track path per N21 (equal x and y scale, start marked, 2 decimals), skipped only
+      `p/<sha256>.png`, linked without `..` (flat site, design N28). `plots.py` track path per N21 (equal x and y scale, start marked, 2 decimals), skipped only
       when the series is a not-measured outcome, which is then shown by name and reason.
     - Unit tests: the figure's attributes for both layouts; the picture name equals the SHA-256 of its bytes; the
       track SVG of body-2 T12 has one point per recorded sample.
     - Verified by: the checks.
     - _Requirements: 3.4, 3.6, 7.6, 7.7, 7.8, 13.7_
-  - [ ] 8.2 Write the cover page
+  - [x] 8.2 Write the cover page
     - `pages/cover.py` (`index.html`): the large pinned photo of the miss trial, the prediction in Dr. Kiro's ink,
       the measured value in pencil, "miss" in miss red, the track beside the photo; every row citing the
       prediction and the replacing row of each `rejected` one, or that no row cites it; the "none" case; one card
@@ -241,8 +245,8 @@ writes nothing into a `lab/` folder.
       for a prediction no row cites.
     - Verified by: the checks.
     - _Requirements: 13.1-13.4, 13.6, 13.7, 12.7, 14.4_
-  - [ ] 8.3 Write the lab pages and the ink legend
-    - `pages/lab.py` (`<app>/index.html`): every record in code-point order with the same fields and type size, ended
+  - [x] 8.3 Write the lab pages and the ink legend
+    - `pages/lab.py` (`<app>.html`): every record in code-point order with the same fields and type size, ended
       and stopped (the fields of 14.2, the one fixed stopped-session commentary beside the recorded reason); links
       to the session pages. `legend.html` with the three inks and the status words defined in commentary ink;
       every page's footer links it.
@@ -251,8 +255,8 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 4.5, 14.1, 14.2, 14.3, 15.2_
 
-- [ ] 9. Scan, sidecars and writing
-  - [ ] 9.1 Write `scan.py`
+- [x] 9. Scan, sidecars and writing
+  - [x] 9.1 Write `scan.py`
     - `Scanner.from_config(scan_configs, stop_list)`; pass 1 over every segment at its author's level with its
       source; pass 2 over each finished text file through its ranges, as `sidecar_pieces` builds them (design 11,
       N7). All findings printed, then exit 1.
@@ -261,30 +265,32 @@ writes nothing into a `lab/` folder.
       path in a builder string fails.
     - Verified by: the checks.
     - _Requirements: 12.8, 20.1, 20.2, 20.5_
-  - [ ] 9.2 Write `site.py` and `build.py`
+  - [x] 9.2 Write `site.py` and `build.py`
     - The four phases of design "Overview"; `Site` path to bytes and ranges; one `<file>.authors.json` per `.html`,
-      `.css`, `.js`, `.svg` (sorted keys, compact separators, final newline; assets one `bench` range); staging
+      `.css`, `.js` (sorted keys, compact separators, final newline; assets one `bench` range); staging
       folder `<parent>/.<out-name>.staging` refused if present, files in sorted order, one `os.replace`; nothing
-      deleted. `build(..., allow_fake=True)` adds the "test fixture" banner; the CLI cannot set it.
+      deleted. `Site` refuses a path that is already present, naming both owners, and the build refuses an
+      application or session id outside `[a-z0-9]+(-[a-z0-9]+)*` (flat addresses, design N28). `build(..., allow_fake=True)` adds the "test fixture" banner; the CLI cannot set it.
     - Unit tests: a fixture build writes the expected path set with a sidecar per text file; a staging folder left
       in place is refused.
     - Verified by: the checks.
     - _Requirements: 2.1, 2.7, 20.3, 21.1, 21.2_
-  - [ ] 9.3 Write property test for determinism
+  - [x] 9.3 Write property test for determinism
     - **Property 15: The build is deterministic**
     - **Validates: Requirements 11.1, 16.8, 21.1, 21.2, 21.4**
-  - [ ] 9.4 Write property test for failed builds
+  - [x] 9.4 Write property test for failed builds
     - **Property 16: A failed build writes nothing**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.7, 7.3, 20.2**
-  - [ ] 9.5 Write the site checks
-    - Unit tests on a fixture build: no file contains `http:`, `https:`, a URL starting with `//`, `<form`,
+  - [x] 9.5 Write the site checks
+    - Unit tests on a fixture build: every page is at the site root and no link contains `..`; no file contains `xmlns`, `http:`, `https:`, a URL
+      starting with `//`, `<form`,
       `<iframe`, or `<input` other than the picture and replay buttons; all links are relative; the table and text
       are in the HTML without script; every page links `legend.html`.
     - Verified by: the checks.
     - _Requirements: 3.1-3.4, 3.7, 4.5_
 
-- [ ] 10. Milestone 1 on the real records
-  - [ ] 10.1 Write the milestone 1 tests on the real records
+- [x] 10. Milestone 1 on the real records
+  - [x] 10.1 Write the milestone 1 tests on the real records
     - A full build of `sessions/` with the committed files passes (with `notebook-build` through the CLI into
       `tmp_path`). body-2: 14 rows in order; R2, R3, R4, R6, R8, R10, R12, R14 struck through with tabs naming R1,
       R11, R5, R7, R9, R11, R13, R13; reverse links R1 "replaces R2", R5 "replaces R4", R7 "replaces R6", R9
@@ -295,7 +301,7 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 13.1, 13.2, 13.7, 22.1, 22.2, 22.5_
 
-- [ ] 11. Checkpoint — **Stop and ask** **[local Mac]**
+- [x] 11. Checkpoint — **Stop and ask** **[local Mac]**
   - Run the checks. Build the site from the real records with `notebook-build` into a git-ignored folder (for
     example `bench-run/notebook-site/`, which must not exist yet). Show the user the cover (`index.html`) and the
     session table pages of body-2, wt-004 and body-1 at a desktop width and at 360 CSS pixels, and ask in Japanese
@@ -307,8 +313,8 @@ writes nothing into a `lab/` folder.
 
 ### Milestone 2: experiment entries, stopped sessions, how the lab works, run bands
 
-- [ ] 12. Experiment entries and the session page
-  - [ ] 12.1 Write the experiment entries and the remaining session sections
+- [x] 12. Experiment entries and the session page
+  - [x] 12.1 Write the experiment entries and the remaining session sections
     - In `pages/session.py`: the highlight (contrast side by side, best result, "none" with reason, "chosen by a
       person"); the progress (budget used and budget, experiments by phase, outcome counts); Dr. Kiro's plan
       (`tasks.md` of the last snapshot, `requirements.md` collapsed below it, N18); one `<details id="E<n>">` per
@@ -321,7 +327,7 @@ writes nothing into a `lab/` folder.
       `not_settled` measurements shows the name and reason and no number; the section order of 10.1.
     - Verified by: the checks.
     - _Requirements: 5.4, 10.1, 10.3-10.6, 10.8, 10.13, 11.1-11.3, 12.7, 15.1, 15.3_
-  - [ ] 12.2 Write the opened row
+  - [x] 12.2 Write the opened row
     - The row evidence `<details>` (below the row on narrow screens, side panel on wide): per cited prediction the
       hypothesis, conditions, range, condition class, Dr. Kiro's label, outcome and value, linked to the experiment
       entry; misses in miss red with "miss" for `partly`; the fixed `observed` explanation; the untried hits for
@@ -330,25 +336,26 @@ writes nothing into a `lab/` folder.
       text.
     - Verified by: the checks.
     - _Requirements: 6.4, 8.5-8.8_
-  - [ ] 12.3 Write property test for the opened row
+  - [x] 12.3 Write property test for the opened row
     - **Property 6: An opened row shows exactly its cited evidence**
     - **Validates: Requirements 8.5, 8.6, 8.7, 8.8**
-  - [ ] 12.4 Write property test for completeness
+  - [x] 12.4 Write property test for completeness
     - **Property 17: Nothing is skipped**
     - **Validates: Requirements 2.8, 10.8**
 
-- [ ] 13. Stopped sessions
-  - [ ] 13.1 Write the stopped session pages
-    - wt-002: a session page with every section of Requirement 10, its last snapshot's table or "no table", labelled
-      "not checked by the bench", the hypothesis registered and never run. wt-003: a page with only the content of
+- [x] 13. Stopped sessions
+  - [x] 13.1 Write the stopped session pages
+    - wt-002: a session page with every section of Requirement 10, its last snapshot's table, or, when the reader does not
+      accept it, the section as written with the reader's message (10.14), labelled "not checked by the bench", the
+      hypothesis registered and never run. wt-003: a page with only the content of
       14.2 and "the record has no snapshot to replay". Neither appears on the cover.
-    - Unit tests on the real records: wt-002 shows 3 trials, 2 hits and "no table"; wt-003's page has no table, no
+    - Unit tests on the real records: wt-002 shows 3 trials, 2 hits and its last snapshot's section with the reader's message (not "no table"); wt-003's page has no table, no
       experiment entry and the sentence of 16.9.
     - Verified by: the checks.
-    - _Requirements: 14.2, 14.3, 14.4, 14.6, 16.9_
+    - _Requirements: 10.14, 14.2, 14.3, 14.4, 14.6, 16.9_
 
-- [ ] 14. How the lab works
-  - [ ] 14.1 Write `how.html`
+- [x] 14. How the lab works
+  - [x] 14.1 Write `how.html`
     - `pages/how.py`: the two levels of spec; what Dr. Kiro can and cannot touch (its lab folder's spec and
       experiment files, the four bench tools, no shell, no other folder); the two applications side by side from
       each record's declaration (knobs and ranges, measurements, budget, picture kind, goal; distinct declarations
@@ -359,8 +366,8 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 18.1-18.5_
 
-- [ ] 15. Run bands
-  - [ ] 15.1 Write `bands.py` and the band drawing
+- [x] 15. Run bands
+  - [x] 15.1 Write `bands.py` and the band drawing
     - Parameter groups, ticks with strength, marked span, number-knob span and Dr. Kiro-parameter span, hatched
       "no trial" parts, exactly as design 4 (N15); inline SVG in pencil beside the scope cell; parameter names in
       Dr. Kiro's ink linked to `#E<n>-file`.
@@ -368,19 +375,19 @@ writes nothing into a `lab/` folder.
       the declared knob range.
     - Verified by: the checks.
     - _Requirements: 8.9, 9.1-9.7, 9.9_
-  - [ ] 15.2 Write property test for run bands
+  - [x] 15.2 Write property test for run bands
     - **Property 7: Run band ticks are exact and hatched parts are empty**
     - **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5, 9.9**
 
-- [ ] 16. Checkpoint — **[local Mac]**
+- [x] 16. Checkpoint — **[local Mac]**
   - Ensure all tests pass, ask the user if questions arise. Rebuild into a new git-ignored folder and check the
     experiment entries, moving pictures and run bands at desktop and 360 px widths; report in Japanese.
   - _Requirements: 3.5, 3.6_
 
 ### Milestone 3: chart, replay, equal trial keys, input lines and tracks
 
-- [ ] 17. Prediction chart
-  - [ ] 17.1 Write the prediction chart
+- [x] 17. Prediction chart
+  - [x] 17.1 Write the prediction chart
     - Within the progress: every registered prediction in registration order; one scale per measurement over all
       range bounds and measured values of the session; same mark size for hit and miss; miss in miss red with
       "miss"; not run and not checkable with the word and range only; condition class "classified at registration"
@@ -388,30 +395,30 @@ writes nothing into a `lab/` folder.
     - Unit tests on body-2: 24 outcomes plotted with the predictions never run shown by word.
     - Verified by: the checks.
     - _Requirements: 5.4, 17.1-17.5_
-  - [ ] 17.2 Write property test for the chart
+  - [x] 17.2 Write property test for the chart
     - **Property 14: The prediction chart scale and marks**
     - **Validates: Requirements 5.4, 17.2, 17.3**
 
-- [ ] 18. Replay
-  - [ ] 18.1 Write the replay steps and pages
-    - `views.steps(record)`: one step per `verdict` snapshot plus the `end` snapshot; `<app>/<session>/replay-<n>.html`
+- [x] 18. Replay
+  - [x] 18.1 Write the replay steps and pages
+    - `views.steps(record)`: one step per `verdict` snapshot plus the `end` snapshot; `<app>-<session>-replay-<n>.html`
       rendered from `view(record, step.seq)` with the same code as the session page; "replay of a sealed record";
       back, forward and play links (play follows forward every 3 s, stops at the last step); "not yet checked by the
-      bench" at middle steps; the unreadable section shown as written with its commentary; chosen items not yet run
+      bench" at middle steps; a table the reader does not accept shown as in 10.14 (section as written, the reader's message, its commentary); chosen items not yet run
       left out with "not run at this step"; refusals as events of their step; the refused-end note only where the
       step's table holds the row.
     - Unit tests on the real records: body-2's two `end` refusals appear in the `end` step, after the E11 verdict
       step; every real step's table equals the bench reader's rows of its snapshot.
     - Verified by: the checks.
     - _Requirements: 16.1-16.10, 16.12, 22.3_
-  - [ ] 18.2 Extend the session fixture with a middle-step replacement
+  - [x] 18.2 Extend the session fixture with a middle-step replacement
     - In `tests/fixtures/session.py`: a first verdict snapshot whose table holds R1 `rejected`, replaced by R2, and
       R2; a later verdict snapshot with an unreadable table; the accepted end. Tests: the middle step strikes R1
       through with its tab to R2 and labels the words "not yet checked by the bench"; the unreadable step shows the
-      section as written.
+      section as written with the reader's message and "the bench's table reader did not accept this table".
     - Verified by: the checks.
-    - _Requirements: 16.4, 16.6, 16.11, 22.3_
-  - [ ] 18.3 Write property test for the replay
+    - _Requirements: 10.14, 16.4, 16.6, 16.11, 22.3_
+  - [x] 18.3 Write property test for the replay
     - **Property 9: Replay steps equal snapshots and record prefixes**
     - **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 

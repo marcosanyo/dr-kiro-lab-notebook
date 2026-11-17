@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `d8eb77cac60b038469eafae69a9d21bbb1e3c16fd038230a25a3c830fffdead4`
+> 原文 SHA-256: `15a99d9ac63f0173e3482597efe653a483c7d558a2f4724748cf1e34f64c84ec`
 
 # Design: lab-notebook
 
@@ -7,7 +7,7 @@
 
 どの Kiro か: ここにあるものはすべて **ビルダー** が作って動かし、**訪問者** が読みます。Dr. Kiro とリーダーはノートブックにもそのビルドにも触れません。
 
-Not in this version（requirements の Decision 48）。この版は予測チャートの後で止まる: リプレイ（要件 16）、等しい試行の一覧（要件 14.5）、入力の線（9.8）、実験エントリーの中の軌跡（10.10）は、以下に記述が残るがビルドは実装しない。関係する節、Property、決定には印をつけてある。
+この版に含めない（requirements の Decision 48）: 等しい試行の一覧（要件 14.5）、入力の線（9.8）、実験エントリーの中の軌跡（10.10）。保留（要件の決定 48）: リプレイ（要件 16）。この版は予測チャートの後で止まる。これらはすべて以下に記述が残るがビルドは実装しない。関係する節、Property、決定には印をつけてある。
 
 ## Overview
 
@@ -147,7 +147,7 @@ uv run --project notebook notebook-build \
 
 ### 2. Views and replay steps (Requirements 10, 16)
 
-リプレイのステップ（以下の `views.steps`、`views.step_view`、`View.events`）はこの版に含めない（requirements の Decision 48）。セッションページは `views.view` を使う。
+リプレイのステップ（以下の `views.steps`、`views.step_view`、`View.events`）は保留（要件の決定 48）。セッションページは `views.view` を使う。
 
 `views.view(record, upto: int) -> View` は、エントリー `upto`（`seq`）の時点でのセッションである。`entries[0:upto]` を `bench.core.state.apply` に通してベンチの `State` にリプレイし、表示のために同じ接頭辞を保持する。セッションページは `upto = len(entries)` を使い、リプレイのステップはそのスナップショットの `seq` を使う。コードの経路は 1 つで、セッションページは、最後のリプレイのステップに、セッションページだけが持つ節を足したものである。
 
@@ -203,7 +203,7 @@ for each group N, for each name n in N (in the declared order of the first exper
 ### 5. Refusals and the refused-end note (Requirements 10.11-10.13, 16.12, 18.4)
 
 - 拒否メッセージは部分のリストである: ベンチのテキスト（`{"text": {author, text}}`）と引用（`{"file", "line", "quote"}`）。各部分は、記録された書き手のインクのセグメントになる。何も解析しない（10.12）。
-- 拒否された終了の注記: 見せる表と、`action` が `end` であるビューの中の拒否エントリーについて、少なくとも 1 つの拒否が、テキストが `row.id` に厳密に等しい引用部分を持つとき、その行に注記が付く。N はそのような拒否エントリー（部分ではなく）の数である。注記はスタンプのスタイルの付箋で、固定のテキスト、記録されたとおりの各メッセージ、封印されたステータスが見せているものであるという文、そして "the record holds no copy of the table that was refused" を持つ。リプレイのステップでは、そのステップの表がその行を持つときだけ注記が付く（16.12。リプレイはこの版に含めない）。
+- 拒否された終了の注記: 見せる表と、`action` が `end` であるビューの中の拒否エントリーについて、少なくとも 1 つの拒否が、テキストが `row.id` に厳密に等しい引用部分を持つとき、その行に注記が付く。N はそのような拒否エントリー（部分ではなく）の数である。注記はスタンプのスタイルの付箋で、固定のテキスト、記録されたとおりの各メッセージ、封印されたステータスが見せているものであるという文、そして "the record holds no copy of the table that was refused" を持つ。リプレイのステップでは、そのステップの表がその行を持つときだけ注記が付く（16.12。リプレイは保留、要件の決定 48）。
 - 組み立てられた引用（10.13）: 記録は、どの引用をベンチが組み立てたかを印づけておらず、見つけるにはメッセージを解析することになる。そのため、見せるすべての拒否メッセージは解説の注記を 1 つ持ち、それがそのメッセージのすべての引用部分を対象とする（N13、Decision 34 のフォールバック）。
 
 ### 6. Equal trial keys (Requirement 14.5)
@@ -253,15 +253,15 @@ class Segment:
 | `p/<sha256>.png` | 画像。バイト単位でコピー（7.7） |
 | `a/notebook.css`, `a/notebook.js` | アセット |
 
-表のリプレイページ `<app>-<session>-replay-<n>.html` はこの版に含めない（requirements の Decision 48）。
+表のリプレイページ `<app>-<session>-replay-<n>.html` は保留（要件の決定 48）。
 
 サイトはフラットである（N28）: すべてのページはサイトのルートにあり、サブフォルダーは `p/` と `a/` だけである。リンクは相対で、`..` を含まない。ページは `legend.html`、`<app>.html`、`p/<sha256>.png`、`a/notebook.css` などを直接リンクする。アドレスが衝突しないことはビルドが検査する: application と session の id は `[a-z0-9]+(-[a-z0-9]+)*` に一致しなければならない（実際の id は `body-lab`、`wind-tunnel`、`body-1`、`wt-004`）。`Site` は、すでにあるパスの追加を、両方の持ち主を挙げて拒否する（たとえば application `a` の session id `x-replay-1` は session `x` のステップ 1 と衝突するので、ここで見つかる。`how` という名前の application も同じ）。ベンチは application と session の id のパターンを定めていないので、この検査はノートブック自身のもので、id を挙げてビルドを失敗させる。小文字だけなので、大文字小文字を区別しないファイルシステムでも 2 つのアドレスが大文字小文字だけで違うことはない。
 
 セッションページのアンカー: `#row-R<n>`、`#E<n>`（実験エントリー、`<details>`）、`#E<n>-T<n>`、`#E<n>-H<n>.P<n>`、`#E<n>-file`、一度も走らなかった予測のための `#H<n>.P<n>`（11）。すべてのリンクは相対で、`..` を含まない（3.2、N28）。JavaScript は、アドレスが指す `<details>` を開く（11.2）。JavaScript がなくても、エントリーは存在し、手で開ける。
 
-セッションページの順序（10.1）: 表のページ（選んだ外れへの付箋と、余白にピンで留めた選んだ画像を伴う）、ハイライト、進み具合（予測チャートを含む、17）、Dr. Kiro の計画（`tasks.md`。`requirements.md` はその下に折りたたむ、N18）、すべての実験エントリー。等しい試行の一覧（14.5）とリプレイの操作（16）はこの版に含めない（requirements の Decision 48）。wt-003 は 14.2 だけを得る（14.6）。
+セッションページの順序（10.1）: 表のページ（選んだ外れへの付箋と、余白にピンで留めた選んだ画像を伴う）、ハイライト、進み具合（予測チャートを含む、17）、Dr. Kiro の計画（`tasks.md`。`requirements.md` はその下に折りたたむ、N18）、すべての実験エントリー。等しい試行の一覧（14.5）はこの版に含めず、リプレイの操作（16）は保留（要件の決定 48）。wt-003 は 14.2 だけを得る（14.6）。
 
-リプレイのページ（この版に含めない、requirements の Decision 48）は、ステップごとに 1 つの完全な静的ページで、`view(record, step.seq)` から描く: 戻る、進む、再生はリンクである（再生は、3 秒ごとに進むリンクをたどり、最後のステップで止まる JavaScript）。すべてのステップのページは "replay of a sealed record" を持つ（16.7）。接頭辞に入っていない選んだ項目とピンで留めた画像は、解説 "not run at this step" とともに省く（16.2）。
+リプレイのページ（保留、要件の決定 48）は、ステップごとに 1 つの完全な静的ページで、`view(record, step.seq)` から描く: 戻る、進む、再生はリンクである（再生は、3 秒ごとに進むリンクをたどり、最後のステップで止まる JavaScript）。すべてのステップのページは "replay of a sealed record" を持つ（16.7）。接頭辞に入っていない選んだ項目とピンで留めた画像は、解説 "not run at this step" とともに省く（16.2）。
 
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
@@ -417,7 +417,7 @@ trial = "T1"
 
 **Validates: Requirements 10.11, 10.12, 16.12**
 
-### Property 9: Replay steps equal snapshots and record prefixes (not in this version)
+### Property 9: Replay steps equal snapshots and record prefixes (on hold, requirements Decision 48)
 
 *任意の* 生成された記録について、ステップは、記録順の `verdict` スナップショットと、あれば `end` スナップショットとまったく同じである。各ステップで、見せる表は、そのステップのスナップショットに対するベンチのリーダーの行（またはリーダーのメッセージつきで書かれたとおりの読めない節）に等しく、見せるエントリーは、そのスナップショットのエントリーまでを含む記録のエントリーとまったく同じである。各拒否は、それより後にスナップショットが来る最初のステップの出来事として、ちょうど 1 つのステップで見せる。それより後にどのスナップショットも来なければ、どのステップでも見せない。
 
@@ -507,7 +507,7 @@ trial = "T1"
 - `end` より前の実記録のすべてのスナップショット（body-1、body-2、wt-002、wt-004）: 書かれたとおりの節、ペンシルのリーダーのメッセージ、"the bench's table reader did not accept this table"（10.14、16.6）。
 - wt-002 と wt-003: ラボのページに同じフィールドで現れる。wt-002 は、最後のスナップショットの節を書かれたとおりに、リーダーのメッセージと "not checked by the bench" とともに見せるセッションページを持つ（"no table" ではない）。wt-003 は停止したセッションの内容と "the record has no snapshot to replay" だけを持つ（14.2、14.6、16.9）。
 - （この版に含めない、requirements の Decision 48。）等しい試行の一覧: wt-002 の T1 と wt-004 の T1、および body-1/body-2 の 9 組。すべて厳密に等しい（14.5）。
-- （この版に含めない、requirements の Decision 48。）すべての本物の記録のリプレイが、そのスナップショットと一致する（16.10、22.3）。
+- （保留、要件の決定 48。）すべての本物の記録のリプレイが、そのスナップショットと一致する（16.10、22.3）。
 
 ### Example and unit tests
 
@@ -548,7 +548,7 @@ trial = "T1"
 
 1. **Milestone 1**: プロジェクト、入力、記録、ビュー、表、選択、カバーファイル、レイアウト、インクとサイドカー、スキャン、サイトの書き出し、ビジュアルのステアリングファイル、カバー、そしてセッションページの発見された spec の表（それに要るタブ、逆リンク、スタンプ、拒否された終了の注記、動く画像を含む）を、本物の記録から作る。そこで止まり、カバーと body-2 の表を、デスクトップと 360 px の画面でユーザーに見せる（22.4）。
 2. **Milestone 2**: 実験エントリーと動く画像の全体、ラボのページと停止したセッション、"How the lab works"、走行バンド。
-3. **Milestone 3**: 予測チャート。リプレイ、等しい試行の一覧、body-lab の入力の線はこの版に含めない（requirements の Decision 48）。この版は予測チャートの後で止まる。
+3. **Milestone 3**: 予測チャート。リプレイは保留であり、等しい試行の一覧と body-lab の入力の線はこの版に含めない（requirements の Decision 48）。この版は予測チャートの後で止まる。
 4. **その後**: "Built from the spec" は "there are no runs yet" を見せる（19.1）。19.2-19.7 は `build-from-spec` の spec を待つ（19.8）。
 
 ## Requirements coverage
@@ -569,7 +569,7 @@ trial = "T1"
 | 12, 13 | Components 7、Data Models、Property 11 |
 | 14 | Components 6（14.5 はこの版に含めない）、9、Property 10（この版に含めない） |
 | 15 | Components 3、8、Property 5 |
-| 16 | Components 2、3、9、Property 9（16 のすべてをこの版に含めない） |
+| 16 | Components 2、3、9、Property 9（16 のすべてを保留） |
 | 17 | Components 9、Property 14 |
 | 18 | Components 9。N24 |
 | 19 | Delivery order 4、N22 |
@@ -590,7 +590,7 @@ trial = "T1"
 - **N7 Two scan passes.** ソースでのセグメント（検出はソースのファイルと行を名指しする）。次に、完成した各ファイルをその範囲を通して。後で `bench-scan` がサイトに対して見るのと同じ断片である。
 - **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「シート全体」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
 - **N9 Addresses.** Components 9 の表のとおり。id はパターンで検査したベンチの id。
-- **N10 Replay as static pages (not in this version, requirements Decision 48).** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
+- **N10 Replay as static pages (on hold, requirements Decision 48).** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
 - **N11 Number format.** `.4g` と `repr`。Data Models のとおり。
 - **N12 Replacement edge cases.** 繰り返された id、行自身、または行なしを指す `replaced by` のセルは、書かれたとおりに、注記つきで、タブなしで見せる（途中のステップでだけ起こりうる。end ではベンチが拒否する）。注記は "names this row itself"、"names no row of this table"（空のセルも）、"names more than one row" のいずれか。
 - **N13 Refusal note covers every quote.** Decision 34 のフォールバックのとおり。設計はメッセージを解析しない。
