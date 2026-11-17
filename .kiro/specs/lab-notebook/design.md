@@ -7,9 +7,9 @@ under "Open questions"; nothing in this design makes one of them.
 Which Kiro: everything here is built and run by **the builder** and read by **visitors**. Dr. Kiro and the reader
 never see the notebook or its build.
 
-Not in this version (requirements Decision 48). This version stops after the prediction chart: the replay (Requirement 16), the equal-trial list
-(Requirement 14.5), the input lines (9.8) and the tracks in experiment entries (10.10) stay described below but are not
-implemented by the build. The sections, properties and decisions concerned are marked.
+Not in this version (requirements Decision 48): the equal-trial list (Requirement 14.5), the input lines (9.8) and the tracks in
+experiment entries (10.10). On hold (requirements Decision 48): the replay (Requirement 16). This version stops after the
+prediction chart; all of these stay described below but are not implemented by the build. The sections, properties and decisions concerned are marked.
 
 ## Overview
 
@@ -175,7 +175,7 @@ predictions, outcomes, verdicts, flags, refusals, snapshots, the failure entry i
 
 ### 2. Views and replay steps (Requirements 10, 16)
 
-The replay steps (`views.steps`, `views.step_view` and `View.events` below) are not in this version (requirements
+The replay steps (`views.steps`, `views.step_view` and `View.events` below) are on hold (requirements
 Decision 48); `views.view` is used by the session page.
 
 `views.view(record, upto: int) -> View` is the session as of entry `upto` (a `seq`): it replays
@@ -271,7 +271,7 @@ cited trial also gets one small SVG line per channel of its recorded `inputs` ag
   when at least one refusal has a quote part whose text equals `row.id` exactly. N is the number of such refusal
   entries (not parts). The note is a sticky note in stamp style with the fixed text, each message as recorded, the
   sentence that the sealed status is the one shown, and "the record holds no copy of the table that was refused".
-  In a replay step the note attaches only if the step's table holds that row (16.12; replay is not in this version).
+  In a replay step the note attaches only if the step's table holds that row (16.12; replay is on hold, requirements Decision 48).
 - Composed quotes (10.13): the record does not mark which quotes the bench composed, and finding them would mean
   parsing the message. So every shown refusal message carries the one commentary note, and it covers every quote
   part of that message (N13, Decision 34's fallback).
@@ -349,7 +349,7 @@ Pages are Python functions that return a list of segments; no template engine. E
 | `p/<sha256>.png` | picture, copied byte for byte (7.7) |
 | `a/notebook.css`, `a/notebook.js` | assets |
 
-The replay pages `<app>-<session>-replay-<n>.html` of the table are not in this version (requirements Decision 48).
+The replay pages `<app>-<session>-replay-<n>.html` of the table are on hold (requirements Decision 48).
 
 The site is flat (N28): every page is at the site root, and the only subfolders are `p/` and `a/`. A link is
 relative and never contains `..`: a page links `legend.html`, `<app>.html`, `p/<sha256>.png`, `a/notebook.css`
@@ -367,10 +367,10 @@ N28). JavaScript opens the
 
 Session page order (10.1): table page (with the sticky note to the chosen miss and pinned chosen pictures in its
 margin), highlight, progress (with the prediction chart, 17), Dr. Kiro's plan (`tasks.md`, and `requirements.md`
-collapsed below it, N18), every experiment entry. The equal-trial list (14.5) and the replay controls (16) are not in
-this version (requirements Decision 48). wt-003 gets only 14.2 (14.6).
+collapsed below it, N18), every experiment entry. The equal-trial list (14.5) is not in this version and the replay controls (16) are on
+hold (requirements Decision 48). wt-003 gets only 14.2 (14.6).
 
-Replay pages (not in this version, requirements Decision 48) are full static pages, one per step, rendered from `view(record, step.seq)`: back, forward and play
+Replay pages (on hold, requirements Decision 48) are full static pages, one per step, rendered from `view(record, step.seq)`: back, forward and play
 are links (play is JavaScript that follows the forward link every 3 s and stops on the last step). Every step page
 carries "replay of a sealed record" (16.7). Chosen items and pinned pictures not in the prefix are left out with
 the commentary "not run at this step" (16.2).
@@ -591,7 +591,7 @@ if that step's table holds the row.
 
 **Validates: Requirements 10.11, 10.12, 16.12**
 
-### Property 9: Replay steps equal snapshots and record prefixes (not in this version)
+### Property 9: Replay steps equal snapshots and record prefixes (on hold, requirements Decision 48)
 
 *For any* generated record, the steps are exactly the `verdict` snapshots in record order plus the `end` snapshot
 if present; at each step the shown table equals the bench reader's rows of that step's snapshot (or the unreadable
@@ -733,7 +733,7 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
   section as written, the reader's message and "not checked by the bench" (not "no table"); wt-003 has
   only the stopped-session content and "the record has no snapshot to replay" (14.2, 14.6, 16.9).
 - (Not in this version, requirements Decision 48.) Equal-trial list: wt-002 T1 with wt-004 T1, and the 9 body-1/body-2 pairs, all exactly equal (14.5).
-- (Not in this version, requirements Decision 48.) Replay of every real record matches its snapshots (16.10, 22.3).
+- (On hold, requirements Decision 48.) Replay of every real record matches its snapshots (16.10, 22.3).
 
 ### Example and unit tests
 
@@ -788,7 +788,7 @@ pair from the CSS.
    Then stop and show the cover and the body-2 table on a desktop and a 360 px screen to the user (22.4).
 2. **Milestone 2**: experiment entries and moving pictures in full, lab pages and stopped sessions, "How the lab
    works", run bands.
-3. **Milestone 3**: the prediction chart. The replay, the equal-trial list and the body-lab input lines are not in this
+3. **Milestone 3**: the prediction chart. The replay is on hold, and the equal-trial list and the body-lab input lines are not in this
    version (requirements Decision 48); this version stops after the prediction chart.
 4. **Then**: "Built from the spec" shows "there are no runs yet" (19.1); 19.2-19.7 wait for the `build-from-spec`
    spec (19.8).
@@ -811,7 +811,7 @@ pair from the CSS.
 | 12, 13 | Components 7, Data Models, Property 11 |
 | 14 | Components 6 (14.5 not in this version), 9, Property 10 (not in this version) |
 | 15 | Components 3, 8, Property 5 |
-| 16 | Components 2, 3, 9, Property 9 (all of 16 not in this version) |
+| 16 | Components 2, 3, 9, Property 9 (all of 16 on hold) |
 | 17 | Components 9, Property 14 |
 | 18 | Components 9; N24 |
 | 19 | Delivery order 4, N22 |
@@ -844,7 +844,7 @@ changes `bench/`.
   draws one cell at a time from source rectangles that include the gap. No re-encoding. CSS `background-position`
   was not chosen because two-axis stepping with gaps needs per-cell keyframes generated per layout.
 - **N9 Addresses.** As in the table of Components 9; ids are bench ids checked by pattern.
-- **N10 Replay as static pages (not in this version, requirements Decision 48).** One page per step, so every step's text is in the HTML and has a fixed address;
+- **N10 Replay as static pages (on hold, requirements Decision 48).** One page per step, so every step's text is in the HTML and has a fixed address;
   "play" only follows the forward link.
 - **N11 Number format.** `.4g` and `repr`, as in Data Models.
 - **N12 Replacement edge cases.** A `replaced by` cell that names a repeated id, the row itself or no row is shown
