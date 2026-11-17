@@ -52,14 +52,15 @@ def sticky(children: list[Segment], *, stamped: bool = False) -> list[Segment]:
 
 def tab(target_id: Segment, target_rule: Segment, source: str) -> list[Segment]:
     """The "replaced by <id>" tab: a `<details>` whose content is the replacing row's rule text in small type
-    and a link to that row in its own place (Requirement 8.3)."""
+    and a link to that row in its own place (Requirement 8.3). It is open when the table is shown, so the
+    replacing rule is readable without a click; a visitor may close it (Requirement 8.13, Decision 49)."""
     summary = html.element("summary", None, [*say_text("REPLACED_BY"), *html.text(target_id)])
     content = [
         *html.element("span", {"class": "rule-small"}, html.text(target_rule)),
         *say_text("LIST_SEPARATOR"),
         *row_link(target_id.text, source, html.text(target_id)),
     ]
-    return html.element("details", {"class": "tab"}, [*summary, *content])
+    return html.element("details", {"class": "tab", "open": "open"}, [*summary, *content])
 
 
 def drkiro_block(segment: Segment) -> list[Segment]:

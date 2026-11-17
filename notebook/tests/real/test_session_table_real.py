@@ -57,16 +57,31 @@ def test_body_2_end_table_rows_tabs_and_note(loaded, chosen) -> None:
     assert [r for r, _ in rows] == [f"R{n}" for n in range(1, 15)]
     struck = [r for r, c in rows if c]
     assert struck == ["R2", "R3", "R4", "R6", "R8", "R10", "R12", "R14"]
-    assert page.count('<details class="tab">') == 8
+    assert page.count('<details class="tab" open="open">') == 8
     assert page.count(text.CHECKED) == 14
     assert text.NOT_CHECKED not in page
     assert page.count('class="sticky sticky-stamp"') == 1
     assert escape(text.REFUSED_END_NO_COPY) in page
     # R13 carries the note in the row right after it; the tabs name the replacing rows.
     assert re.search(r'<tr id="row-R13">.*?</tr><tr class="row-note">', page, re.S)
-    tabs = re.findall(r'<details class="tab">.*?href="#row-(R\d+)"', page, re.S)
+    tabs = re.findall(r'<details class="tab" open="open">.*?href="#row-(R\d+)"', page, re.S)
     assert tabs == ["R1", "R11", "R5", "R7", "R9", "R11", "R13", "R13"]
     assert page.count(text.CHOSEN_BY_A_PERSON) == 3
+
+
+def test_body_2_every_rejected_rows_replaced_by_tab_is_open(loaded, chosen) -> None:
+    """Requirement 8.13 (Decision 49): the "replaced by" tab of each rejected row is open when the table is
+    shown; a visitor may close it. Each struck row has exactly one tab, and no tab of the table is closed."""
+    _, page = _section(loaded, chosen, "body-2")
+    rejected = [
+        (rid, body)
+        for rid, body in re.findall(r'<tr id="row-(R\d+)" class="row-rejected">(.*?)</tr>', page, re.S)
+    ]
+    assert [rid for rid, _ in rejected] == ["R2", "R3", "R4", "R6", "R8", "R10", "R12", "R14"]
+    for rid, body in rejected:
+        assert body.count('<details class="tab" open="open">') == 1, rid
+        assert body.count("<details") == 1, rid
+    assert page.count('<details class="tab">') == 0
 
 
 def test_wt_004_rows_are_checked_and_wt_002_shows_the_readers_message(loaded, chosen) -> None:

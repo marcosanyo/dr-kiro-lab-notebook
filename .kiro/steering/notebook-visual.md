@@ -97,7 +97,8 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
   bench" and the others) is never struck through: in the table the status cell (`td.status`) is left out of the
   rule, and on the cover only the row's id link and rule text (`.cover-rule`) are struck.
 - The "replaced by" tab (`.tab`) sits at the row's right edge as a paper tab, background `--tab` `#f1e9d2`; it is a
-  `<details>` whose content is the replacing row's rule text in small type and a link to that row.
+  `<details>` whose content is the replacing row's rule text in small type and a link to that row. It is open
+  when the table is shown (`open="open"`, Requirement 8.13, Decision 49); a visitor may close it.
 - Reverse links ("replaces <id>, <id>") use `.replaces`.
 
 ## Type and spacing

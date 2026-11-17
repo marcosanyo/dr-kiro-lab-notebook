@@ -23,7 +23,7 @@ def test_tab_links_the_target_row_and_shows_its_rule() -> None:
     target = Segment("R5", Ink.DRKIRO, "fixture")
     rule = Segment("a <rule> & more", Ink.DRKIRO, "fixture")
     page = _html(parts.tab(target, rule, "fixture"))
-    assert page.startswith('<details class="tab"><summary>')
+    assert page.startswith('<details class="tab" open="open"><summary>')
     assert 'href="#row-R5"' in page
     assert "a &lt;rule&gt; &amp; more" in page
 
