@@ -24,7 +24,7 @@ from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
 from notebook.inputs import Inputs
 from notebook.layouts import Layout
-from notebook.pages import cover, lab, parts, session
+from notebook.pages import cover, how, lab, parts, session
 from notebook.pages.photo import PictureFile, Pins
 from notebook.records import RecordModel
 from notebook.site import Site, check_target, write
@@ -118,6 +118,10 @@ def _legend(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]
     return {addresses.LEGEND: (lab.legend(), ())}
 
 
+def _how(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
+    return {addresses.HOW: (how.page(list(m.checked.records)), ())}
+
+
 def _sessions(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
     out = {}
     for record in m.checked.records:
@@ -128,12 +132,13 @@ def _sessions(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...
     return out
 
 
-# Every page kind of the site, in this order. A later task adds its page kind here (how.html, built.html,
-# the replay steps).
+# Every page kind of the site, in this order. A later task adds its page kind here (built.html, the replay
+# steps).
 PAGES: tuple[tuple[str, Pages], ...] = (
     ("the cover", _cover),
     ("the lab pages", _labs),
     ("the ink legend", _legend),
+    ("how the lab works", _how),
     ("the session pages", _sessions),
 )
 

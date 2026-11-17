@@ -11,7 +11,7 @@ import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 
 from notebook import choices, ink, layouts, plots, records, refusals, scan, views
-from notebook.pages import cover, lab, parts, photo, session
+from notebook.pages import cover, how, lab, parts, photo, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
@@ -122,8 +122,8 @@ def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, l
 def test_the_lab_pages_and_the_legend_pass_both_scan_passes_and_links_stay_in_the_site(
     scanner, loaded
 ) -> None:
-    pages = {**lab.pages(loaded), "legend.html": lab.legend()}
-    assert sorted(pages) == ["body-lab.html", "legend.html", "wind-tunnel.html"]
+    pages = {**lab.pages(loaded), "legend.html": lab.legend(), "how.html": how.page(loaded)}
+    assert sorted(pages) == ["body-lab.html", "how.html", "legend.html", "wind-tunnel.html"]
     for name, (written, _) in scan.check(scanner, pages).items():
         _links_stay_in_the_site(name, written)
         assert "<div" not in written and "xmlns" not in written and "http" not in written, name

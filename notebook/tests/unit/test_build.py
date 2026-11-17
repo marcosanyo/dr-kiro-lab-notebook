@@ -72,7 +72,15 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
     # Pictures shown: every trial's, in its experiment entry (Requirement 10.8), which includes the cover's
     # and the margin's.
     pictures = {f"p/{hashlib.sha256(t.picture.data).hexdigest()}.png" for t in record.trials}
-    texts = {"index.html", "fake.html", "legend.html", "fake-s1.html", "a/notebook.css", "a/notebook.js"}
+    texts = {
+        "index.html",
+        "fake.html",
+        "legend.html",
+        "how.html",
+        "fake-s1.html",
+        "a/notebook.css",
+        "a/notebook.js",
+    }
     expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures
     assert _all_files(built) == expected
     for path in pictures:
@@ -97,7 +105,7 @@ def test_every_sidecar_is_compact_sorted_and_read_by_the_bench(built):
 
 
 def test_every_page_of_a_fixture_build_carries_the_banner(built):
-    for path in ("index.html", "fake.html", "legend.html", "fake-s1.html"):
+    for path in ("index.html", "fake.html", "legend.html", "how.html", "fake-s1.html"):
         page = (built / path).read_text(encoding="utf-8")
         assert page.count(text.FIXTURE_BANNER) == 1
         assert page.index(text.FIXTURE_BANNER) > page.index("<body>")

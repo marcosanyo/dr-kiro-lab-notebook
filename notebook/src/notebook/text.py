@@ -309,6 +309,65 @@ REFUSAL_ACTION = "Refused action: "
 REFUSAL_GIVEN = "; given "
 REFUSAL_MESSAGE = "The bench's message: "
 
+# How the lab works, `how.html` (Requirement 18). No builder spec is quoted, and no file or folder outside a
+# lab is named or linked (18.5, design N24).
+HOW_TITLE = "How the lab works"
+HOW_INTRO = (
+    "Dr. Kiro is an agent that experiments on a system it has no description of, and writes that "
+    "system's spec from the evidence of its trials."
+)
+HOW_LEVELS_HEADING = "Two levels of spec"
+HOW_LEVEL_BUILDER = (
+    "The builder's specs built the lab: the bench, which holds Dr. Kiro to the method, the two "
+    "applications that plug into it, and this notebook. Dr. Kiro never sees them."
+)
+HOW_LEVEL_DRKIRO = (
+    "Dr. Kiro's lab spec is written by Dr. Kiro from evidence: its requirements hold the hypotheses and "
+    "their predictions, its design holds the discovered spec table, and its tasks hold the plan. Before a "
+    "session can end, the bench checks the table against the record."
+)
+HOW_TOUCH_HEADING = "What Dr. Kiro can and cannot touch"
+HOW_CAN = (
+    "Dr. Kiro can read and write the spec files and the experiment files of its own lab folder, and it can "
+    "call the four bench tools:"
+)
+HOW_TOOL_REGISTER = "register_hypothesis: register a hypothesis and its predictions before any trial of it."
+HOW_TOOL_RUN = "run_experiment: run one experiment file, one trial at a time, within the budget."
+HOW_TOOL_VERDICT = "record_verdict: give a verdict on a hypothesis after its experiment."
+HOW_TOOL_END = "end_session: end the session; the bench first checks the discovered spec table."
+HOW_CANNOT = (
+    "Dr. Kiro has no shell and cannot open any other folder. The bench returns measurements, pictures and "
+    "the remaining budget, and nothing else."
+)
+HOW_WORDING = (
+    "The notebook's own text describes motion by direction, distance, heading, speed, symmetry and which "
+    "channels were active. Dr. Kiro's text is shown as written."
+)
+HOW_APPS_HEADING = "The two applications"
+HOW_APPS_INTRO = (
+    "What each application declares, as the bench recorded it at the start of each session. Records of one "
+    "application that hold different declarations are shown apart."
+)
+HOW_APP_SESSIONS = "Sessions with this declaration: "
+HOW_GOAL = "Goal: "
+HOW_KNOBS = "Knobs, each with its kind and declared range:"
+HOW_KNOB_KIND = ", kind "
+HOW_KNOB_RANGE = ", range "
+HOW_RANGE_OPEN = "["
+HOW_RANGE_CLOSE = "]"
+HOW_MEASUREMENTS = "Measurements, each with its unit and kind:"
+HOW_MEASUREMENT_UNIT = ", unit "
+HOW_MEASUREMENT_KIND = ", "
+HOW_BUDGET = "Budget, in trials per session: "
+HOW_PICTURE = "Picture of each trial: "
+HOW_REFUSALS_HEADING = "Refusals, per session"
+HOW_REFUSALS_INTRO = (
+    "How often the bench refused an action of Dr. Kiro, and why, as recorded. A refused action runs "
+    "nothing and uses no budget."
+)
+HOW_REFUSALS_BY_ACTION = "Refusals by action: "
+HOW_SESSION_OF = ", session "
+
 # The banner of a build from labelled test fixtures (design N19). The command line never shows it.
 FIXTURE_BANNER = (
     "test fixture: this page is built from labelled fixture records, and nothing on it is a result."

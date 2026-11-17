@@ -426,6 +426,13 @@ a {
   max-width: 100%;
 }
 
+/* How the lab works (pages/how.py): one column per declaration, side by side from wide screens. */
+.how-app {
+  flex: 1 1 18rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .entry {
   margin: var(--space-3) 0;
   padding-bottom: var(--space-3);
