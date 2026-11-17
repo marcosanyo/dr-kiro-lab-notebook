@@ -65,6 +65,7 @@ class Lab:
             seed=7,
             scan_sources=(FAKE_SOURCES,),
             stop_list=STOP_LIST,
+            discovered_table="required",
         )
 
     def write(self, name: str, text: str) -> None:

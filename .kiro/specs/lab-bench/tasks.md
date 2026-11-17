@@ -363,3 +363,18 @@ Added on the user's decision of the `dr-kiro` final-spec copies (`dr-kiro` Requi
     matching hash and an extra file fail the scan, a path in a copied file is found; a lab file with a template's
     bytes is scanned for terms. `sh bench/scripts/check.sh` passes.
   - _Requirements: 15.10, 15.11_
+## Amendment: ending without the table (Requirement 21)
+Added for the `build-from-spec` spec (its task 1, Requirement 12). Design: "D1. Ending without the table (Req 21)".
+Commits `961e5a9`, `a9f91f7` and `a453f9a` hold the code and tests.
+- [x] 36. Ending setting, `end_session` text and records sealed before the change
+  - `SessionConfig`, the config file, the start check, the start entry and the one branch of `end`; `bench-new-session`
+    writes `"required"`; `describe.py` and `server.py` make the `end_session` text depend on the setting; the tests
+    that show records sealed before the change stay valid (`build-from-spec` tasks 1.1-1.3).
+  - _Requirements: 21.1-21.9_
+## Amendment: run records skipped by `bench-check-discovered` (Requirement 22)
+Added for the `build-from-spec` spec (its task 2, Requirement 13.7). Design: "D2. Run records skipped by
+`bench-check-discovered` (Req 22)". Commit `f0dc911` holds the code and test.
+- [x] 37. `check_copies` skips `sessions/build-from-spec/`
+  - `record/spec_copy.py`: `RUN_RECORDS` and the skip in `_records`, and the report line; the test in
+    `bench/tests/unit/test_spec_copy.py` (`build-from-spec` task 2.1).
+  - _Requirements: 22.1-22.5_

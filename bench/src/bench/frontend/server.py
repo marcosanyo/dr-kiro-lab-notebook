@@ -33,7 +33,7 @@ class BenchServer:
         self.session = session
         self.lock = anyio.Lock()
         self.write_picture = PictureWriter(session.config.lab_dir)
-        texts = descriptions(session.declaration)
+        texts = descriptions(session.declaration, session.config.discovered_table)
         findings = [
             f for name, text in texts.items() for f in session.scanner.scan_text(text, "builder", name)
         ]

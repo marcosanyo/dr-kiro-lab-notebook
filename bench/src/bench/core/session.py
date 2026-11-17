@@ -95,6 +95,11 @@ class SessionConfig:
     seed: int
     scan_sources: tuple[Path, ...]
     stop_list: Path
+    # Whether ending needs the ## Discovered spec table: "required" or "not-required" (build-from-spec 12.1).
+    discovered_table: str
+
+
+DISCOVERED_TABLE_VALUES = ("required", "not-required")
 
 
 @dataclass(frozen=True)
@@ -236,6 +241,8 @@ class Session:
             raise _refuse("cannot start: the experiments folder does not exist")
         if not config.scan_sources:
             raise _refuse("cannot start: scan_sources is empty")
+        if config.discovered_table not in DISCOVERED_TABLE_VALUES:
+            raise _refuse("cannot start: discovered_table must be required or not-required")
         try:
             decl = config.adapter.declaration()
             check_declaration(decl)
@@ -275,6 +282,7 @@ class Session:
                 "declaration": declaration_record(decl),
                 "spec_files": dict(zip(SPEC_FILE_KEYS, config.spec_files, strict=True)),
                 "experiments_dir": config.experiments_dir,
+                "discovered_table": config.discovered_table,
                 "step_bound": STEP_BOUND,
             },
         )
@@ -302,8 +310,12 @@ class Session:
             "application": config.application,
             "seed": config.seed,
             "declaration": declaration_record(decl),
+            "discovered_table": config.discovered_table,
         }
         for key, value in expected.items():
+            if key not in start:
+                store.close()
+                raise SessionError(f"the record has no {key}; it was started before the bench recorded it")
             if start[key] != value:
                 store.close()
                 raise SessionError(f"the record's {key} differs from the config")
@@ -724,15 +736,16 @@ class Session:
         if self.state.pending is not None:
             raise _refuse(f"{self.state.pending} needs a verdict before the session can end")
         specs = self._read_specs()
-        file = self.config.spec_files[1]
-        problems = check_table(specs[1], self.evidence(), file)
-        if problems:
-            spans: list[Span] = [BenchText("the discovered spec table does not agree with the record: ")]
-            for index, problem in enumerate(problems):
-                if index:
-                    spans.append(BenchText("; "))
-                spans += list(problem.spans)
-            raise RefusalError(Message(tuple(spans)))
+        if self.config.discovered_table == "required":
+            file = self.config.spec_files[1]
+            problems = check_table(specs[1], self.evidence(), file)
+            if problems:
+                spans: list[Span] = [BenchText("the discovered spec table does not agree with the record: ")]
+                for index, problem in enumerate(problems):
+                    if index:
+                        spans.append(BenchText("; "))
+                    spans += list(problem.spans)
+                raise RefusalError(Message(tuple(spans)))
         self._snapshot(specs, "end")
         sealed = self._seal("ended", "Dr. Kiro ended the session")
         if isinstance(sealed, BenchFailure):

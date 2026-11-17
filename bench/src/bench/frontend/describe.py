@@ -6,6 +6,7 @@ is scanned at the builder level when the server starts.
 """
 
 from bench.adapter import Declaration, FunctionKnob
+from bench.core.session import DISCOVERED_TABLE_VALUES
 
 _EXTENSIONS = {"image/png": "png", "image/gif": "gif", "image/webp": "webp"}
 
@@ -47,7 +48,13 @@ def declaration_text(decl: Declaration) -> str:
     return "\n".join(lines)
 
 
-def descriptions(decl: Declaration) -> dict[str, str]:
+END_BASE = "End the session. Every experiment needs a verdict"
+END_TABLE = ", and your design.md must end with a Discovered spec table that agrees with the record"
+
+
+def descriptions(decl: Declaration, discovered_table: str) -> dict[str, str]:
+    if discovered_table not in DISCOVERED_TABLE_VALUES:
+        raise ValueError(f"discovered_table must be required or not-required, not {discovered_table!r}")
     about = declaration_text(decl)
     return {
         "register_hypothesis": (
@@ -67,8 +74,5 @@ def descriptions(decl: Declaration) -> dict[str, str]:
             "verdict is one of supported, partly or rejected, "
             "and words are what you saw and why you judge it so."
         ),
-        "end_session": (
-            "End the session. Every experiment needs a verdict, and your design.md must end with a "
-            "Discovered spec table that agrees with the record."
-        ),
+        "end_session": END_BASE + (END_TABLE if discovered_table == "required" else "") + ".",
     }

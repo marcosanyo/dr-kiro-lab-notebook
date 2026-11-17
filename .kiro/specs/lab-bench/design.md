@@ -1055,3 +1055,99 @@ file-name patterns only. Body-lab's scans and golden files are unchanged (checke
 ## C5. What would make me stop and ask
 
 - A golden file of body-lab or a sealed session changes its scan result after the change. Not the case.
+
+## D1. Ending without the table (Req 21)
+
+The whole change. It is the detailed design of `build-from-spec` section 3.14.1, written here because the bench code
+is specified in this spec.
+
+| Where | Change |
+|---|---|
+| `SessionConfig` (`core/session.py`) | New field `discovered_table: str`, no default. |
+| `Session._check_config` | Refuse unless the value is `"required"` or `"not-required"`, naming the setting (21.6). |
+| `frontend/config.py` | `FIELDS` already follows `SessionConfig`, so a missing field is refused by name. `load` checks that it is a string and passes it on. |
+| Start entry | `"discovered_table": config.discovered_table` (21.7). `Session.open` compares it with the config, as it does `seed`. |
+| `Session._end` | One branch: the `check_table` block runs only when the value is `"required"`. The verdict gate, the one reading of the three files, the `"for": "end"` snapshot and sealing as `ended` stay as they are (21.2, 21.3). |
+| `frontend/describe.py` | `descriptions` takes the setting; with `"not-required"` the `end_session` text leaves out the table clause (21.9). |
+| `frontend/server.py` | `BenchServer` calls `descriptions(session.declaration, session.config.discovered_table)`. It is the only caller. |
+| `bench-new-session` (`drkiro/session.py`) | Passes and writes `discovered_table = "required"` (21.4). |
+| Tests and docs | `tests/labkit.py` and every config in the bench tests state `"required"`; `bench/README.md`'s sample `session.toml` gains the line. |
+
+**`frontend/describe.py`.** The `end_session` text is built from two constants:
+
+```python
+END_BASE = "End the session. Every experiment needs a verdict"
+END_TABLE = ", and your design.md must end with a Discovered spec table that agrees with the record"
+
+def descriptions(decl: Declaration, discovered_table: str) -> dict[str, str]:
+    if discovered_table not in ("required", "not-required"):
+        raise ValueError(f"discovered_table must be required or not-required, not {discovered_table!r}")
+    ...
+    "end_session": END_BASE + (END_TABLE if discovered_table == "required" else "") + ".",
+```
+
+- `"required"` gives the current text byte for byte, so Dr. Kiro's tool texts do not change (21.9).
+- `"not-required"` gives `End the session. Every experiment needs a verdict.`
+- The other three texts do not depend on the setting. An unknown value raises; the start check has already refused it,
+  so this guards only another caller.
+
+**Tests.** `bench/tests/unit/test_session.py`: with `"not-required"`, `end` without a table seals as `ended` with an
+end snapshot that `final_spec` reads; with a pending verdict it still refuses; a missing or unknown value is refused at
+start, naming the setting; the start entry holds the value; with `"required"` the existing end tests pass unchanged.
+`bench/tests/frontend/test_describe.py` and `test_server.py`: `"required"` gives the current literal byte for byte;
+`"not-required"` gives the shorter text; the other three texts are equal for both values; an unknown value raises; a
+server started with each value lists the matching `end_session` text.
+`bench/tests/unit/test_sealed_before_amendment.py`: `bench-verify` and `final_spec` pass on `sessions/body-lab/body-1`,
+`sessions/body-lab/body-2` and `sessions/wind-tunnel/wt-004`, whose start entries have no `discovered_table`.
+
+- Records sealed before this amendment have no `discovered_table` in their start entry. `bench-verify` and
+  `final_spec` do not read it, so they stay valid (21.8).
+- `Session.open` refuses a record without the key, so an unsealed session started before the amendment could not be
+  reopened. No session may be open when the amendment is merged (section D4).
+- The configs in `bench-run/` are git-ignored and belong to sealed sessions. They are not edited.
+
+## D2. Run records skipped by `bench-check-discovered` (Req 22)
+
+`_records` in `record/spec_copy.py` reads every folder under `<sessions>/<x>/` as a session record and raises on a
+folder without `log.jsonl`. `sessions/build-from-spec/body-lab/` holds run records and run files, so the check would
+fail on the repository. The change:
+
+```python
+RUN_RECORDS = "build-from-spec"   # sessions/build-from-spec/ holds reader run records (lab-bench Requirement 22)
+
+def _records(sessions: Path) -> list[Path]:
+    """Every Dr. Kiro session record folder under `<sessions>/<application>/`; `<sessions>/build-from-spec/` is skipped."""
+    for application in sorted(p for p in Path(sessions).iterdir() if p.is_dir() and p.name != RUN_RECORDS):
+        ...  # unchanged
+```
+
+- `check_copies` adds the report line `build-from-spec: reader run records, no copies` when `<sessions>/build-from-spec/`
+  exists, so the skip is visible (22.2).
+- Nothing else changes (22.3). A folder `discovered/build-from-spec/` is still reported as "no sealed session record has
+  this name".
+- Run records stay covered by `bench-verify`, the blind scan of `sessions/` and the `build-from-spec` run check (22.4).
+- Test: `bench/tests/unit/test_spec_copy.py`. The repository's sessions are copied to a temporary folder with a sealed
+  run record and its run file under `sessions/build-from-spec/body-lab/`: no problem and the skip line; a copy of that
+  run under `discovered/build-from-spec/` is a problem; a folder without `log.jsonl` under another application still
+  raises.
+
+## D3. Decisions (taken by the builder, from `build-from-spec` decisions)
+
+1. **Numbers 21 and 22.** The next free numbers after Requirement 20. One number per amendment, because
+   `build-from-spec` Requirement 12 and 13.7 are two amendments.
+2. **Two values, not a boolean.** `"required"` and `"not-required"` read more clearly in a record than `true` and
+   `false` (`build-from-spec` design B8).
+3. **No default.** A config without the setting is refused at start, naming it, so no session runs on an assumed value.
+4. **Old records are not migrated.** Their start entries keep no key. `bench-verify` and `final_spec` do not read it.
+5. **The `end_session` text is one sentence shorter**, and only in the `"not-required"` case. Dr. Kiro's text is
+   unchanged.
+6. **The skip line is added, not silent.** The report of `check_copies` names the skipped folder.
+7. **The `dr-kiro` wording.** `dr-kiro` Requirement 8.4 and its design section state "every Dr. Kiro session record
+   sealed as `ended` with an end snapshot", with run records named as not covered.
+
+## D4. What would make me stop and ask
+
+- A session is open in `bench-run/` when the amendment is merged. `Session.open` would refuse its record, because the
+  start entry has no `discovered_table`. The builder stops and reports it.
+- An existing sealed record fails `bench-verify` or `final_spec` after the change. Not expected: the code does not read
+  the key on those paths.

@@ -121,7 +121,8 @@ the pass condition is fixed before anything runs.
 ### Requirement 3: Request check before commit
 
 **User Story:** As the user, I want to check a request before I commit it, so that its words tell the reader
-nothing forbidden and its format is right.
+nothing forbidden, its format is right, and its pass ranges do not contain a trial already recorded in the source
+session, so that the reader cannot pass by copying it.
 
 #### Acceptance criteria
 
@@ -131,8 +132,14 @@ nothing forbidden and its format is right.
 2. IF the check finds a format error or a forbidden item, THEN THE check command SHALL fail, naming the file, the
    line and the item.
 3. THE user SHALL word the request about the motion or the outcome only (direction, distance, heading). THE check
-   command SHALL enforce this only through the blind scan and SHALL judge nothing else.
+   command SHALL enforce this only through the blind scan and SHALL judge nothing else, except the source check of
+   criterion 5.
 4. WHEN the check finds nothing, THE check command SHALL exit with success and SHALL change no file.
+5. THE check command SHALL require the source session path as an explicit argument, with no default. WHEN a source
+   session path is given, THE check command SHALL read every counted trial of that sealed record. IF a counted trial
+   has every measurement named in the request measured and inside its pass range, THEN THE check command SHALL fail,
+   naming the request file and the id of each such trial. IF the source path does not hold a record that passes
+   `bench-verify`, THEN THE check command SHALL fail, naming the path.
 
 ### Requirement 4: Setups
 
@@ -324,7 +331,8 @@ and records its setup.
    run script SHALL refuse, naming the file.
 3. THE run script SHALL record the commit hash of the last commit that changed the request file, and the SHA-256 of
    the request file.
-4. THE run script SHALL check the request (Requirement 3) and refuse on any finding.
+4. THE run script SHALL check the request (Requirement 3) with the source session of the run (Requirement 3.5) and
+   refuse on any finding.
 5. THE run script SHALL write the session config under `bench-run/build-from-spec/` but outside the working folder,
    with the wrapping adapter, the run id as session id, the working folder as lab, `sessions/build-from-spec` as
    sessions folder, the seed, and the discovered spec setting of Requirement 12 set to not required.
@@ -595,6 +603,12 @@ exactly as recorded.
     `record`, source session body-2). No other request is run without the user. Implementation waits until the
     other chat's notebook work is merged into main, because both use the main folder. This updates Decisions 8
     and 16. (Introduction, Requirement 17, Appendix A)
+19. **Source trials in the request check.** The user asked that the request check also refuse a request whose pass
+    ranges already contain a trial of the source session record, so that the reader cannot pass by copying a
+    recorded trial. The check takes the source session path explicitly, with no default, and the run script runs
+    it with the source of each run. The user asked for this before any run, to keep the comparison fair. Under this
+    decision, `straight-ahead` and `turn-right` are refused by the check, and `stop-ahead` passes, as Decision 18
+    found. (Requirements 3.5, 11.4; Design 2.2, 3.2)
 
 ### By Kiro (the user may change these)
 
@@ -665,6 +679,11 @@ exactly as recorded.
   out that one sentence when the table is not required, so the reader is told only true things. The description
   stays built from the declaration and the setting only, and is identical in the three setups. This amends
   Requirements 8.3 and 12.5 and adds Requirement 12.9.
+- **K27 Source trials in the request check (Decision 19).** The check reads the counted trials of the source record,
+  the trials the result program counts (Requirement 15.9), and judges each with the same range test as the result
+  program: every named measurement measured and inside its range. A not-measured value is outside. Only trials of
+  the given source are read, never the working folder or other records. The check runs before any file is written
+  in a run (Requirement 5.7). (Requirements 3.5, 11.4)
 
 ## Open items
 

@@ -92,7 +92,7 @@ the current folder has no `.git`, so every repository path in this design is rel
 
 | Command | What it does | Req |
 |---|---|---|
-| `bfs-check-request <request file>` | Format check and builder-level blind scan of `id` and `words`. Writes nothing. | 2, 3 |
+| `bfs-check-request <request file> --source <record path>` | Format check, builder-level blind scan of `id` and `words`, and the source check: no counted trial of the source record has every named measurement inside its pass range. `--source` is required, with no default. Writes nothing. | 2, 3.1-3.5 |
 | `bfs-run --request <file> --setup <setup> --source <record> --seed <n> --run <n> --model <m> --effort <e>` | Checks, prepares, starts the bench session, runs the turns, writes the run file. | 4-11, 13, 17 |
 | `bfs-run-file <run-id>` | Writes the run file of a sealed run record. `bfs-run` calls the same function at its end; the command is for a run whose script was interrupted after sealing. | 14, 16.2 |
 | `bfs-check-runs` | Checks every run file against its records and the committed request, checks runs of one request against each other, and derives what the notebook shows. | 14.3, 14.6, 16, 18 |
@@ -160,7 +160,8 @@ class RequestError(Exception): ...          # file, where (field or line), probl
 def parse_request(path: Path, apps) -> Request
 def print_request(request: Request) -> str
 def inside(value: float, p: PassRange) -> bool   # p.low <= value <= p.high (Req 2.3)
-def check_request(path: Path, apps, stop_list: Path) -> list[str]   # bfs-check-request
+def source_trials_inside(request: Request, record: Path) -> list[str]   # ids of counted trials inside every pass range (Req 3.5)
+def check_request(path: Path, source: Path, apps, stop_list: Path) -> list[str]   # bfs-check-request
 ```
 
 `parse_request` reads the file with `tomllib` and refuses, naming the file and the field (`id`, `words`,
@@ -180,7 +181,16 @@ need not equal the committed file's bytes.
 `check_request` parses, then scans `id` and `words` with `Scanner.from_config([App.scan_sources], stop_list)` at the
 builder level. The line of each finding is the line of the file that starts with `id =` or `words =`. It prints each
 finding as `<file>:<line>: <kind>: <match>` and exits 1, or prints "no findings" and exits 0 (Req 3.2, 3.4). It
-judges nothing else (Req 3.3).
+judges nothing else (Req 3.3) except the source check below.
+
+`source_trials_inside(request, record)` is the source check (Req 3.5, Kiro decision K27). It verifies the record
+with `verify(record, sealed=True)` (`bench.record.chain`), takes its counted trials with `counted_trials(entries)`
+from `judge.py` (section 3.8), and returns the ids, in log order, of the trials where every measurement named in the
+request is a number and `inside` holds. A not-measured value is outside, as in section 3.8. A named measurement
+missing from a trial fails the command, as in section 3.8. `check_request` takes the source path as an argument with
+no default, and it fails when the list is not empty, naming the request file and each trial id. A source that does
+not verify fails, naming the path (rules.md 2). The run script calls `check_request` with the source of the run
+(section 3.9, step A2), so the check runs on the same record as the one the run is tied to.
 
 ### 3.3 Wrapping adapter (`wrap.py`, Req 8)
 
@@ -432,7 +442,7 @@ non-empty (Req 11.8). Run id: `<request-id>-<setup>-<n>`.
 1. The request file is tracked (`git ls-files --error-unmatch`) and equal to `HEAD`, staged or not
    (`git diff --quiet HEAD -- <file>`) (Req 11.2). Its last-change commit is `git log -1 --format=%H -- <file>`; its
    SHA-256 is taken from the file (Req 11.3).
-2. `parse_request` and the request check of section 3.2 (Req 11.4).
+2. `parse_request` and the request check of section 3.2 with the run's source (Req 11.4, 3.5).
 3. The application is in `APPS` (Req 4.7).
 4. The source: a folder, not inside `sessions/build-from-spec/` (Req 5.5); `read_end` verifies it and gives its
    end, application and final spec; it must be `ended`, have a final spec, and be of the request's application
@@ -879,7 +889,7 @@ valid-looking value makes `bfs-check-runs` fail, naming the run file and that fi
 
 | Where | Failure | What happens |
 |---|---|---|
-| `bfs-check-request` | Format error or finding | Prints file, line or field, and item; exit 1. Nothing written. |
+| `bfs-check-request` | Format error, finding, a counted source trial inside the ranges, or a source that does not verify | Prints file, line or field, and item (or the trial ids, or the source path); exit 1. Nothing written. |
 | `bfs-run`, phase A | Any check | Prints the reason; exit 2. Nothing written; the run counts nothing (Req 17.4). |
 | Phase B | Write error, copy check, hash difference, blind-scan finding | Prints the reason and the working folder; exit 1. The folder stays; the bench session is not started (Req 11.7, 11.10). |
 | Phase C | `Session.start` refuses | Prints the bench's message; exit 1. No session; the folder stays. |
@@ -907,7 +917,7 @@ comment `# Feature: build-from-spec, Property <n>: <title>`. They do not start K
 
 | Test | Req |
 |---|---|
-| `bfs-check-request` on both committed requests: no findings, no file changed; a planted fake term in `words` and in `id` fails naming the line. | 3 |
+| `bfs-check-request` with `--source sessions/body-lab/body-2` on the committed requests: `stop-ahead` gives no findings and no file changed; `straight-ahead` is refused naming T31, T34, T35, T37, T38 and T39; `turn-right` is refused naming T19, T25 and T29 (Decision 18); a planted fake term in `words` and in `id` fails naming the line; a request whose range contains a trial of a fake source is refused naming that trial. | 3 |
 | Allowed ids of body-2: `spec` R1-R14 and `none`; `record` H1-H11, E1-E11 and `none`; `none` only `none`. | 10.2, 10.5 |
 | A fake session registers an H1 whose prediction block starts with the relied-on comment; the recorded frozen blob holds the line byte for byte. Run before any real run. | 10.6 |
 | Three working folders of one request (`spec`, `none`, `record`) have identical trees and bytes outside `given/`; `given/` of `none` is empty; `request.md` and the declared goal equal `words`; no file outside `given/` holds the run id, the source session id or a path. | 4.2, 4.5, 7.2, 7.7, 8.4 |

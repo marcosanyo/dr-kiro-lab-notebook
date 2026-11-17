@@ -123,7 +123,7 @@ so that no session starts from a half-reset lab.
    always reopens the session it was given.
 4. The experiments and pictures folders of a lab SHALL be ignored by git; the sealed record holds their files.
    Nothing under `.kiro/` SHALL be listed in a `.gitignore`: Dr. Kiro's three lab spec files are tracked in their
-   template state, and the final spec of each ended session is kept in `discovered/` (Requirement 8). The builder
+   template state, and the final spec of each ended Dr. Kiro session record is kept in `discovered/` (Requirement 8). The builder
    files and the templates (package data) stay tracked.
 
 ### Requirement 6: Running a session
@@ -171,10 +171,11 @@ Markdown files, so that I can read what it discovered without opening the sealed
    application, the session, the end snapshot's sequence number and hash, the seal's hash, and the SHA-256 of each
    file. IF that folder exists, THEN it SHALL fail, naming it, and change nothing.
 4. THE command `bench-check-discovered <sessions folder> <discovered folder>` SHALL list each sealed session and
-   what it found, and SHALL fail, naming each problem, unless: every session sealed as `ended` with an end snapshot
-   has a copy whose files equal, byte for byte, what 8.3 writes; a session sealed as `stopped`, or as `ended`
+   what it found, and SHALL fail, naming each problem, unless: every Dr. Kiro session record sealed as `ended` with an
+   end snapshot has a copy whose files equal, byte for byte, what 8.3 writes; a session sealed as `stopped`, or as `ended`
    without an end snapshot, has no copy; and the discovered folder holds nothing else except `README.md` and its
-   author sidecar.
+   author sidecar. The reader run records in `sessions/build-from-spec/` are not Dr. Kiro session records, so this check
+   does not cover them (`lab-bench` Requirement 22).
 5. THE check of 8.4 SHALL run before publishing (the `publish` spec) and in the tests.
 6. `discovered/README.md` SHALL say what the copies are, that the sealed record stays the source, and why a
    session has no copy.

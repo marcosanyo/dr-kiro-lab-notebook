@@ -4,8 +4,10 @@ import dataclasses
 import re
 from pathlib import Path
 
+import pytest
+
 from bench.adapter import Declaration, FunctionKnob, Measurement, NumberKnob
-from bench.frontend.describe import declaration_text
+from bench.frontend.describe import declaration_text, descriptions
 
 SRC = Path(__file__).resolve().parents[2] / "src" / "bench"
 ALLOWED = {"adapter.py", "core/session.py", "frontend/describe.py"}
@@ -57,3 +59,33 @@ def test_description_is_read_only_in_three_files() -> None:
             found.add(path.relative_to(SRC).as_posix())
     assert found <= ALLOWED, f"unexpected readers: {sorted(found - ALLOWED)}"
     assert found == ALLOWED
+
+
+CURRENT_END_SESSION = (
+    "End the session. Every experiment needs a verdict, and your design.md must end with a "
+    "Discovered spec table that agrees with the record."
+)
+
+
+def test_end_session_with_the_table_required_is_the_current_text() -> None:
+    assert descriptions(decl(), "required")["end_session"] == CURRENT_END_SESSION
+
+
+def test_end_session_without_the_table_leaves_out_the_table_clause() -> None:
+    assert descriptions(decl(), "not-required")["end_session"] == (
+        "End the session. Every experiment needs a verdict."
+    )
+
+
+def test_other_texts_do_not_depend_on_the_setting() -> None:
+    knobs = decl(NumberKnob("gain", 0.0, 3.0))
+    required = descriptions(knobs, "required")
+    not_required = descriptions(knobs, "not-required")
+    for name in ("register_hypothesis", "run_experiment", "record_verdict"):
+        assert required[name] == not_required[name]
+
+
+@pytest.mark.parametrize("value", ["", "Required", "yes", "true", "none"])
+def test_unknown_setting_raises_naming_the_setting(value: str) -> None:
+    with pytest.raises(ValueError, match="discovered_table must be required or not-required"):
+        descriptions(decl(), value)

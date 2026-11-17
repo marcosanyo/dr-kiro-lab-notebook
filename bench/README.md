@@ -114,6 +114,7 @@ sessions_dir = "sessions"
 seed = 1
 scan_sources = ["../../bench/src/bench/fake/scan_sources.toml"]
 stop_list = "../../.kiro/blind-scan/stop-list.txt"
+discovered_table = "required"
 resume = false
 EOF
 ls $R/session.toml $R/lab/.kiro/agents/fake-tester.json     # both must exist

@@ -67,6 +67,29 @@ def test_descriptions_come_from_the_declaration(lab: Lab) -> None:
     assert "How it is measured: Computed by the fake application" in run
 
 
+@pytest.mark.parametrize(
+    ("setting", "end_session"),
+    [
+        (
+            "required",
+            "End the session. Every experiment needs a verdict, and your design.md must end with a "
+            "Discovered spec table that agrees with the record.",
+        ),
+        ("not-required", "End the session. Every experiment needs a verdict."),
+    ],
+)
+def test_end_session_text_follows_the_discovered_table_setting(
+    lab: Lab, setting: str, end_session: str
+) -> None:
+    srv = BenchServer(lab.start(discovered_table=setting))
+
+    async def main() -> dict[str, str]:
+        async with Client(srv.mcp) as client:
+            return {t.name: t.description or "" for t in (await client.list_tools()).tools}
+
+    assert anyio.run(main)["end_session"] == end_session
+
+
 def test_run_result_has_measurements_paths_and_no_image(lab: Lab) -> None:
     srv = server(lab)
     lab.add(hyp_block("H1", STATEMENT, P1))
@@ -144,6 +167,7 @@ def _config_file(lab: Lab, tmp: Path, **changes: object) -> Path:
         "seed": 3,
         "scan_sources": [str(FAKE_SOURCES)],
         "stop_list": str(STOP_LIST),
+        "discovered_table": "required",
         "resume": False,
     }
     values.update(changes)
@@ -166,10 +190,22 @@ def test_config_file_starts_and_resumes(lab: Lab, tmp_path: Path) -> None:
     resumed.close()
 
 
-@pytest.mark.parametrize("field", ["resume", "stop_list", "sessions_dir", "application", "seed"])
+@pytest.mark.parametrize(
+    "field", ["resume", "stop_list", "sessions_dir", "application", "seed", "discovered_table"]
+)
 def test_config_file_missing_field(lab: Lab, tmp_path: Path, field: str) -> None:
     with pytest.raises(config_file.ConfigError, match=f"missing field.*{field}"):
         config_file.load(_config_file(lab, tmp_path, **{field: None}))
+
+
+def test_config_file_discovered_table_must_be_a_string(lab: Lab, tmp_path: Path) -> None:
+    with pytest.raises(config_file.ConfigError, match="discovered_table must be a string"):
+        config_file.load(_config_file(lab, tmp_path, discovered_table=1))
+
+
+def test_config_file_passes_the_discovered_table_setting_on(lab: Lab, tmp_path: Path) -> None:
+    config = config_file.load(_config_file(lab, tmp_path, discovered_table="not-required"))
+    assert config.session.discovered_table == "not-required"
 
 
 def test_missing_session_config_variable_stops_the_server() -> None:

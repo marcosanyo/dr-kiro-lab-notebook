@@ -13,6 +13,7 @@ import pytest
 
 from bench.record.spec_copy import (
     COPY_FILES,
+    RUN_RECORDS,
     SOURCE_NAME,
     SpecCopyError,
     check_copies,
@@ -202,3 +203,51 @@ def test_templates_pass_the_builder_level_scan() -> None:
     adapter tests."""
     for data in scan_module.TEMPLATE_BYTES:
         assert fake_scanner().scan_text(data.decode("utf-8"), "builder", "template") == []
+
+
+RUN_ID = "run-001"
+
+
+def run_record(root: Path) -> Path:
+    """A sealed record standing in for a reader run: a copy of wt-004, which verifies, placed under
+    `sessions/build-from-spec/body-lab/` with the run file beside it."""
+    folder = root / RUN_RECORDS / "body-lab"
+    record = folder / RUN_ID
+    shutil.copytree(root / "wind-tunnel" / "wt-004", record)
+    (folder / f"{RUN_ID}.run.json").write_text(json.dumps({"run": RUN_ID}) + "\n")
+    return record
+
+
+def test_reader_run_records_are_skipped(tmp_path: Path) -> None:
+    """build-from-spec Req 13.7: the run records under `sessions/build-from-spec/` are not read as session
+    records and have no copies."""
+    root, out = sessions(tmp_path), discovered(tmp_path)
+    run_record(root)
+    write_copy(root / "wind-tunnel" / "wt-004", out)
+    report, problems = check_copies(root, out)
+    assert problems == []
+    assert "wind-tunnel/wt-004: copy matches the record" in report
+    assert report[-1] == "build-from-spec: reader run records, no copies"
+    # A copy of a run record is reported as a copy with no session record behind it.
+    (out / RUN_RECORDS / RUN_ID).mkdir(parents=True)
+    assert check_copies(root, out)[1] == [
+        f"{out / RUN_RECORDS / RUN_ID}: no sealed session record has this name"
+    ]
+
+
+def test_reader_run_folders_are_not_read_as_records(tmp_path: Path) -> None:
+    """A folder under `sessions/build-from-spec/` is skipped whole, even without a log: it is not a session
+    record and is not reported."""
+    root, out = sessions(tmp_path), discovered(tmp_path)
+    (root / RUN_RECORDS / "body-lab" / "run-002").mkdir(parents=True)
+    write_copy(root / "wind-tunnel" / "wt-004", out)
+    report, problems = check_copies(root, out)
+    assert problems == []
+    assert "build-from-spec: reader run records, no copies" in report
+
+
+def test_a_folder_without_a_log_under_another_application_still_fails(tmp_path: Path) -> None:
+    root, out = sessions(tmp_path), discovered(tmp_path)
+    (root / "body-lab" / "broken").mkdir()
+    with pytest.raises(SpecCopyError, match="not a session record"):
+        check_copies(root, out)

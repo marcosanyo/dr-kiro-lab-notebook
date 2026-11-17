@@ -53,6 +53,7 @@ def test_new_session_resets_the_lab_and_refuses_while_one_is_open(tmp_path: Path
 
     config = config_file.load(tmp_path / "s1.toml")
     assert config.resume is True
+    assert config.session.discovered_table == "required"
     session = Session.open(config.session)
     assert session.state.sealed is None
     session.stop("test over")
