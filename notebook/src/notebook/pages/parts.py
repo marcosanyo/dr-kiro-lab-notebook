@@ -149,8 +149,8 @@ def footer() -> list[Segment]:
 def page(title: str, children: list[Segment]) -> list[Segment]:
     """A whole page at the site root: the head with the stylesheet, the decoration, `children` in the content
     column, the footer with its links to the ink legend and to how the lab works, and the page script. `title`
-    is the name of a string in `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an ink
-    element."""
+    is the name of a string in `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an
+    ink element."""
     head = html.element(
         "head",
         None,
