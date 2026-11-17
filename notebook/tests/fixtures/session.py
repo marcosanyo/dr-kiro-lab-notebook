@@ -5,10 +5,17 @@ test module is not imported.
 Every record made here is labelled fake (the fake application's declaration and every trial say so), lives in
 a temporary folder and is never built into a site. The fake application's numbers are not results.
 
-`accepted_session(root)` runs the session and ends it with an accepted table. Task 18.2 extends it with middle
-verdict snapshots (a table with a `rejected` row and its replacement, and an unreadable table): the steps are
-listed in `accepted_session` in order, and `Lab.write("design.md", ...)` before a verdict sets the table that
-the verdict snapshot holds.
+`accepted_session(root)` runs the session and ends it with an accepted table. The steps, in order:
+
+1. run E1, verdict E1 (verdict snapshot 1, table: the start table only, no rows);
+2. run E2, verdict E2 (verdict snapshot 2);
+3. end with the accepted table.
+
+`accepted_session(root, middle_steps=True)` (task 18.2) changes the two verdict snapshots: before verdict E1,
+`design.md` holds a table where R1 is `rejected` and replaced by R2, and R2 is `observed` (the replay's first
+step strikes R1); before verdict E2, `design.md` holds a table with a header and no rows, which the bench's
+reader does not accept (the replay's second step is unreadable). The end table is the same in both variants.
+`Lab.write("design.md", ...)` before a verdict sets the table that the verdict snapshot holds.
 """
 
 import textwrap
@@ -35,6 +42,21 @@ END_TABLE = """
 | R1 | distance grows with amp | gain 1 | E1 | H1.P1 | observed | |
 | R2 | the best point stays below 2.5 | amp 1, gain 3 | E2 | H2.P1 | rejected | R3 |
 | R3 | distance at amp 1 and gain 3 is the highest seen | amp 1, gain 3 | E2 | | observed | |
+"""
+
+# Task 18.2: the table of the first verdict snapshot (a `rejected` row and the row that replaces it).
+MIDDLE_TABLE = """
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|
+| R1 | distance grows with amp | gain 1 | E1 | H1.P1 | rejected | R2 |
+| R2 | distance grows with amp at gain 1 | gain 1 | E1 | H1.P1 | observed | |
+"""
+
+# Task 18.2: the table of the second verdict snapshot. A header and no rows: the bench's reader refuses it
+# ("the discovered spec table has no rules"), so the replay step shows it as unreadable (Requirement 16.6).
+UNREADABLE_TABLE = """
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|
 """
 
 
@@ -130,8 +152,11 @@ class SessionFixture:
     name: str  # the record name `records.load_record` is given
 
 
-def accepted_session(root: Path) -> SessionFixture:
-    """A fake session of two experiments that ends with an accepted discovered spec table."""
+def accepted_session(root: Path, *, middle_steps: bool = False) -> SessionFixture:
+    """A fake session of two experiments that ends with an accepted discovered spec table.
+
+    `middle_steps=True` (task 18.2) sets the table of each verdict snapshot as the module docstring describes;
+    the default is the fixture of every earlier task, unchanged."""
     lab = Lab(root)
     session = lab.start()
 
@@ -147,6 +172,8 @@ def accepted_session(root: Path) -> SessionFixture:
     sweep = [[a, 1.0] for a in (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)]
     ok(session.run(lab.experiment("e1_sweep_amp.py", exp_file("H1", sweep, mode="sweep", sweep=["amp"]))))
     lab.write("tasks.md", "# Tasks\n\n- [x] map the system\n- [ ] predict the best point\n")
+    if middle_steps:
+        lab.write("design.md", DESIGN_START + MIDDLE_TABLE)
     ok(session.verdict("E1", "supported", "distance rose with amp"))
 
     # E2: one trial at amp 1, gain 3; H2.P1 is a miss.
@@ -159,6 +186,8 @@ def accepted_session(root: Path) -> SessionFixture:
     )
     ok(session.register("H2"))
     ok(session.run(lab.experiment("e2_best.py", exp_file("H2", [[1.0, 3.0]], phase="best"))))
+    if middle_steps:
+        lab.write("design.md", DESIGN_START + UNREADABLE_TABLE)
     ok(session.verdict("E2", "rejected", "it went further than predicted"))
 
     lab.write("design.md", DESIGN_START + END_TABLE)
