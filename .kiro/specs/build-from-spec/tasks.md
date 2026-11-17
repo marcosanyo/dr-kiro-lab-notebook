@@ -120,7 +120,7 @@ Dr. Kiro takes no part.
     - Verified by: `sh scripts/ja-check.sh` reports nothing stale for `lab-bench` and `dr-kiro`.
     - _Requirements: 12.5, 13.7_
 
-- [ ] 4. Checkpoint
+- [x] 4. Checkpoint
   - Ensure all tests pass, ask the user if questions arise. Run `sh bench/scripts/check.sh`, the body-lab adapter
     tests (golden files unchanged, `git diff --stat body-lab/` empty), `bench-check-discovered sessions discovered`
     and `bench-scan` on both labs. Report in Japanese.
