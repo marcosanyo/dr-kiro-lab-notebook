@@ -75,6 +75,62 @@ def chosen() -> list[Segment]:
     return html.element("span", {"class": "block-label"}, say_text("CHOSEN_BY_A_PERSON"))
 
 
+# The Halloween decoration: a cobweb corner and a small bat, drawn with paths only (visual steering,
+# "Halloween"; design N28). Coordinates in a 64 x 128 box.
+_WEB = (
+    "M0 0 L64 0",
+    "M0 0 L0 64",
+    "M0 0 L60 60",
+    "M0 0 L32 62",
+    "M0 0 L62 32",
+    "M14 0 Q12 12 0 14",
+    "M28 0 Q26 18 18 18 Q18 26 0 28",
+    "M44 0 Q41 24 30 30 Q24 41 0 44",
+    "M60 0 Q56 32 44 44 Q32 56 0 60",
+)
+_BAT = (
+    "M32 100 C28 94 20 92 10 94 C14 97 15 100 14 104 C18 102 22 103 24 106 C26 103 29 102 32 104 "
+    "C35 102 38 103 40 106 C42 103 46 102 50 104 C49 100 50 97 54 94 C44 92 36 94 32 100 Z",
+    "M29 97 L30 93 L32 96 L34 93 L35 97 Z",
+)
+
+
+def decoration() -> list[Segment]:
+    """The Halloween decoration as inline SVG: no text, hidden from assistive technology, no namespace
+    attribute (HTML puts an inline `<svg>` in the SVG namespace by itself). It is drawn in `currentColor`, and
+    the stylesheet shows it only in the page gutter from 1000px (Requirement 6.5)."""
+    web = html.element(
+        "g",
+        {
+            "fill": "none",
+            "stroke": "currentColor",
+            "stroke-width": "1",
+            "stroke-linecap": "round",
+            "opacity": "0.55",
+        },
+        [segment for d in _WEB for segment in html.element("path", {"d": d}, [])],
+    )
+    bat = [
+        segment
+        for d in _BAT
+        for segment in html.element("path", {"d": d, "fill": "currentColor", "opacity": "0.8"}, [])
+    ]
+    # HTML parsers turn `viewbox` into the SVG attribute `viewBox`; `html.py` takes lowercase names only.
+    # In HTML, an SVG element left open would hold the elements after it, so each one has an end tag.
+    return html.element(
+        "svg",
+        {
+            "class": "deco",
+            "viewbox": "0 0 64 128",
+            "width": "64",
+            "height": "128",
+            "aria-hidden": "true",
+            "focusable": "false",
+        },
+        [*web, *bat],
+    )
+
+
 def legend_link(root: str) -> list[Segment]:
     """The footer link to the ink legend; `root` is the relative path from the page to the site root, such
     as `""` or `"../../"` (Requirement 4.5)."""

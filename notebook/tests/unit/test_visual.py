@@ -5,13 +5,22 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
+from bench.scan.levels import AUTHOR_LEVEL
+from bench.scan.scan import Scanner
+
+from notebook import ink
+from notebook.pages import parts
 
 PROJECT = Path(__file__).resolve().parents[2]
 REPO = PROJECT.parent
 STEERING = REPO / ".kiro" / "steering" / "notebook-visual.md"
 ASSETS = PROJECT / "src" / "notebook" / "assets"
 CSS = ASSETS / "notebook.css"
-DECO = ASSETS / "deco.svg"
+SCRIPT = ASSETS / "notebook.js"
+
+
+def _decoration() -> str:
+    return ink.join(parts.decoration())[0]
 
 
 def _rules(css: str) -> list[tuple[str, str]]:
@@ -107,11 +116,11 @@ def test_each_ink_differs_in_family_or_style():
     rules = {sel: _declarations(body) for sel, body in _rules(CSS.read_text(encoding="utf-8"))}
     properties = _custom_properties()
     looks = {}
-    for ink in (".ink-k", ".ink-p", ".ink-c"):
-        decl = rules[ink]
+    for ink_class in (".ink-k", ".ink-p", ".ink-c"):
+        decl = rules[ink_class]
         family = decl["font-family"]
         resolved = re.sub(r"var\((--[a-z-]+)\)", lambda m: properties[m.group(1)], family)
-        looks[ink] = (resolved, decl.get("font-style", "normal"))
+        looks[ink_class] = (resolved, decl.get("font-style", "normal"))
     inks = list(looks)
     for i, a in enumerate(inks):
         for b in inks[i + 1 :]:
@@ -139,11 +148,44 @@ def test_no_remote_or_font_file_in_the_stylesheet():
 
 
 def test_decoration_holds_no_text_and_is_hidden_from_assistive_technology():
-    root = ET.fromstring(DECO.read_text(encoding="utf-8"))
-    tags = {element.tag.rsplit("}", 1)[-1] for element in root.iter()}
-    assert not tags & {"text", "title", "desc", "tspan", "textPath", "foreignObject", "image", "use", "a"}
+    markup = _decoration()
+    assert "xmlns" not in markup and "http:" not in markup and "https:" not in markup
+    root = ET.fromstring(markup)
+    assert root.tag == "svg" and root.get("class") == "deco"
+    tags = {element.tag for element in root.iter()}
+    assert tags <= {"svg", "g", "path"}, tags
     assert root.get("aria-hidden") == "true"
     assert all(not (element.text or "").strip() for element in root.iter())
+    assert all(not (element.tail or "").strip() for element in root.iter())
+    # Drawn in currentColor: the stylesheet gives the colour, the markup holds no colour literal.
+    assert "#" not in markup
+
+
+def test_decoration_is_inline_markup_not_a_file():
+    assert not (ASSETS / "deco.svg").exists()
+    assert {segment.ink for segment in parts.decoration()} == {ink.Ink.MARKUP}
+
+
+def test_assets_and_decoration_pass_the_builder_level_scan():
+    scanner = Scanner.from_config(
+        [
+            REPO / "body-lab" / "adapter" / "scan_sources.toml",
+            REPO / "wind-tunnel" / "adapter" / "scan_sources.toml",
+        ],
+        REPO / ".kiro" / "blind-scan" / "stop-list.txt",
+    )
+    level = AUTHOR_LEVEL["bench"]
+    for where, content in (
+        ("notebook.css", CSS.read_text(encoding="utf-8")),
+        ("notebook.js", SCRIPT.read_text(encoding="utf-8")),
+        ("decoration", _decoration()),
+    ):
+        assert scanner.scan_text(content, level, where) == [], where
+
+
+def test_stylesheet_holds_no_remote_address():
+    css = CSS.read_text(encoding="utf-8")
+    assert "http:" not in css and "https:" not in css
 
 
 def test_decoration_shows_only_from_1000px_in_a_reserved_gutter():
