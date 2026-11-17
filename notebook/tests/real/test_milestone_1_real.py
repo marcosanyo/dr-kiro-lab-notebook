@@ -348,6 +348,14 @@ def test_cover_shows_rows_r4_and_its_replacement_r5(site):
     assert "row-rejected" in item.classes
     stamps = [s.text() for s in claim.find_all("span", "stamp")]
     assert stamps == ["rejected", "observed"]
+    # Each row's stamp keeps its label, as in the table (Requirement 8.2; user, checkpoint 11).
+    labels = [s.text() for s in claim.find_all("span", "stamp-label")]
+    assert labels == [text.CHECKED, text.CHECKED]
+    for status in claim.find_all("span", "cover-status"):
+        assert [(c.tag, sorted(c.classes)[0]) for c in status.elements()] == [
+            ("span", "stamp"),
+            ("span", "stamp-label"),
+        ]
 
 
 def test_ink_of_status_words_is_the_stamp(site, loaded):
@@ -355,3 +363,97 @@ def test_ink_of_status_words_is_the_stamp(site, loaded):
     for stamp in page.find_all("span", "stamp"):
         assert [c.tag for c in stamp.elements()] == ["span"]
         assert f"ink-{Ink.STAMP.value}" in stamp.elements()[0].classes
+
+
+# The four fixes of checkpoint 11 (user, 2026-11-17; visual steering)
+
+CSS = ROOT / "notebook" / "src" / "notebook" / "assets" / "notebook.css"
+
+
+def _paths(node: Node, ancestors: tuple[Node, ...] = ()):
+    """Every element with the elements above it, outermost first."""
+    yield ancestors, node
+    for child in node.elements():
+        yield from _paths(child, (*ancestors, node))
+
+
+def _struck_selectors() -> set[str]:
+    """The selectors of every stylesheet rule that draws a strike-through."""
+    found: set[str] = set()
+    for rule in CSS.read_text(encoding="utf-8").split("}"):
+        if "{" not in rule:
+            continue
+        selectors, declarations = rule.split("{", 1)
+        if "line-through" in declarations:
+            lines = [ln for ln in selectors.splitlines() if not ln.strip().startswith("/*")]
+            selectors = "\n".join(lines).rsplit("*/", 1)[-1]
+            found |= {s.strip() for s in selectors.split(",") if s.strip()}
+    return found
+
+
+def test_the_strike_through_rules_leave_the_status_cell_and_the_cover_status_out():
+    assert _struck_selectors() == {
+        ".row-rejected td:not(.status)",
+        ".cover-rows .row-rejected > a",
+        ".cover-rows .row-rejected > .cover-rule",
+    }
+
+
+def test_no_stamp_label_sits_inside_a_struck_element(site, loaded):
+    pages = [_session_page(site, loaded["body-2"]), _parse(site / "index.html")]
+    labels = 0
+    for page in pages:
+        for ancestors, node in _paths(page):
+            if "stamp-label" not in node.classes:
+                continue
+            labels += 1
+            for i, above in enumerate(ancestors):
+                parent = ancestors[i - 1] if i else None
+                in_rejected_row = parent is not None and "row-rejected" in parent.classes
+                # `.row-rejected td:not(.status)`
+                assert not (above.tag == "td" and in_rejected_row and "status" not in above.classes)
+                # `.row-rejected > a`, `.row-rejected > .cover-rule`
+                assert not (in_rejected_row and (above.tag == "a" or "cover-rule" in above.classes))
+    # Every label of body-2's table (14 rows) and of the cover's two cited rows was looked at.
+    assert labels >= 14 + 2
+    rejected = [r for r in _rows(pages[0]) if "row-rejected" in r.classes]
+    assert len(rejected) == len(BODY_2_TABS)
+    for row in rejected:
+        status = _cells(row)[5]
+        assert "status" in status.classes and status.find_all("span", "stamp-label")
+        assert [c for c in _cells(row) if "status" in c.classes] == [status]
+
+
+def test_cover_photo_and_track_are_siblings_in_one_row(site):
+    evidence = _parse(site / "index.html").find(cls="cover-evidence")
+    children = evidence.elements()
+    assert [(c.tag, "photo-large" in c.classes or "track" in c.classes) for c in children] == [
+        ("figure", True),
+        ("figure", True),
+    ]
+    assert "photo-large" in children[0].classes and "track" in children[1].classes
+    css = CSS.read_text(encoding="utf-8")
+    rule = css[css.index(".cover-evidence {") :]
+    rule = rule[: rule.index("}")]
+    assert "display: flex;" in rule and "flex-wrap: wrap;" in rule
+
+
+def test_cover_cards_label_sits_directly_above_the_cards(site):
+    cards = _parse(site / "index.html").find("section", "cover-cards")
+    label, row = cards.elements()
+    assert "block-label" in label.classes and label.text() == text.CHOSEN_BY_A_PERSON
+    assert "card-row" in row.classes
+    assert [len(c.find_all("figure", "photo-small")) for c in row.elements()] == [1, 1]
+
+
+def test_sticky_note_sets_the_measurement_name_apart(site, loaded):
+    record = loaded["body-2"]
+    sticky = _session_page(site, record).find("aside", "margin").find_all("aside", "sticky")[0]
+    (name,) = sticky.find_all("span", "measure-name")
+    predictions = {p.id: p for h in record.hypotheses for p in h.predictions}
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H8.P6" and o.outcome == "miss"]
+    assert "ink-p" in name.classes and name.text() == predictions["H8.P6"].measurement
+    paragraph = sticky.find_all("p")[0].text()
+    assert text.MEASURED + name.text() + text.MEASURED_NAME_END in paragraph
+    assert paragraph.startswith(text.MISS_POINTER + "H8.P6" + text.REGISTERED_RANGE)
+    assert outcome.value is not None

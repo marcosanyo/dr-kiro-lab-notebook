@@ -44,6 +44,7 @@ _COLUMNS = (
     "COLUMN_STATUS",
     "COLUMN_REPLACED_BY",
 )
+_STATUS_COLUMN = _COLUMNS.index("COLUMN_STATUS")
 
 # The note of `tables.table_view` -> its commentary in `text.py`.
 _REPLACED_NOTES = {
@@ -129,7 +130,17 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         attrs = {"id": row_anchor}
         if rv.struck:
             attrs["class"] = "row-rejected"
-        body += html.element("tr", attrs, [s for c in cells for s in html.element("td", None, c)])
+        # The status cell is marked so the strike-through of a rejected row leaves its label alone
+        # (visual steering, strike-through).
+        body += html.element(
+            "tr",
+            attrs,
+            [
+                s
+                for i, c in enumerate(cells)
+                for s in html.element("td", {"class": "status"} if i == _STATUS_COLUMN else None, c)
+            ],
+        )
         note = notes.get(rv.index)
         if note is not None:
             body += html.element(
@@ -199,9 +210,10 @@ def _miss(view: View, outcome: Outcome, predictions: dict[str, Prediction]) -> l
         value = html.text(pencil(outcome.not_measured, source))
     else:
         raise NotebookError(source, f"the miss of {pid} has neither a value nor a not-measured outcome")
+    # "<id> registered range [<low>, <high>], measured <name>: <value> miss", the measurement's name in its
+    # own element (visual steering, sticky note; user, checkpoint 11).
     return [
         *link,
-        *html.text(pencil(" " + prediction.measurement, source)),
         *say_text("REGISTERED_RANGE"),
         *html.text(
             pencil(
@@ -210,6 +222,8 @@ def _miss(view: View, outcome: Outcome, predictions: dict[str, Prediction]) -> l
             )
         ),
         *say_text("MEASURED"),
+        *html.element("span", {"class": "ink-p measure-name"}, [pencil(prediction.measurement, source)]),
+        *say_text("MEASURED_NAME_END"),
         *value,
         markup(" "),
         *html.element("span", {"class": "ink-p miss"}, [pencil(outcome.outcome, source)]),

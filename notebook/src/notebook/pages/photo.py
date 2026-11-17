@@ -59,14 +59,15 @@ def _image_size(data: bytes) -> tuple[int, int]:
 
 
 def photo(
-    record: RecordModel, trial: Trial, layout: Layout, size: str = ""
+    record: RecordModel, trial: Trial, layout: Layout, size: str = "", *, trial_word: bool = True
 ) -> tuple[list[Segment], PictureFile]:
     """The instant photo of one trial and the picture file it shows.
 
     Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
     `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
     sheet that does not divide into whole cells fails the build, naming the record and the trial
-    (Requirement 7.3)."""
+    (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
+    cover, whose visible commentary is limited, Requirement 13.6)."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -104,7 +105,7 @@ def photo(
             "button", {"type": "button", "data-action": action, "hidden": "hidden"}, say_text(label)
         )
     caption = [
-        *say_text("PHOTO_TRIAL"),
+        *(say_text("PHOTO_TRIAL") if trial_word else []),
         *html.text(pencil(tid, source)),
         *html.element("span", {"class": "photo-controls"}, buttons),
     ]

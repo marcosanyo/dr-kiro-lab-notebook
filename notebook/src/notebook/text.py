@@ -79,6 +79,8 @@ MISS_POINTER = "A prediction that missed: "
 MISS_NONE = "No missed prediction was chosen for this note. The reason given: "
 REGISTERED_RANGE = " registered range "
 MEASURED = ", measured "
+# After the measurement's name, which stands in its own element (visual steering, sticky note).
+MEASURED_NAME_END = ": "
 PINNED_CONTRAST = "contrast"
 PINNED_BEST = "best result"
 PINNED_NONE = "none. The reason given: "
@@ -95,11 +97,13 @@ PHOTO_SHEET = "whole sheet"
 # Overhead track of a trial (Requirements 10.10, 13.7; design N21).
 TRACK_CAPTION = "recorded track seen from above, equal scale on both axes; the circle marks the start"
 TRACK_NOT_MEASURED = "No track is drawn: the recorded series is not measured. "
-# The cover's short caption; the cover explains the drawing in full inside its details (Requirement 13.6).
-TRACK_CAPTION_COVER = "track from above"
+# The cover's one-word caption; the cover explains the drawing in full inside its details (Requirement 13.6).
+TRACK_CAPTION_COVER = "track"
 
 # The cover, `index.html` (Requirement 13). The commentary visible before any detail is opened is at most 60
-# words (13.6), so the visible strings are short and the explanations sit inside `<details>`.
+# words (13.6), so the visible strings are short and the explanations sit inside `<details>`. To keep the
+# stamp labels of the cited rows (8.2) within the limit, the cover's photos show the trial id without the word
+# "trial" and the track has a one-word caption (user, checkpoint 11).
 SITE_TITLE = "Dr. Kiro's Lab Notebook"
 TAGLINE = "The experiment gets the final edit."
 COVER_RANGE = " range "

@@ -69,9 +69,23 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Caption below the picture (`figcaption`), in commentary ink or pencil.
 - The cover's large photo adds `.photo-large`; lab cards use `.photo-small`.
 
+## Cover layout (Requirements 13.1, 13.7; user, checkpoint 11)
+
+- The large photo and the recorded track are siblings in one row (`.cover-evidence`, a wrapping flex row): from
+  1000px the track stands beside the photo; on a narrow screen it wraps below it.
+- From 1000px the cover's miss (`.cover-miss`) is two columns: the evidence row at its own width, then the
+  prediction text in the rest of the line, with no empty column between them.
+- On the cover each cited row's stamp keeps its label below it, as in the table (Requirement 8.2).
+- The cards' "chosen by a person" label sits directly above the cards it labels (`.cover-cards`), and the cards
+  follow in their own row (`.card-row`).
+
 ## Sticky note (Requirement 6.3)
 
 - Class `.sticky`: background `--sticky` `#fff1a8`, commentary ink, rotated 1deg, a shadow.
+- The sticky note to a missed prediction names the measurement in its own element, set apart from the ids and the
+  range (user, checkpoint 11): "<id> registered range [<low>, <high>], measured <name>: <value> miss", with the name
+  in `.measure-name` (pencil, bold). The same wording is used in the list of missed predictions of a session
+  without a table.
 - The refused-end note is `.sticky.sticky-stamp`: a sticky note with the stamp border (2px, rounded, pencil colour),
   its heading in stamp type. Refusal message parts inside it keep their own inks.
 
@@ -79,6 +93,9 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 
 - Class `.row-rejected` on the row: `text-decoration: line-through` 2px in `--graphite` `#3d3d3d`. The text keeps
   its full colour and contrast.
+- The line covers the row's own text only (user, checkpoint 11). The stamp's label (`.stamp-label`, "checked by the
+  bench" and the others) is never struck through: in the table the status cell (`td.status`) is left out of the
+  rule, and on the cover only the row's id link and rule text (`.cover-rule`) are struck.
 - The "replaced by" tab (`.tab`) sits at the row's right edge as a paper tab, background `--tab` `#f1e9d2`; it is a
   `<details>` whose content is the replacing row's rule text in small type and a link to that row.
 - Reverse links ("replaces <id>, <id>") use `.replaces`.

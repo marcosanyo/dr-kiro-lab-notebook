@@ -288,7 +288,8 @@ a {
   vertical-align: top;
 }
 
-.row-rejected td {
+/* The row's own text only: the status cell, whose stamp label is never struck, is left out. */
+.row-rejected td:not(.status) {
   text-decoration: line-through 2px var(--graphite);
 }
 
@@ -330,9 +331,29 @@ a {
   margin: 0 0 var(--space-4);
 }
 
-.cover-evidence,
+/* The photo and the track in one row; the track wraps below the photo on a narrow screen. */
+.cover-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+}
+
+.cover-evidence .track {
+  margin: var(--space-4) 0;
+}
+
 .cover-claim {
   display: block;
+}
+
+.cover-status {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.measure-name {
+  font-weight: bold;
 }
 
 .cover-rows {
@@ -355,11 +376,14 @@ a {
 }
 
 .cover-cards {
+  margin-top: var(--space-5);
+}
+
+.card-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-4);
-  margin-top: var(--space-5);
 }
 
 .card-heading {
@@ -438,7 +462,7 @@ a {
 
   .cover-miss {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: auto minmax(0, 1fr);
     gap: var(--space-4);
     align-items: start;
   }

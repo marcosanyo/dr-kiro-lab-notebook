@@ -27,9 +27,12 @@ from hypothesis import strategies as st
 
 from fixtures.session import FAKE_SOURCES, REPO, STOP_LIST
 from fixtures.synth import record_sets, write_all
-from notebook import build
+from notebook import build, layouts
+from notebook import choices as notebook_choices
 from notebook import records as notebook_records
+from notebook.errors import NotebookError
 from notebook.inputs import Inputs
+from notebook.pages import cover
 from notebook.records import RecordModel
 
 LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 2 x 2 picture"\n'
@@ -58,15 +61,32 @@ def _choice(record: RecordModel) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _cover(record: RecordModel) -> str:
-    misses = [o.prediction for o in record.outcomes if o.outcome == "miss"]
-    prediction = misses[0] if misses else "none"
+def _cover(record: RecordModel, prediction: str) -> str:
     return (
         f'[miss]\napplication = "{record.application}"\nsession = "{record.session}"\n'
         f'prediction = "{prediction}"\n\n'
         f'[[card]]\napplication = "{record.application}"\nsession = "{record.session}"\n'
         f'trial = "{record.trials[0].id}"\n'
     )
+
+
+def _fitting_cover(record: RecordModel, loaded: list[RecordModel], choices: Path, layouts_file: Path) -> bool:
+    """Write the cover file with the first miss of `record` whose cover keeps within the cover's word limit
+    (Requirement 13.6), as a person choosing the cover must; "none" when the record has no miss. Each cited
+    row adds its stamp label (8.2), so a miss cited by many rows does not fit. False when no miss fits; any
+    other refusal of the cover is raised."""
+    misses = [o.prediction for o in record.outcomes if o.outcome == "miss"]
+    table = layouts.load(layouts_file)
+    for prediction in misses or ["none"]:
+        (choices / "cover.toml").write_text(_cover(record, prediction))
+        try:
+            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table)
+        except NotebookError as error:
+            if "words of commentary" not in error.problem:
+                raise
+            continue
+        return True
+    return False
 
 
 def _write_inputs(root: Path, synthesized) -> Inputs | None:
@@ -81,9 +101,10 @@ def _write_inputs(root: Path, synthesized) -> Inputs | None:
     for record in loaded:
         (choices / record.application).mkdir(parents=True, exist_ok=True)
         (choices / record.application / f"{record.session}.toml").write_text(_choice(record))
-    (choices / "cover.toml").write_text(_cover(covers[0]))
     (root / "layouts.toml").write_text(LAYOUTS)
     (root / "words.txt").write_text(WORDS)
+    if not _fitting_cover(covers[0], loaded, choices, root / "layouts.toml"):
+        return None
     return Inputs(
         sessions=sessions,
         choices=choices,

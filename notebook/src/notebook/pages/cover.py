@@ -18,7 +18,7 @@ The commentary visible before any detail is opened is at most `MAX_VISIBLE_WORDS
 file names ended sessions only (14.4, checked in `choices.load_cover`).
 """
 
-from bench.specfiles.discovered import STATUSES, Row, Table
+from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, plots, tables
 from notebook.choices import Card, Cover
@@ -63,13 +63,13 @@ def _prediction(record: RecordModel, pid: str, where: str) -> tuple[Hypothesis, 
 
 
 def _stamp(snapshot: Snapshot, row: Row) -> list[Segment]:
-    """A status word in the bench's stamp style, in a reference to a row (Requirement 15.2). The label below
-    each stamp is left out on the cover; the details say that the words are checked by the bench."""
-    classes = "stamp"
-    if row.status in STATUSES:
-        classes += f" stamp-{row.status}"
+    """A status word in the bench's stamp style with its label below, as in the table (Requirements 8.2,
+    15.2). The cover shows rows of the accepted `end` snapshot only, so the label is "checked by the
+    bench"."""
+    if snapshot.for_ != "end":
+        raise NotebookError(snapshot.design.source, "the cover cites rows of an accepted end snapshot only")
     segment = stamp_segment(row.status, f"{snapshot.design.source} line {row.line}")
-    return html.element("span", {"class": classes}, html.text(segment))
+    return html.element("span", {"class": "cover-status"}, parts.stamp(segment, "CHECKED"))
 
 
 def _row(record: RecordModel, snapshot: Snapshot, row: Row) -> list[Segment]:
@@ -219,7 +219,10 @@ def _miss(
         raise NotebookError(_source(record, outcome.seq), f"the miss of {miss.prediction} names no trial")
     hypothesis, prediction = _prediction(record, miss.prediction, where)
     trial = _trial(record, outcome.trial, where)
-    figure, picture = photo(record, trial, layout_for(layouts, record.application, record.name), "large")
+    figure, picture = photo(
+        record, trial, layout_for(layouts, record.application, record.name), "large", trial_word=False
+    )
+    # The photo and the track are siblings in one row container (visual steering, "Cover layout").
     evidence = html.element(
         "section", {"class": "cover-evidence"}, [*figure, *plots.track(record, trial, "TRACK_CAPTION_COVER")]
     )
@@ -276,7 +279,9 @@ def _card(
 ) -> tuple[list[Segment], PictureFile]:
     record = _record(records, card.application, card.session, card.source)
     trial = _trial(record, card.trial, f"{card.source} trial")
-    figure, picture = photo(record, trial, layout_for(layouts, record.application, record.name), "small")
+    figure, picture = photo(
+        record, trial, layout_for(layouts, record.application, record.name), "small", trial_word=False
+    )
     source = _source(record, 1)
     heading = html.element(
         "p",
@@ -340,7 +345,12 @@ def page(
     body = [
         *head,
         *miss,
-        *html.element("section", {"class": "cover-cards"}, [*cards, *chosen()]),
+        # The label sits directly above the cards it labels (visual steering, "Cover layout").
+        *html.element(
+            "section",
+            {"class": "cover-cards"},
+            [*chosen(), *html.element("section", {"class": "card-row"}, cards)],
+        ),
     ]
     segments = parts.page("SITE_TITLE", body)
     words = visible_words(segments)
