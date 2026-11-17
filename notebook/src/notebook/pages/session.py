@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from bench.conditions import NOT_RUN
 from bench.specfiles.discovered import Row, Table
 
-from notebook import addresses, html, numbers, refusals, tables, views
+from notebook import addresses, html, numbers, refusals, tables
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
@@ -1144,41 +1144,6 @@ class Nav:
     session: str
 
 
-def _replay_steps(record: RecordModel) -> list[Segment]:
-    """Requirement 16.1 and 10.1: the steps of the record as links, the play link from the first step, or the
-    sentence of Requirement 16.9 when the record has no step."""
-    steps = views.steps(record)
-    if not steps:
-        return html.element("p", {"class": "no-replay"}, say_text("NO_STEP"))
-    start = _entry_source(record, 1)
-    items: list[Segment] = []
-    for step in steps:
-        href = addresses.replay(record.application, record.session, step.number, start)
-        label = [
-            *say_text("REPLAY_STEP"),
-            *html.text(pencil(str(step.number), start)),
-            *say_text("REPLAY_STEP_OF"),
-            *html.text(pencil(str(len(steps)), start)),
-            *say_text("REPLAY_AT_END" if step.end else "REPLAY_AFTER_VERDICT"),
-        ]
-        items += html.element("li", None, link(href, label))
-    first = addresses.replay(record.application, record.session, 1, start)
-    return [
-        *html.element("p", None, say_text("REPLAY_INTRO")),
-        *html.element("p", None, link(first + "?play=1", say_text("REPLAY_PLAY"))),
-        *html.element("ol", {"class": "steps"}, items),
-    ]
-
-
-def _replay_list(record: RecordModel) -> list[Segment]:
-    """The replay section of the session page (Requirement 16)."""
-    return html.element(
-        "section",
-        {"class": "replay", "id": "replay"},
-        [*html.element("h2", None, say_text("REPLAY_HEADING")), *_replay_steps(record)],
-    )
-
-
 def _replay_head(record: RecordModel, nav: Nav) -> list[Segment]:
     """The heading of a replay step: the label "replay of a sealed record" (Requirement 16.7), the step's
     number, the controls back, forward and play (Requirement 16.8), and the link back to the session page."""
@@ -1252,14 +1217,6 @@ def _no_snapshot_page(record: RecordModel) -> list[Segment]:
             {"class": "record-holds", "id": "record"},
             [*html.element("h2", None, say_text("NO_SNAPSHOT_HEADING")), *lab.content(record)],
         ),
-        *html.element(
-            "section",
-            {"class": "replay", "id": "replay"},
-            [
-                *html.element("h2", None, say_text("REPLAY_HEADING")),
-                *html.element("p", {"class": "no-replay"}, say_text("NO_REPLAY")),
-            ],
-        ),
     ]
     return parts.page("SESSION_TITLE", body)
 
@@ -1294,8 +1251,6 @@ def page(
     ]
     anchors = _Anchors(record)
     body += [*_entries(view, pins, anchors), *_never_run(view, anchors), *_refusals(view)]
-    if nav is None:
-        body += _replay_list(record)
     unique: dict[str, PictureFile] = {}
     for picture in pins.files:
         unique.setdefault(picture.path, picture)

@@ -151,30 +151,6 @@
   document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
     setUp(figure, rate, reduced);
   });
-  // Replay play (Requirement 16.8): a replay step opened with "?play=1" follows its forward link after
-  // REPLAY_WAIT milliseconds and carries the query on, so play goes on to the last step. The last step has no
-  // forward link, so play stops there. Without this script the play link is a plain link to the next step.
-  var REPLAY_WAIT = 3000;
-
-  function playReplay() {
-    if (location.search !== "?play=1") {
-      return;
-    }
-    var forward = document.querySelector("a[data-replay='forward']");
-    if (forward === null) {
-      return;
-    }
-    setTimeout(function () {
-      location.href = forward.getAttribute("href") + "?play=1";
-    }, REPLAY_WAIT);
-  }
-
-  var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var rate = interval();
-  document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
-    setUp(figure, rate, reduced);
-  });
   openAddress();
   addEventListener("hashchange", openAddress);
-  playReplay();
 })();

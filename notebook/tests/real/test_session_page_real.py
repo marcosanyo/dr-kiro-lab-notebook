@@ -12,8 +12,9 @@ import pytest
 from notebook import cli, numbers, records, text
 from real.test_milestone_1_real import SESSIONS, Node, _argv, _parse
 
-# Requirement 10.1: these sections first, in this order; the others follow.
-SECTION_ORDER = ["table", "highlight", "progress", "plan", "experiments", "never-run", "refusals", "replay"]
+# Requirement 10.1: these sections first, in this order. The replay section is not in this version
+# (Decision 48), so the page ends with the refusals.
+SECTION_ORDER = ["table", "highlight", "progress", "plan", "experiments", "never-run", "refusals"]
 
 # wt-003 (stopped, no snapshot) has the page of Requirement 14.6 instead of these sections, so the tests of
 # the sections below leave it out; its page is checked in `test_stopped_real.py`.

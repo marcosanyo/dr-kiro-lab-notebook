@@ -85,11 +85,13 @@ def test_wt_003_page_shows_only_the_content_of_14_2_and_the_sentence_of_16_9(sit
     assert record.seal.end == "stopped" and not record.snapshots and not record.trials
     page = _parse(site / "wind-tunnel-wt-003.html")
     main = page.find("main", "page")
-    assert _sections(page) == ["record", "replay"]
-    assert [n.tag for n in main.elements()] == ["p", "h1", "section", "section"]
+    assert _sections(page) == ["record"]
+    assert [n.tag for n in main.elements()] == ["p", "h1", "section"]
     assert page.find_all("table") == [] and page.find_all("details", "entry") == []
     assert page.find_all("figure") == [] and page.find_all(cls="table-page") == []
-    assert page.find("section", "replay", id="replay").find("p", "no-replay").text() == text.NO_REPLAY
+    # No replay section, no replay link, not even the sentence of 16.9 (Decision 48).
+    assert page.find_all("section", "replay") == [] and text.NO_REPLAY not in page.text()
+    assert all("replay" not in a.attrs.get("href", "") for a in page.find_all("a"))
 
     shown = _fields(page.find("dl", "record-content"))
     assert list(shown) == [getattr(text, name) for name in lab.CONTENT_FIELDS]

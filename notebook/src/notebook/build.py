@@ -24,7 +24,7 @@ from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
 from notebook.inputs import Inputs
 from notebook.layouts import Layout
-from notebook.pages import cover, how, lab, parts, replay, session
+from notebook.pages import cover, how, lab, parts, session
 from notebook.pages.photo import PictureFile, Pins
 from notebook.records import RecordModel
 from notebook.site import Site, check_target, write
@@ -132,23 +132,14 @@ def _sessions(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...
     return out
 
 
-def _replays(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    out = {}
-    for record in m.checked.records:
-        layout = layouts.layout_for(m.checked.layouts, record.application, record.name)
-        chosen = m.checked.choices[(record.application, record.session)]
-        out.update(replay.step_pages(record, layout, chosen))
-    return out
-
-
 # Every page kind of the site, in this order. A later task adds its page kind here (built.html).
+# The replay steps are not in this version (Decision 48): `pages/replay.py` stays in the repository, unbuilt.
 PAGES: tuple[tuple[str, Pages], ...] = (
     ("the cover", _cover),
     ("the lab pages", _labs),
     ("the ink legend", _legend),
     ("how the lab works", _how),
     ("the session pages", _sessions),
-    ("the replay steps", _replays),
 )
 
 

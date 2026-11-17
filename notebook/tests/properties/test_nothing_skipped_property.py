@@ -154,4 +154,4 @@ def test_a_record_with_no_snapshot_has_a_complete_page(synth: SynthRecord) -> No
     _check_page(synth, record)
     # The page of Requirement 14.6: what the record holds and the sentence of 16.9, nothing else.
     page, _ = ink.join(session.page(views.full(record), _choices(record), Pins(record, LAYOUT))[0])
-    assert page.count(text.NO_REPLAY) == 1
+    assert text.NO_REPLAY not in page  # the replay section is not in this version (Decision 48)

@@ -25,6 +25,10 @@ STEP_COUNTS = {
 }
 
 
+# The replay pages are not in this version (Decision 48): tests that read a replay page are skipped.
+NOT_IN_THIS_VERSION = pytest.mark.skip(reason="not in this version, Decision 48")
+
+
 @pytest.fixture(scope="module")
 def site(tmp_path_factory) -> Path:
     out = tmp_path_factory.mktemp("replay-real") / "site"
@@ -62,6 +66,7 @@ def test_every_real_step_table_is_the_bench_readers_table_of_its_snapshot(loaded
                 assert read.rows == parse_table(source, tables.design_file(record)).rows, record.name
 
 
+@NOT_IN_THIS_VERSION
 def test_every_step_page_is_a_replay_of_a_sealed_record_with_its_controls(site, loaded):
     for record in loaded.values():
         steps = views.steps(record)
@@ -86,6 +91,7 @@ def test_every_step_page_is_a_replay_of_a_sealed_record_with_its_controls(site, 
                 assert page.find_all("a", **{"data-replay": "play"})[0].attrs["href"] == nxt + "?play=1"
 
 
+@NOT_IN_THIS_VERSION
 def test_the_session_page_links_every_step(site, loaded):
     for record in loaded.values():
         if not views.steps(record):
@@ -98,6 +104,7 @@ def test_the_session_page_links_every_step(site, loaded):
             assert f'href="{name}"' in shown, (record.name, step.number)
 
 
+@NOT_IN_THIS_VERSION
 def test_body_2_has_the_refusals_of_the_end_step_only_after_e11(site, loaded):
     record = loaded[("body-lab", "body-2")]
     before_end = _parse(_step_path(site, record, 11))
@@ -111,6 +118,7 @@ def test_body_2_has_the_refusals_of_the_end_step_only_after_e11(site, loaded):
     assert len(end.find_all("li", "refusal")) == 2
 
 
+@NOT_IN_THIS_VERSION
 def test_body_2_middle_steps_are_not_yet_checked_and_the_end_step_is_checked(site, loaded):
     record = loaded[("body-lab", "body-2")]
     middle = _parse(_step_path(site, record, 1))
@@ -121,6 +129,7 @@ def test_body_2_middle_steps_are_not_yet_checked_and_the_end_step_is_checked(sit
     assert len(end.find_all("td", "status")) == 14
 
 
+@NOT_IN_THIS_VERSION
 def test_wt_004_end_step_has_its_six_rows_checked_and_its_middle_steps_not_yet(site, loaded):
     record = loaded[("wind-tunnel", "wt-004")]
     assert len(_parse(_step_path(site, record, 7)).find_all("td", "status")) == 6
@@ -128,6 +137,7 @@ def test_wt_004_end_step_has_its_six_rows_checked_and_its_middle_steps_not_yet(s
     assert _labels(_parse(_step_path(site, record, 1))) == {text.NOT_YET_CHECKED}
 
 
+@NOT_IN_THIS_VERSION
 def test_chosen_items_not_yet_run_are_left_out_with_their_commentary(site, loaded):
     record = loaded[("body-lab", "body-2")]
     first = _parse(_step_path(site, record, 1))

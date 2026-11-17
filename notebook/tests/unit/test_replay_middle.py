@@ -78,6 +78,7 @@ def test_the_first_step_table_is_read_by_the_bench_reader_with_r1_replaced_by_r2
     ]
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_the_first_step_strikes_r1_and_its_tab_names_r2(middle) -> None:
     site, record = middle
     page = _parse(site / "fake-s1-replay-1.html")
@@ -92,6 +93,7 @@ def test_the_first_step_strikes_r1_and_its_tab_names_r2(middle) -> None:
     assert struck == ["row-R1"]
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_the_first_step_shows_r2_with_the_reverse_link_to_r1(middle) -> None:
     site, _ = middle
     r2 = _parse(site / "fake-s1-replay-1.html").find("tr", id="row-R2")
@@ -99,6 +101,7 @@ def test_the_first_step_shows_r2_with_the_reverse_link_to_r1(middle) -> None:
     assert text.REPLACES + "R1" in r2.text()
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_the_first_step_shows_its_table_as_not_yet_checked(middle) -> None:
     site, _ = middle
     page = _parse(site / "fake-s1-replay-1.html")
@@ -116,6 +119,7 @@ def test_the_second_step_table_is_unreadable_and_shown_as_written(middle) -> Non
         parse_table(step.snapshot.design.text().text, tables.design_file(record))
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_the_second_step_shows_the_reader_refusal_and_no_rows(middle) -> None:
     site, _ = middle
     page = _parse(site / "fake-s1-replay-2.html")
@@ -127,6 +131,7 @@ def test_the_second_step_shows_the_reader_refusal_and_no_rows(middle) -> None:
     assert _labels(page) == {text.NOT_YET_CHECKED}
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_the_end_step_table_is_the_accepted_end_table_and_is_checked(middle) -> None:
     site, record = middle
     end = views.steps(record)[2]

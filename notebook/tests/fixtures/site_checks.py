@@ -36,7 +36,7 @@ FORBIDDEN_SCRIPT = (
     "import(",
     "import ",
 )
-# The only buttons: the moving picture controls (design 10). Replay controls are links (design 9, N10).
+# The only buttons: the moving picture controls (design 10).
 BUTTON_ACTIONS = {"play", "pause", "step", "sheet"}
 _CSS_URL = re.compile(r"url\(\s*['\"]?([^'\")]*)", re.IGNORECASE)
 _SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)

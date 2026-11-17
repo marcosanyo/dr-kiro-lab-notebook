@@ -311,12 +311,12 @@ def test_wt_002_shows_its_last_snapshot_section_with_the_readers_message(site, l
 
 
 def test_wt_003_has_a_page_with_only_what_the_record_holds_and_no_replay(site, loaded):
-    """wt-003 (stopped, no snapshot) has a page with only the content of Requirement 14.2 and the sentence of
-    16.9 (14.6). The page in detail: `test_stopped_real.py`."""
+    """wt-003 (stopped, no snapshot) has a page with only the content of Requirement 14.2 (14.6); no replay
+    section (Decision 48). The page in detail: `test_stopped_real.py`."""
     record = loaded["wt-003"]
     assert not record.snapshots
     page = _session_page(site, record)
-    assert page.find("p", "no-replay").text() == text.NO_REPLAY
+    assert page.find_all("section", "replay") == [] and page.find_all("p", "no-replay") == []
     assert page.find_all("table") == [] and page.find_all("details", "entry") == []
 
 

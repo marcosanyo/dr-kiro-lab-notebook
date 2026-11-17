@@ -90,6 +90,7 @@ def test_every_record_passes_both_scan_passes_and_links_stay_in_the_site(scanner
         assert "<div" not in written
 
 
+@pytest.mark.skip(reason="not in this version, Decision 48")
 def test_every_replay_page_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
     # Requirement 16 and 20: the step pages are scanned at the builder level and the Dr. Kiro level, like the
     # session pages, and their links stay in the flat site (task 18.1).
