@@ -1,0 +1,702 @@
+/* The notebook's one theme. Every colour is a custom property on :root (.kiro/steering/notebook-visual.md). */
+
+:root {
+  --paper: #fbf7ec;
+  --rule-line: #dfe6ef;
+  --sticky: #fff1a8;
+  --photo-frame: #ffffff;
+  --tab: #f1e9d2;
+
+  --ink-drkiro: #1f3a8a;
+  --ink-pencil: #3d3d3d;
+  --ink-commentary: #2b2118;
+  --miss-red: #b3261e;
+
+  --stamp-validated: #1d5e3a;
+  --stamp-partly: #7a4b00;
+  --stamp-observed: #3a4a5c;
+  --stamp-rejected: #5b2a6e;
+
+  --pin-brass: #b08d3c;
+  --graphite: #3d3d3d;
+  --shadow: rgba(43, 33, 24, 0.22);
+
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+
+  --line: 1.5;
+  --cell-interval: 500ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+}
+
+body {
+  margin: 0;
+  color: var(--ink-commentary);
+  background-color: var(--paper);
+  /* One rule line at the bottom of each 1.5rem tile: the conic gradient's centre sits 1px above the tile's bottom
+     edge at its left side, so the quarter turn from 90deg to 180deg covers exactly the bottom 1px row. */
+  background-image: conic-gradient(
+    at 0 calc(100% - 1px),
+    transparent 0deg 90deg,
+    var(--rule-line) 90deg 180deg,
+    transparent 180deg 360deg
+  );
+  background-size: 100% 1.5rem;
+  font-family: var(--font-sans);
+  line-height: var(--line);
+}
+
+.page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline 1px;
+  text-underline-offset: 2px;
+}
+
+/* The three inks. */
+
+.ink-k {
+  color: var(--ink-drkiro);
+  font-family: var(--font-serif);
+  font-style: normal;
+  white-space: pre-wrap;
+}
+
+.ink-p {
+  color: var(--ink-pencil);
+  font-family: var(--font-mono);
+  font-style: normal;
+}
+
+.ink-c {
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 0.95em;
+}
+
+.block-k,
+.code-k {
+  margin: var(--space-3) 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 2px solid var(--ink-drkiro);
+  color: var(--ink-drkiro);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.block-k {
+  font-family: var(--font-serif);
+}
+
+.code-k {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.block-label {
+  display: block;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+}
+
+/* Miss red: only missed predictions and their measured values, always with the word "miss". */
+
+.miss,
+.miss-value {
+  color: var(--miss-red);
+  font-weight: bold;
+}
+
+.miss-mark {
+  fill: var(--miss-red);
+  stroke: var(--miss-red);
+}
+
+/* The bench stamp. */
+
+.stamp {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  color: var(--ink-pencil);
+  font-family: var(--font-sans);
+  font-weight: bold;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.stamp-validated {
+  color: var(--stamp-validated);
+}
+
+.stamp-partly {
+  color: var(--stamp-partly);
+}
+
+.stamp-observed {
+  color: var(--stamp-observed);
+}
+
+.stamp-rejected {
+  color: var(--stamp-rejected);
+}
+
+.stamp-label {
+  display: block;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 0.75em;
+}
+
+/* Instant photos. */
+
+.photo {
+  position: relative;
+  display: inline-block;
+  margin: var(--space-4) var(--space-2);
+  padding: 8px 8px 28px;
+  background: var(--photo-frame);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.photo::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--pin-brass);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.photo img,
+.photo canvas {
+  display: block;
+}
+
+.photo figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.85em;
+}
+
+.photo-large {
+  max-width: 40rem;
+}
+
+.photo-small {
+  max-width: 18rem;
+}
+
+/* The moving picture and its magnified picture in one row; the magnified picture wraps below on a narrow
+   screen (Requirement 7.9). Each figure may shrink to the width of the row. */
+.photo-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 var(--space-3);
+}
+
+.photo-pair > .photo {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.photo-magnified img {
+  image-rendering: pixelated;
+}
+
+.tilt-0 {
+  transform: rotate(-1.5deg);
+}
+
+.tilt-1 {
+  transform: rotate(-0.75deg);
+}
+
+.tilt-2 {
+  transform: rotate(0deg);
+}
+
+.tilt-3 {
+  transform: rotate(0.75deg);
+}
+
+.tilt-4 {
+  transform: rotate(1.5deg);
+}
+
+.photo-controls button {
+  margin-right: var(--space-1);
+  font-family: var(--font-sans);
+}
+
+/* Sticky notes. */
+
+.sticky {
+  display: block;
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--sticky);
+  color: var(--ink-commentary);
+  box-shadow: 0 2px 6px var(--shadow);
+  transform: rotate(1deg);
+}
+
+.sticky-stamp {
+  border: 2px solid var(--ink-pencil);
+  border-radius: 6px;
+}
+
+.sticky-stamp .sticky-heading {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* The discovered spec table. */
+
+.table-box {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.spec-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.spec-table th,
+.spec-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--rule-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* The row's own text only: the status cell, whose stamp label is never struck, is left out. */
+.row-rejected td:not(.status) {
+  text-decoration: line-through 2px var(--graphite);
+}
+
+.tab {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  background: var(--tab);
+  border-radius: 0 6px 6px 0;
+  text-decoration: none;
+}
+
+.tab .rule-small {
+  font-size: 0.8em;
+}
+
+.replaces {
+  display: block;
+  font-size: 0.85em;
+}
+
+/* The opened row: its own table row below the row, one cell across all columns. Below the row on a
+   narrow screen; from 1000px the opened evidence stands as a panel at the right of the table. */
+.row-evidence > td {
+  padding-top: 0;
+}
+
+.evidence > summary {
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.evidence-body {
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--tab);
+  border-left: 2px solid var(--ink-pencil);
+}
+
+.evidence-list {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+}
+
+/* Layout: one column; table with margin and side panel from 1000px. */
+
+.margin {
+  display: block;
+}
+
+.pinned {
+  margin: 0 0 var(--space-3);
+}
+
+/* The cover (pages/cover.py). */
+.cover-head h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.cover-tagline {
+  margin: 0 0 var(--space-4);
+}
+
+/* The photo and the track in one row; the track wraps below the photo on a narrow screen. */
+.cover-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+}
+
+.cover-evidence .track {
+  margin: var(--space-4) 0;
+}
+
+.cover-claim {
+  display: block;
+}
+
+.cover-status {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.measure-name {
+  font-weight: bold;
+}
+
+.cover-rows {
+  margin: var(--space-3) 0;
+  padding-left: var(--space-3);
+}
+
+.cover-rows li {
+  margin-bottom: var(--space-2);
+}
+
+.cover-rows .row-rejected > a,
+.cover-rows .row-rejected > .cover-rule {
+  text-decoration: line-through 2px var(--graphite);
+}
+
+.cover-replaced {
+  display: block;
+  margin-left: var(--space-3);
+}
+
+.cover-cards {
+  margin-top: var(--space-5);
+}
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.card-heading {
+  margin: 0;
+}
+
+/* The session page after the table (pages/session.py). */
+
+.side-by-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.highlight-trial {
+  max-width: 100%;
+}
+
+/* How the lab works (pages/how.py): one column per declaration, side by side from wide screens. */
+.how-app {
+  flex: 1 1 18rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.entry {
+  margin: var(--space-3) 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule-line);
+}
+
+.entry > summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.values,
+.predictions,
+.outcomes,
+.phases,
+.outcome-counts,
+.refusals {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+}
+
+.bench-note {
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--ink-pencil);
+  border-radius: 6px;
+}
+
+/* The lab pages and the ink legend (pages/lab.py). Every record is drawn alike, in one type size. */
+
+.lab-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lab-record {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule-line);
+}
+
+.lab-record dl,
+.legend {
+  margin: 0;
+}
+
+.lab-record dt,
+.legend dt {
+  font-weight: bold;
+  margin-top: var(--space-2);
+}
+
+.lab-record dd,
+.legend dd {
+  margin-left: var(--space-3);
+}
+
+.swatch {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.swatch-k {
+  background: var(--ink-drkiro);
+}
+
+.swatch-p {
+  background: var(--ink-pencil);
+}
+
+.swatch-c {
+  background: var(--ink-commentary);
+}
+
+/* The inline Halloween decoration (pages/parts.py), drawn in currentColor. */
+
+.deco {
+  display: none;
+  color: var(--graphite);
+  pointer-events: none;
+}
+
+@media (min-width: 1000px) {
+  body {
+    padding-left: 96px;
+  }
+
+  .with-margin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    gap: var(--space-4);
+  }
+
+  .evidence-body {
+    max-width: 40rem;
+    margin-left: auto;
+  }
+
+  .cover-miss {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  .deco {
+    display: block;
+    position: fixed;
+    top: var(--space-3);
+    left: var(--space-3);
+    width: 64px;
+    height: auto;
+  }
+}
+
+/* Run bands beside a row's scope (pages/bands.py). Pencil, drawn in currentColor; no colour of its own. */
+
+.bands {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-pencil);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.bands > figcaption {
+  margin-bottom: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 0.95em;
+  color: var(--ink-commentary);
+}
+
+.band-groups,
+.band-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.band-group {
+  margin-top: var(--space-2);
+}
+
+.band-group > span {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: bold;
+  color: var(--ink-commentary);
+}
+
+.band-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.band {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.tick-other {
+  opacity: 0.6;
+}
+
+.hatch {
+  opacity: 0.7;
+}
+
+/* The prediction chart in the progress (pages/chart.py). Pencil; a hit mark is pencil, a miss mark is miss red
+   through .miss-mark above. */
+
+.chart {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-pencil);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.chart > figcaption {
+  margin-bottom: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 0.95em;
+  color: var(--ink-commentary);
+}
+
+.chart-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chart-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.chart-mark {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-mark .range {
+  stroke: currentColor;
+  stroke-width: 3;
+}
+
+.chart-mark .mark {
+  stroke-width: 1;
+}
+
+.chart-mark .mark-hit {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.chart-none {
+  font-family: var(--font-sans);
+  color: var(--ink-commentary);
+}
+
+/* Footer: the legend link and the link to how the lab works. */
+
+.footer {
+  margin-top: var(--space-5);
+  font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+

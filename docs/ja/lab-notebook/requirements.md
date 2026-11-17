@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `050aa3c43bfcf6c56c9132cb3d472eb371ccf718baa0e684a4c2ae713f91b9ad`
+> 原文 SHA-256: `84f06c023f560baf593bb46d0c7503dce6921519b3840ef80e2c8422ce49167e`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -11,7 +11,7 @@ Spec: `lab-notebook`。
 - `wind-tunnel/wt-004`: 終了、24 試行中 18 試行、実験 6 件、予測結果 17 件（うち外れ 1 件）。`end` スナップショットには行 R1-R6 の表があります（`validated` 4 行、`partly` 1 行、`observed` 1 行、`rejected` なし）。1 つの試行は、5 つの計測すべてについて未計測結果 `not_settled` を持ちます。
 - `wind-tunnel/wt-002`: 停止（stopped）、3 試行、実験 1 件、的中 2 件、登録されたまま一度も走らなかった仮説 1 件、表の行なし。
 - `wind-tunnel/wt-003`: 最初の操作で停止、0 試行、スナップショットなし。
-- `body-lab/body-2`: Dr. Kiro が終了、40 試行中 39 試行（残り予算 1）、仮説 11 件、実験 11 件、予測結果 24 件、スナップショット 23 件、拒否 3 件（`register` 1 件、`end` 2 件）、判定フラグ 1 件（E5、判定 `partly`、件数は的中 0、外れ 1）。`end` より前のすべてのスナップショットの `## Discovered spec` 表には行がありません。`end` スナップショットには 14 行あります: `validated` は R9、R11、`observed` は R1、R5、R7、R13、`rejected` は R2（R1 に置き換え）、R3（R11）、R4（R5）、R6（R7）、R8（R9）、R10（R11）、R12（R13）、R14（R13）。1 つの行が複数の行を置き換えることがあり（R11、R13）、置き換える行が置き換えられる行より前にあることがあり（R2 を R1 が置き換える）、置き換える行が `observed` であることもあります。セルにはエスケープされたパイプ（`\|heading\|`）が含まれます。Dr. Kiro は、反証された規則を `rejected` 行として残すよう、テンプレートで教えられていました（`dr-kiro` 要件 3.7）。
+- `body-lab/body-2`: Dr. Kiro が終了、40 試行中 39 試行（残り予算 1）、仮説 11 件、実験 11 件、予測結果 24 件、スナップショット 23 件、拒否 3 件（`register` 1 件、`end` 2 件）、判定フラグ 1 件（E5、判定 `partly`、件数は的中 0、外れ 1）。`end` より前のすべてのスナップショットの `## Discovered spec` 表には行がなく、ベンチの表リーダーはそれを受理しません（Decision 45）。`end` スナップショットには 14 行あります: `validated` は R9、R11、`observed` は R1、R5、R7、R13、`rejected` は R2（R1 に置き換え）、R3（R11）、R4（R5）、R6（R7）、R8（R9）、R10（R11）、R12（R13）、R14（R13）。1 つの行が複数の行を置き換えることがあり（R11、R13）、置き換える行が置き換えられる行より前にあることがあり（R2 を R1 が置き換える）、置き換える行が `observed` であることもあります。セルにはエスケープされたパイプ（`\|heading\|`）が含まれます。Dr. Kiro は、反証された規則を `rejected` 行として残すよう、テンプレートで教えられていました（`dr-kiro` 要件 3.7）。
 - body-2 の 2 件の `end` 拒否は同じメッセージを持ち、メッセージは部分に分けて記録されています: ベンチの文 "the discovered spec table does not agree with the record: "、".kiro/specs/lab/design.md line 32: "、"row "、引用（書き手 `dr-kiro`）"R13"、": "、"a validated rule needs at least one hit that is a new combination or outside the tried range ("、引用（書き手 `dr-kiro`）"H11.P3: hit/not-comparable"、")"。記録には、拒否された `design.md` の写しがありません（スナップショットは、受理された終了のときだけ取られます）。封印された R13 は `observed` です。2 つ目の引用が書き手 `dr-kiro` で記録されているのは意図的です。予測 id は Dr. Kiro のものなので、ベンチは引用した結果の要約を引用として扱います（`bench/src/bench/specfiles/discovered.py`、`_summary`）。ただし "hit" と "not-comparable" はベンチの言葉です。
 - body-2 では、E11 が新しいパラメーター名 `sq` を宣言したため、パラメーターグループ {a1, s3, f, sq} に以前の試行がなく、H11.P3 は `not-comparable` です。R13 は E10（{a1, s3, f}）と E11（{a1, s3, f, sq}）を引用しており、パラメーターグループは 2 つです。
 - body-2 の 9 試行は、body-1 の試行と同じ試行キーを持ちます（body-1/body-2: T7/T7、T8/T8、T3/T4、T2/T3、T4/T5、T6/T25、T1/T2、T5/T6、T9/T9）。計測値はすべて完全に等しいのに、パラメーター名は異なります（一方は `k`、他方は `a0`..`a4`）。
@@ -77,7 +77,7 @@ Spec: `lab-notebook`。
 **User Story:** 訪問者として、スマートフォンで動き、他のサーバーに何も求めない素朴な Web サイトがほしい。速く、プライベートで、長持ちするようにするためである。
 #### Acceptance criteria
 1. THE site SHALL be plain HTML, CSS and JavaScript, written by the build, with no framework, no third-party library and no build step in Node。
-2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote image. Every asset SHALL be a file of the site, referenced by a relative URL。
+2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote image. Every asset SHALL be a file of the site, referenced by a relative URL that contains no `..`. Every page SHALL be at the site root, and only pictures and assets SHALL be in subfolders (Decision 46)。
 3. THE site SHALL have no chat box and no control that starts an experiment, a session or a build-from-spec run, and SHALL send no data anywhere。
 4. THE text, the discovered spec tables and the experiment entries SHALL be present in the HTML as written by the build, and SHALL need no script to be shown; moving pictures and the replay controls MAY need JavaScript。
 5. WHEN the viewport is 360 CSS pixels wide、THE page's scroll width SHALL NOT exceed the viewport width; a wide table MAY scroll inside its own box。
@@ -88,7 +88,7 @@ Spec: `lab-notebook`。
 **User Story:** 訪問者として、すべての文を誰が書いたかを見たい。また Dr. Kiro の言葉を、書かれたとおりに読みたい。主張を、私たちの解説や計測と区別できるようにするためである。
 #### Acceptance criteria
 1. THE site SHALL show every text in one of three inks, with fixed meanings used everywhere: Dr. Kiro's ink for text whose recorded author is Dr. Kiro; pencil for text whose recorded author is the bench (measurements, outcomes, condition classes, reasons, counts) and for numbers the build computes from them; commentary ink for the builder's text. Status words are the one exception: they are shown in the bench's stamp style (Requirements 8.2, 15.2)。
-2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or, for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build SHALL fail, naming the text's place in the record。
+2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or, for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build SHALL fail, naming the text's place in the record。例外: Dr. Kiro がベンチに渡し、ベンチが書き手のない固定の語として記録する値（判定の語と、予測についての Dr. Kiro のラベル）は、Dr. Kiro のインクで見せる SHALL（要件 15.1、17.4）。THE build SHALL それぞれを、Dr. Kiro のレベルに加えてビルダーのレベルでもスキャンする（要件 20.1）（Decision 47）。
 3. THE site SHALL show text written by Dr. Kiro as written: the same characters in the same order, with its line breaks, HTML-escaped, and not rendered as Markdown or HTML. The cells of a discovered spec table are shown as the bench's table reader gives them。
 4. FOR ALL texts written by Dr. Kiro、the text content of the element that shows the text, parsed from the written HTML, SHALL equal the text in the record character for character, including line breaks (round-trip property)。
 5. THE ink SHALL be distinguishable without colour: each ink SHALL also differ in typeface or style, and a legend of the three inks SHALL be reachable from every page。
@@ -110,7 +110,7 @@ Spec: `lab-notebook`。
 2. THE site SHALL have one theme and no theme switch。
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown as sticky notes。
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with the word "miss"。
-5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6。
+5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the page markup, not a separate file, and SHALL carry no namespace URL (Decision 46)。
 6. WHEN the user describes a difference from the reference、THE builder SHALL update this requirement or the steering file first, and the pages after。
 ### Requirement 7: Picture sheets and moving pictures
 **対象:** ビルダーと訪問者。
@@ -124,6 +124,7 @@ Spec: `lab-notebook`。
 6. THE site SHALL show a moving picture by showing the cells of the sheet in reading order (left to right, then top to bottom), one at a time at a fixed rate set in the visual system, and then starting again。
 7. THE site SHALL copy each picture as recorded, byte for byte, under a name made from its blob hash, and SHALL NOT re-encode it。
 8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once。
+9. FOR each trial's moving picture, except the small pictures of the lab cards (Requirement 13.4)、THE site SHALL show beside it an enlarged picture of the moving body: a magnified view, derived by the build from the record's own picture sheet, in which the body in its cell is readable. THE build SHALL choose the region of the enlarged picture as the box, over all frames of the sheet, of the pixels that change between frames, plus a margin of 4 pixels, clipped to its cell; SHALL scale it by the smallest whole-number factor (nearest neighbour) that makes it at least as large as the frame; and, WHEN no pixel changes, SHALL use the whole cell. THE build SHALL NOT use the track to choose the region, because the records hold no mapping from track coordinates to picture pixels. THE build SHALL derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5) (Decision 50)。
 ### Requirement 8: The discovered spec table
 **対象:** 訪問者とビルダー。表を書いたのは Dr. Kiro で、検査したのはベンチ。
 **User Story:** 訪問者として、発見された spec の表を中心に置き、各規則のステータスをベンチの言葉で、その証拠をひと押しで見たい。何が見つかり、どれほど確かかが分かるようにするためである。
@@ -140,6 +141,7 @@ Spec: `lab-notebook`。
 10. WHERE one or more `rejected` rows name a row in their "replaced by" cell、THE site SHALL show on that row the reverse links "replaces <id>, <id>", one per such row, in table order, each linked to the rejected row。
 11. THE site SHALL draw each row in full exactly once per table; a replacing row's rule text in a "replaced by" tab is the only repeated text。
 12. FOR ALL generated tables、each row SHALL be drawn in full exactly once, each `rejected` row whose "replaced by" cell names a row of the table SHALL have exactly one tab naming that row, and each row's reverse links SHALL be exactly the `rejected` rows that name it (property test)。
+13. WHERE a row has the status `rejected` and its "replaced by" cell names exactly one other row of the table、THE site SHALL show the row's "replaced by" tab open by default, so that the replacing row's rule text and the link to that row are readable when the table is shown, without a click. THE tab's content and link SHALL be as in 8.3, and a visitor MAY close the tab (Decision 49)。
 ### Requirement 9: What was run, beside each row
 **対象:** 訪問者とビルダー。
 **User Story:** 訪問者として、規則の scope の隣に、記録によれば実際に何が走り、どの試行も走らせなかったものが何かを見たい。主張を証拠と自分で比べられるようにするためである。
@@ -151,25 +153,26 @@ Spec: `lab-notebook`。
 5. WHERE the parameter is one Dr. Kiro declared (it has no declared range)、THE run band SHALL span from the lowest to the highest value among the parameter group's trials and the cited predictions' conditions, and only the parts outside the tried values SHALL be hatched as "no trial"。
 6. THE site SHALL show combinations of tried values that no trial ran only through the condition class word of each cited prediction (`new-combination`), and SHALL NOT draw a grid of combinations。
 7. THE parameter names Dr. Kiro declared SHALL be shown in Dr. Kiro's ink, with a link to the experiment file that declares them。
-8. WHERE an application's knobs are functions of time (body-lab)、THE site SHALL also show, for each cited trial, one small line plot per channel of its computed input over time, from the record's `inputs`, against the declared range [-1, 1] of the channel, in pencil。
+8. WHERE an application's knobs are functions of time (body-lab)、THE site SHALL also show, for each cited trial, one small line plot per channel of its computed input over time, from the record's `inputs`, against the declared range [-1, 1] of the channel, in pencil。 Not in this version (Decision 48)。
 9. FOR ALL records and rows、the ticks of a run band SHALL be exactly the recorded values of that parameter for all trials of its parameter group in the session, and no hatched part SHALL contain such a value (property test over generated records)。
 ### Requirement 10: The session page
 **対象:** 訪問者。
 **User Story:** 訪問者として、発見されたものから始まり、すべての実験まで降りていける、セッションごとの 1 ページがほしい。どの主張も確かめられるようにするためである。
 #### Acceptance criteria
-1. THE session page SHALL show these sections first, in this order: the discovered spec table as a notebook page, with a sticky note pointing to the chosen missed prediction (Requirement 12) and the moving pictures of the chosen trials pinned in its margin; the highlight; the progress; Dr. Kiro's plan; and every experiment entry. The other sections of the session page (Requirements 14.5, 16 and 17) SHALL follow them。
+1. THE session page SHALL show these sections first, in this order: the discovered spec table as a notebook page, with a sticky note pointing to the chosen missed prediction (Requirement 12) and the moving pictures of the chosen trials pinned in its margin; the highlight; the progress; Dr. Kiro's plan; and every experiment entry. The other sections of the session page (Requirement 17; Requirements 14.5 and 16 are not in this version, Decision 48) SHALL follow them。
 2. IF the missed-prediction choice is "none", THEN THE sticky note SHALL show the choice file's reason。
 3. THE highlight SHALL show the chosen contrast (two trials side by side) and the chosen best result as moving pictures with their measured values, labelled "chosen by a person"。
 4. IF the contrast or the best result is "none", THEN THE highlight SHALL show "none" and the choice file's reason in its place。
 5. THE progress SHALL show the budget used and the budget, the experiments by phase, and the counts of each prediction outcome, from the record。
 6. Dr. Kiro's plan SHALL be the `tasks.md` of the session's last snapshot, shown as written (Requirement 4.3)。
-7. WHERE a session is an ended session with an `end` snapshot、THE table SHALL come from that snapshot; WHERE a session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words labelled "not checked by the bench"。
+7. WHERE a session is an ended session with an `end` snapshot、THE table SHALL come from that snapshot; WHERE a session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words labelled "not checked by the bench" (10.14 applies where the reader does not accept the table)。
 8. EACH experiment entry SHALL show: the hypothesis's frozen part as written; its predictions, with conditions, range, condition class (labelled "classified at registration") and Dr. Kiro's label; the experiment file as written; each trial with its parameter values, its measurements or not-measured outcomes, and its moving picture; each prediction outcome; the verdict with Dr. Kiro's words; and the verdict flag if the bench recorded one。
-9. IF an ended session's record has no `end` snapshot, or its table has no rows, THEN THE session page SHALL show "no table" in place of the table, with commentary that the record holds no table, and SHALL list every missed prediction of the session in its place (body-1). THE build SHALL NOT fill in a table。
-10. WHERE an application's measurements include series (body-lab `track_x`, `track_y`, `track_heading`)、THE experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the series is a not-measured outcome。
+9. IF an ended session's record has no `end` snapshot (body-1), THEN THE session page SHALL show "no table" in place of the table, with commentary that the record holds no table, and SHALL list every missed prediction of the session in its place. THE build SHALL NOT fill in a table. "No table" SHALL be used for no other case (Decision 45)。
+10. WHERE an application's measurements include series (body-lab `track_x`, `track_y`, `track_heading`)、THE experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the series is a not-measured outcome。 Not in this version (Decision 48)。
 11. WHERE a record holds refusal entries with action `end`, and a quote part of a refusal message equals the id of a row of the shown table exactly, character for character、THE session page SHALL attach to that row a sticky note in the bench's stamp style: "the bench refused to end this session N times", with N the number of such refusal entries, each refusal message shown as recorded with each part in the ink of its recorded author, the note that the sealed row's status is the one shown in the table, and the commentary "the record holds no copy of the table that was refused" (Decision 33; body-2 R13)。
 12. THE build SHALL attach the note of 10.11 only by exact equality of a quote part with a row id, SHALL NOT read any other meaning from a refusal message, and SHALL NOT infer or show what changed between refusals or between a refused table and the sealed table。
 13. WHEREVER the site shows a refusal message、THE site SHALL show with it a commentary note that quotes in a refusal message are recorded with Dr. Kiro as author, and that some quotes, such as a summary of cited outcomes, are composed by the bench from Dr. Kiro's ids; the quote itself SHALL be shown as recorded, in Dr. Kiro's ink (Decision 34). Which quotes the note points to is decided in the design; without parsing the message, the note covers every quote part of the message。
+14. IF the bench's table reader does not accept the table of the snapshot the page shows (this includes a table with no rows, which the reader refuses; every snapshot of the real records before `end` is such a table), THEN THE site SHALL show that snapshot's `## Discovered spec` section as written, in Dr. Kiro's ink; the message the reader returned, as returned, in pencil; and the commentary "the bench's table reader did not accept this table"; and, WHERE the table is not from an accepted `end` snapshot, the label "not checked by the bench". THE build SHALL NOT parse the message, SHALL NOT guess rows, and SHALL NOT call such a case "no table" (Decision 45)。
 ### Requirement 11: Links to one experiment
 **対象:** 訪問者。
 **User Story:** 訪問者として、1 つのセッションの 1 つの実験へ直接リンクしたい。証拠を誰かに示せるようにするためである。
@@ -208,8 +211,8 @@ Spec: `lab-notebook`。
 2. FOR each stopped session、THE site SHALL show the seal's end and the bench's reason as written, the budget used (the budget minus the recorded remaining budget), and what the record contains: the numbers of trials, experiments, hits and misses, the hypotheses registered and never run, whether there is a table, and, if the record has a failure entry, the action at which the session stopped。
 3. THE commentary about a stopped session SHALL be one fixed text from the notebook's source, the same for every stopped session, with the bench's recorded reason shown as written beside it, and SHALL pass the blind scan at the builder level。
 4. A stopped session SHALL NOT appear on the cover。
-5. IF two or more trials of the same application, in any records, have the same recorded trial key (the hash of the computed inputs), THEN THE session page of each of those records SHALL show a compact list of those pairs: for each pair, the session and trial ids, each trial's parameter names and values as written, and whether all their recorded measurements are exactly equal (for example wt-002 T1 and wt-004 T1; the 9 pairs of body-1 and body-2). WHEN a visitor opens an entry of the list, THE site SHALL show the two trials' moving pictures side by side (Decision 35)。
-6. A stopped session with snapshots SHALL have a session page with every section of Requirement 10, its table as in 10.7, and "no table" where its last snapshot has no rows; a stopped session without snapshots (wt-003) SHALL have a page that shows only the content of 14.2 and the sentence of 16.9。
+5. IF two or more trials of the same application, in any records, have the same recorded trial key (the hash of the computed inputs), THEN THE session page of each of those records SHALL show a compact list of those pairs: for each pair, the session and trial ids, each trial's parameter names and values as written, and whether all their recorded measurements are exactly equal (for example wt-002 T1 and wt-004 T1; the 9 pairs of body-1 and body-2). WHEN a visitor opens an entry of the list, THE site SHALL show the two trials' moving pictures side by side (Decision 35)。 Not in this version (Decision 48)。
+6. A stopped session with snapshots SHALL have a session page with every section of Requirement 10, its table as in 10.7 and 10.14 (wt-002: its last snapshot's section as written, with the bench reader's message); a stopped session without snapshots (wt-003) SHALL have a page that shows only the content of 14.2 (the sentence of 16.9 is not in this version, Decision 48)。
 ### Requirement 15: Verdicts and status words kept apart
 **対象:** 訪問者。
 **User Story:** 訪問者として、仮説に対する Dr. Kiro の判定と、ベンチが検査した規則のステータスを、決して混同したくない。`partly` と `rejected` が、読む場所ごとに 1 つの意味だけを持つようにするためである。
@@ -218,6 +221,8 @@ Spec: `lab-notebook`。
 2. THE site SHALL show a status word only in a discovered spec table row or in a reference to a row by its id, in the bench's stamp style, never in Dr. Kiro's ink. This is the one exception to Requirement 4.1. Commentary that defines a status word (Requirement 8.6, the ink legend, Requirement 18) MAY name the word in commentary ink, not in the stamp style。
 3. WHERE the bench recorded a verdict flag、THE site SHALL show the flag as a bench note beside the verdict, with the recorded counts of each prediction outcome。
 ### Requirement 16: Replay
+
+**Not in this version (Decision 48).** 以下の基準はすべて、後のバージョンのために書かれたままにする。ビルドはこれを実装せず、サイトにリプレイのページはない。
 **対象:** 訪問者とビルダー。
 **User Story:** 訪問者として、セッションを 1 実験ずつたどり、そのときのページを見たい。規則が取り消し線で消され、置き換えられる様子を、起きたとおりに見るためである。
 #### Acceptance criteria
@@ -226,7 +231,7 @@ Spec: `lab-notebook`。
 3. AT a step other than the `end` step、THE status words SHALL be shown with the characters Dr. Kiro wrote, in the bench's stamp style, labelled "not yet checked by the bench"。
 4. WHERE a step's table holds a `rejected` row、THE replay SHALL strike it through and show its replacement beside it (Requirement 8.3). Strike-through SHALL appear only where a step's table holds such a row。
 5. IF a `rejected` row's "replaced by" cell at a step is empty or names no row of that step's table, THEN THE replay SHALL strike the row through, show the cell as written, and show commentary that the named row is not in the table at this step, and SHALL NOT pick a replacement。
-6. IF the bench's table reader cannot read the table of a step's snapshot, THEN THE replay SHALL show that step's `## Discovered spec` section as written, with the commentary "the bench's table reader could not read this table at this step", and SHALL NOT guess its rows。
+6. IF the bench's table reader does not accept the table of a step's snapshot (including a table with no rows), THEN THE replay SHALL show that step's table as in 10.14, and SHALL NOT guess its rows。
 7. THE replay SHALL be labelled "replay of a sealed record" on every step, and SHALL NOT be presented as live。
 8. THE replay SHALL have controls to step back, step forward and play. THE address of a step SHALL include its 1-based step number in record order, SHALL be the same in every build from the same inputs, and opening it SHALL show that step。
 9. IF a record has no step, THEN THE session page SHALL show, in place of the replay controls, that the record has no snapshot to replay; for wt-003 this is shown in addition to the content of 14.2。
@@ -286,9 +291,9 @@ Spec: `lab-notebook`。
 #### Acceptance criteria
 1. THE site SHALL build from the records of both labs in `sessions/`, with the committed choice and cover files。
 2. EVERY row of every discovered spec table SHALL show its status word (test over all records)。
-3. THE replay SHALL match the snapshots at every step (Requirement 16.10 and 16.11)。
+3. THE replay SHALL match the snapshots at every step (Requirement 16.10 and 16.11)。 Not in this version (Decision 48)。
 4. THE user SHALL accept the first screen. The builder SHALL show the cover on a desktop screen and a 360-pixel-wide screen and record the user's answer in `docs/status.md`; any change the user asks for goes first into Requirement 6 or the steering file (6.6)。
-5. THE session page of body-2 SHALL show its 8 `rejected` rows struck through, each with its "replaced by" tab (8.3) and each replacing row with its reverse links (8.10), and R13 SHALL carry the refused-end note (10.11); a test SHALL check this on the real body-2 record. The strike-through at a middle replay step stays tested with the fixture of 16.11, because every middle step of body-2 has an empty table。
+5. THE session page of body-2 SHALL show its 8 `rejected` rows struck through, each with its "replaced by" tab (8.3) and each replacing row with its reverse links (8.10), and R13 SHALL carry the refused-end note (10.11); a test SHALL check this on the real body-2 record. The test of the strike-through at a middle replay step with the fixture of 16.11 is not in this version (Decision 48)。
 ---
 ## Decisions
 項目 1-13 は、この要件が書かれる前のセッションでユーザーが決めました。項目 14-31 は、ユーザーの委任のもとでビルダーが決めました（ユーザーの項目 14: "any remaining details: the builder decides and writes the decision into the requirements"）。項目 32-44 は、body-2 の記録が封印された後にユーザーが決めました。各項目に "(user)" と付けてあり、委任のもとでビルダーが決めた部分にはそう書いてあります。ここにあるものは、どの規則にも例外を作りません。
@@ -309,7 +314,7 @@ Spec: `lab-notebook`。
 15. **Gap in the layout table**（builder）。wind-tunnel のシートには 4 ピクセルの隙間があるので（1208 × 404 = 3 × 400 + 2 × 4 、2 × 200 + 4）、表はセル間の隙間も持つ。これがないとセルを切り出せない。body-lab のエントリーは隙間 0（1600 × 360 = 5 × 320、2 × 180）（要件 7.1）。
 16. **The end table is checked again at build time**（builder）。ビルドは `end` スナップショットにベンチ自身の表検査を実行する。食い違いは、壊れた記録かベンチの欠陥であり、ビルドを失敗させる（要件 2.4）。
 17. **Status words in the middle of a replay**（builder）。ベンチは表を最後にしか検査しないので、それより前のステップの語は、Dr. Kiro が書いたとおりに、"not yet checked by the bench" と付けて見せる。ノートブックはステータスを計算しない（要件 16.3）。
-18. **A table the reader cannot read at a middle step**（builder）。書かれたとおりに、ラベルつきの文とともに見せ、行は推測しない（要件 16.6）。これは記録をあるがままに見せるもので、何も補わない。ユーザーが確定した。
+18. **A table the reader does not accept at a middle step**（builder）。書かれたとおりに、ラベルつきの文とともに見せ、行は推測しない（要件 16.6）。これは記録をあるがままに見せるもので、何も補わない。ユーザーが確定した。Decision 45 で拡張。
 19. **Ticks across the session, emphasis from the row**（builder）。走行バンドの目盛りは、セッション内のパラメーターグループのすべての試行である。したがって "no trial" は、セッション内に試行がないことを意味する。引用された試行と予測の試行は、より強く描く（要件 9.3）。これは brief（"conditions that no trial in the session ran"）と項目 1 を組み合わせたものである。
 20. **Dr. Kiro's text not rendered as Markdown**（builder）。書かれたとおりに、エスケープし、改行つきで見せる。表のセルはベンチのリーダーから来る。Markdown を描画すると、見せるものが変わってしまう（要件 4.3）。
 21. **Rounding**（builder）。一覧とチャートでは有効数字 4 桁。試行を開いたときは、記録された値の全体（要件 5.3）。
@@ -341,5 +346,14 @@ Spec: `lab-notebook`。
 42. **Adapters installed for the scan**（user）。ベンチのブラインドスキャンは、各アプリケーションの宣言をインポートして許可リストを読む（`bench/src/bench/scan/terms.py`、`load_app`）。このインポートはアダプターパッケージを（それを通じて MuJoCo の Python パッケージと `wind-tunnel-model` も）インポートする。そのためノートブックは、ベンチと両方のアダプターパッケージにパスで依存する。それらをインストールするが、シミュレーター、ソルバー、Docker は動かさない（設計の以前の Open question 1 の選択肢 A）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（ビルドはプロセスを起動せず、サイトはスキャンの前にディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）（要件 1.5）。
 43. **No link to the root `.kiro/`**（user）。"How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがない。ノートブックはラボの外のファイルやフォルダーを名指しせず、リンクもしない。この問いは README を書くとき（README のステップ、`docs/brief.md` セクション 5 項目 8）に改めて決める。これにより以前の Open question 2 は解決して削除される（要件 18.5）。
 44. **Rescanning the written site for `publish`**（user）。`publish` が書き出されたサイトをどう再走査するか（ベンチのフォルダースキャンはすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する）は、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを 1 つ書き（要件 20.3）、書き出す前の自前のスキャンも残る（要件 20.1、20.2）。
+45. **A table the bench reader does not accept**（user、2026-11-17）。`parse_table` は行のない表に対して `TableError` を送出する（"the discovered spec table has no rules"）。そのため実記録の `end` より前のスナップショットはすべて、リーダーが受理しない表であり、行のない表を、メッセージを解析することも 2 つ目のリーダーを持つこともなく（要件 2.6）、他の受理されない表と見分けることはできない。決定: リーダーが受理しない表は、行がなくても他の理由でも、`## Discovered spec` の節を Dr. Kiro のインクで書かれたとおりに、リーダーが返したメッセージをペンシルで、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析しない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使い、そこでは外れた予測をすべて一覧する。wt-002（停止、最後のスナップショットに行なし）は、最後のスナップショットの節をメッセージつきで、"not checked by the bench" のラベルで見せる。N12 の端のケースは変えない: 置き換え先のセルが行自身を指せば "names this row itself"、一致なし（空を含む）なら "names no row of this table"、2 つ以上なら "names more than one row"（要件 10.9、10.14、14.6、16.6、設計 N27。Decision 18 を拡張）。
+
+46. **Flat site and wording that avoids scan terms**（user、2026-11-17）。ビルダー自身のテキストのスキャン（タスク 8.1）は 4 点に印をつけた: 相対リンクの `../`（ラボの外を指すパスと読まれる）、スタイルシートの派生語 `linear`、`thickness`、`spacing`、装飾ファイルの `xmlns` の URL（サイトの `http:` 検査が拒否する）、スキャン語である画像の属性名とスクリプトの名前。決定: すべてのページをサイトのルートに置く。アドレスは `index.html`、`how.html`、`built.html`、`legend.html`、`<app>.html`、`<app>-<session>.html`、`<app>-<session>-replay-<n>.html`。画像は `p/<sha256>.png`、アセットは `a/notebook.css` と `a/notebook.js`。どのリンクにも `..` を含めない。ビルドは、application と session の id が小文字、数字、単独のハイフンだけであること、2 つのページが同じアドレスを持たないことを検査する。スタイルシートは、印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾はインライン SVG で、`xmlns` を持たない。画像のレイアウト属性は `data-tile-width` と `data-tile-height`。サイトの `http:` 検査は厳格なまま。ビルダーのテキストへのスキャンの指摘は、常に言い換えで直す（design N28）（要件 3.2、6.5、11.1、20.1、20.2）。
+
+47. **Dr. Kiro's fixed words**（user、2026-11-17）。タスク 12.1 で、判定の語と予測についての Dr. Kiro のラベルが、ベンチの `verdict` と `register` のエントリーに書き手のない素の文字列として記録されていること（ベンチのスキャンはこれらをベンチの文字列として扱う）、一方で同じ値が拒否の `given` には書き手 `dr-kiro` つきで現れることがわかった。要件 15.1 と 17.4 は Dr. Kiro のインクを求め、4.2 はインクが記録された書き手に従うとしている。決定: これらの語は Dr. Kiro のインクのままとし、要件 4.2 に例外として書く。Dr. Kiro がこれらを選び、ベンチは固定の集合と照らして検査しただけだからである。さらにビルドはそれぞれを Dr. Kiro のレベルに加えてビルダーのレベルでもスキャンし、この例外から語が漏れないようにする。ベンチと記録は変えない（要件 4.2、15.1、17.4、20.1、design N29）。
+
+48. **This version stops after the prediction chart**（user、2026-11-17）。この版に含めないもの: 封印された記録のリプレイ（要件 16 のすべての基準。本物の記録は最後のステップまで表が空なので、リプレイはほとんどのステップで空の表を見せることになる）、等しい試行の一覧（要件 14.5）、body-lab の入力の線（要件 9.8）、実験エントリーの中の記録された軌跡（要件 10.10）。タスク 19、20、21（予測チャートより後のマイルストーン 3 の残り）は止める。予測チャート（要件 17）と要件 5.4 はこの版に残り、カバーの軌跡（要件 13.7）も残る。これらの要件、設計の節、Property 9 と等しい試行の Property は、「not in this version」と印をつけて文書に残し、ビルドは実装しない。これは Decision 40 の納品順序を変える（要件 9.8、10.1、10.10、14.5、14.6、16、22.3、22.5、design の Delivery order）。
+49. **Rejected-row tab open by default**（user、2026-11-17）。`rejected` の行の "replaced by" タブは、表を見せるときに開いており、置き換える規則がクリックなしで読める。中身とリンクは Decision 32 のとおり（要件 8.13、design N31）。
+50. **Enlarged picture of the body**（user、2026-11-17）。各試行の動く画像の隣に、動く体を拡大した画像を見せ、セルの中の体が読めるようにする。領域は、フレーム間で変わるピクセルの箱に 4 px の余白を足し、そのセルで切ったもの。フレーム以上の大きさになる最小の整数倍で拡大する（何も動かなければセル全体）。記録には軌跡の座標から画像のピクセルへの対応がないので、軌跡は使わない。記録された画像シートからビルド時に導出する。記録された PNG ファイルは変えない。代替テキストは、隣の画像の拡大表示であることを述べ、コメンタリーの語のリストの語を使わない（要件 7.9、design N32）。
 ## Open questions
 なし。

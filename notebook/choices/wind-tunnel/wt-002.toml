@@ -1,0 +1,5 @@
+contrast = ["T1", "T3"]
+best = "none"
+best_reason = "no trial without shedding"
+missed = "none"
+missed_reason = "no prediction missed"

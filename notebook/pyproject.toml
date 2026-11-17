@@ -1,0 +1,54 @@
+[project]
+name = "lab-notebook"
+version = "0.1.0"
+description = "The lab notebook: a static site built from the sealed session records."
+requires-python = ">=3.12,<3.13"
+dependencies = ["lab-bench", "body-lab-adapter", "wind-tunnel-adapter"]
+
+[project.scripts]
+notebook-build = "notebook.cli:main"
+
+[tool.uv.sources]
+lab-bench = { path = "../bench", editable = true }
+body-lab-adapter = { path = "../body-lab/adapter", editable = true }
+wind-tunnel-adapter = { path = "../wind-tunnel/adapter", editable = true }
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "notebook"
+
+[dependency-groups]
+dev = ["pytest", "hypothesis", "ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-ra", "--import-mode=importlib"]
+pythonpath = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "TID", "BLE", "S110", "SIM"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+# Design N1: the bench's banned-API list. The build makes no request, starts no process and never imports the
+# bench front end (Requirements 3.2, 3.3).
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"mcp".msg = "The notebook must not import the bench front end or the MCP SDK (design N1)."
+"fastmcp".msg = "The notebook must not import a front end or transport (design N1)."
+"bench.frontend".msg = "The notebook must not import the bench front end (design N1)."
+"asyncio".msg = "The build is synchronous and must not import a transport (design N1)."
+"socket".msg = "The build makes no network request (Requirement 3.2)."
+"socketserver".msg = "The build makes no network request (Requirement 3.2)."
+"http".msg = "The build makes no network request (Requirement 3.2)."
+"urllib".msg = "The build makes no network request (Requirement 3.2)."
+"xmlrpc".msg = "The build makes no network request (Requirement 3.2)."
+"subprocess".msg = "The build starts no process (design N1, N23)."

@@ -1,0 +1,14 @@
+[miss]
+application = "body-lab"
+session = "body-2"
+prediction = "H4.P1"
+
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+
+[[card]]
+application = "wind-tunnel"
+session = "wt-004"
+trial = "T1"

@@ -7,6 +7,10 @@ under "Open questions"; nothing in this design makes one of them.
 Which Kiro: everything here is built and run by **the builder** and read by **visitors**. Dr. Kiro and the reader
 never see the notebook or its build.
 
+Not in this version (requirements Decision 48). This version stops after the prediction chart: the replay (Requirement 16), the equal-trial list
+(Requirement 14.5), the input lines (9.8) and the tracks in experiment entries (10.10) stay described below but are not
+implemented by the build. The sections, properties and decisions concerned are marked.
+
 ## Overview
 
 The notebook is one Python program, `notebook-build`, in its own `uv` project `notebook/`. It reads the sealed
@@ -92,7 +96,8 @@ notebook/
     ink.py                Ink, Segment, escape, joining segments into text and author ranges
     html.py               element helpers over segments (plain string templates)
     pages/                cover.py, lab.py, session.py, replay.py, how.py, built.py, parts.py
-    assets/               notebook.css, notebook.js, deco.svg (builder files, copied byte for byte)
+    assets/               notebook.css, notebook.js (builder files, copied byte for byte); the Halloween decoration is inline SVG in
+                          the page markup (parts.py), not a file (N28)
     scan.py               the bench Scanner over segments and finished files
     site.py               Site: path -> bytes and ranges; sidecars; staging and rename
     build.py              the four phases
@@ -170,6 +175,9 @@ predictions, outcomes, verdicts, flags, refusals, snapshots, the failure entry i
 
 ### 2. Views and replay steps (Requirements 10, 16)
 
+The replay steps (`views.steps`, `views.step_view` and `View.events` below) are not in this version (requirements
+Decision 48); `views.view` is used by the session page.
+
 `views.view(record, upto: int) -> View` is the session as of entry `upto` (a `seq`): it replays
 `entries[0:upto]` through `bench.core.state.apply` into a bench `State`, and keeps the same prefix for display.
 The session page uses `upto = len(entries)`; a replay step uses the `seq` of its snapshot entry. There is one code
@@ -182,8 +190,10 @@ that table is "checked by the bench" (only an accepted `end` snapshot).
 
 `views.steps(record) -> list[Step]`: one step per snapshot with `for` `verdict`, in record order, and one final step
 for the `end` snapshot if present (16.1). Step numbers are 1-based in that order. Snapshots with `for` `experiment`
-are never steps. A refusal belongs to the first step whose snapshot `seq` is greater than its own (16.12); this
-follows from the prefix rule and needs no extra code.
+are never steps. A refusal is an event of the first step whose snapshot `seq` is greater than its own (16.12, Decision
+33). `views.step_view` gives a step `View.events`: the refusals after the previous step's snapshot and before its own.
+`View.refusals` keeps every refusal of the prefix, which the refused-end note reads (16.12). A refusal after the last
+step is an event of no step.
 
 `Evidence` for the end check is built from the bench `State` exactly as `Session.evidence` does (experiment ids;
 each prediction's outcome kind and condition class). A test checks it against `Session.evidence()` of a fake session
@@ -192,12 +202,15 @@ opened from the same state (N3).
 ### 3. Tables (Requirements 2.4-2.6, 8, 16.3-16.6)
 
 - `tables.read(snapshot) -> Table | Unreadable`: calls `bench.specfiles.discovered.parse_table(design_text,
-  file)`. A `TableError` at a middle step gives `Unreadable(section_text, message)`; the `## Discovered spec`
-  section is shown as written (16.6, requirements Decision 18, N26). At the `end` snapshot a `TableError` cannot
-  happen (the bench accepted it) and fails the build if it does.
+  file)`. A `TableError` at any snapshot that is not an accepted `end` snapshot (a middle step, or the last
+  snapshot of a stopped session) gives `Unreadable(section_text, message)`, with `message` the text the reader
+  returned; this includes a table with no rows, which the reader refuses. The page shows the `## Discovered spec`
+  section as written in Dr. Kiro's ink, `message` in pencil, and the commentary "the bench's table reader did not
+  accept this table"; the message is never parsed (10.14, 16.6, requirements Decisions 18 and 45, N26, N27). At
+  the `end` snapshot a `TableError` cannot happen (the bench accepted it) and fails the build if it does.
 - `tables.check_end(record)`: runs `check_table(design_text, evidence, file)` on the `end` snapshot; any problem
   fails the build, naming the row (2.4). Ended sessions without an `end` snapshot (body-1) are not checked and are
-  shown as "no table" (2.5). There is no second table reader (2.6).
+  shown as "no table" (2.5, 10.9); "no table" is used for no other case. There is no second table reader (2.6).
 - `TableView` is built from a `Table` by a pure function:
 
 ```
@@ -211,7 +224,8 @@ reverse(s) = [r.id for r in rows if r.status == "rejected" and target(r) is s]  
 
 Each row is drawn once, in table order, with all seven cells as the reader returns them (8.1, 8.11). A rejected row
 is struck through; its tab "replaced by <id>" is a `<details>` element whose content is the target's rule text in
-small type and a link to `#row-<id>` (8.3). The status is drawn as a stamp with the label "checked by the bench",
+small type and a link to `#row-<id>` (8.3). The `<details>` carries the `open` attribute, so the tab is open by default
+(8.13, N31). The status is drawn as a stamp with the label "checked by the bench",
 "not checked by the bench" (stopped session's last snapshot) or "not yet checked by the bench" (middle replay step)
 (8.2, 10.7, 16.3). The status cell's characters are shown exactly; strike-through applies only when the status is
 exactly `rejected`.
@@ -247,7 +261,7 @@ for each group N, for each name n in N (in the declared order of the first exper
 An empty hatched interval is not drawn. Groups are never merged by shared names (9.2). Missing combinations are
 shown only through each cited prediction's class word (9.6). The band is an inline SVG in pencil; the parameter
 names are Dr. Kiro's ink and link to `#E<n>-file` of an experiment that declares them (9.7). For body-lab, each
-cited trial also gets one small SVG line per channel of its recorded `inputs` against [-1, 1] (9.8).
+cited trial also gets one small SVG line per channel of its recorded `inputs` against [-1, 1] (9.8; not in this version, requirements Decision 48).
 
 ### 5. Refusals and the refused-end note (Requirements 10.11-10.13, 16.12, 18.4)
 
@@ -257,12 +271,14 @@ cited trial also gets one small SVG line per channel of its recorded `inputs` ag
   when at least one refusal has a quote part whose text equals `row.id` exactly. N is the number of such refusal
   entries (not parts). The note is a sticky note in stamp style with the fixed text, each message as recorded, the
   sentence that the sealed status is the one shown, and "the record holds no copy of the table that was refused".
-  In a replay step the note attaches only if the step's table holds that row (16.12).
+  In a replay step the note attaches only if the step's table holds that row (16.12; replay is not in this version).
 - Composed quotes (10.13): the record does not mark which quotes the bench composed, and finding them would mean
   parsing the message. So every shown refusal message carries the one commentary note, and it covers every quote
   part of that message (N13, Decision 34's fallback).
 
 ### 6. Equal trial keys (Requirement 14.5)
+
+Not in this version (requirements Decision 48).
 
 Over all records of one application: group trials by the recorded `key`; every unordered pair in a group is listed,
 including pairs within one record. A pair is ordered (session id, trial number) first, then by the second member.
@@ -297,6 +313,11 @@ class Segment:
 - Ink from author: record text with author `dr-kiro` -> `DRKIRO`; bench-written record text and numbers the build
   computes from record fields -> `PENCIL`; strings from `text.py` -> `COMMENTARY`; status words -> `STAMP` (4.1,
   15.2); tags and attributes from templates -> `MARKUP`.
+- Exception for Dr. Kiro's fixed words (4.2, N29): the verdict word of a `verdict` entry and Dr. Kiro's label of a
+  prediction in a `register` entry are plain strings in the record, with no author, but Dr. Kiro passed them to
+  the bench. The pages show them as `DRKIRO` segments (`pages/session.py`, `_drkiro_word`; 15.1, 17.4), with the
+  source of their log entry. They are the only `DRKIRO` segments that do not come from a value recorded with
+  author `dr-kiro`, and they are also scanned at the builder level (Components 11).
 - Scan author per ink: `DRKIRO` -> `dr-kiro`; all others -> `bench` (the sidecar format knows only `bench` and
   `dr-kiro`; `bench` is scanned at the builder level, `bench.scan.levels.AUTHOR_LEVEL`).
 - `html.text(seg)` wraps a non-markup segment in `<span class="ink-<k>">` (or `<pre>`/`<div>` for blocks) and
@@ -314,30 +335,42 @@ class Segment:
 ### 9. Pages (Requirements 3, 8, 10, 13, 14, 16-19)
 
 Pages are Python functions that return a list of segments; no template engine. Every page links the ink legend
-(4.5) in its footer.
+(4.5) in its footer, and next to it `how.html`, how the lab works (18; user, 2026-11-17).
 
 | Address | Page |
 |---|---|
 | `index.html` | cover (13) |
 | `how.html` | how the lab works (18) |
 | `built.html` | built from the spec (19) |
-| `<app>/index.html` | lab page (14.1-14.4) |
-| `<app>/<session>/index.html` | session page (10, 14.5, 14.6, 17) |
-| `<app>/<session>/replay-<n>.html` | replay step n, 1-based (16.8) |
+| `<app>.html` | lab page (14.1-14.4) |
+| `<app>-<session>.html` | session page (10, 14.5, 14.6, 17) |
+| `<app>-<session>-replay-<n>.html` | replay step n, 1-based (16.8) |
 | `legend.html` | ink legend and status words defined in commentary (4.5, 15.2) |
 | `p/<sha256>.png` | picture, copied byte for byte (7.7) |
-| `a/notebook.css`, `a/notebook.js`, `a/deco.svg` | assets |
+| `a/notebook.css`, `a/notebook.js` | assets |
+
+The replay pages `<app>-<session>-replay-<n>.html` of the table are not in this version (requirements Decision 48).
+
+The site is flat (N28): every page is at the site root, and the only subfolders are `p/` and `a/`. A link is
+relative and never contains `..`: a page links `legend.html`, `<app>.html`, `p/<sha256>.png`, `a/notebook.css`
+and so on directly. Addresses cannot collide, because the build checks it: application and session ids must match
+`[a-z0-9]+(-[a-z0-9]+)*` (the real ids are `body-lab`, `wind-tunnel`, `body-1`, `wt-004`), and `Site` refuses to add
+a path that is already present, naming both owners (for example a session id `x-replay-1` of application `a`
+against step 1 of session `x` would be caught here, as would an application named `how`). The bench defines no id
+pattern for applications and sessions, so this check is the notebook's own and fails the build, naming the id.
+Lower case only, so two addresses cannot differ by case on a case-insensitive file system.
 
 Anchors on a session page: `#row-R<n>`; `#E<n>` (experiment entry, a `<details>`); `#E<n>-T<n>`; `#E<n>-H<n>.P<n>`;
-`#E<n>-file`; `#H<n>.P<n>` for predictions never run (11). All links are relative (3.2). JavaScript opens the
+`#E<n>-file`; `#H<n>.P<n>` for predictions never run (11). All links are relative and contain no `..` (3.2,
+N28). JavaScript opens the
 `<details>` named by the address (11.2); without JavaScript the entry is present and can be opened by hand.
 
 Session page order (10.1): table page (with the sticky note to the chosen miss and pinned chosen pictures in its
 margin), highlight, progress (with the prediction chart, 17), Dr. Kiro's plan (`tasks.md`, and `requirements.md`
-collapsed below it, N18), every experiment entry, equal-trial list (14.5), replay controls (16). wt-003 gets only
-14.2 and "the record has no snapshot to replay" (14.6, 16.9).
+collapsed below it, N18), every experiment entry. The equal-trial list (14.5) and the replay controls (16) are not in
+this version (requirements Decision 48). wt-003 gets only 14.2 (14.6).
 
-Replay pages are full static pages, one per step, rendered from `view(record, step.seq)`: back, forward and play
+Replay pages (not in this version, requirements Decision 48) are full static pages, one per step, rendered from `view(record, step.seq)`: back, forward and play
 are links (play is JavaScript that follows the forward link every 3 s and stops on the last step). Every step page
 carries "replay of a sealed record" (16.7). Chosen items and pinned pictures not in the prefix are left out with
 the commentary "not run at this step" (16.2).
@@ -345,11 +378,17 @@ the commentary "not run at this step" (16.2).
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
 The HTML holds a `<figure class="photo">` with an `<img>` of the whole sheet (works without JavaScript and is the
-"whole sheet" view) and `data-` attributes: columns, rows, gap, cell width and height. `notebook.js` replaces the
+"whole sheet" view) and `data-` attributes: columns, rows, gap, and `data-tile-width` and `data-tile-height` for
+the cell size (N28). `notebook.js` replaces the
 visible image with a `<canvas>` of one cell and draws cell k with `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)`,
 where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + gap)`, in reading order, one cell per
 500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
 `prefers-reduced-motion: reduce`, it starts paused on cell 0.
+
+Beside each moving picture, except the lab cards, the page shows a magnified picture of the moving body: the box of the
+pixels that change between frames, plus a 4 px margin (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as
+`p/<sha256>.png` (the SHA-256 of its bytes) with the alt text "Magnified view of the picture beside it", and leaves the
+recorded PNG file untouched.
 
 ### 11. Scan (Requirement 20)
 
@@ -360,12 +399,24 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
 2. Every finished text file: the pieces built from its `(text, ranges)` exactly as `sidecar_pieces` builds them,
    so the escaped forms the site holds pass the scan that the sidecars describe (how `publish` scans is N25).
 
+Extra segments, scanned in pass 1 but not a file of their own (`scan.check(..., extra)`): the choice reasons at
+the builder level (`scan.choice_segments`, 12.8), and Dr. Kiro's fixed words at the builder level
+(`scan.drkiro_word_segments`: every verdict word and every Dr. Kiro label of a prediction of every record, as
+pencil segments named by their log entry; 4.2, N29). Where a page shows a fixed word, it is also scanned there at
+Dr. Kiro's level, in both passes.
+
 Pictures pass `check_picture` in phase 1 (20.4). The scanner also flags this machine's home folder and the
 repository path (`local_paths`), which guards Requirement 21.1 against absolute paths.
 
+General rule (N28): the builder's own text, the CSS, the JavaScript and the HTML attribute and class names are
+written to avoid the terms the scan derives from the model and solver files (and `..` in links, which the scan
+reads as a path outside the lab). A finding is fixed by rewording or restructuring the builder's text, never by
+the stop list and never by an exception in the scanner. Known cases: no `linear`, `thickness` or `spacing` in the
+CSS, no `window.` or `tagName` in the JavaScript, `data-tile-width` instead of a cell-width name.
+
 ### 12. Site writing (Requirements 2.7, 20.3, 21)
 
-`Site` maps relative paths to bytes. Each `.html`, `.css`, `.js` and `.svg` file gets `<file>.authors.json`:
+`Site` maps relative paths to bytes. Each `.html`, `.css` and `.js` file gets `<file>.authors.json`:
 `{"ranges": [...]}` written with `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` and a
 final newline. Assets are one `bench` range. Writing: create `<parent>/.<out-name>.staging` (refuse if it
 exists), write every file in sorted path order, then `os.replace(staging, out)` (out absent or an empty folder).
@@ -484,7 +535,10 @@ segment's escaped form lies inside one `dr-kiro` range, and every other segment 
 
 *For any* generated record, every segment made from an authored value has the ink of its recorded author
 (`dr-kiro` -> Dr. Kiro's ink, `bench` -> pencil), every status word has the stamp ink, and a generated entry with a
-text field that has no author fails the build naming the record and line.
+text field that has no author fails the build naming the record and line. The one exception is Dr. Kiro's fixed
+words (N29): on the session page, a Dr. Kiro's ink segment from a log entry is either a value recorded with author
+`dr-kiro` or a verdict word or Dr. Kiro's label of a prediction of that entry; each such word is shown in Dr.
+Kiro's ink and is also a builder-level scan segment.
 
 **Validates: Requirements 4.1, 4.2**
 
@@ -536,16 +590,17 @@ if that step's table holds the row.
 
 **Validates: Requirements 10.11, 10.12, 16.12**
 
-### Property 9: Replay steps equal snapshots and record prefixes
+### Property 9: Replay steps equal snapshots and record prefixes (not in this version)
 
 *For any* generated record, the steps are exactly the `verdict` snapshots in record order plus the `end` snapshot
 if present; at each step the shown table equals the bench reader's rows of that step's snapshot (or the unreadable
-section as written), and the shown entries are exactly the record entries up to and including that snapshot entry;
-each refusal is shown in exactly one step, the first whose snapshot comes after it.
+section as written with the reader's message), and the shown entries are exactly the record entries up to and including that snapshot entry;
+each refusal is shown as an event in exactly one step, the first whose snapshot comes after it, and in no step when no
+snapshot comes after it.
 
 **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 
-### Property 10: Equal-trial pairs are exactly the equal keys
+### Property 10: Equal-trial pairs are exactly the equal keys (not in this version)
 
 *For any* generated set of records of one application, the listed pairs are exactly the unordered pairs of trials
 with the same recorded key, and each pair's "exactly equal" flag equals JSON equality of their measurements.
@@ -671,10 +726,13 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
 - wt-004: rows R1-R6 with their status words "checked by the bench"; the trial whose five measurements are `not_settled` shows the
   outcome name and reason and has no plotted mark.
 - body-1: "no table" and the list of its 8 misses (10.9).
-- wt-002 and wt-003: on the lab page with the same fields; wt-002 has its session page with "no table"; wt-003 has
+- Every real snapshot before `end` (body-1, body-2, wt-002, wt-004): the section as written, the reader's message
+  in pencil and "the bench's table reader did not accept this table" (10.14, 16.6).
+- wt-002 and wt-003: on the lab page with the same fields; wt-002 has its session page with its last snapshot's
+  section as written, the reader's message and "not checked by the bench" (not "no table"); wt-003 has
   only the stopped-session content and "the record has no snapshot to replay" (14.2, 14.6, 16.9).
-- Equal-trial list: wt-002 T1 with wt-004 T1, and the 9 body-1/body-2 pairs, all exactly equal (14.5).
-- Replay of every real record matches its snapshots (16.10, 22.3).
+- (Not in this version, requirements Decision 48.) Equal-trial list: wt-002 T1 with wt-004 T1, and the 9 body-1/body-2 pairs, all exactly equal (14.5).
+- (Not in this version, requirements Decision 48.) Replay of every real record matches its snapshots (16.10, 22.3).
 
 ### Example and unit tests
 
@@ -683,7 +741,8 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
   of a fixture record does not (20.5). A planted term in a choice reason fails (12.8).
 - Commentary: every string in `text.py` passes the word list; a planted listed word fails (5.5). Cover commentary
   outside `<details>` is at most 60 tokens (13.6).
-- Site: no file contains `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
+- Site: every page is at the root and no link contains `..`; ids that could make two addresses equal fail the
+  build (N28); no file contains `xmlns`, `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
   picture buttons, or `<iframe` (3.1-3.3); text is in the HTML without script (3.4); every picture's name is the
   SHA-256 of its bytes (7.7); every page links `legend.html` (4.5).
 - Colours: each foreground and background pair declared in the visual steering has a contrast ratio of at least
@@ -714,7 +773,7 @@ into the steering file first (6.6). Only system font stacks are used; no font fi
 | Strike-through | `line-through` 2px graphite; text stays at full contrast; the "replaced by" tab sits at the row's right edge as a paper tab |
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
 | Narrow screen | at 360px one column; margin photos move below the table; wide tables scroll inside their own box |
-| Halloween | one small ink-drawn bat and a cobweb corner (`deco.svg`), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
+| Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
 | Motion | 500 ms per cell; reduced motion starts paused (3.6) |
 
 All text colours above reach at least 4.5:1 on their backgrounds (paper and sticky yellow); the test checks each
@@ -728,7 +787,8 @@ pair from the CSS.
    Then stop and show the cover and the body-2 table on a desktop and a 360 px screen to the user (22.4).
 2. **Milestone 2**: experiment entries and moving pictures in full, lab pages and stopped sessions, "How the lab
    works", run bands.
-3. **Milestone 3**: the prediction chart, the replay, the equal-trial list, the body-lab input lines.
+3. **Milestone 3**: the prediction chart. The replay, the equal-trial list and the body-lab input lines are not in this
+   version (requirements Decision 48); this version stops after the prediction chart.
 4. **Then**: "Built from the spec" shows "there are no runs yet" (19.1); 19.2-19.7 wait for the `build-from-spec`
    spec (19.8).
 
@@ -742,15 +802,15 @@ pair from the CSS.
 | 4 | Components 1, 8, Properties 1-3, Visual system |
 | 5 | Data Models (numbers, word list), Property 13, 14 |
 | 6 | Visual system |
-| 7 | Components 7, 10, Data Models (layouts), Property 12 |
+| 7 | Components 7, 10 (7.9 enlarged picture), Data Models (layouts), Property 12 |
 | 8 | Components 3, Properties 4-6 |
 | 9 | Components 4, Property 7 |
 | 10 | Components 2, 5, 9, Property 8, 17 |
 | 11 | Components 9 (addresses), Property 15 |
 | 12, 13 | Components 7, Data Models, Property 11 |
-| 14 | Components 6, 9, Property 10 |
+| 14 | Components 6 (14.5 not in this version), 9, Property 10 (not in this version) |
 | 15 | Components 3, 8, Property 5 |
-| 16 | Components 2, 3, 9, Property 9 |
+| 16 | Components 2, 3, 9, Property 9 (all of 16 not in this version) |
 | 17 | Components 9, Property 14 |
 | 18 | Components 9; N24 |
 | 19 | Delivery order 4, N22 |
@@ -783,14 +843,15 @@ changes `bench/`.
   draws one cell at a time from source rectangles that include the gap. No re-encoding. CSS `background-position`
   was not chosen because two-axis stepping with gaps needs per-cell keyframes generated per layout.
 - **N9 Addresses.** As in the table of Components 9; ids are bench ids checked by pattern.
-- **N10 Replay as static pages.** One page per step, so every step's text is in the HTML and has a fixed address;
+- **N10 Replay as static pages (not in this version, requirements Decision 48).** One page per step, so every step's text is in the HTML and has a fixed address;
   "play" only follows the forward link.
 - **N11 Number format.** `.4g` and `repr`, as in Data Models.
-- **N12 Replacement edge cases.** A `replaced by` cell that names a repeated id or the row itself is treated like a
-  cell that names no row: shown as written, with a note, no tab (only possible at a middle step; the bench refuses
-  it at the end).
+- **N12 Replacement edge cases.** A `replaced by` cell that names a repeated id, the row itself or no row is shown
+  as written, with a note, no tab (only possible at a middle step; the bench refuses it at the end). The note
+  says "names this row itself", "names no row of this table" (also for an empty cell) or "names more than one
+  row".
 - **N13 Refusal note covers every quote.** Per Decision 34's fallback; the design does not parse messages.
-- **N14 Equal-trial pairs.** All pairs with the same key in one application, including pairs within one record;
+- **N14 Equal-trial pairs (not in this version, requirements Decision 48).** All pairs with the same key in one application, including pairs within one record;
   equality is JSON equality of the measurements.
 - **N15 Number knob or Dr. Kiro parameter.** A parameter is a number knob when its name equals a declared knob of
   kind `number`; otherwise it is Dr. Kiro's parameter (body-lab refuses function-knob names as parameters).
@@ -802,7 +863,7 @@ changes `bench/`.
 - **N19 Fixture mode only through the library.** `build(..., allow_fake=True)` accepts fake records and marks every
   page "test fixture"; the CLI cannot.
 - **N20 Visual system.** As proposed above, written to steering first.
-- **N21 Plots.** Track paths keep equal x and y scale, fitted to the trial's own track with the start marked;
+- **N21 Plots (the input lines are not in this version, requirements Decision 48).** Track paths keep equal x and y scale, fitted to the trial's own track with the start marked;
   input lines use a fixed [-1, 1] axis; SVG coordinates are formatted with 2 decimals so the output is stable.
 - **N22 Built from the spec.** No CLI option for runs until `build-from-spec` defines its records; the page says
   there are no runs yet.
@@ -827,6 +888,53 @@ changes `bench/`.
   the `## Discovered spec` section is shown as written with the labelled sentence, and no rows are guessed
   (Components 3, Requirement 16.6, requirements Decision 18, confirmed by the user). This was the former Open
   question 2.
+- **N27 A table the reader does not accept (user, 2026-11-17).** A table that `parse_table` rejects, including a
+  table with no rows (every real snapshot before `end`), is shown as its `## Discovered spec` section as written
+  (Dr. Kiro's ink), the reader's message (pencil) and the commentary "the bench's table reader did not accept this
+  table"; the build does not parse the message and has no second reader. "No table" is only for an ended session
+  without an `end` snapshot (body-1). wt-002 shows its last snapshot this way, labelled "not checked by the
+  bench" (Components 3, Requirements 10.9, 10.14, 14.6, 16.6, requirements Decision 45). Extends N26.
+- **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** Task 8.1's scan of the builder's own text found
+  that (1) relative links with `../` are read as paths pointing outside the lab, (2) `notebook.css` held the
+  derived terms `linear`, `thickness` and `spacing`, (3) `deco.svg` held `xmlns="http://www.w3.org/2000/svg"`, which
+  the `http:` site check (task 9.5) rejects, and (4) the picture attributes and the JavaScript used names that are
+  scan terms. Decided: the site layout is flat, with every page at the root (table in Components 9) and `p/` and
+  `a/` the only folders, so no link needs `..`; the CSS is reworded without the flagged words (never the stop
+  list); the Halloween decoration is inline SVG with no `xmlns`, and `deco.svg` is not an asset; the picture
+  attributes are `data-tile-width` and `data-tile-height`; and the general rule in Components 11 holds. Ids are
+  checked as in Components 9. The `http:` check stays strict. Extends N9 (Requirements 3.2, 6.5, 20.1, 20.2,
+  requirements Decision 46).
+- **N29 Dr. Kiro's fixed words (user, 2026-11-17).** Task 12.1 found that the verdict word and Dr. Kiro's label of
+  a prediction are recorded as plain strings with no author (the bench's scan treats them as bench strings),
+  while the same values appear with author `dr-kiro` in the `given` of a refusal. Decided: they are shown in Dr.
+  Kiro's ink, as the exception of Requirement 4.2, and `scan.drkiro_word_segments` adds each of them, from every
+  record, as a builder-level segment to the scan, besides the Dr. Kiro level scan where a page shows it. Property
+  3 states the exception: on a session page, a `DRKIRO` segment from a log entry is a value recorded with author
+  `dr-kiro` or one of these words, and every such word is shown in Dr. Kiro's ink. `bench/` and the records are
+  not changed (Components 8, 11; Requirements 4.2, 15.1, 17.4, 20.1; requirements Decision 47).
+- **N30 Declaration columns on `how.html` and the footer link (user, 2026-11-17).** Task 14.1 found that the
+  sealed body-1 record's declaration differs from body-2's only in a field the page does not show. Decided: on
+  `how.html` records of one application are shown in separate columns only when the five items of Requirement 18.3
+  differ (knobs and their ranges, measurements, budget, picture kind, goal); every other field of the declaration,
+  such as how the measurements are made (`measured_by`) and the knob descriptions, is not shown and does not make a
+  column (`how.declaration_key`). Every page's footer links `how.html` next to the ink legend link (Components 9).
+  The records and `bench/` are not changed (Requirement 18.3).
+- **N31 Rejected-row tab open by default (user, 2026-11-17).** The "replaced by" `<details>` of a `rejected` row
+  whose cell names exactly one other row of the table is written with `open`; its content and link are unchanged. A
+  visitor can close it (Requirement 8.13, requirements Decision 49).
+- **N32 Enlarged picture (user, 2026-11-17).** The build decodes the recorded PNG with `zlib` and `struct` (no new
+  dependency; `notebook/src/notebook/png.py` reads 8-bit RGB and RGBA, unfiltered or with the five row filters, and
+  writes filter type 0). The region is chosen from the sheet's pixels, not from the track (the records have no mapping from track
+  coordinates to picture pixels): a pixel is moving when its colour differs from the first frame's pixel at the same
+  place in some frame; the box round all moving pixels, with
+  a margin of 4 pixels clipped to the cell, is cut out of every frame in the sheet's layout (no moving pixel: the
+  whole cell). Each cut-out is enlarged by one whole number, nearest neighbour, the smallest that makes the enlarged
+  box at least as large as the frame in both directions. The magnified sheet keeps the layout and has no gap
+  (`notebook/src/notebook/magnify.py`). It is named by the SHA-256 of its own bytes, as every picture (7.7). It is
+  shown beside the moving picture in one row that wraps on a narrow screen. Every moving picture gets one except the
+  lab cards (`photo(..., magnified=False)`, 7.9). The recorded file is copied byte for byte as before (7.7); the
+  derived file is deterministic and passes the bench's picture check and the scan (Requirement 7.9, requirements
+  Decision 50).
 
 ## Open questions
 

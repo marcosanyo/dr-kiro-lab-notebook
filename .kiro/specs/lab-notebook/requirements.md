@@ -34,7 +34,8 @@ they are not results restated by the notebook):
 - `wind-tunnel/wt-003`: stopped at its first action, 0 trials, no snapshots.
 - `body-lab/body-2`: ended by Dr. Kiro, 39 of 40 trials (remaining budget 1), 11 hypotheses, 11 experiments, 24
   prediction outcomes, 23 snapshots, 3 refusals (one `register`, two `end`), one verdict flag (E5, verdict
-  `partly`, counts hit 0, miss 1). Every snapshot before `end` has a `## Discovered spec` table with no rows. The
+  `partly`, counts hit 0, miss 1). Every snapshot before `end` has a `## Discovered spec` table with no rows, which
+  the bench's table reader does not accept (Decision 45). The
   `end` snapshot has 14 rows: `validated` R9, R11; `observed` R1, R5, R7, R13; `rejected` R2 (replaced by R1), R3
   (R11), R4 (R5), R6 (R7), R8 (R9), R10 (R11), R12 (R13), R14 (R13). One row can replace several rows (R11, R13), a
   replacing row can come before the row it replaces (R2 by R1), and a replacing row can be `observed`. Cells contain
@@ -175,7 +176,8 @@ that it is fast, private and lasts.
 1. THE site SHALL be plain HTML, CSS and JavaScript, written by the build, with no framework, no third-party
    library and no build step in Node.
 2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote
-   image. Every asset SHALL be a file of the site, referenced by a relative URL.
+   image. Every asset SHALL be a file of the site, referenced by a relative URL that contains no `..`. Every page SHALL be at
+   the site root, and only pictures and assets SHALL be in subfolders (Decision 46).
 3. THE site SHALL have no chat box and no control that starts an experiment, a session or a build-from-spec run,
    and SHALL send no data anywhere.
 4. THE text, the discovered spec tables and the experiment entries SHALL be present in the HTML as written by the
@@ -202,7 +204,10 @@ them, so that I can tell its claims from our comments and from the measurements.
    (Requirements 8.2, 15.2).
 2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or,
    for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build
-   SHALL fail, naming the text's place in the record.
+   SHALL fail, naming the text's place in the record. Exception: values Dr. Kiro passed to the bench that the bench
+   records as fixed words without an author (the verdict word and Dr. Kiro's label of a prediction) SHALL be shown
+   in Dr. Kiro's ink (Requirements 15.1, 17.4), and THE build SHALL scan each of them at the builder level as well
+   as at Dr. Kiro's level (Requirement 20.1) (Decision 47).
 3. THE site SHALL show text written by Dr. Kiro as written: the same characters in the same order, with its line
    breaks, HTML-escaped, and not rendered as Markdown or HTML. The cells of a discovered spec table are shown as
    the bench's table reader gives them.
@@ -253,7 +258,8 @@ record of work.
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with
    the word "miss".
 5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or
-   experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6.
+   experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the
+   page markup, not a separate file, and SHALL carry no namespace URL (Decision 46).
 6. WHEN the user describes a difference from the reference, THE builder SHALL update this requirement or the
    steering file first, and the pages after.
 
@@ -283,6 +289,17 @@ numbers.
 7. THE site SHALL copy each picture as recorded, byte for byte, under a name made from its blob hash, and SHALL NOT
    re-encode it.
 8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once.
+9. FOR each trial's moving picture, except the small pictures of the lab cards (Requirement 13.4), THE site SHALL show
+   beside it an enlarged picture of the moving body: a magnified view, derived by the build from the record's own
+   picture sheet, in which the body in its cell is readable. THE build SHALL choose the region of the enlarged picture
+   as the box, over all frames of the sheet, of the pixels that change between frames, plus a margin of 4 pixels,
+   clipped to its cell; SHALL scale it by the smallest whole-number factor (nearest neighbour) that makes it at least
+   as large as the frame; and, WHEN no pixel changes, SHALL use the whole cell. THE build SHALL NOT use the track to
+   choose the region, because the records hold no mapping from track coordinates to picture pixels. THE build SHALL
+   derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the
+   enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
+   "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
+   (Decision 50).
 
 ### Requirement 8: The discovered spec table
 
@@ -325,6 +342,10 @@ word and its evidence one press away, so that I see what was found and how sure 
 12. FOR ALL generated tables, each row SHALL be drawn in full exactly once, each `rejected` row whose "replaced by"
     cell names a row of the table SHALL have exactly one tab naming that row, and each row's reverse links SHALL be
     exactly the `rejected` rows that name it (property test).
+13. WHERE a row has the status `rejected` and its "replaced by" cell names exactly one other row of the table, THE
+    site SHALL show the row's "replaced by" tab open by default, so that the replacing row's rule text and the link
+    to that row are readable when the table is shown, without a click. THE tab's content and link SHALL be as in 8.3,
+    and a visitor MAY close the tab (Decision 49).
 
 ### Requirement 9: What was run, beside each row
 
@@ -358,6 +379,7 @@ no trial ever ran, so that I can compare the claim with the evidence myself.
 8. WHERE an application's knobs are functions of time (body-lab), THE site SHALL also show, for each cited trial,
    one small line plot per channel of its computed input over time, from the record's `inputs`, against the
    declared range [-1, 1] of the channel, in pencil.
+   Not in this version (Decision 48).
 9. FOR ALL records and rows, the ticks of a run band SHALL be exactly the recorded values of that parameter for
    all trials of its parameter group in the session, and no hatched part SHALL contain such a value (property test
    over generated records).
@@ -374,7 +396,7 @@ to every experiment, so that I can check any claim.
 1. THE session page SHALL show these sections first, in this order: the discovered spec table as a notebook page,
    with a sticky note pointing to the chosen missed prediction (Requirement 12) and the moving pictures of the
    chosen trials pinned in its margin; the highlight; the progress; Dr. Kiro's plan; and every experiment entry.
-   The other sections of the session page (Requirements 14.5, 16 and 17) SHALL follow them.
+   The other sections of the session page (Requirement 17; Requirements 14.5 and 16 are not in this version, Decision 48) SHALL follow them.
 2. IF the missed-prediction choice is "none", THEN THE sticky note SHALL show the choice file's reason.
 3. THE highlight SHALL show the chosen contrast (two trials side by side) and the chosen best result as moving
    pictures with their measured values, labelled "chosen by a person".
@@ -385,18 +407,19 @@ to every experiment, so that I can check any claim.
 6. Dr. Kiro's plan SHALL be the `tasks.md` of the session's last snapshot, shown as written (Requirement 4.3).
 7. WHERE a session is an ended session with an `end` snapshot, THE table SHALL come from that snapshot; WHERE a
    session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words
-   labelled "not checked by the bench".
+   labelled "not checked by the bench" (10.14 applies where the reader does not accept the table).
 8. EACH experiment entry SHALL show: the hypothesis's frozen part as written; its predictions, with conditions,
    range, condition class (labelled "classified at registration") and Dr. Kiro's label; the experiment file as
    written; each trial with its parameter values, its measurements or not-measured outcomes, and its moving
    picture; each prediction outcome; the verdict with Dr. Kiro's words; and the verdict flag if the bench recorded
    one.
-9. IF an ended session's record has no `end` snapshot, or its table has no rows, THEN THE session page SHALL show
-   "no table" in place of the table, with commentary that the record holds no table, and SHALL list every missed
-   prediction of the session in its place (body-1). THE build SHALL NOT fill in a table.
+9. IF an ended session's record has no `end` snapshot (body-1), THEN THE session page SHALL show "no table" in
+   place of the table, with commentary that the record holds no table, and SHALL list every missed prediction of
+   the session in its place. THE build SHALL NOT fill in a table. "No table" SHALL be used for no other case
+   (Decision 45).
 10. WHERE an application's measurements include series (body-lab `track_x`, `track_y`, `track_heading`), THE
    experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the
-   series is a not-measured outcome.
+   series is a not-measured outcome. Not in this version (Decision 48).
 11. WHERE a record holds refusal entries with action `end`, and a quote part of a refusal message equals the id of
     a row of the shown table exactly, character for character, THE session page SHALL attach to that row a sticky
     note in the bench's stamp style: "the bench refused to end this session N times", with N the number of such
@@ -411,6 +434,13 @@ to every experiment, so that I can check any claim.
     outcomes, are composed by the bench from Dr. Kiro's ids; the quote itself SHALL be shown as recorded, in Dr.
     Kiro's ink (Decision 34). Which quotes the note points to is decided in the design; without parsing the
     message, the note covers every quote part of the message.
+14. IF the bench's table reader does not accept the table of the snapshot the page shows (this includes a table
+    with no rows, which the reader refuses; every snapshot of the real records before `end` is such a table), THEN
+    THE site SHALL show that snapshot's `## Discovered spec` section as written, in Dr. Kiro's ink; the message
+    the reader returned, as returned, in pencil; and the commentary "the bench's table reader did not accept this
+    table"; and, WHERE the table is not from an accepted `end` snapshot, the label "not checked by the bench".
+    THE build SHALL NOT parse the message, SHALL NOT guess rows, and SHALL NOT call such a case "no table"
+    (Decision 45).
 
 ### Requirement 11: Links to one experiment
 
@@ -506,10 +536,11 @@ nothing that went wrong is hidden.
    for each pair, the session and trial ids, each trial's parameter names and values as written, and whether all
    their recorded measurements are exactly equal (for example wt-002 T1 and wt-004 T1; the 9 pairs of body-1 and
    body-2). WHEN a visitor opens an entry of the list, THE site SHALL show the two trials' moving pictures side by
-   side (Decision 35).
+   side (Decision 35). Not in this version (Decision 48).
 6. A stopped session with snapshots SHALL have a session page with every section of Requirement 10, its table as
-   in 10.7, and "no table" where its last snapshot has no rows; a stopped session without snapshots (wt-003) SHALL
-   have a page that shows only the content of 14.2 and the sentence of 16.9.
+   in 10.7 and 10.14 (wt-002: its last snapshot's section as written, with the bench reader's message); a stopped
+   session without snapshots (wt-003) SHALL
+   have a page that shows only the content of 14.2 (the sentence of 16.9 is not in this version, Decision 48).
 
 ### Requirement 15: Verdicts and status words kept apart
 
@@ -530,6 +561,9 @@ status of a rule, so that `partly` and `rejected` mean one thing where I read th
    the recorded counts of each prediction outcome.
 
 ### Requirement 16: Replay
+
+**Not in this version (Decision 48).** Every criterion below stays as written, for a later version; the build does not
+implement it and the site has no replay page.
 
 **Concerns:** the visitor and the builder.
 
@@ -552,9 +586,8 @@ so that I see a rule struck through and replaced as it happened.
 5. IF a `rejected` row's "replaced by" cell at a step is empty or names no row of that step's table, THEN THE
    replay SHALL strike the row through, show the cell as written, and show commentary that the named row is not in
    the table at this step, and SHALL NOT pick a replacement.
-6. IF the bench's table reader cannot read the table of a step's snapshot, THEN THE replay SHALL show that step's
-   `## Discovered spec` section as written, with the commentary "the bench's table reader could not read this
-   table at this step", and SHALL NOT guess its rows.
+6. IF the bench's table reader does not accept the table of a step's snapshot (including a table with no rows),
+   THEN THE replay SHALL show that step's table as in 10.14, and SHALL NOT guess its rows.
 7. THE replay SHALL be labelled "replay of a sealed record" on every step, and SHALL NOT be presented as live.
 8. THE replay SHALL have controls to step back, step forward and play. THE address of a step SHALL include its
    1-based step number in record order, SHALL be the same in every build from the same inputs, and opening it SHALL
@@ -688,14 +721,14 @@ rebuilt and compared byte for byte.
 
 1. THE site SHALL build from the records of both labs in `sessions/`, with the committed choice and cover files.
 2. EVERY row of every discovered spec table SHALL show its status word (test over all records).
-3. THE replay SHALL match the snapshots at every step (Requirement 16.10 and 16.11).
+3. THE replay SHALL match the snapshots at every step (Requirement 16.10 and 16.11). Not in this version (Decision 48).
 4. THE user SHALL accept the first screen. The builder SHALL show the cover on a desktop screen and a 360-pixel-wide
    screen and record the user's answer in `docs/status.md`; any change the user asks for goes first into
    Requirement 6 or the steering file (6.6).
 5. THE session page of body-2 SHALL show its 8 `rejected` rows struck through, each with its "replaced by" tab
    (8.3) and each replacing row with its reverse links (8.10), and R13 SHALL carry the refused-end note (10.11); a
-   test SHALL check this on the real body-2 record. The strike-through at a middle replay step stays tested with the
-   fixture of 16.11, because every middle step of body-2 has an empty table.
+   test SHALL check this on the real body-2 record. The test of the strike-through at a middle replay step with the
+   fixture of 16.11 is not in this version (Decision 48).
 
 ---
 
@@ -756,8 +789,9 @@ exception to a rule.
 17. **Status words in the middle of a replay** (builder). The bench checks the table only at the end, so the words
     at earlier steps are shown as Dr. Kiro wrote them, labelled "not yet checked by the bench". The notebook does
     not compute a status (Requirement 16.3).
-18. **A table the reader cannot read at a middle step** (builder). Shown as written with a labelled sentence, no
+18. **A table the reader does not accept at a middle step** (builder). Shown as written with a labelled sentence, no
     guessed rows (Requirement 16.6). This shows the record as it is and fills in nothing. Confirmed by the user.
+    Extended by Decision 45.
 19. **Ticks across the session, emphasis from the row** (builder). A run band's ticks are all trials of the
     parameter group in the session, so "no trial" means no trial in the session; the cited and prediction trials
     are drawn stronger (Requirement 9.3). This combines the brief ("conditions that no trial in the session ran")
@@ -852,6 +886,62 @@ exception to a rule.
     folder scan reads every file as text, so the site's PNG files would fail it) is decided in the `publish` spec
     when it is written. The notebook still writes one sidecar per text file (Requirement 20.3), and its own scan
     before writing stays (Requirement 20.1, 20.2).
+
+45. **A table the bench reader does not accept** (user, 2026-11-17). `parse_table` raises `TableError` for a table
+    with no rows ("the discovered spec table has no rules"), so every snapshot before `end` in the real records is
+    one the reader does not accept, and a row-less table cannot be told from other unaccepted tables without
+    parsing the message or a second reader (Requirement 2.6). Decided: a table the reader does not accept, with no
+    rows or for any other reason, is shown with its `## Discovered spec` section as written in Dr. Kiro's ink, the
+    reader's message in pencil, and the commentary "the bench's table reader did not accept this table"; the build
+    does not parse the message. "No table" is used only for an ended session without an `end` snapshot (body-1),
+    which still lists every missed prediction. wt-002 (stopped, last snapshot without rows) shows its last
+    snapshot's section with the message, labelled "not checked by the bench". The edge cases of N12 are unchanged:
+    a replaced-by cell naming the row itself gives "names this row itself", no match (including empty) gives
+    "names no row of this table", two or more give "names more than one row" (Requirements 10.9, 10.14, 14.6, 16.6;
+    design N27; extends Decision 18).
+
+46. **Flat site and wording that avoids scan terms** (user, 2026-11-17). The builder's scan of its own text (task
+    8.1) flagged four things: `../` in relative links (read as a path outside the lab), the derived terms `linear`,
+    `thickness` and `spacing` in the stylesheet, the `xmlns` URL in the decoration file (which the `http:` check
+    of the site rejects), and picture attribute and script names that are scan terms. Decided: every page is at the
+    site root, addresses are `index.html`, `how.html`, `built.html`, `legend.html`, `<app>.html`,
+    `<app>-<session>.html` and `<app>-<session>-replay-<n>.html`, pictures are `p/<sha256>.png`, assets are
+    `a/notebook.css` and `a/notebook.js`, and no link contains `..`; the build checks that application and session
+    ids are lower case letters, digits and single hyphens and that no two pages have the same address; the
+    stylesheet is reworded without the flagged words, never through the stop list; the Halloween decoration is
+    inline SVG without `xmlns`; the picture layout attributes are `data-tile-width` and `data-tile-height`; the
+    `http:` check stays strict. A scan finding in builder text is always fixed by rewording (design N28)
+    (Requirements 3.2, 6.5, 11.1, 20.1, 20.2).
+
+47. **Dr. Kiro's fixed words** (user, 2026-11-17). Task 12.1 found that the verdict word and Dr. Kiro's label of a
+    prediction are recorded in the bench's `verdict` and `register` entries as plain strings with no author (the
+    bench's scan treats them as bench strings), while the same values appear with author `dr-kiro` in the `given`
+    of a refusal. Requirements 15.1 and 17.4 ask for Dr. Kiro's ink, and 4.2 says ink follows the recorded author.
+    Decided: these words keep Dr. Kiro's ink, as an exception written into Requirement 4.2, because Dr. Kiro chose
+    them and the bench only checked them against its fixed set; and the build scans each of them at the builder
+    level as well as at Dr. Kiro's level, so the exception cannot let a term through. The bench and the records
+    are not changed (Requirements 4.2, 15.1, 17.4, 20.1; design N29).
+
+48. **This version stops after the prediction chart** (user, 2026-11-17). Not in this version: the replay of a sealed
+    record (Requirement 16, all criteria; the real records have an empty table up to the last step, so the replay
+    would show empty tables for most steps); the equal-trial list (Requirement 14.5); the input lines of body-lab
+    (Requirement 9.8) and the recorded tracks in experiment entries (Requirement 10.10). Tasks 19, 20 and 21 (the
+    rest of milestone 3 after the prediction chart) are stopped. The prediction chart (Requirement 17) and
+    Requirement 5.4 stay in this version, and so does the track on the cover (Requirement 13.7). The requirements,
+    the design sections and Property 9 and the equal-trial property stay in the documents, marked "not in this
+    version", and the build does not implement them. This changes the order of delivery of Decision 40 (Requirements
+    9.8, 10.1, 10.10, 14.5, 14.6, 16, 22.3, 22.5; design Delivery order).
+49. **Rejected-row tab open by default** (user, 2026-11-17). The "replaced by" tab of a `rejected` row is open when
+    the table is shown, so that the replacing rule is readable without a click. Its content and link are as in
+    Decision 32 (Requirement 8.13; design N31).
+50. **Enlarged picture of the body** (user, 2026-11-17). Beside each trial's moving picture, the site shows an
+    enlarged picture of the moving body, so that the body in its cell is readable. Its region is the box of the pixels
+    that change between frames, plus a 4 px margin, clipped to its cell, scaled by the smallest whole-number factor
+    that makes it at least as large as the frame (the whole cell if nothing moves); the track is not used, because
+    the records have no mapping from track coordinates to picture pixels. It is derived at build time from the
+    record's own picture sheet; the recorded PNG file is not changed. Its alt text says that it is a
+    magnified view of the picture beside it, and uses no word of the commentary word list (Requirement 7.9; design
+    N32).
 
 ## Open questions
 

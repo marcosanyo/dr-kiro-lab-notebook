@@ -1,11 +1,13 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `8d126c34687a9216c60f858a5589df6ad66b3977a9017fe74a1ae78cae30dcd9`
+> 原文 SHA-256: `47aa0477d0ca632dd880e8cbd1015e2a5c6332a776960fd54c78b1dd68a0b85f`
 
 # Design: lab-notebook
 
 この設計は `lab-notebook` の要件 1-22 を対象とします。"N4" のような節の参照は、末尾の「Decisions」にあるビルダーの設計判断を指します。ユーザーの判断、規則の例外、`bench/` の変更が要るものは「Open questions」にあります。この設計はそのどれも自分では決めません。
 
 どの Kiro か: ここにあるものはすべて **ビルダー** が作って動かし、**訪問者** が読みます。Dr. Kiro とリーダーはノートブックにもそのビルドにも触れません。
+
+Not in this version（requirements の Decision 48）。この版は予測チャートの後で止まる: リプレイ（要件 16）、等しい試行の一覧（要件 14.5）、入力の線（9.8）、実験エントリーの中の軌跡（10.10）は、以下に記述が残るがビルドは実装しない。関係する節、Property、決定には印をつけてある。
 
 ## Overview
 
@@ -85,7 +87,8 @@ notebook/
     ink.py                Ink, Segment, escape, joining segments into text and author ranges
     html.py               element helpers over segments (plain string templates)
     pages/                cover.py, lab.py, session.py, replay.py, how.py, built.py, parts.py
-    assets/               notebook.css, notebook.js, deco.svg (builder files, copied byte for byte)
+    assets/               notebook.css, notebook.js (builder files, copied byte for byte); the Halloween decoration is inline SVG in
+                          the page markup (parts.py), not a file (N28)
     scan.py               the bench Scanner over segments and finished files
     site.py               Site: path -> bytes and ranges; sidecars; staging and rename
     build.py              the four phases
@@ -144,18 +147,20 @@ uv run --project notebook notebook-build \
 
 ### 2. Views and replay steps (Requirements 10, 16)
 
+リプレイのステップ（以下の `views.steps`、`views.step_view`、`View.events`）はこの版に含めない（requirements の Decision 48）。セッションページは `views.view` を使う。
+
 `views.view(record, upto: int) -> View` は、エントリー `upto`（`seq`）の時点でのセッションである。`entries[0:upto]` を `bench.core.state.apply` に通してベンチの `State` にリプレイし、表示のために同じ接頭辞を保持する。セッションページは `upto = len(entries)` を使い、リプレイのステップはそのスナップショットの `seq` を使う。コードの経路は 1 つで、セッションページは、最後のリプレイのステップに、セッションページだけが持つ節を足したものである。
 
 `View` が与えるもの: 接頭辞のエントリー。接頭辞の中の実験、試行、結果、判定、フラグ、拒否。`State` からの `remaining` と `trials_run`。表、計画、要件を見せるスナップショット（ステップのスナップショット。セッションページでは、終了したセッションの `end` スナップショット、そうでなければ最後のスナップショット）。そしてその表が「ベンチに検査された」ものかどうか（受理された `end` スナップショットだけ）。
 
-`views.steps(record) -> list[Step]`: `for` が `verdict` のスナップショットごとに記録順で 1 ステップ、`end` スナップショットがあればそれに最後の 1 ステップ（16.1）。ステップ番号はその順での 1 始まり。`for` が `experiment` のスナップショットは決してステップにならない。拒否は、`seq` が自分より大きいスナップショットを持つ最初のステップに属する（16.12）。これは接頭辞の規則から導かれ、追加のコードは要らない。
+`views.steps(record) -> list[Step]`: `for` が `verdict` のスナップショットごとに記録順で 1 ステップ、`end` スナップショットがあればそれに最後の 1 ステップ（16.1）。ステップ番号はその順での 1 始まり。`for` が `experiment` のスナップショットは決してステップにならない。拒否は、`seq` が自分より大きいスナップショットを持つ最初のステップの出来事である（16.12、Decision 33）。`views.step_view` は、ステップに `View.events` を与える。前のステップのスナップショットより後で、自分のスナップショットより前の拒否である。`View.refusals` は接頭辞のすべての拒否を保つ。これは拒否の注記が読む（16.12）。最後のステップより後の拒否は、どのステップの出来事でもない。
 
 end の検査のための `Evidence` は、`Session.evidence` とまったく同じように、ベンチの `State` から作る（実験 id。各予測の結果の種類と条件クラス）。テストが、同じ状態から開いた fake セッションの `Session.evidence()` と照合する（N3）。
 
 ### 3. Tables (Requirements 2.4-2.6, 8, 16.3-16.6)
 
-- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。途中のステップでの `TableError` は `Unreadable(section_text, message)` になり、`## Discovered spec` の節は書かれたとおりに見せる（16.6、要件の Decision 18、N26）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
-- `tables.check_end(record)`: `end` スナップショットに `check_table(design_text, evidence, file)` を走らせる。問題があれば、行を名指ししてビルドを失敗させる（2.4）。`end` スナップショットのない終了済みセッション（body-1）は検査せず、"no table" として見せる（2.5）。2 つ目の表リーダーはない（2.6）。
+- `tables.read(snapshot) -> Table | Unreadable`: `bench.specfiles.discovered.parse_table(design_text, file)` を呼ぶ。受理された `end` スナップショットでないスナップショット（途中のステップ、または停止したセッションの最後のスナップショット）での `TableError` は `Unreadable(section_text, message)` になる（`message` はリーダーが返したテキスト）。行のない表もリーダーが拒否するのでここに含まれる。ページは `## Discovered spec` の節を Dr. Kiro のインクで書かれたとおりに、`message` をペンシルで、コメンタリー "the bench's table reader did not accept this table" とともに見せる。メッセージは解析しない（10.14、16.6、要件の Decision 18 と 45、N26、N27）。`end` スナップショットでは `TableError` は起こりえず（ベンチが受理した）、起こればビルドを失敗させる。
+- `tables.check_end(record)`: `end` スナップショットに `check_table(design_text, evidence, file)` を走らせる。問題があれば、行を名指ししてビルドを失敗させる（2.4）。`end` スナップショットのない終了済みセッション（body-1）は検査せず、"no table" として見せる（2.5、10.9）。"no table" は他の場合には使わない。2 つ目の表リーダーはない（2.6）。
 - `TableView` は、純関数で `Table` から作る:
 
 ```
@@ -167,7 +172,7 @@ note(r)    = "names no row of this table" | "names more than one row" | "names t
 reverse(s) = [r.id for r in rows if r.status == "rejected" and target(r) is s]   (table order, 8.10)
 ```
 
-各行は表の順序で 1 回だけ描き、7 つのセルはすべてリーダーが返したとおりにする（8.1、8.11）。`rejected` の行は取り消し線を引く。そのタブ "replaced by <id>" は `<details>` 要素で、中身は対象の規則の文を小さな文字で書いたものと `#row-<id>` へのリンクである（8.3）。ステータスは、"checked by the bench"、"not checked by the bench"（停止したセッションの最後のスナップショット）、"not yet checked by the bench"（途中のリプレイステップ）のラベルをもつスタンプとして描く（8.2、10.7、16.3）。ステータスのセルの文字は書かれたとおりに見せ、取り消し線はステータスが厳密に `rejected` のときだけ適用する。
+各行は表の順序で 1 回だけ描き、7 つのセルはすべてリーダーが返したとおりにする（8.1、8.11）。`rejected` の行は取り消し線を引く。そのタブ "replaced by <id>" は `<details>` 要素で、中身は対象の規則の文を小さな文字で書いたものと `#row-<id>` へのリンクである（8.3）。この `<details>` は `open` 属性を持つので、タブは最初から開いている（8.13、N31）。ステータスは、"checked by the bench"、"not checked by the bench"（停止したセッションの最後のスナップショット）、"not yet checked by the bench"（途中のリプレイステップ）のラベルをもつスタンプとして描く（8.2、10.7、16.3）。ステータスのセルの文字は書かれたとおりに見せ、取り消し線はステータスが厳密に `rejected` のときだけ適用する。
 
 行を開く（行の証拠を包む `<details>`。狭い画面では行の下、広い画面ではサイドパネル）と、引用された予測ごとに次を見せる: 仮説、条件、範囲、条件クラス（ベンチの語）、Dr. Kiro のラベル、結果、計測値。それぞれが自分の実験エントリーにリンクする（8.8）。`partly` の行では外れを miss red で（8.5）、`observed` の行では `text.py` の固定の説明を（8.6）、`validated` の行では条件クラスが `new-combination` か `outside` の的中を見せる（8.7）。
 
@@ -193,15 +198,17 @@ for each group N, for each name n in N (in the declared order of the first exper
         span = [min(ticks + extra), max(ticks + extra)];  hatched = [span.low, lo) and (hi, span.high]
 ```
 
-空の斜線の区間は描かない。グループは、共通の名前でまとめることは決してない（9.2）。足りない組み合わせは、引用された各予測の条件クラスの語を通してだけ見せる（9.6）。バンドは鉛筆の inline SVG である。パラメーター名は Dr. Kiro のインクで、それを宣言する実験の `#E<n>-file` にリンクする（9.7）。body-lab では、引用された各試行に、記録された `inputs` のチャンネルごとに [-1, 1] に対する小さな SVG の線も 1 本付く（9.8）。
+空の斜線の区間は描かない。グループは、共通の名前でまとめることは決してない（9.2）。足りない組み合わせは、引用された各予測の条件クラスの語を通してだけ見せる（9.6）。バンドは鉛筆の inline SVG である。パラメーター名は Dr. Kiro のインクで、それを宣言する実験の `#E<n>-file` にリンクする（9.7）。body-lab では、引用された各試行に、記録された `inputs` のチャンネルごとに [-1, 1] に対する小さな SVG の線も 1 本付く（9.8。この版に含めない、requirements の Decision 48）。
 
 ### 5. Refusals and the refused-end note (Requirements 10.11-10.13, 16.12, 18.4)
 
 - 拒否メッセージは部分のリストである: ベンチのテキスト（`{"text": {author, text}}`）と引用（`{"file", "line", "quote"}`）。各部分は、記録された書き手のインクのセグメントになる。何も解析しない（10.12）。
-- 拒否された終了の注記: 見せる表と、`action` が `end` であるビューの中の拒否エントリーについて、少なくとも 1 つの拒否が、テキストが `row.id` に厳密に等しい引用部分を持つとき、その行に注記が付く。N はそのような拒否エントリー（部分ではなく）の数である。注記はスタンプのスタイルの付箋で、固定のテキスト、記録されたとおりの各メッセージ、封印されたステータスが見せているものであるという文、そして "the record holds no copy of the table that was refused" を持つ。リプレイのステップでは、そのステップの表がその行を持つときだけ注記が付く（16.12）。
+- 拒否された終了の注記: 見せる表と、`action` が `end` であるビューの中の拒否エントリーについて、少なくとも 1 つの拒否が、テキストが `row.id` に厳密に等しい引用部分を持つとき、その行に注記が付く。N はそのような拒否エントリー（部分ではなく）の数である。注記はスタンプのスタイルの付箋で、固定のテキスト、記録されたとおりの各メッセージ、封印されたステータスが見せているものであるという文、そして "the record holds no copy of the table that was refused" を持つ。リプレイのステップでは、そのステップの表がその行を持つときだけ注記が付く（16.12。リプレイはこの版に含めない）。
 - 組み立てられた引用（10.13）: 記録は、どの引用をベンチが組み立てたかを印づけておらず、見つけるにはメッセージを解析することになる。そのため、見せるすべての拒否メッセージは解説の注記を 1 つ持ち、それがそのメッセージのすべての引用部分を対象とする（N13、Decision 34 のフォールバック）。
 
 ### 6. Equal trial keys (Requirement 14.5)
+
+Not in this version（requirements の Decision 48）。
 
 1 つのアプリケーションのすべての記録にわたって: 記録された `key` で試行をグループにし、グループの中の順序なしの組をすべて列挙する。1 つの記録の中の組も含む。組は（セッション id、試行番号）の順、次に 2 番目のメンバーの順に並べる。「厳密に等しい」とは、2 つの `measurements` オブジェクトが JSON の値として等しいこと（数値、リスト、理由つきの未計測オブジェクト）を指す。各セッションページは、自分の試行を含む組を列挙し、エントリーを開くと 2 つの動く画像が並んで見える。
 
@@ -224,6 +231,7 @@ class Segment:
 ```
 
 - 書き手からインクへ: 書き手が `dr-kiro` の記録のテキスト -> `DRKIRO`。ベンチが書いた記録のテキストと、記録のフィールドからビルドが計算した数 -> `PENCIL`。`text.py` の文字列 -> `COMMENTARY`。ステータスの語 -> `STAMP`（4.1、15.2）。テンプレートのタグと属性 -> `MARKUP`。
+- Dr. Kiro の固定の語の例外（4.2、N29）: `verdict` エントリーの判定の語と、`register` エントリーの予測についての Dr. Kiro のラベルは、記録では書き手のない素の文字列だが、Dr. Kiro がベンチに渡したものである。ページはこれらを、そのログエントリーのソースつきの `DRKIRO` セグメントとして見せる（`pages/session.py`、`_drkiro_word`。15.1、17.4）。これらは、書き手 `dr-kiro` で記録された値から来ない唯一の `DRKIRO` セグメントであり、ビルダーのレベルでもスキャンされる（Components 11）。
 - インクごとのスキャンの書き手: `DRKIRO` -> `dr-kiro`。それ以外はすべて -> `bench`（サイドカーの形式は `bench` と `dr-kiro` しか知らない。`bench` はビルダーレベルでスキャンされる、`bench.scan.levels.AUTHOR_LEVEL`）。
 - `html.text(seg)` は、マークアップでないセグメントを `<span class="ink-<k>">`（ブロックなら `<pre>`/`<div>`）で包み、エスケープする: `html.escape(text, quote=True)`、その後 `\r` -> `&#13;`。Dr. Kiro のテキストは要素の内容にだけ置き、属性には決して置かない。その要素は `white-space: pre-wrap` を使うので、改行は書かれたとおりに見える（4.3）。タブ、改行、キャリッジリターン以外の C0 制御文字を含む Dr. Kiro のテキストは、HTML で書かれたとおりには見せられないので、そのソースを名指ししてビルドを失敗させる（N6）。
 - アドレスと属性に使う id（`E<n>`、`T<n>`、`H<n>.P<n>`、`R<n>`）は、`bench.core.ids` のパターンと `discovered.py` の行のパターンで検査する。それ以外は決して属性に入れず、パターンに合わない id はビルドを失敗させる。
@@ -231,29 +239,35 @@ class Segment:
 
 ### 9. Pages (Requirements 3, 8, 10, 13, 14, 16-19)
 
-ページは、セグメントのリストを返す Python の関数である。テンプレートエンジンは使わない。すべてのページはフッターにインクの凡例（4.5）へのリンクを持つ。
+ページは、セグメントのリストを返す Python の関数である。テンプレートエンジンは使わない。すべてのページはフッターにインクの凡例（4.5）へのリンクを持ち、その隣に `how.html`（ラボの仕組み、18。ユーザー、2026-11-17）へのリンクを持つ。
 
 | Address | Page |
 |---|---|
 | `index.html` | カバー（13） |
 | `how.html` | ラボのしくみ（18） |
 | `built.html` | spec から作る（19） |
-| `<app>/index.html` | ラボのページ（14.1-14.4） |
-| `<app>/<session>/index.html` | セッションページ（10、14.5、14.6、17） |
-| `<app>/<session>/replay-<n>.html` | リプレイのステップ n、1 始まり（16.8） |
+| `<app>.html` | ラボのページ（14.1-14.4） |
+| `<app>-<session>.html` | セッションページ（10、14.5、14.6、17） |
+| `<app>-<session>-replay-<n>.html` | リプレイのステップ n、1 始まり（16.8） |
 | `legend.html` | インクの凡例と、解説で定義するステータスの語（4.5、15.2） |
 | `p/<sha256>.png` | 画像。バイト単位でコピー（7.7） |
-| `a/notebook.css`, `a/notebook.js`, `a/deco.svg` | アセット |
+| `a/notebook.css`, `a/notebook.js` | アセット |
 
-セッションページのアンカー: `#row-R<n>`、`#E<n>`（実験エントリー、`<details>`）、`#E<n>-T<n>`、`#E<n>-H<n>.P<n>`、`#E<n>-file`、一度も走らなかった予測のための `#H<n>.P<n>`（11）。すべてのリンクは相対（3.2）。JavaScript は、アドレスが指す `<details>` を開く（11.2）。JavaScript がなくても、エントリーは存在し、手で開ける。
+表のリプレイページ `<app>-<session>-replay-<n>.html` はこの版に含めない（requirements の Decision 48）。
 
-セッションページの順序（10.1）: 表のページ（選んだ外れへの付箋と、余白にピンで留めた選んだ画像を伴う）、ハイライト、進み具合（予測チャートを含む、17）、Dr. Kiro の計画（`tasks.md`。`requirements.md` はその下に折りたたむ、N18）、すべての実験エントリー、等しい試行の一覧（14.5）、リプレイの操作（16）。wt-003 は 14.2 と "the record has no snapshot to replay" だけを得る（14.6、16.9）。
+サイトはフラットである（N28）: すべてのページはサイトのルートにあり、サブフォルダーは `p/` と `a/` だけである。リンクは相対で、`..` を含まない。ページは `legend.html`、`<app>.html`、`p/<sha256>.png`、`a/notebook.css` などを直接リンクする。アドレスが衝突しないことはビルドが検査する: application と session の id は `[a-z0-9]+(-[a-z0-9]+)*` に一致しなければならない（実際の id は `body-lab`、`wind-tunnel`、`body-1`、`wt-004`）。`Site` は、すでにあるパスの追加を、両方の持ち主を挙げて拒否する（たとえば application `a` の session id `x-replay-1` は session `x` のステップ 1 と衝突するので、ここで見つかる。`how` という名前の application も同じ）。ベンチは application と session の id のパターンを定めていないので、この検査はノートブック自身のもので、id を挙げてビルドを失敗させる。小文字だけなので、大文字小文字を区別しないファイルシステムでも 2 つのアドレスが大文字小文字だけで違うことはない。
 
-リプレイのページは、ステップごとに 1 つの完全な静的ページで、`view(record, step.seq)` から描く: 戻る、進む、再生はリンクである（再生は、3 秒ごとに進むリンクをたどり、最後のステップで止まる JavaScript）。すべてのステップのページは "replay of a sealed record" を持つ（16.7）。接頭辞に入っていない選んだ項目とピンで留めた画像は、解説 "not run at this step" とともに省く（16.2）。
+セッションページのアンカー: `#row-R<n>`、`#E<n>`（実験エントリー、`<details>`）、`#E<n>-T<n>`、`#E<n>-H<n>.P<n>`、`#E<n>-file`、一度も走らなかった予測のための `#H<n>.P<n>`（11）。すべてのリンクは相対で、`..` を含まない（3.2、N28）。JavaScript は、アドレスが指す `<details>` を開く（11.2）。JavaScript がなくても、エントリーは存在し、手で開ける。
+
+セッションページの順序（10.1）: 表のページ（選んだ外れへの付箋と、余白にピンで留めた選んだ画像を伴う）、ハイライト、進み具合（予測チャートを含む、17）、Dr. Kiro の計画（`tasks.md`。`requirements.md` はその下に折りたたむ、N18）、すべての実験エントリー。等しい試行の一覧（14.5）とリプレイの操作（16）はこの版に含めない（requirements の Decision 48）。wt-003 は 14.2 だけを得る（14.6）。
+
+リプレイのページ（この版に含めない、requirements の Decision 48）は、ステップごとに 1 つの完全な静的ページで、`view(record, step.seq)` から描く: 戻る、進む、再生はリンクである（再生は、3 秒ごとに進むリンクをたどり、最後のステップで止まる JavaScript）。すべてのステップのページは "replay of a sealed record" を持つ（16.7）。接頭辞に入っていない選んだ項目とピンで留めた画像は、解説 "not run at this step" とともに省く（16.2）。
 
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
-HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、セルの幅と高さ）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
+HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
+
+各フルサイズの画像（ラボのカードの画像は除く）の隣に、ページは動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。
 
 ### 11. Scan (Requirement 20)
 
@@ -262,11 +276,15 @@ HTML は、シート全体の `<img>`（JavaScript なしで動き、「シー�
 1. すべてのセグメント: `scanner.scan_text(seg.text, level, seg.source)`。レベルはそのスキャンの書き手から取る。検出はソースのファイルと行を名指しする（20.2）。
 2. 完成したすべてのテキストファイル: `(text, ranges)` から、`sidecar_pieces` がまったく同じ作り方で作る断片を使う。サイトが持つエスケープ後の形が、サイドカーが記述するスキャンを通る（`publish` がどうスキャンするかは N25）。
 
+追加のセグメント。パス 1 でスキャンされるが、それ自身のファイルではない（`scan.check(..., extra)`）: ビルダーのレベルの選択の理由（`scan.choice_segments`、12.8）と、ビルダーのレベルの Dr. Kiro の固定の語（`scan.drkiro_word_segments`: すべての記録のすべての判定の語と、予測についてのすべての Dr. Kiro のラベルを、そのログエントリーで名指しされるペンシルのセグメントとして。4.2、N29）。ページが固定の語を見せるところでは、そこで Dr. Kiro のレベルでも、両方のパスでスキャンされる。
+
 画像はフェーズ 1 で `check_picture` を通す（20.4）。スキャナーは、このマシンのホームフォルダーとリポジトリのパス（`local_paths`）にも印をつけ、絶対パスについての要件 21.1 を守る。
+
+一般規則（N28）: ビルダー自身のテキスト、CSS、JavaScript、HTML の属性名とクラス名は、スキャンがモデルとソルバーのファイルから導く語（およびスキャンがラボの外を指すパスと読む、リンクの `..`）を避けて書く。指摘は、ビルダーのテキストの言い換えまたは構成の変更で直す。除外リストでも、スキャナーの例外でも直さない。既知の例: CSS に `linear`、`thickness`、`spacing` を使わない。JavaScript に `window.` と `tagName` を使わない。セル幅を表す名前の代わりに `data-tile-width` を使う。
 
 ### 12. Site writing (Requirements 2.7, 20.3, 21)
 
-`Site` は、相対パスをバイト列に対応づける。各 `.html`、`.css`、`.js`、`.svg` のファイルは `<file>.authors.json` を得る: `{"ranges": [...]}` を `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` と最後の改行で書く。アセットは `bench` の範囲 1 つである。書き出し: `<parent>/.<out-name>.staging` を作り（すでにあれば拒否）、すべてのファイルをパスの並び順で書き、`os.replace(staging, out)`（out は存在しないか、空のフォルダー）。
+`Site` は、相対パスをバイト列に対応づける。各 `.html`、`.css`、`.js` のファイルは `<file>.authors.json` を得る: `{"ranges": [...]}` を `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` と最後の改行で書く。アセットは `bench` の範囲 1 つである。書き出し: `<parent>/.<out-name>.staging` を作り（すでにあれば拒否）、すべてのファイルをパスの並び順で書き、`os.replace(staging, out)`（out は存在しないか、空のフォルダー）。
 
 ## Data Models
 
@@ -365,7 +383,7 @@ trial = "T1"
 
 ### Property 3: Ink follows the recorded author
 
-*任意の* 生成された記録について、書き手つきの値から作ったすべてのセグメントは、記録された書き手のインクを持つ（`dr-kiro` -> Dr. Kiro のインク、`bench` -> 鉛筆）。すべてのステータスの語はスタンプのインクを持つ。書き手のないテキストのフィールドを持つ生成エントリーは、記録と行を名指ししてビルドを失敗させる。
+*任意の* 生成された記録について、書き手つきの値から作ったすべてのセグメントは、記録された書き手のインクを持つ（`dr-kiro` -> Dr. Kiro のインク、`bench` -> 鉛筆）。すべてのステータスの語はスタンプのインクを持つ。書き手のないテキストのフィールドを持つ生成エントリーは、記録と行を名指ししてビルドを失敗させる。唯一の例外は Dr. Kiro の固定の語（N29）である: セッションページで、ログエントリーから来る Dr. Kiro のインクのセグメントは、書き手 `dr-kiro` で記録された値か、そのエントリーの判定の語または予測についての Dr. Kiro のラベルのどちらかである。そうした語はそれぞれ Dr. Kiro のインクで見せられ、ビルダーのレベルのスキャンのセグメントでもある。
 
 **Validates: Requirements 4.1, 4.2**
 
@@ -399,13 +417,13 @@ trial = "T1"
 
 **Validates: Requirements 10.11, 10.12, 16.12**
 
-### Property 9: Replay steps equal snapshots and record prefixes
+### Property 9: Replay steps equal snapshots and record prefixes (not in this version)
 
-*任意の* 生成された記録について、ステップは、記録順の `verdict` スナップショットと、あれば `end` スナップショットとまったく同じである。各ステップで、見せる表は、そのステップのスナップショットに対するベンチのリーダーの行（または書かれたとおりの読めない節）に等しく、見せるエントリーは、そのスナップショットのエントリーまでを含む記録のエントリーとまったく同じである。各拒否は、それより後にスナップショットが来る最初のステップに、ちょうど 1 つのステップで見せる。
+*任意の* 生成された記録について、ステップは、記録順の `verdict` スナップショットと、あれば `end` スナップショットとまったく同じである。各ステップで、見せる表は、そのステップのスナップショットに対するベンチのリーダーの行（またはリーダーのメッセージつきで書かれたとおりの読めない節）に等しく、見せるエントリーは、そのスナップショットのエントリーまでを含む記録のエントリーとまったく同じである。各拒否は、それより後にスナップショットが来る最初のステップの出来事として、ちょうど 1 つのステップで見せる。それより後にどのスナップショットも来なければ、どのステップでも見せない。
 
 **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 
-### Property 10: Equal-trial pairs are exactly the equal keys
+### Property 10: Equal-trial pairs are exactly the equal keys (not in this version)
 
 *任意の* 生成された、1 つのアプリケーションの記録の集合について、列挙される組は、記録された同じキーを持つ試行の順序なしの組とまったく同じで、各組の "exactly equal" フラグは、それらの計測値の JSON としての等しさに等しい。
 
@@ -486,16 +504,17 @@ trial = "T1"
 - body-2 のカバー: 試行 T12 の画像と軌跡を持つ H4.P1、"miss"、行 R4 と R5（13.1、13.2、13.7）。
 - wt-004: 行 R1-R6 が、ステータスの語 "checked by the bench" を持つ。5 つの計測が `not_settled` である試行は、結果名と理由を見せ、プロットされた印を持たない。
 - body-1: "no table" と、その 8 つの外れの一覧（10.9）。
-- wt-002 と wt-003: ラボのページに同じフィールドで現れる。wt-002 は "no table" のセッションページを持つ。wt-003 は停止したセッションの内容と "the record has no snapshot to replay" だけを持つ（14.2、14.6、16.9）。
-- 等しい試行の一覧: wt-002 の T1 と wt-004 の T1、および body-1/body-2 の 9 組。すべて厳密に等しい（14.5）。
-- すべての本物の記録のリプレイが、そのスナップショットと一致する（16.10、22.3）。
+- `end` より前の実記録のすべてのスナップショット（body-1、body-2、wt-002、wt-004）: 書かれたとおりの節、ペンシルのリーダーのメッセージ、"the bench's table reader did not accept this table"（10.14、16.6）。
+- wt-002 と wt-003: ラボのページに同じフィールドで現れる。wt-002 は、最後のスナップショットの節を書かれたとおりに、リーダーのメッセージと "not checked by the bench" とともに見せるセッションページを持つ（"no table" ではない）。wt-003 は停止したセッションの内容と "the record has no snapshot to replay" だけを持つ（14.2、14.6、16.9）。
+- （この版に含めない、requirements の Decision 48。）等しい試行の一覧: wt-002 の T1 と wt-004 の T1、および body-1/body-2 の 9 組。すべて厳密に等しい（14.5）。
+- （この版に含めない、requirements の Decision 48。）すべての本物の記録のリプレイが、そのスナップショットと一致する（16.10、22.3）。
 
 ### Example and unit tests
 
 - 引数: 欠けているオプションはそれぞれ名指しされる。空でない出力フォルダーは拒否される（1.3、1.4）。
 - スキャン: スキャンのソースの語を `text.py` の文字列に仕込むとビルドが失敗する。同じ語がフィクスチャの記録の Dr. Kiro のテキストにあっても失敗しない（20.5）。選択の理由に仕込んだ語は失敗する（12.8）。
 - 解説: `text.py` のすべての文字列が語のリストを通る。仕込んだリストの語は失敗する（5.5）。`<details>` の外にあるカバーの解説は、最大 60 トークン（13.6）。
-- サイト: どのファイルにも `http:`、`https:`、URL の先頭の `//`、`<form`、リプレイと画像のボタン以外の `<input`、`<iframe` が含まれない（3.1-3.3）。テキストはスクリプトなしで HTML の中にある（3.4）。すべての画像の名前は、そのバイト列の SHA-256 である（7.7）。すべてのページが `legend.html` にリンクする（4.5）。
+- サイト: すべてのページがルートにあり、どのリンクにも `..` がない。2 つのアドレスを等しくしうる id はビルドを失敗させる（N28）。どのファイルにも `xmlns`、`http:`、`https:`、URL の先頭の `//`、`<form`、リプレイと画像のボタン以外の `<input`、`<iframe` が含まれない（3.1-3.3）。テキストはスクリプトなしで HTML の中にある（3.4）。すべての画像の名前は、そのバイト列の SHA-256 である（7.7）。すべてのページが `legend.html` にリンクする（4.5）。
 - 色: ビジュアルのステアリングで宣言された前景と背景の組はすべて、CSS のカスタムプロパティから WCAG の式で計算したコントラスト比が 4.5:1 以上である（4.6、6.5）。
 - `uv.lock` に `mcp` がない。`git diff --stat bench/` が、タスクの検証ステップで空である（7.4）。
 
@@ -520,7 +539,7 @@ trial = "T1"
 | Strike-through | 2px の黒鉛色の `line-through`。文字は十分なコントラストのまま。"replaced by" タブは、行の右端に紙のタブとして置く |
 | Type and spacing | 基準 17px / 1.5。間隔の尺度は 4、8、16、24、40px |
 | Narrow screen | 360px では 1 列。余白の写真は表の下へ移る。幅の広い表は、それ自身の箱の中でスクロールする |
-| Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（`deco.svg`）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
+| Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（ページのマークアップの中のインライン SVG。ファイルなし、`xmlns` 属性なし、テキストなし）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
 | Motion | 1 セルあたり 500 ms。モーション低減は一時停止で始まる（3.6） |
 
 上のすべての文字色は、その背景（紙と付箋の黄色）の上で 4.5:1 以上に達します。テストが、CSS から各組を確認します。
@@ -529,7 +548,7 @@ trial = "T1"
 
 1. **Milestone 1**: プロジェクト、入力、記録、ビュー、表、選択、カバーファイル、レイアウト、インクとサイドカー、スキャン、サイトの書き出し、ビジュアルのステアリングファイル、カバー、そしてセッションページの発見された spec の表（それに要るタブ、逆リンク、スタンプ、拒否された終了の注記、動く画像を含む）を、本物の記録から作る。そこで止まり、カバーと body-2 の表を、デスクトップと 360 px の画面でユーザーに見せる（22.4）。
 2. **Milestone 2**: 実験エントリーと動く画像の全体、ラボのページと停止したセッション、"How the lab works"、走行バンド。
-3. **Milestone 3**: 予測チャート、リプレイ、等しい試行の一覧、body-lab の入力の線。
+3. **Milestone 3**: 予測チャート。リプレイ、等しい試行の一覧、body-lab の入力の線はこの版に含めない（requirements の Decision 48）。この版は予測チャートの後で止まる。
 4. **その後**: "Built from the spec" は "there are no runs yet" を見せる（19.1）。19.2-19.7 は `build-from-spec` の spec を待つ（19.8）。
 
 ## Requirements coverage
@@ -542,15 +561,15 @@ trial = "T1"
 | 4 | Components 1、8、Properties 1-3、Visual system |
 | 5 | Data Models（数値、語のリスト）、Property 13、14 |
 | 6 | Visual system |
-| 7 | Components 7、10、Data Models（レイアウト）、Property 12 |
+| 7 | Components 7、10（7.9 拡大した画像）、Data Models（レイアウト）、Property 12 |
 | 8 | Components 3、Properties 4-6 |
 | 9 | Components 4、Property 7 |
 | 10 | Components 2、5、9、Property 8、17 |
 | 11 | Components 9（アドレス）、Property 15 |
 | 12, 13 | Components 7、Data Models、Property 11 |
-| 14 | Components 6、9、Property 10 |
+| 14 | Components 6（14.5 はこの版に含めない）、9、Property 10（この版に含めない） |
 | 15 | Components 3、8、Property 5 |
-| 16 | Components 2、3、9、Property 9 |
+| 16 | Components 2、3、9、Property 9（16 のすべてをこの版に含めない） |
 | 17 | Components 9、Property 14 |
 | 18 | Components 9。N24 |
 | 19 | Delivery order 4、N22 |
@@ -571,25 +590,30 @@ trial = "T1"
 - **N7 Two scan passes.** ソースでのセグメント（検出はソースのファイルと行を名指しする）。次に、完成した各ファイルをその範囲を通して。後で `bench-scan` がサイトに対して見るのと同じ断片である。
 - **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「シート全体」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
 - **N9 Addresses.** Components 9 の表のとおり。id はパターンで検査したベンチの id。
-- **N10 Replay as static pages.** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
+- **N10 Replay as static pages (not in this version, requirements Decision 48).** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
 - **N11 Number format.** `.4g` と `repr`。Data Models のとおり。
-- **N12 Replacement edge cases.** 繰り返された id や行自身を指す `replaced by` のセルは、何も指さないセルと同じに扱う: 書かれたとおりに、注記つきで、タブなしで見せる（途中のステップでだけ起こりうる。end ではベンチが拒否する）。
+- **N12 Replacement edge cases.** 繰り返された id、行自身、または行なしを指す `replaced by` のセルは、書かれたとおりに、注記つきで、タブなしで見せる（途中のステップでだけ起こりうる。end ではベンチが拒否する）。注記は "names this row itself"、"names no row of this table"（空のセルも）、"names more than one row" のいずれか。
 - **N13 Refusal note covers every quote.** Decision 34 のフォールバックのとおり。設計はメッセージを解析しない。
-- **N14 Equal-trial pairs.** 1 つのアプリケーションの、同じキーを持つすべての組。1 つの記録の中の組も含む。等しさは計測値の JSON としての等しさ。
+- **N14 Equal-trial pairs (not in this version, requirements Decision 48).** 1 つのアプリケーションの、同じキーを持つすべての組。1 つの記録の中の組も含む。等しさは計測値の JSON としての等しさ。
 - **N15 Number knob or Dr. Kiro parameter.** パラメーターが数値ノブなのは、その名前が種類 `number` の宣言されたノブに等しいとき。そうでなければ Dr. Kiro のパラメーターである（body-lab は、関数ノブの名前をパラメーターとして拒否する）。
 - **N16 File formats.** 選択、カバー、レイアウトのキーは Data Models のとおり。未知のキーは失敗する。
 - **N17 Word list matching.** 小文字のトークン全体と、接尾辞 `s`、`es`、`ed`、`ing`。リストの内容はタスクで提案し、ユーザーの承認が要る。
 - **N18 Requirements shown with the plan.** 要件 16.2 はステップの要件を見せる。セッションページでは、`requirements.md` は Dr. Kiro の計画の下に折りたたんで見せるので、10.1 の節の順序は保たれる。
 - **N19 Fixture mode only through the library.** `build(..., allow_fake=True)` は fake の記録を受け入れ、すべてのページに "test fixture" の印をつける。CLI はそれができない。
 - **N20 Visual system.** 上の提案のとおり。まずステアリングに書く。
-- **N21 Plots.** 軌跡の経路は、x と y の縮尺を等しく保ち、その試行自身の軌跡に合わせ、開始点に印をつける。入力の線は固定の [-1, 1] の軸を使う。SVG の座標は小数 2 桁で書式化するので、出力は安定する。
+- **N21 Plots (the input lines are not in this version, requirements Decision 48).** 軌跡の経路は、x と y の縮尺を等しく保ち、その試行自身の軌跡に合わせ、開始点に印をつける。入力の線は固定の [-1, 1] の軸を使う。SVG の座標は小数 2 桁で書式化するので、出力は安定する。
 - **N22 Built from the spec.** `build-from-spec` が記録を定義するまで、実行のための CLI オプションはない。ページは、まだ実行がないと述べる。
 - **N23 Adapters installed for the scan (user, option A).** ベンチのスキャンは、各アプリケーションの宣言を import して許可リストを読む（`load_app` は、`mujoco` を import する `body_lab.adapter` と、`wind_tunnel_model` を import する `wind_tunnel.declaration` を import する）。ノートブックは両方のアダプターパッケージにパスで依存する。MuJoCo の Python パッケージはインストールされるが、何もシミュレートも解きもせず、Docker も要らない（要件 1.5、要件の Decision 42）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（プロセスの起動が要り、N1 が禁じている。またスキャンの前にサイトのステージングがディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）。
 - **N24 No link to the root `.kiro/` (user).** "How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがなく、ラボの外のファイルやフォルダーを名指ししたりリンクしたりする解説もない。この問いは README のステップ（`docs/brief.md` セクション 5 項目 8）で改めて決める（要件 18.5、要件の Decision 43）。以前の Open question 3 だったもの。
 - **N25 Rescanning the written site is decided in `publish` (user).** ラボの外のフォルダーに対する `bench-scan` はすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する（`bench/src/bench/scan/scan.py`、`scan_file`）。`publish` がサイトをどうスキャンするかは、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを書き（要件 20.3）、書き出す前の自前の 2 回のスキャンも残る（Components 11、N7）（要件の Decision 44）。以前の Open question 4 だったもの。
 
 - **N26 Unreadable middle-step table shown as written (user).** 途中のステップでの `TableError` は `Unreadable` になり、`## Discovered spec` の節は書かれたとおりに、ラベルつきの文とともに見せる。行は推測しない（Components 3、要件 16.6、要件の Decision 18、ユーザーが確定）。以前の Open question 2 だったもの。
-
+- **N27 A table the reader does not accept (user, 2026-11-17).** `parse_table` が拒否する表は、行のない表（`end` より前の実記録のすべてのスナップショット）を含め、`## Discovered spec` の節を書かれたとおりに（Dr. Kiro のインク）、リーダーのメッセージ（ペンシル）、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析せず、2 つ目のリーダーも持たない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使う。wt-002 は最後のスナップショットをこの形で、"not checked by the bench" のラベルつきで見せる（Components 3、要件 10.9、10.14、14.6、16.6、要件の Decision 45）。N26 を拡張。
+- **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** タスク 8.1 によるビルダー自身のテキストのスキャンは、(1) 相対リンクの `../` がラボの外を指すパスと読まれること、(2) `notebook.css` に派生語 `linear`、`thickness`、`spacing` があること、(3) `deco.svg` に `xmlns="http://www.w3.org/2000/svg"` があり、`http:` のサイト検査（タスク 9.5）が拒否すること、(4) 画像の属性とスクリプトの名前がスキャン語であることを見つけた。決定: サイトのレイアウトはフラットで、すべてのページがルートにある（Components 9 の表）。`p/` と `a/` だけがフォルダーなので、どのリンクにも `..` はいらない。CSS は印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾は `xmlns` のないインライン SVG で、`deco.svg` はアセットではない。画像の属性は `data-tile-width` と `data-tile-height`。Components 11 の一般規則が成り立つ。id は Components 9 のとおり検査する。`http:` 検査は厳格なまま。N9 を拡張する（要件 3.2、6.5、20.1、20.2、requirements Decision 46）。
+- **N29 Dr. Kiro's fixed words (user, 2026-11-17).** タスク 12.1 で、判定の語と予測についての Dr. Kiro のラベルが書き手のない素の文字列として記録されていること（ベンチのスキャンはこれらをベンチの文字列として扱う）、一方で同じ値が拒否の `given` には書き手 `dr-kiro` つきで現れることがわかった。決定: これらは要件 4.2 の例外として Dr. Kiro のインクで見せる。`scan.drkiro_word_segments` が、すべての記録からそれぞれをビルダーのレベルのセグメントとしてスキャンに加える。ページが見せるところでの Dr. Kiro のレベルのスキャンとは別である。Property 3 はこの例外を明記する: セッションページで、ログエントリーから来る `DRKIRO` セグメントは、書き手 `dr-kiro` で記録された値か、これらの語のどちらかであり、そうした語はすべて Dr. Kiro のインクで見せられる。`bench/` と記録は変えない（Components 8、11、要件 4.2、15.1、17.4、20.1、requirements Decision 47）。
+- **N30 Declaration columns on `how.html` and the footer link (user, 2026-11-17).** タスク 14.1 で、封印済みの body-1 の記録の宣言は、body-2 の宣言と、ページが見せないフィールドだけが違うことがわかった。決定: `how.html` では、1 つのアプリケーションの記録を別々の列で見せるのは、要件 18.3 の 5 つの項目（ノブとその範囲、測定、予算、画像の種類、目標）が違うときだけである。宣言のそれ以外のフィールド、たとえば測定の作り方（`measured_by`）やノブの説明は見せず、列を作らない（`how.declaration_key`）。すべてのページのフッターは、インクの凡例へのリンクの隣に `how.html` へのリンクを持つ（Components 9）。記録と `bench/` は変えない（要件 18.3）。
+- **N31 Rejected-row tab open by default (user, 2026-11-17).** 表の別の 1 行だけをセルが名指しする `rejected` の行の "replaced by" `<details>` は `open` つきで書く。中身とリンクは変えない。訪問者は閉じることができる（要件 8.13、requirements の Decision 49）。
+- **N32 Enlarged picture (user, 2026-11-17).** ビルドは記録された PNG を `zlib` と `struct` で復号し（新しい依存なし。`notebook/src/notebook/png.py` は 8 ビットの RGB と RGBA を、フィルターなしまたは 5 種の行フィルターで読み、フィルター種別 0 で書く）、領域はシートのピクセルから選び、軌跡からは選ばない（記録には軌跡の座標から画像のピクセルへの対応がない）。あるフレームの同じ位置で、色が最初のフレームのピクセルと違うピクセルを動いているとする。動くピクセルすべてを囲む箱に、セルで切った 4 ピクセルの余白を足したものを、シートのレイアウトのまま全フレームから切り出す（動くピクセルがなければセル全体）。切り出しは、拡大した箱が両方向でフレーム以上の大きさになる最小の整数倍に、最近傍法で拡大する。拡大したシートはレイアウトを保ち、隙間はない（`notebook/src/notebook/magnify.py`）。ほかの画像と同じく、自分のバイト列の SHA-256 で名付ける（7.7）。動く画像の隣に、狭い画面で折り返す 1 行で見せる。ラボのカード以外のすべての動く画像に 1 つ付く（`photo(..., magnified=False)`、7.9）。記録されたファイルは従来どおり 1 バイトずつ複製する（7.7）。導出したファイルは決定的で、画像検査とスキャンを通る（要件 7.9、requirements の Decision 50）。
 ## Open questions
 
 なし。以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 2（途中のステップで読めない表）は N26 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。
