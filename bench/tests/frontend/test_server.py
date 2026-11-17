@@ -67,6 +67,29 @@ def test_descriptions_come_from_the_declaration(lab: Lab) -> None:
     assert "How it is measured: Computed by the fake application" in run
 
 
+@pytest.mark.parametrize(
+    ("setting", "end_session"),
+    [
+        (
+            "required",
+            "End the session. Every experiment needs a verdict, and your design.md must end with a "
+            "Discovered spec table that agrees with the record.",
+        ),
+        ("not-required", "End the session. Every experiment needs a verdict."),
+    ],
+)
+def test_end_session_text_follows_the_discovered_table_setting(
+    lab: Lab, setting: str, end_session: str
+) -> None:
+    srv = BenchServer(lab.start(discovered_table=setting))
+
+    async def main() -> dict[str, str]:
+        async with Client(srv.mcp) as client:
+            return {t.name: t.description or "" for t in (await client.list_tools()).tools}
+
+    assert anyio.run(main)["end_session"] == end_session
+
+
 def test_run_result_has_measurements_paths_and_no_image(lab: Lab) -> None:
     srv = server(lab)
     lab.add(hyp_block("H1", STATEMENT, P1))
