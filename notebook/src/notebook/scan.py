@@ -1,1 +1,122 @@
-"""The bench Scanner over segments and finished files (design 11). Task 9.1."""
+"""The bench Scanner over segments and finished files (design 11, N7; Requirements 12.8, 20.1, 20.2).
+
+The scanner is the bench's own, `bench.scan.scan.Scanner.from_config(scan_configs, stop_list)`; this module
+adds no term, pattern or exception of its own. Two passes, both before anything is written:
+
+1. `segment_findings`: every segment at the level of its scan author (`ink.SCAN_AUTHOR`, then the bench's
+   `AUTHOR_LEVEL`), named by the segment's source, so a finding names the file and line the text comes from.
+2. `file_findings`: every finished text file, cut into the pieces its author ranges describe, exactly as the
+   bench's `sidecar_pieces` cuts a file with its `<file>.authors.json` sidecar. So the escaped forms the site
+   holds pass the scan the sidecars describe.
+
+`check` runs both passes over a set of files and raises one `ScanFailed` that holds every finding; it never
+stops at the first. The command line prints the error in full and exits 1 (design "Error Handling").
+"""
+
+from collections.abc import Iterable, Mapping, Sequence
+from pathlib import Path
+
+from bench.scan.levels import AUTHOR_LEVEL, Piece
+from bench.scan.scan import Finding, Scanner
+from bench.scan.terms import ScanError
+
+from notebook.choices import CHOICE_KEYS, Choices
+from notebook.errors import NotebookError
+from notebook.ink import SCAN_AUTHOR, Segment, commentary, join
+
+WHERE = "blind scan"
+
+
+class ScanFailed(NotebookError):
+    """The blind scan found something. `findings` holds every finding of both passes, in the bench's
+    format."""
+
+    def __init__(self, findings: Sequence[Finding]) -> None:
+        if not findings:
+            raise ValueError("ScanFailed needs at least one finding")
+        self.findings = tuple(findings)
+        lines = "\n".join(str(f) for f in self.findings)
+        super().__init__(WHERE, f"{len(self.findings)} finding(s); nothing was written\n{lines}")
+
+
+def load(scan_configs: Sequence[Path], stop_list: Path) -> Scanner:
+    """The bench scanner for these applications and this stop list. A scan that cannot run fails the build."""
+    if not scan_configs:
+        raise NotebookError("--scan-config", "the scan needs at least one application's scan_sources.toml")
+    try:
+        return Scanner.from_config(list(scan_configs), stop_list)
+    except ScanError as error:
+        raise NotebookError(WHERE, str(error)) from error
+
+
+def level(segment: Segment) -> str:
+    """The scan level of a segment: Dr. Kiro's ink at the Dr. Kiro level, every other ink at the builder
+    level."""
+    return AUTHOR_LEVEL[SCAN_AUTHOR[segment.ink]]
+
+
+def segment_findings(scanner: Scanner, segments: Iterable[Segment]) -> list[Finding]:
+    """Pass 1: every segment at its author's level, named by its source (Requirement 20.2)."""
+    findings: list[Finding] = []
+    for segment in segments:
+        findings += scanner.scan_text(segment.text, level(segment), segment.source)
+    return findings
+
+
+def file_pieces(path: str, text: str, ranges: Sequence[Mapping[str, int | str]]) -> list[Piece]:
+    """The pieces of a finished file through its author ranges, as `sidecar_pieces` builds them from the
+    sidecar. The ranges come from `ink.join`; ranges that do not cover the text in order fail the build."""
+    pieces: list[Piece] = []
+    position = 0
+    for item in ranges:
+        start, end, author = item["start"], item["end"], item["author"]
+        if author not in AUTHOR_LEVEL:
+            raise NotebookError(path, f"author range with unknown author {author!r}")
+        if start != position or not isinstance(end, int) or end <= start:
+            raise NotebookError(path, "author ranges must cover the file in order without gaps")
+        pieces.append(Piece(text[start:end], AUTHOR_LEVEL[author], path, text.count("\n", 0, start) + 1))
+        position = end
+    if position != len(text):
+        raise NotebookError(path, f"author ranges cover {position} of {len(text)} characters")
+    return pieces
+
+
+def file_findings(
+    scanner: Scanner, path: str, text: str, ranges: Sequence[Mapping[str, int | str]]
+) -> list[Finding]:
+    """Pass 2: a finished text file through its author ranges."""
+    findings: list[Finding] = []
+    for piece in file_pieces(path, text, ranges):
+        findings += scanner.scan_piece(piece)
+    return findings
+
+
+def choice_segments(chosen: Iterable[Choices]) -> list[Segment]:
+    """Every "none" reason of the choice files as a builder-level segment, so each reason is scanned
+    whether or not a page shows it (Requirement 12.8)."""
+    out: list[Segment] = []
+    for choices in chosen:
+        for key in CHOICE_KEYS:
+            choice = getattr(choices, key)
+            if choice.reason is not None:
+                out.append(commentary(choice.reason, choice.source))
+    return out
+
+
+def check(
+    scanner: Scanner, files: Mapping[str, Sequence[Segment]], extra: Iterable[Segment] = ()
+) -> dict[str, tuple[str, list[dict[str, int | str]]]]:
+    """Both passes over every file (site path -> segments) and over `extra` segments that are scanned but
+    not a file of their own (choice reasons). Returns each file's joined text and author ranges. Raises one
+    `ScanFailed` with every finding of both passes if there is any."""
+    findings = segment_findings(scanner, extra)
+    joined: dict[str, tuple[str, list[dict[str, int | str]]]] = {}
+    for path in sorted(files):
+        segments = files[path]
+        findings += segment_findings(scanner, segments)
+        written, ranges = join(list(segments))
+        findings += file_findings(scanner, path, written, ranges)
+        joined[path] = (written, ranges)
+    if findings:
+        raise ScanFailed(findings)
+    return joined
