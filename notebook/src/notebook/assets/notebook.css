@@ -553,6 +553,62 @@ a {
   }
 }
 
+/* Run bands beside a row's scope (pages/bands.py). Pencil, drawn in currentColor; no colour of its own. */
+
+.bands {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-pencil);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.bands > figcaption {
+  margin-bottom: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 0.95em;
+  color: var(--ink-commentary);
+}
+
+.band-groups,
+.band-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.band-group {
+  margin-top: var(--space-2);
+}
+
+.band-group > span {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: bold;
+  color: var(--ink-commentary);
+}
+
+.band-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.band {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.tick-other {
+  opacity: 0.6;
+}
+
+.hatch {
+  opacity: 0.7;
+}
+
 /* Footer: the legend link and the link to how the lab works. */
 
 .footer {
