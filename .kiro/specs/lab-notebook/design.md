@@ -183,8 +183,10 @@ that table is "checked by the bench" (only an accepted `end` snapshot).
 
 `views.steps(record) -> list[Step]`: one step per snapshot with `for` `verdict`, in record order, and one final step
 for the `end` snapshot if present (16.1). Step numbers are 1-based in that order. Snapshots with `for` `experiment`
-are never steps. A refusal belongs to the first step whose snapshot `seq` is greater than its own (16.12); this
-follows from the prefix rule and needs no extra code.
+are never steps. A refusal is an event of the first step whose snapshot `seq` is greater than its own (16.12, Decision
+33). `views.step_view` gives a step `View.events`: the refusals after the previous step's snapshot and before its own.
+`View.refusals` keeps every refusal of the prefix, which the refused-end note reads (16.12). A refusal after the last
+step is an event of no step.
 
 `Evidence` for the end check is built from the bench `State` exactly as `Session.evidence` does (experiment ids;
 each prediction's outcome kind and condition class). A test checks it against `Session.evidence()` of a fake session
@@ -576,7 +578,8 @@ if that step's table holds the row.
 *For any* generated record, the steps are exactly the `verdict` snapshots in record order plus the `end` snapshot
 if present; at each step the shown table equals the bench reader's rows of that step's snapshot (or the unreadable
 section as written with the reader's message), and the shown entries are exactly the record entries up to and including that snapshot entry;
-each refusal is shown in exactly one step, the first whose snapshot comes after it.
+each refusal is shown as an event in exactly one step, the first whose snapshot comes after it, and in no step when no
+snapshot comes after it.
 
 **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 
