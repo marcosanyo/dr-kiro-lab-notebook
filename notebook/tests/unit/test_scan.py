@@ -3,6 +3,7 @@
 The planted term is taken at test time from the scanner's own derived terms, so no term is written here.
 """
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from fixtures.session import DESIGN_START, Lab, exp_file, hyp_block, ok
 from notebook import records, scan, text
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
-from notebook.ink import commentary, join, markup, pencil
+from notebook.ink import Ink, Segment, commentary, join, markup, pencil
 from notebook.pages import parts
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -105,6 +106,36 @@ def test_a_term_planted_in_a_choice_reason_fails_naming_the_file_and_key(scanner
         scan.check(scanner, {}, scan.choice_segments([chosen]))
     assert [(f.file, f.kind, f.match) for f in caught.value.findings] == [
         ("choices/fake/s1.toml key best", "term", term)
+    ]
+
+
+def test_dr_kiros_fixed_words_are_builder_level_segments(planted_record) -> None:
+    (hypothesis,) = planted_record.hypotheses
+    (verdict,) = planted_record.verdicts
+    log = "sessions/fake/s1/log.jsonl"
+    assert scan.drkiro_word_segments([planted_record]) == [
+        pencil("inside", f"{log} line {hypothesis.seq}"),
+        pencil("supported", f"{log} line {verdict.seq}"),
+    ]
+    assert {scan.level(s) for s in scan.drkiro_word_segments([planted_record])} == {"builder"}
+
+
+def test_a_term_planted_in_a_verdict_word_fails_at_the_builder_level(scanner, term, planted_record) -> None:
+    # The bench accepts only its fixed verdict words, so the term is planted in the loaded fixture record.
+    (verdict,) = planted_record.verdicts
+    planted = dataclasses.replace(planted_record, verdicts=(dataclasses.replace(verdict, verdict=term),))
+    # Shown in Dr. Kiro's ink, the word passes at Dr. Kiro's level ...
+    shown = Segment(term, Ink.DRKIRO, f"sessions/fake/s1/log.jsonl line {verdict.seq}")
+    scan.check(scanner, {"page.html": [markup("<p>"), shown, markup("</p>")]})
+    # ... and the builder-level segments of the record fail, naming the record's log line.
+    with pytest.raises(scan.ScanFailed) as caught:
+        scan.check(
+            scanner,
+            {"page.html": [markup("<p>"), shown, markup("</p>")]},
+            scan.drkiro_word_segments([planted]),
+        )
+    assert [(f.file, f.kind, f.match) for f in caught.value.findings] == [
+        (f"sessions/fake/s1/log.jsonl line {verdict.seq}", "term", term)
     ]
 
 

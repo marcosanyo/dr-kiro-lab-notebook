@@ -104,6 +104,14 @@ def test_every_refusal_message_and_choice_reason_passes_at_its_authors_level(sca
     assert scan.segment_findings(scanner, [*segments, *reasons]) == []
 
 
+def test_dr_kiros_fixed_words_of_every_record_pass_at_the_builder_level(scanner, loaded) -> None:
+    # The verdict words and Dr. Kiro's labels of predictions (Requirement 4.2 exception, design N29).
+    words = scan.drkiro_word_segments(loaded)
+    assert words
+    assert {AUTHOR_LEVEL[ink.SCAN_AUTHOR[s.ink]] for s in words} == {"builder"}
+    assert scan.segment_findings(scanner, words) == []
+
+
 def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
     segments, _ = cover.page(loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS))
     written, _ = scan.check(scanner, {"index.html": segments})["index.html"]

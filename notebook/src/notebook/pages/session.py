@@ -582,7 +582,8 @@ def _code(segment: Segment) -> list[Segment]:
 
 def _drkiro_word(word: str, source: str) -> Segment:
     """A word Dr. Kiro gave the bench, which the bench recorded as a plain string after checking it: the
-    verdict word and Dr. Kiro's label of a prediction. Shown in Dr. Kiro's ink (Requirements 15.1, 17.4)."""
+    verdict word and Dr. Kiro's label of a prediction. Shown in Dr. Kiro's ink (Requirements 15.1, 17.4; the
+    exception of 4.2), and also scanned at the builder level (`scan.drkiro_word_segments`, design N29)."""
     return Segment(word, Ink.DRKIRO, source)
 
 

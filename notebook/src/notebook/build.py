@@ -168,8 +168,11 @@ def render(m: Model) -> dict[str, bytes]:
     for path, name in ASSET_FILES.items():
         source = f"{ASSET_SOURCE}/{name}"
         site.add_text(path, [markup((ASSETS / name).read_text(encoding="utf-8"), source)], source)
-    reasons = scan.choice_segments(m.checked.choices[k] for k in sorted(m.checked.choices))
-    joined = scan.check(m.checked.scanner, site.texts(), reasons)
+    extra = [
+        *scan.choice_segments(m.checked.choices[k] for k in sorted(m.checked.choices)),
+        *scan.drkiro_word_segments(m.checked.records),
+    ]
+    joined = scan.check(m.checked.scanner, site.texts(), extra)
     return site.files(joined)
 
 

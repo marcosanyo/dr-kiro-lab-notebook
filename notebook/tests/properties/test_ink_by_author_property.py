@@ -5,11 +5,15 @@ the bench's wording (refusal text, not-measured reasons, seal and failure reason
 carry their author in the reference. Each record is written, verified by the bench and loaded with
 `allow_fake=True`. No number here is a recorded result.
 
-Three parts:
+Four parts:
 - the model: every authored value of the record is read with the author it was recorded with, and its segment
   has that author's ink (`dr-kiro` -> Dr. Kiro's ink, `bench` -> pencil);
 - the rendered table section: every cell in the ink of the snapshot file's author, every status word in the
   stamp ink (and nothing else), the reader's message spans in their authors' inks, bench values in pencil;
+- the whole session page and the exception of Requirement 4.2 (design N29): Dr. Kiro's ink from a log entry
+  is an authored value recorded with author `dr-kiro`, or one of Dr. Kiro's fixed words (the verdict word,
+  Dr. Kiro's label of a prediction), which the bench records as plain strings; every fixed word is shown in
+  Dr. Kiro's ink and is also a builder-level scan segment;
 - an entry whose text field has no recorded author (a plain string, or an unknown author) fails the load,
   naming the record and the `log.jsonl` line.
 """
@@ -33,15 +37,20 @@ from hypothesis import strategies as st
 
 from fixtures.synth import SynthRecord, design_text, records, table_rows, write_all
 from notebook import records as notebook_records
-from notebook import tables, views
+from notebook import scan, tables, views
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink
+from notebook.layouts import Layout
+from notebook.pages import session
+from notebook.pages.photo import Pins
 from notebook.pages.session import table_section
 from notebook.records import Blob, RecordModel
 
 INK_OF = {"dr-kiro": Ink.DRKIRO, "bench": Ink.PENCIL}
 READER = "(the bench's table reader)"
+# The synthetic pictures are one cell each (`fixtures.synth._picture`).
+LAYOUT = Layout("fake", frames=1, rows=1, columns=1, gap=0, source="test fixture")
 
 
 def _load(synth: SynthRecord) -> RecordModel:
@@ -163,12 +172,63 @@ def _assert_section(record: RecordModel) -> None:
             assert seg.ink is INK_OF[design.author]
 
 
+# The exception of Requirement 4.2: Dr. Kiro's fixed words
+
+
+def _fixed_words(record: RecordModel) -> Counter[tuple[str, str]]:
+    """The exception of Requirement 4.2 (design N29), as (source, text): the verdict word of each verdict
+    entry and Dr. Kiro's label of each prediction of a hypothesis entry. Dr. Kiro passed them to the bench,
+    which recorded them as plain strings with no author."""
+    log = f"{record.name}/{LOG_NAME}"
+    words: Counter[tuple[str, str]] = Counter()
+    for hypothesis in record.hypotheses:
+        for prediction in hypothesis.predictions:
+            words[(f"{log} line {hypothesis.seq}", prediction.label)] += 1
+    for verdict in record.verdicts:
+        words[(f"{log} line {verdict.seq}", verdict.verdict)] += 1
+    return words
+
+
+def _assert_page(record: RecordModel) -> None:
+    """On the whole session page, Dr. Kiro's ink from a log entry is either an authored value recorded with
+    author `dr-kiro` at that entry, or one of the fixed words of the exception, and every fixed word is shown
+    in Dr. Kiro's ink. The scan reads each fixed word at the builder level as well."""
+    fixed = _fixed_words(record)
+    builder = scan.drkiro_word_segments([record])
+    assert Counter((s.source, s.text) for s in builder) == fixed
+    assert {scan.level(s) for s in builder} <= {"builder"}
+    if not session.has_page(record):
+        event("no snapshot: no session page")
+        return
+    log = f"{record.name}/{LOG_NAME}"
+    drkiro = {
+        (item.source, item.text)
+        for item in _model_authored(record)
+        if isinstance(item, Authored) and item.author == "dr-kiro"
+    }
+    segments, _ = session.page(views.full(record), _choices(record), Pins(record, LAYOUT))
+    shown_fixed: Counter[tuple[str, str]] = Counter()
+    for seg in segments:
+        if seg.ink is not Ink.DRKIRO or not seg.source.startswith(log):
+            continue
+        place = (seg.source, seg.text)
+        if place in drkiro:
+            continue
+        # Not recorded with an author: allowed only as a fixed word of the exception.
+        assert place in fixed, seg
+        shown_fixed[place] += 1
+    if fixed:
+        event("fixed words shown")
+    assert shown_fixed == fixed
+
+
 @settings(max_examples=100, deadline=None)
 @given(records(rounds=st.integers(0, 4), designs=table_rows().map(design_text)))
 def test_ink_follows_the_recorded_author(synth: SynthRecord) -> None:
     record = _load(synth)
     _assert_model(synth, record)
     _assert_section(record)
+    _assert_page(record)
 
 
 @settings(max_examples=100, deadline=None)
@@ -177,6 +237,7 @@ def test_ink_follows_the_recorded_author_with_middle_tables(synth: SynthRecord) 
     record = _load(synth)
     _assert_model(synth, record)
     _assert_section(record)
+    _assert_page(record)
 
 
 # A text without an author

@@ -9,6 +9,10 @@ adds no term, pattern or exception of its own. Two passes, both before anything 
    bench's `sidecar_pieces` cuts a file with its `<file>.authors.json` sidecar. So the escaped forms the site
    holds pass the scan the sidecars describe.
 
+Extra segments that are scanned but are not a file of their own: the choice reasons (`choice_segments`) and
+Dr. Kiro's fixed words, the verdict word and Dr. Kiro's label of a prediction, at the builder level
+(`drkiro_word_segments`, design N29).
+
 `check` runs both passes over a set of files and raises one `ScanFailed` that holds every finding; it never
 stops at the first. The command line prints the error in full and exits 1 (design "Error Handling").
 """
@@ -16,13 +20,15 @@ stops at the first. The command line prints the error in full and exits 1 (desig
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
+from bench.record.chain import LOG_NAME
 from bench.scan.levels import AUTHOR_LEVEL, Piece
 from bench.scan.scan import Finding, Scanner
 from bench.scan.terms import ScanError
 
 from notebook.choices import CHOICE_KEYS, Choices
 from notebook.errors import NotebookError
-from notebook.ink import SCAN_AUTHOR, Segment, commentary, join
+from notebook.ink import SCAN_AUTHOR, Segment, commentary, join, pencil
+from notebook.records import RecordModel
 
 WHERE = "blind scan"
 
@@ -103,11 +109,29 @@ def choice_segments(chosen: Iterable[Choices]) -> list[Segment]:
     return out
 
 
+def drkiro_word_segments(loaded: Iterable[RecordModel]) -> list[Segment]:
+    """Every verdict word and every Dr. Kiro label of a prediction in the records, as builder-level segments
+    (pencil, scan author `bench`). Dr. Kiro passed these words to the bench, which recorded them as plain
+    strings after checking them, so they carry no author. The pages show them in Dr. Kiro's ink and the scan
+    reads them there at Dr. Kiro's level; this adds the builder level, whether or not a page shows them
+    (Requirement 4.2, the exception for fixed words; design 8, 11, N29)."""
+    out: list[Segment] = []
+    for record in loaded:
+        log = f"{record.name}/{LOG_NAME}"
+        for hypothesis in record.hypotheses:
+            for prediction in hypothesis.predictions:
+                out.append(pencil(prediction.label, f"{log} line {hypothesis.seq}"))
+        for verdict in record.verdicts:
+            out.append(pencil(verdict.verdict, f"{log} line {verdict.seq}"))
+    return out
+
+
 def check(
     scanner: Scanner, files: Mapping[str, Sequence[Segment]], extra: Iterable[Segment] = ()
 ) -> dict[str, tuple[str, list[dict[str, int | str]]]]:
     """Both passes over every file (site path -> segments) and over `extra` segments that are scanned but
-    not a file of their own (choice reasons). Returns each file's joined text and author ranges. Raises one
+    not a file of their own (choice reasons, and Dr. Kiro's fixed words at the builder level). Returns each
+    file's joined text and author ranges. Raises one
     `ScanFailed` with every finding of both passes if there is any."""
     findings = segment_findings(scanner, extra)
     joined: dict[str, tuple[str, list[dict[str, int | str]]]] = {}
