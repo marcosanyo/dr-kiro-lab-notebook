@@ -176,8 +176,9 @@ All arguments are required (`rules.md` 2). Steps, each failing with a message an
   `<discovered>/<application>/<session id>/requirements.md`, `design.md`, `tasks.md` and `source.json`
   (`json.dumps` with `indent=2` and sorted keys, then a newline, so the bytes depend only on the record). It refuses
   an existing folder; a copy is written again by deleting it first.
-- `bench-check-discovered <sessions folder> <discovered folder>` reads every record in
-  `<sessions>/<application>/<session id>/`. For an ended record with an end snapshot it compares the copy's files
+- `bench-check-discovered <sessions folder> <discovered folder>` reads every Dr. Kiro session record in
+  `<sessions>/<application>/<session id>/`. It skips `<sessions>/build-from-spec/`, which holds reader run records
+  (`lab-bench` Requirement 22). For an ended record with an end snapshot it compares the copy's files
   with what `bench-export-spec` would write; for the others it requires that there is no copy. It reports any
   other file or folder in the discovered folder, except `README.md` and `README.md.authors.json`. It prints one
   line per session and exits 1 with the list of problems.

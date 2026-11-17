@@ -730,3 +730,69 @@ name of a file is always matched. The stop list still changes only with the user
 both levels. The scans and golden files of body-lab do not change. Reason: Dr. Kiro text with a bare `P` or `U`
 would be flagged as a file name, and the stop list could not remove it because it did not apply to file-name
 patterns.
+### Requirement 21: Ending without the discovered spec table (amendment)
+
+**Amendment.** Added for the `build-from-spec` spec (its Requirement 12), implemented as its task 1. No existing
+requirement is renumbered or reworded. Requirements 11.1 and 12 apply unchanged while the new setting says the table
+is required. This requirement adds one setting to the session config, one branch to `end` and one sentence to the
+`end_session` tool description.
+
+**User Story:** As the builder of the reader, I want a session to end normally without a `## Discovered spec` table,
+so that the reader is not pushed to invent rows and a normal end does not read as a stop. As the builder of Dr. Kiro,
+I want the table to stay required for every Dr. Kiro session, so that nothing changes for Dr. Kiro's own endings.
+
+**Concerns:** the builder and the reader. Dr. Kiro sees only the `end_session` text, and only for a session that
+declares the table not required.
+
+#### Acceptance criteria
+
+1. THE session config SHALL have one required setting `discovered_table`, with no default, whose value SHALL be
+   `"required"` or `"not-required"`.
+2. WHILE the setting is `"required"`, THE `end` action SHALL apply Requirements 11.1 and 12 unchanged.
+3. WHILE the setting is `"not-required"`, THE `end` action SHALL NOT check the discovered spec table, SHALL refuse if
+   an experiment has no verdict (Requirement 8), SHALL take the final snapshot of the three lab spec files from one
+   reading (Requirement 10), and SHALL seal the record as `ended`.
+4. Every existing session config, and every config that `bench-new-session` writes for Dr. Kiro, SHALL state
+   `"required"`.
+5. THE change SHALL stay small: the setting, its check at start, its value in the start entry, the one branch in
+   `end`, the one sentence of the `end_session` text (criterion 9), and the tests and documentation that state the
+   setting.
+6. IF the setting is missing, or has a value other than the two allowed values, THEN THE bench SHALL refuse to start,
+   naming the setting.
+7. THE bench SHALL record the value of the setting in the start entry of the sealed record.
+8. Records sealed before this amendment, which have no `discovered_table` in their start entry, SHALL stay valid for
+   `bench-verify` and for `final_spec` (Requirements 10.4 and 13).
+9. WHILE the setting is `"not-required"`, THE `end_session` tool description built by `bench-mcp` SHALL leave out the
+   sentence that says ending needs a `## Discovered spec` table, and SHALL otherwise be unchanged. WHILE the setting is
+   `"required"`, the description SHALL be unchanged. THE description SHALL depend on the declaration and this setting
+   only, so that it is byte-identical in the three setups of one request.
+
+### Requirement 22: Run records skipped by bench-check-discovered (amendment)
+
+**Amendment.** Added for the `build-from-spec` spec (its Requirement 13.7), implemented as its task 2. It is the second
+of the two amendments that spec asks for, the other being Requirement 21. No existing requirement is renumbered or
+reworded. It changes Requirement 13 only for the copy check of `bench-check-discovered`.
+
+**User Story:** As the builder, I want `bench-check-discovered` to pass on the repository once reader run records
+exist in `sessions/build-from-spec/`, so that run records are not treated as Dr. Kiro session records.
+
+**Concerns:** the builder. Dr. Kiro does not see this check.
+
+#### Acceptance criteria
+
+1. THE `check_copies` check of `bench-check-discovered` SHALL skip the folder `sessions/build-from-spec/`, because its
+   folders are reader run records and not Dr. Kiro session records. Such a record gets no copy in `discovered/`.
+2. WHEN the folder `sessions/build-from-spec/` exists, THE check SHALL add one report line,
+   `build-from-spec: reader run records, no copies`, so that the skip is visible and not silent.
+3. Nothing else in the check changes: a folder without `log.jsonl` under any other application folder still fails, and
+   a folder `discovered/build-from-spec/` is still reported as having no sealed session record of that name.
+4. The run records stay covered by `bench-verify`, by the blind scan of `sessions/` and by the `build-from-spec` check
+   of its run records.
+5. THE change SHALL stay small and SHALL have its own test.
+
+#### Decision (taken by the builder, on the `build-from-spec` decisions)
+
+**Two amendments, two numbers.** `build-from-spec` Requirement 12 and Requirement 13.7 are two separate `lab-bench`
+amendments, so they take the next two free numbers, 21 and 22 (the last number before this amendment is 20). Their
+details are in design sections D1 and D2.
+
