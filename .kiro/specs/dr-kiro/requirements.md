@@ -123,7 +123,7 @@ so that no session starts from a half-reset lab.
    always reopens the session it was given.
 4. The experiments and pictures folders of a lab SHALL be ignored by git; the sealed record holds their files.
    Nothing under `.kiro/` SHALL be listed in a `.gitignore`: Dr. Kiro's three lab spec files are tracked in their
-   template state, and the final spec of each ended session is kept in `discovered/` (Requirement 8). The builder
+   template state, and the final spec of each ended Dr. Kiro session record is kept in `discovered/` (Requirement 8). The builder
    files and the templates (package data) stay tracked.
 
 ### Requirement 6: Running a session

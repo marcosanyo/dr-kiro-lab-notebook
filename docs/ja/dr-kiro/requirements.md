@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/requirements.md`](../../../.kiro/specs/dr-kiro/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `8cc65c928cb4ff626f533a704fbce67973950da80b462c1a84a212a47fdddefc`
+> 原文 SHA-256: `c1d7bc4e239afb8ba3b236872aafc9104c1ba436b246db3897dbaee5d8eb437f`
 
 # 要件: dr-kiro
 
@@ -76,7 +76,7 @@ Dr. Kiro は実験者です。アプリケーションの `lab/` フォルダー
 1. THE コマンド `bench-make-lab <lab>` SHALL ビルダーのファイルを書き、フックを組み込む（`bench-lab-hooks`）。THE コマンド SHALL ビルダーのファイルを上書きし、SHALL NOT Dr. Kiro のファイルに触れる。
 2. THE コマンド `bench-new-session` SHALL アプリケーションのアダプター、スキャン対象のソース、ラボ、状態フォルダー、セッションフォルダー、セッション id、シードを、すべて明示的に受け取る。THE コマンド SHALL 状態フォルダー内にそのラボのセッションで封印されていないものがあれば、そのセッションを示して拒否する。
 3. WHEN 開いているセッションがないとき、`bench-new-session` SHALL ラボから Dr. Kiro のファイル（実験ファイル、画像ファイル、3 つのラボの仕様ファイル）を削除し、テンプレートを書き、コアでセッションを開始し（`Session.start`）、ラボの外に `resume = true` のセッション設定を書く。これにより、`bench-mcp` は常に渡されたセッションを開き直す。
-4. THE ラボの実験フォルダーと画像フォルダー SHALL git で無視される。封印済みの記録がそれらのファイルを保持する。THE `.gitignore` SHALL NOT `.kiro/` の下のものを挙げる: Dr. Kiro の 3 つのラボの仕様ファイルはテンプレートの状態で追跡され、終わった各セッションの最終仕様は `discovered/` に保管される（要件 8）。ビルダーのファイルとテンプレート（パッケージデータ）は追跡されたままである。
+4. THE ラボの実験フォルダーと画像フォルダー SHALL git で無視される。封印済みの記録がそれらのファイルを保持する。THE `.gitignore` SHALL NOT `.kiro/` の下のものを挙げる: Dr. Kiro の 3 つのラボの仕様ファイルはテンプレートの状態で追跡され、終わった Dr. Kiro のセッション記録ごとの最終仕様は `discovered/` に保管される（要件 8）。ビルダーのファイルとテンプレート（パッケージデータ）は追跡されたままである。
 
 ### 要件 6: セッションの実行
 
@@ -108,7 +108,7 @@ Dr. Kiro は実験者です。アプリケーションの `lab/` フォルダー
 1. THE セッションの最終仕様 SHALL その終了スナップショット（`lab-bench` 10.4）の 3 つのファイルとし、ハッシュチェーンを検証した後の封印済みの記録から読む。IF 記録が検証に通らない、`stopped` として封印された、または終了スナップショットなしで `ended` として封印された場合、THEN 読み取り SHALL どれであるかを述べて失敗する。
 2. THE 8.1 の読み取り SHALL 最終仕様のあらゆる用途の唯一の出どころとする: ここでの写しと、`build-from-spec` での reader の仕様。
 3. THE コマンド `bench-export-spec <sealed session folder> <discovered folder>` SHALL `<discovered>/<application>/<session-id>/` に、3 つのファイルをバイト単位でそのまま書き、`source.json` を書く。`source.json` は、アプリケーション、セッション、終了スナップショットの番号とハッシュ、封印のハッシュ、各ファイルの SHA-256 を示す。IF そのフォルダーが存在する場合、THEN コマンド SHALL それを示して失敗し、何も変えない。
-4. THE コマンド `bench-check-discovered <sessions folder> <discovered folder>` SHALL 封印済みの各セッションと見つけた内容を一覧にし、次のすべてが成り立たなければ、問題を 1 つずつ示して失敗する: 終了スナップショットのある `ended` の各セッションに、8.3 が書く内容とバイト単位で等しいファイルの写しがある。`stopped`、または終了スナップショットなしの `ended` として封印されたセッションには写しがない。`discovered` フォルダーには `README.md` とその作者サイドカー以外に何もない。
+4. THE コマンド `bench-check-discovered <sessions folder> <discovered folder>` SHALL 封印済みの各セッションと見つけた内容を一覧にし、次のすべてが成り立たなければ、問題を 1 つずつ示して失敗する: 終了スナップショットのある `ended` として封印された Dr. Kiro のセッション記録の各々に、8.3 が書く内容とバイト単位で等しいファイルの写しがある。`stopped`、または終了スナップショットなしの `ended` として封印されたセッションには写しがない。`discovered` フォルダーには `README.md` とその作者サイドカー以外に何もない。`sessions/build-from-spec/` の読み手の実行記録は Dr. Kiro のセッション記録ではないので、この確認の対象外である（`lab-bench` 要件 22）。
 5. THE 8.4 の確認 SHALL 公開の前（`publish` の仕様）とテストで実行する。
 6. `discovered/README.md` SHALL 写しが何であるか、封印済みの記録が出どころのままであること、そしてあるセッションに写しがない理由を述べる。
 7. THE ブラインドスキャン SHALL 写しをスキャンする（`lab-bench` 15.10）。

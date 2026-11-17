@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `d0757ac949fc1fba361f24ca90ca32b5aa0f87bc434718e09e3bfb3722294438`
+> 原文 SHA-256: `633ca20f08a386981a4da2b5bcfb02986995804f55742bfacd18f2ef2c8db2a7`
 
 # 設計: lab-bench（コア）
 
@@ -774,3 +774,76 @@ def input_refusal(adapter: object, inputs) -> str | None   # None when the adapt
 ## C5. 止めて確認することになる場合
 
 - 変更後に、body-lab の golden ファイルまたは封印済みセッションのスキャン結果が変わる。そうはなっていない。
+
+## D1. discovered spec 表のない終了（要件 21）
+
+変更の全体です。`build-from-spec` spec のセクション 3.14.1 の詳細設計であり、ベンチのコードはこの spec で規定するため、ここに書きます。
+
+| 場所 | 変更 |
+|---|---|
+| `SessionConfig`（`core/session.py`） | 新しいフィールド `discovered_table: str`。既定値はない。 |
+| `Session._check_config` | 値が `"required"` か `"not-required"` でなければ拒否し、設定の名前を示す（21.6）。 |
+| `frontend/config.py` | `FIELDS` はすでに `SessionConfig` に従うので、欠けたフィールドは名前を示して拒否される。`load` は文字列であることを検査し、受け渡す。 |
+| 開始エントリー | `"discovered_table": config.discovered_table`（21.7）。`Session.open` は `seed` と同じく設定と比べる。 |
+| `Session._end` | 分岐が 1 つ: `check_table` のブロックは値が `"required"` のときだけ動く。判定の検査、3 つのファイルの 1 回の読み込み、`"for": "end"` のスナップショット、`ended` としての封印はそのまま（21.2、21.3）。 |
+| `frontend/describe.py` | `descriptions` が設定を受け取る。`"not-required"` のとき、`end_session` の文は表の節を含まない（21.9）。 |
+| `frontend/server.py` | `BenchServer` が `descriptions(session.declaration, session.config.discovered_table)` を呼ぶ。これが唯一の呼び出し元である。 |
+| `bench-new-session`（`drkiro/session.py`） | `discovered_table = "required"` を渡し、書く（21.4）。 |
+| テストとドキュメント | `tests/labkit.py` とベンチのテストのすべての設定が `"required"` と書く。`bench/README.md` のサンプルの `session.toml` にその行を加える。 |
+
+**`frontend/describe.py`。** `end_session` の文は 2 つの定数から組み立てる:
+
+```python
+END_BASE = "End the session. Every experiment needs a verdict"
+END_TABLE = ", and your design.md must end with a Discovered spec table that agrees with the record"
+
+def descriptions(decl: Declaration, discovered_table: str) -> dict[str, str]:
+    if discovered_table not in ("required", "not-required"):
+        raise ValueError(f"discovered_table must be required or not-required, not {discovered_table!r}")
+    ...
+    "end_session": END_BASE + (END_TABLE if discovered_table == "required" else "") + ".",
+```
+
+- `"required"` では現在の文がバイト単位で同じになるので、Dr. Kiro のツールの文は変わらない（21.9）。
+- `"not-required"` では `End the session. Every experiment needs a verdict.` になる。
+- 他の 3 つの文は設定によらない。未知の値は例外を投げる。開始時の検査がすでに拒否しているので、これは別の呼び出し元に対する守りだけである。
+
+**テスト。** `bench/tests/unit/test_session.py`: `"not-required"` で表なしの `end` は、`final_spec` が読める終了スナップショットのある `ended` として封印される。判定が保留のままなら、引き続き拒否する。設定がないか未知の値なら、開始時に設定の名前を示して拒否する。開始エントリーは値を持つ。`"required"` では既存の終了のテストがそのまま通る。`bench/tests/frontend/test_describe.py` と `test_server.py`: `"required"` は現在の文字列をバイト単位で与える。`"not-required"` は短い文を与える。他の 3 つの文は両方の値で等しい。未知の値は例外を投げる。各値でサーバーを起動すると、対応する `end_session` の文が一覧に出る。
+`bench/tests/unit/test_sealed_before_amendment.py`: 開始エントリーに `discovered_table` がない `sessions/body-lab/body-1`、`sessions/body-lab/body-2`、`sessions/wind-tunnel/wt-004` で `bench-verify` と `final_spec` が通る。
+
+- この改訂の前に封印された記録は、開始エントリーに `discovered_table` を持たない。`bench-verify` と `final_spec` はそれを読まないので、有効なままである（21.8）。
+- `Session.open` はそのキーのない記録を拒否するので、改訂の前に開始した未封印のセッションは開き直せない。改訂をマージするときに開いているセッションがあってはならない（セクション D4）。
+- `bench-run/` の設定は git で無視され、封印済みセッションに属する。これらは編集しない。
+
+## D2. bench-check-discovered が飛ばす実行記録（要件 22）
+
+`record/spec_copy.py` の `_records` は `<sessions>/<x>/` の下のすべてのフォルダーをセッション記録として読み、`log.jsonl` のないフォルダーで例外を投げる。`sessions/build-from-spec/body-lab/` には実行記録と実行ファイルがあるので、検査はリポジトリで失敗してしまう。変更は次のとおり:
+
+```python
+RUN_RECORDS = "build-from-spec"   # sessions/build-from-spec/ holds reader run records (lab-bench Requirement 22)
+
+def _records(sessions: Path) -> list[Path]:
+    """Every Dr. Kiro session record folder under `<sessions>/<application>/`; `<sessions>/build-from-spec/` is skipped."""
+    for application in sorted(p for p in Path(sessions).iterdir() if p.is_dir() and p.name != RUN_RECORDS):
+        ...  # unchanged
+```
+
+- `check_copies` は、`<sessions>/build-from-spec/` が存在するとき報告の行 `build-from-spec: reader run records, no copies` を加えるので、飛ばしたことが見える（22.2）。
+- ほかは何も変わらない（22.3）。`discovered/build-from-spec/` のフォルダーは、「この名前の封印済みセッション記録はない」として引き続き報告される。
+- 実行記録は、`bench-verify`、`sessions/` のブラインドスキャン、`build-from-spec` の実行記録の検査によって引き続き対象となる（22.4）。
+- テスト: `bench/tests/unit/test_spec_copy.py`。リポジトリのセッションを一時フォルダーにコピーし、封印済みの実行記録とその実行ファイルを `sessions/build-from-spec/body-lab/` に置く。問題はなく、飛ばした行が出る。その実行の写しが `discovered/build-from-spec/` にあれば問題になる。ほかのアプリケーションの下で `log.jsonl` のないフォルダーは、引き続き例外を投げる。
+
+## D3. 決定（ビルダーが `build-from-spec` の決定に基づいて行った）
+
+1. **番号は 21 と 22。** 要件 20 の後で空いている次の番号。改訂 1 件ごとに 1 つの番号を使う。`build-from-spec` の要件 12 と 13.7 は 2 件の改訂だからである。
+2. **真偽値ではなく 2 つの値。** `"required"` と `"not-required"` は、記録の中で `true` と `false` よりはっきり読める（`build-from-spec` 設計 B8）。
+3. **既定値なし。** 設定のない設定ファイルは、開始時に名前を示して拒否されるので、仮定された値でセッションが走ることはない。
+4. **古い記録は移行しない。** 開始エントリーにはキーがないままである。`bench-verify` と `final_spec` はそれを読まない。
+5. **`end_session` の文は 1 文短くなる。** ただし `"not-required"` の場合だけ。Dr. Kiro の文は変わらない。
+6. **飛ばしたことは黙らず、行を加える。** `check_copies` の報告が飛ばしたフォルダーの名前を示す。
+7. **`dr-kiro` の文言。** `dr-kiro` の要件 8.4 とその設計のセクションは、「終了スナップショットのある `ended` として封印された Dr. Kiro のセッション記録の各々」と述べ、実行記録は対象外と明記する。
+
+## D4. 止めて確認することになる場合
+
+- 改訂のマージ時に `bench-run/` にセッションが開いている。`Session.open` は、開始エントリーに `discovered_table` がないためその記録を拒否する。ビルダーは止めて報告する。
+- 変更後に、既存の封印済み記録が `bench-verify` または `final_spec` で失敗する。想定していない。この経路ではコードがそのキーを読まないからである。

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `697c50c59a8423c8dad16851cafe7c400fd08225c4cdf6a167a0d8f03e1e3a1c`
+> 原文 SHA-256: `25e7a7a8850fa1a653ba3aaa5c0d77e453f1b8d68cbf19fb128407792b7d3d46`
 
 # タスク: lab-bench
 
@@ -296,3 +296,13 @@ import する唯一の場所です。
   - `scan/levels.py`: `copy_pieces`。`scan/scan.py`: `source.json` のあるフォルダーを写しとしてスキャンし、テンプレートのバイトを持つラボのファイルをビルダーレベルにする（設計 11.3）。
   - `bench/tests/unit/test_spec_copy.py` のテスト（`dr-kiro` タスク 6）: 写しが通る。ハッシュの合わない編集されたファイルと余分なファイルはスキャンを失敗させる。写したファイルの中のパスが見つかる。テンプレートのバイトを持つラボのファイルは語についてスキャンされる。`sh bench/scripts/check.sh` が通る。
   - _要件: 15.10, 15.11_
+## 改訂: 表なしの終了（要件 21）
+`build-from-spec` spec（そのタスク 1、要件 12）のために追加した。設計: 「D1. 表なしの終了（Req 21）」。コミット `961e5a9`、`a9f91f7`、`a453f9a` がコードとテストを持つ。
+- **36. 終了設定、`end_session` の文、変更前に封印された記録** — 完了
+  - `SessionConfig`、設定ファイル、開始時の検査、開始エントリー、`end` の 1 つの分岐。`bench-new-session` は `"required"` と書く。`describe.py` と `server.py` は `end_session` の文を設定に依存させる。変更前に封印された記録を示すテストは有効なまま（`build-from-spec` タスク 1.1-1.3）。
+  - _要件: 21.1-21.9_
+## 改訂: bench-check-discovered が飛ばす実行記録（要件 22）
+`build-from-spec` spec（そのタスク 2、要件 13.7）のために追加した。設計: 「D2. bench-check-discovered が飛ばす実行記録（Req 22）」。コミット `f0dc911` がコードとテストを持つ。
+- **37. `check_copies` が `sessions/build-from-spec/` を飛ばす** — 完了
+  - `record/spec_copy.py`: `RUN_RECORDS` と `_records` での飛ばし、報告の行。テストは `bench/tests/unit/test_spec_copy.py`（`build-from-spec` タスク 2.1）。
+  - _要件: 22.1-22.5_

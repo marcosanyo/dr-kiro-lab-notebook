@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/design.md`](../../../.kiro/specs/dr-kiro/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `e2b5899ee02a3c5e0f94ffbc9420abc44b9371dc4e9c62aaf983a10789c91c88`
+> 原文 SHA-256: `6c5aed0d16ba87765257f0303780bc6aed145288fd68f86c47a6e84c83e5c7db`
 
 # 設計: dr-kiro
 
@@ -130,7 +130,7 @@ bench-new-session --application <name> --adapter <module:factory> --scan-sources
 
 - `final_spec(record)` は封印済みの記録を検証し（`bench-verify` の確認）、`"for": "end"` のスナップショットのエントリー 1 つを取り、3 つのファイルのバイトを、アプリケーション、セッション、スナップショットの番号とハッシュ、封印のハッシュとともに返します。検証に通らない記録、`stopped` の封印、終了スナップショットのない `ended` の封印（body-1）では、どれであるかを述べて失敗します。`build-from-spec` は reader の仕様をこれで読みます。
 - `bench-export-spec <sealed session folder> <discovered folder>` は `<discovered>/<application>/<session id>/requirements.md`、`design.md`、`tasks.md` と `source.json` を書きます（`json.dumps` を `indent=2` とキーの並べ替えで使い、改行で終える。バイトは記録だけで決まる）。フォルダーがすでにあれば拒否します。写しを書き直すときは、先に削除します。
-- `bench-check-discovered <sessions folder> <discovered folder>` は `<sessions>/<application>/<session id>/` のすべての記録を読みます。終了スナップショットのある ended の記録では、写しのファイルを `bench-export-spec` が書く内容と比べます。それ以外では写しがないことを求めます。`discovered` フォルダーにあるそれ以外のファイルやフォルダーは、`README.md` と `README.md.authors.json` を除いて報告します。セッションごとに 1 行を表示し、問題があれば一覧にして終了コード 1 で終わります。
+- `bench-check-discovered <sessions folder> <discovered folder>` は `<sessions>/<application>/<session id>/` のすべての Dr. Kiro のセッション記録を読みます。`<sessions>/build-from-spec/` は読みません。そこには読み手の実行記録があります（`lab-bench` 要件 22）。終了スナップショットのある ended の記録では、写しのファイルを `bench-export-spec` が書く内容と比べます。それ以外では写しがないことを求めます。`discovered` フォルダーにあるそれ以外のファイルやフォルダーは、`README.md` と `README.md.authors.json` を除いて報告します。セッションごとに 1 行を表示し、問題があれば一覧にして終了コード 1 で終わります。
 - `ended` としてセッションが封印された後、ビルダーは両方のコマンドを実行し、写しを封印済みフォルダーとともにコミットします（`bench/README.md`、各アプリケーションの README）。公開の前に、リポジトリ全体に対して `bench-check-discovered` を実行します。同じことをテストも行います。
 - ブラインドスキャンは、`source.json` のあるフォルダーを写しとして読みます（`lab-bench` 15.10）: 3 つのファイルは SHA-256 が `source.json` と一致する間は Dr. Kiro の段階で、`source.json` はハッシュを除いてビルダーの段階で読みます。`discovered/README.md` には、ラボと記録の外にある他のビルダーのファイルと同じく、作者サイドカー（bench）があります。
 
