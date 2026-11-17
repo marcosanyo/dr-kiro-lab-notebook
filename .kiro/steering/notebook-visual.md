@@ -111,6 +111,9 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Margin photos (`.margin`) move below the table.
 - Wide tables scroll inside their own box (`.table-box`, `overflow-x: auto`).
 - The two-column layout (table with margin, row evidence in a side panel) starts at 1000px.
+- The row evidence is a `<details class="evidence">` in its own table row below the row (`tr.row-evidence`, one
+  cell across all columns), never struck through. Its opened body (`.evidence-body`, background `--tab`, a 2px
+  pencil rule on its left) is full width below 1000px and a panel at most 40rem wide at the right from 1000px.
 
 ## Halloween (Requirement 6.5)
 

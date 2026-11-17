@@ -311,6 +311,29 @@ a {
   font-size: 0.85em;
 }
 
+/* The opened row: its own table row below the row, one cell across all columns. Below the row on a
+   narrow screen; from 1000px the opened evidence stands as a panel at the right of the table. */
+.row-evidence > td {
+  padding-top: 0;
+}
+
+.evidence > summary {
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.evidence-body {
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--tab);
+  border-left: 2px solid var(--ink-pencil);
+}
+
+.evidence-list {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+}
+
 /* Layout: one column; table with margin and side panel from 1000px. */
 
 .margin {
@@ -499,6 +522,11 @@ a {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 18rem;
     gap: var(--space-4);
+  }
+
+  .evidence-body {
+    max-width: 40rem;
+    margin-left: auto;
   }
 
   .cover-miss {

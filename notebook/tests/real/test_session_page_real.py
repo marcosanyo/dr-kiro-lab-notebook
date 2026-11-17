@@ -195,6 +195,15 @@ def test_every_fragment_link_of_the_real_site_resolves(site):
                 problems.append(f"{name}: {href}")
     assert problems == []
     assert checked > 0
+    # The opened rows' links (task 12.2) are among the links checked: every page with a readable table has
+    # them, and they point into the experiment entries.
+    for name in ("body-lab-body-2.html", "wind-tunnel-wt-004.html"):
+        opened = [
+            a.attrs["href"]
+            for details in _parse(site / name).find_all("details", "evidence")
+            for a in details.find_all("a")
+        ]
+        assert opened and all(h.startswith("#E") for h in opened), name
     assert "body-lab-body-2.html#E4-H4.P1" in {
         a.attrs.get("href") for a in _parse(site / "index.html").find_all("a")
     }

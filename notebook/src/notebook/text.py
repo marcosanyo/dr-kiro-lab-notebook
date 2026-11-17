@@ -61,6 +61,24 @@ REPLACED_NAMES_NO_ROW = "This cell names no row of this table."
 REPLACED_NAMES_MANY_ROWS = "This cell names more than one row of this table."
 REPLACED_NAMES_ITSELF = "This cell names this row itself."
 
+# The opened row: the evidence a row cites (Requirements 8.5-8.8). No status word is written here except in
+# the fixed explanation of the bench's check (8.6, 15.2).
+EVIDENCE_SUMMARY = "open the evidence this row cites: "
+EVIDENCE_EXPERIMENTS = "Cited experiments:"
+EVIDENCE_EXPERIMENTS_NONE = "The row cites no experiment."
+EVIDENCE_NO_EXPERIMENT = " (no experiment of the record at this point has this id)"
+EVIDENCE_PREDICTIONS = "Cited predictions, each with its registered range and what was measured:"
+EVIDENCE_PREDICTIONS_NONE = "The row cites no prediction."
+EVIDENCE_NO_PREDICTION = " (no prediction registered in the record at this point has this id)"
+EVIDENCE_OF_HYPOTHESIS = " of hypothesis "
+EVIDENCE_PREDICTED = "; "
+EVIDENCE_OBSERVED = "What the bench checks for this status word: "
+EVIDENCE_UNTRIED = (
+    "Cited hits under conditions no earlier trial covered, with their condition class from registration:"
+)
+EVIDENCE_UNTRIED_NONE = "No cited hit has the condition class new-combination or outside."
+EVIDENCE_CLASS = ", condition class "
+
 # A table the bench's table reader does not accept (Requirement 10.14).
 UNREADABLE = "the bench's table reader did not accept this table"
 UNREADABLE_MESSAGE = "The reader's message: "

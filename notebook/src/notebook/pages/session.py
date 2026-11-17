@@ -157,6 +157,13 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
             body += html.element(
                 "tr", {"class": "row-note"}, html.element("td", {"colspan": "7"}, _refused_end(note))
             )
+        # The opened row (Requirement 8.8): a `<details>` in its own table row, one cell across all columns,
+        # so the HTML stays valid and the row itself is still drawn once (8.11).
+        body += html.element(
+            "tr",
+            {"class": "row-evidence"},
+            html.element("td", {"colspan": "7"}, _evidence(view, snapshot, row)),
+        )
     grid = html.element(
         "table",
         {"class": "spec-table"},
@@ -172,6 +179,201 @@ def _status(snapshot: Snapshot, row: Row) -> Segment:
 
 def _tab(snapshot: Snapshot, target: Row, source: str) -> list[Segment]:
     return tab(_cell(snapshot, target, target.id), _cell(snapshot, target, target.rule), source)
+
+
+# The opened row (Requirements 8.5-8.8)
+
+# The condition classes of a hit that a `validated` row needs at least one of (Requirement 8.7).
+UNTRIED_CLASSES = ("new-combination", "outside")
+
+
+def _evidence_experiment(view: View, snapshot: Snapshot, row: Row, cited: str) -> list[Segment]:
+    """One cited experiment: its id linked to its entry, and its title as written. An id that names no
+    experiment of the view is shown as the row wrote it, with commentary, and is not linked."""
+    found = [e for e in view.experiments if e.id == cited]
+    if not found:
+        return html.element(
+            "li", None, [*html.text(_cell(snapshot, row, cited)), *say_text("EVIDENCE_NO_EXPERIMENT")]
+        )
+    (experiment,) = found
+    source = _entry_source(view.record, experiment.seq)
+    eid = addresses.experiment(experiment.id, source)
+    return html.element(
+        "li",
+        None,
+        [
+            *link(addresses.here(eid), html.text(pencil(eid, source))),
+            markup(" "),
+            *html.text(experiment.title.segment()),
+        ],
+    )
+
+
+def _evidence_value(view: View, outcome: Outcome) -> list[Segment]:
+    """The trial and the measured value of one outcome; a miss in miss red with the word "miss" (6.4)."""
+    source = _entry_source(view.record, outcome.seq)
+    pid = html.check_id("prediction", outcome.prediction, source)
+    where = f"{source}: prediction {pid}"
+    miss = outcome.outcome == "miss"
+    line: list[Segment] = []
+    if outcome.trial is not None:
+        tid = html.check_id("trial", outcome.trial, source)
+        line += [
+            *say_text("OUTCOME_TRIAL"),
+            *link(
+                addresses.here(addresses.trial(outcome.experiment, tid, source)),
+                html.text(pencil(tid, source)),
+            ),
+        ]
+    if outcome.value is not None:
+        value = pencil(numbers.short(outcome.value, where), source)
+        line += say_text("OUTCOME_MEASURED")
+        line += html.element("span", {"class": "ink-p miss-value"}, [value]) if miss else html.text(value)
+    elif outcome.not_measured is not None:
+        line += [*say_text("OUTCOME_NOT_MEASURED"), *html.text(pencil(outcome.not_measured, source))]
+    line += say_text("OUTCOME_IS")
+    word = pencil(outcome.outcome, source)
+    line += html.element("span", {"class": "ink-p miss"}, [word]) if miss else html.text(word)
+    return line
+
+
+def _evidence_prediction(
+    view: View, snapshot: Snapshot, row: Row, cited: str, owners: dict[str, Hypothesis]
+) -> list[Segment]:
+    """One cited prediction: its hypothesis, conditions, registered range, condition class, Dr. Kiro's
+    label, outcome and measured value, each linked to its place in its experiment entry (Requirement 8.8).
+    An id that names no prediction registered in the view is shown as the row wrote it, with commentary."""
+    hypothesis = owners.get(cited)
+    if hypothesis is None:
+        return html.element(
+            "li", None, [*html.text(_cell(snapshot, row, cited)), *say_text("EVIDENCE_NO_PREDICTION")]
+        )
+    (prediction,) = [p for p in hypothesis.predictions if p.id == cited]
+    source = _entry_source(view.record, hypothesis.seq)
+    pid = html.check_id("prediction", prediction.id, source)
+    hid = html.check_id("hypothesis", hypothesis.id, source)
+    where = f"{source}: prediction {pid}"
+    outcomes = [o for o in view.outcomes if o.prediction == pid]
+    kind = view.state.outcomes[pid].kind
+    # The prediction's place: its outcome in the experiment entry, or its own address when it never ran.
+    prediction_id = html.text(pencil(pid, source))
+    if outcomes:
+        osource = _entry_source(view.record, outcomes[0].seq)
+        prediction_id = link(
+            addresses.here(addresses.outcome(outcomes[0].experiment, pid, osource)), prediction_id
+        )
+    elif kind == NOT_RUN.kind:
+        prediction_id = link(addresses.here(addresses.never_run(pid, source)), prediction_id)
+    entries = [e for e in view.experiments if e.hypothesis == hypothesis.id]
+    hypothesis_id = html.text(pencil(hid, source))
+    if entries:
+        esource = _entry_source(view.record, entries[0].seq)
+        hypothesis_id = link(addresses.here(addresses.experiment(entries[0].id, esource)), hypothesis_id)
+    line: list[Segment] = [
+        *prediction_id,
+        *say_text("EVIDENCE_OF_HYPOTHESIS"),
+        *hypothesis_id,
+        markup(" "),
+        *html.text(hypothesis.title.segment()),
+        *say_text("EVIDENCE_PREDICTED"),
+        *html.text(pencil(prediction.measurement, source)),
+        *say_text("PREDICTION_RANGE"),
+        *html.text(
+            pencil(
+                f"[{numbers.short(prediction.low, where)}, {numbers.short(prediction.high, where)}]", source
+            )
+        ),
+    ]
+    if prediction.when:
+        line += [*say_text("PREDICTION_WHEN"), *_conditions(prediction, source)]
+    line += [
+        *say_text("PREDICTION_CLASS"),
+        *html.text(pencil(prediction.condition_class, source)),
+        *say_text("PREDICTION_LABEL"),
+        *html.text(_drkiro_word(prediction.label, source)),
+    ]
+    if outcomes:
+        for outcome in outcomes:
+            line += _evidence_value(view, outcome)
+    else:
+        line += [*say_text("PREDICTION_STATE"), *html.text(pencil(kind, source))]
+    return html.element("li", None, line)
+
+
+def _untried_hits(view: View, row: Row, owners: dict[str, Hypothesis]) -> list[Segment]:
+    """For a `validated` row: each cited hit whose condition class is `new-combination` or `outside`, with
+    its condition class (Requirement 8.7)."""
+    items: list[Segment] = []
+    for cited in row.predictions:
+        hypothesis = owners.get(cited)
+        if hypothesis is None:
+            continue
+        (prediction,) = [p for p in hypothesis.predictions if p.id == cited]
+        if prediction.condition_class not in UNTRIED_CLASSES:
+            continue
+        for outcome in (o for o in view.outcomes if o.prediction == cited and o.outcome == "hit"):
+            source = _entry_source(view.record, outcome.seq)
+            pid = html.check_id("prediction", outcome.prediction, source)
+            rsource = _entry_source(view.record, hypothesis.seq)
+            items += html.element(
+                "li",
+                None,
+                [
+                    *link(
+                        addresses.here(addresses.outcome(outcome.experiment, pid, source)),
+                        html.text(pencil(pid, source)),
+                    ),
+                    *say_text("EVIDENCE_CLASS"),
+                    *html.text(pencil(prediction.condition_class, rsource)),
+                    *_evidence_value(view, outcome),
+                ],
+            )
+    if not items:
+        return html.element("p", None, say_text("EVIDENCE_UNTRIED_NONE"))
+    return [
+        *html.element("p", None, say_text("EVIDENCE_UNTRIED")),
+        *html.element("ul", {"class": "evidence-list untried-hits"}, items),
+    ]
+
+
+def _evidence(view: View, snapshot: Snapshot, row: Row) -> list[Segment]:
+    """The opened row: a `<details>` with the row's cited experiments and cited predictions (8.8); for an
+    `observed` row the fixed explanation (8.6); for a `validated` row its untried hits (8.7). A cited miss
+    is in miss red with the word "miss" in every row, so in a `partly` row too (8.5). The status word itself
+    is shown only in the row's stamp (15.2)."""
+    owners = {p.id: h for h in view.record.hypotheses if h.seq <= view.upto for p in h.predictions}
+    experiments = [s for cited in row.experiments for s in _evidence_experiment(view, snapshot, row, cited)]
+    predictions = [
+        s for cited in row.predictions for s in _evidence_prediction(view, snapshot, row, cited, owners)
+    ]
+    content: list[Segment] = [*html.element("p", None, say_text("EVIDENCE_EXPERIMENTS"))]
+    content += (
+        html.element("ul", {"class": "evidence-list"}, experiments)
+        if experiments
+        else html.element("p", None, say_text("EVIDENCE_EXPERIMENTS_NONE"))
+    )
+    content += html.element("p", None, say_text("EVIDENCE_PREDICTIONS"))
+    content += (
+        html.element("ul", {"class": "evidence-list cited-predictions"}, predictions)
+        if predictions
+        else html.element("p", None, say_text("EVIDENCE_PREDICTIONS_NONE"))
+    )
+    if row.status == "observed":
+        content += html.element(
+            "p",
+            {"class": "evidence-observed"},
+            [*say_text("EVIDENCE_OBSERVED"), *say_text("STATUS_OBSERVED")],
+        )
+    elif row.status == "validated":
+        content += _untried_hits(view, row, owners)
+    summary = html.element(
+        "summary", None, [*say_text("EVIDENCE_SUMMARY"), *html.text(_cell(snapshot, row, row.id))]
+    )
+    return html.element(
+        "details",
+        {"class": "evidence"},
+        [*summary, *html.element("section", {"class": "evidence-body"}, content)],
+    )
 
 
 def _unreadable(view: View, snapshot: Snapshot, unreadable: tables.Unreadable) -> list[Segment]:

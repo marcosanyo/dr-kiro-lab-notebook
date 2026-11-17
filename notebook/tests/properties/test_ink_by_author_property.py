@@ -137,6 +137,12 @@ def _assert_section(record: RecordModel) -> None:
     for item in _model_authored(record):
         if isinstance(item, Authored):
             recorded.setdefault((item.source, item.text), set()).add(INK_OF[item.author])
+    # The opened rows show Dr. Kiro's label of each cited prediction, a fixed word of the exception of
+    # Requirement 4.2 (design N29), in Dr. Kiro's ink (task 12.2).
+    # The same characters at the same entry may also be a bench string (a condition class equal to the
+    # label), which stays in pencil.
+    for place in _fixed_words(record):
+        recorded.setdefault(place, {Ink.PENCIL}).add(Ink.DRKIRO)
     for seg in segments:
         if seg.ink is Ink.DRKIRO:
             # Dr. Kiro's ink only ever carries text read from the record.
@@ -219,7 +225,9 @@ def _assert_page(record: RecordModel) -> None:
         shown_fixed[place] += 1
     if fixed:
         event("fixed words shown")
-    assert shown_fixed == fixed
+    # Every fixed word is shown; a label may be shown more than once, in its experiment entry and in each
+    # opened row that cites its prediction (task 12.2).
+    assert set(shown_fixed) == set(fixed)
 
 
 @settings(max_examples=100, deadline=None)
