@@ -25,6 +25,7 @@ from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
+from notebook.pages import bands as run_bands
 from notebook.pages import lab, parts
 from notebook.pages.parts import chosen, drkiro_block, link, row_link, say_text, stamp, sticky, tab
 from notebook.pages.photo import PictureFile, Pins
@@ -132,7 +133,7 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         cells = [
             id_cell,
             html.text(_cell(snapshot, row, row.rule)),
-            html.text(_cell(snapshot, row, row.scope)),
+            [*html.text(_cell(snapshot, row, row.scope)), *run_bands.draw(view, row)],
             html.text(_id_list(snapshot, row, row.experiments)),
             html.text(_id_list(snapshot, row, row.predictions)),
             stamp(_status(snapshot, row), label),

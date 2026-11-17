@@ -119,6 +119,25 @@ TRACK_NOT_MEASURED = "No track is drawn: the recorded series is not measured. "
 # The cover's one-word caption; the cover explains the drawing in full inside its details (Requirement 13.6).
 TRACK_CAPTION_COVER = "track"
 
+# Run bands beside a row's scope (Requirement 9; design 4). Shown inside the scope cell, after Dr. Kiro's
+# scope text, which is never read.
+BANDS_INTRO = (
+    "What the record says was run, per parameter group of this row's cited trials: one tick per value a "
+    "trial of the session ran in that group; taller ticks are this row's cited trials, the tallest its "
+    "prediction trials; the shaded span runs from the lowest to the highest cited value; hatched parts had "
+    "no trial. Untried combinations show only in each cited prediction's condition class."
+)
+BANDS_NONE = "No trial is cited by this row, so there is no run band."
+BANDS_GROUP = "parameter group: "
+BANDS_TRIED = " tried "
+BANDS_DECLARED = ", declared range "
+BANDS_CITED = ", cited "
+BANDS_NO_TRIAL = ", no trial "
+BANDS_RANGE_OPEN = "["
+BANDS_RANGE_CLOSE = "]"
+BANDS_OPEN_LOW = "("
+BANDS_OPEN_HIGH = ")"
+
 # The cover, `index.html` (Requirement 13). The commentary visible before any detail is opened is at most 60
 # words (13.6), so the visible strings are short and the explanations sit inside `<details>`. To keep the
 # stamp labels of the cited rows (8.2) within the limit, the cover's photos show the trial id without the word
