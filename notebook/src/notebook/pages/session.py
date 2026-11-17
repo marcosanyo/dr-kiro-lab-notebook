@@ -26,6 +26,7 @@ from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
 from notebook.pages import bands as run_bands
+from notebook.pages import chart as prediction_chart
 from notebook.pages import lab, parts
 from notebook.pages.parts import chosen, drkiro_block, link, row_link, say_text, stamp, sticky, tab
 from notebook.pages.photo import PictureFile, Pins
@@ -737,6 +738,7 @@ def _progress(view: View) -> list[Segment]:
             *html.element("ul", {"class": "phases"}, phase_items),
             *html.element("p", None, say_text("PROGRESS_OUTCOMES")),
             *html.element("ul", {"class": "outcome-counts"}, outcome_items),
+            *prediction_chart.figure(view),
         ],
     )
 

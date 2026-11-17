@@ -274,6 +274,17 @@ PROGRESS_HEADING = "Progress"
 PROGRESS_BUDGET = "Budget used: "
 PROGRESS_PHASES = "Experiments by phase:"
 PROGRESS_OUTCOMES = "Prediction outcomes, one for each registered prediction:"
+# The prediction chart (Requirements 5.4, 17.1-17.5; task 17.1).
+CHART_HEADING = "Prediction chart"
+CHART_INTRO = (
+    "Every registered prediction, in the order it was registered. Each measurement has one scale, which "
+    "spans the lowest and the highest registered bound and measured value of that measurement in this "
+    "session. A filled circle marks a hit, and a circle in miss red with the word miss marks a miss. A "
+    "prediction that was not run or not checkable has its registered range only."
+)
+CHART_NONE = "No prediction is registered in this session, so the chart has nothing to show."
+CHART_SCALE = "; scale of the measurement "
+CHART_NO_VALUE = "; no measured value is drawn"
 
 # Dr. Kiro's plan (Requirement 10.6, design N18).
 PLAN_HEADING = "Dr. Kiro's plan"
