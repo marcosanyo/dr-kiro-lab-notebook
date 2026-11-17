@@ -26,6 +26,8 @@ SOURCE_NAME = "source.json"
 COPY_FILES = tuple(f"{key}.md" for key in SPEC_KEYS)
 # Files of the discovered folder itself, written by the builder (the README and its author sidecar).
 DISCOVERED_FILES = frozenset({"README.md", "README.md.authors.json"})
+# sessions/build-from-spec/ holds the reader's run records (build-from-spec Req 13.7); they have no copies.
+RUN_RECORDS = "build-from-spec"
 
 
 class SpecCopyError(Exception):
@@ -136,9 +138,10 @@ def write_copy(record: Path, discovered: Path) -> Path:
 
 
 def _records(sessions: Path) -> list[Path]:
-    """Every session record folder under `<sessions>/<application>/`."""
+    """Every Dr. Kiro session record folder under `<sessions>/<application>/`. The reader's run records under
+    `<sessions>/build-from-spec/` are skipped."""
     found = []
-    for application in sorted(p for p in Path(sessions).iterdir() if p.is_dir()):
+    for application in sorted(p for p in Path(sessions).iterdir() if p.is_dir() and p.name != RUN_RECORDS):
         for folder in sorted(p for p in application.iterdir() if p.is_dir()):
             if not (folder / LOG_NAME).is_file():
                 raise SpecCopyError(f"{folder}: not a session record (no {LOG_NAME})")
@@ -197,6 +200,8 @@ def check_copies(sessions: Path, discovered: Path) -> tuple[list[str], list[str]
         problems += found
         if not found:
             report.append(f"{name}: copy matches the record")
+    if (sessions / RUN_RECORDS).is_dir():
+        report.append(f"{RUN_RECORDS}: reader run records, no copies")
     for child in sorted(discovered.iterdir()):
         if child.is_file() and child.name in DISCOVERED_FILES:
             continue
