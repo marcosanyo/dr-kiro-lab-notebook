@@ -90,7 +90,7 @@ applications stay unchanged and the parts are easy to find.
    request, the run script and its code, the wrapping adapter, and the reader's builder files (agent definition,
    prompt, steering, templates), one set for all setups. `build-from-spec/` SHALL hold no copy of the bench method
    text; THE run script SHALL take that text from the bench package source file of Dr. Kiro's method (`dr-kiro`
-   Requirement 3.2).
+   Requirement 3.2). No `mcp` package is installed by `build-from-spec/`.
 2. THE code in `build-from-spec/` SHALL be its own `uv` project depending on `bench` and on the application
    adapter it wraps, by path. `bench/` and each application's `uv` project SHALL NOT depend on `build-from-spec`,
    and their existing tests SHALL pass in their own projects without it.
@@ -609,6 +609,9 @@ exactly as recorded.
     it with the source of each run. The user asked for this before any run, to keep the comparison fair. Under this
     decision, `straight-ahead` and `turn-right` are refused by the check, and `stop-ahead` passes, as Decision 18
     found. (Requirements 3.5, 11.4; Design 2.2, 3.2)
+20. **No `mcp` package in `build-from-spec/`.** The user asked that Requirement 1.1 state that `build-from-spec/`
+    installs no `mcp` package. The user confirmed that the `uv.lock` of `build-from-spec/` may keep the line for the
+    optional `frontend` extra of `bench`, because no package from that extra is installed. (Requirement 1.1)
 
 ### By Kiro (the user may change these)
 
