@@ -385,10 +385,11 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
 500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
 `prefers-reduced-motion: reduce`, it starts paused on cell 0.
 
-Beside each moving picture, except the lab cards, the page shows a magnified picture of the moving body: the box of the
+Beside each body-lab moving picture, except the lab cards, the page shows a magnified picture of the moving body: the box of the
 pixels that change between frames, plus a 4 px margin (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as
 `p/<sha256>.png` (the SHA-256 of its bytes) with the alt text "Magnified view of the picture beside it", and leaves the
-recorded PNG file untouched.
+recorded PNG file untouched. A wind-tunnel moving picture has none: the flow moves through the whole sheet, so no
+region of it is the moving body (7.9, Decision 50).
 
 ### 11. Scan (Requirement 20)
 
@@ -931,8 +932,9 @@ changes `bench/`.
   whole cell). Each cut-out is enlarged by one whole number, nearest neighbour, the smallest that makes the enlarged
   box at least as large as the frame in both directions. The magnified sheet keeps the layout and has no gap
   (`notebook/src/notebook/magnify.py`). It is named by the SHA-256 of its own bytes, as every picture (7.7). It is
-  shown beside the moving picture in one row that wraps on a narrow screen. Every moving picture gets one except the
-  lab cards (`photo(..., magnified=False)`, 7.9). The recorded file is copied byte for byte as before (7.7); the
+  shown beside the moving picture in one row that wraps on a narrow screen. Every body-lab moving picture gets one except
+  the lab cards (`photo(..., magnified=False)`, 7.9); a wind-tunnel picture gets none, because the flow moves
+  through the whole sheet (`photo.MAGNIFIED_APPLICATIONS`, Decision 50). The recorded file is copied byte for byte as before (7.7); the
   derived file is deterministic and passes the bench's picture check and the scan (Requirement 7.9, requirements
   Decision 50).
 
