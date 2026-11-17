@@ -366,6 +366,57 @@ a {
   margin: 0;
 }
 
+/* The lab pages and the ink legend (pages/lab.py). Every record is drawn alike, in one type size. */
+
+.lab-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lab-record {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule-line);
+}
+
+.lab-record dl,
+.legend {
+  margin: 0;
+}
+
+.lab-record dt,
+.legend dt {
+  font-weight: bold;
+  margin-top: var(--space-2);
+}
+
+.lab-record dd,
+.legend dd {
+  margin-left: var(--space-3);
+}
+
+.swatch {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.swatch-k {
+  background: var(--ink-drkiro);
+}
+
+.swatch-p {
+  background: var(--ink-pencil);
+}
+
+.swatch-c {
+  background: var(--ink-commentary);
+}
+
 /* The inline Halloween decoration (pages/parts.py), drawn in currentColor. */
 
 .deco {

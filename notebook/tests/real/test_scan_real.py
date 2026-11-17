@@ -12,7 +12,7 @@ from bench.scan.levels import AUTHOR_LEVEL, SIDECAR_SUFFIX, sidecar_pieces
 from bench.scan.scan import Scanner
 
 from notebook import choices, ink, layouts, plots, records, views
-from notebook.pages import cover, parts, photo, session
+from notebook.pages import cover, lab, parts, photo, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
@@ -123,6 +123,35 @@ def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, l
     for link in parser.links:
         assert ".." not in link and not link.startswith("/") and ":" not in link, link
     assert "<div" not in written and "xmlns" not in written and "http" not in written
+
+
+def test_the_lab_pages_and_the_legend_pass_both_scan_passes_and_links_stay_in_the_site(
+    scanner, loaded, tmp_path
+) -> None:
+    pages = {**lab.pages(loaded), "legend.html": lab.legend()}
+    assert sorted(pages) == ["body-lab.html", "legend.html", "wind-tunnel.html"]
+    findings = []
+    for name, segments in pages.items():
+        for segment in segments:
+            level = AUTHOR_LEVEL[ink.SCAN_AUTHOR[segment.ink]]
+            findings += scanner.scan_text(segment.text, level, segment.source)
+        written, ranges = ink.join(segments)
+        path = tmp_path / name
+        path.write_text(written, encoding="utf-8")
+        path.with_name(path.name + SIDECAR_SUFFIX).write_text(
+            json.dumps({"ranges": ranges}, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        for piece in sidecar_pieces(path, written):
+            findings += scanner.scan_piece(piece)
+        parser = _Links()
+        parser.feed(written)
+        parser.close()
+        assert parser.links, name
+        for link in parser.links:
+            assert ".." not in link and not link.startswith("/") and ":" not in link, (name, link)
+        assert "<div" not in written and "xmlns" not in written and "http" not in written, name
+    assert [str(f) for f in findings] == []
 
 
 def test_the_stylesheet_passes_the_builder_level_scan(scanner) -> None:

@@ -122,3 +122,78 @@ COVER_ROWS = (
 COVER_OUTCOME_LINK = "this prediction's outcome in its experiment entry"
 COVER_TABLE_LINK = "the session's discovered spec table"
 COVER_CARDS = "One trial of each lab, chosen by a person. Each card opens the list of that lab's sessions."
+
+# The lab pages, `<app>.html` (Requirement 14). Every record shows the same fields (14.1, 14.2).
+LAB_TITLE = "Sessions of a lab"
+LAB_HEADING = "Every session of the lab "
+LAB_INTRO = "Ended and stopped sessions are listed together, in order of their session ids."
+BACK_TO_COVER = "back to the cover"
+FIELD_SESSION = "session"
+FIELD_END = "how the record was sealed"
+FIELD_REASON = "the bench's reason"
+FIELD_BUDGET = "budget used"
+BUDGET_OF = " of "
+FIELD_TRIALS = "trials"
+FIELD_EXPERIMENTS = "experiments"
+FIELD_HITS = "hits"
+FIELD_MISSES = "misses"
+FIELD_NEVER_RUN = "hypotheses registered and never run"
+NEVER_RUN_NONE = "none"
+FIELD_TABLE = "discovered spec table"
+TABLE_CHECKED_ROWS = "checked by the bench, rows: "
+TABLE_NOT_CHECKED_ROWS = "not checked by the bench, rows: "
+TABLE_NO_SNAPSHOT = "the record has no snapshot"
+FIELD_STOPPED_AT = "action at which the session stopped"
+STOPPED_AT_NONE = "the record has no failure entry"
+# The one fixed commentary of every stopped session, shown beside the bench's recorded reason (14.3).
+STOPPED_NOTE = (
+    "The bench stopped this session before Dr. Kiro ended it. "
+    "The record is shown as it was sealed, with the bench's reason as written."
+)
+
+# The ink legend, `legend.html` (Requirements 4.5, 15.2). Status words are named here in commentary ink.
+LEGEND_TITLE = "Ink legend"
+LEGEND_INTRO = (
+    "Every text in this notebook is shown in the ink of its author. "
+    "Each ink has its own typeface, so the inks can be told apart without colour."
+)
+LEGEND_INKS = "The three inks"
+INK_DRKIRO_NAME = "Dr. Kiro's ink"
+INK_DRKIRO_ABOUT = (
+    "Text whose recorded author is Dr. Kiro, shown exactly as written. "
+    "Serif type, dark blue; a block of it has a rule on its left side and the label written by Dr. Kiro."
+)
+INK_PENCIL_NAME = "Pencil"
+INK_PENCIL_ABOUT = (
+    "Text the bench recorded, and numbers the notebook computes from it: measurements, outcomes, "
+    "condition classes, reasons and counts. Monospace type, dark grey."
+)
+INK_COMMENTARY_NAME = "Commentary ink"
+INK_COMMENTARY_ABOUT = (
+    "The notebook's own text, written by the builder of the lab: headings, labels and explanations. "
+    "Sans-serif type, dark brown."
+)
+MISS_RED_NAME = "Miss red"
+MISS_RED_ABOUT = (
+    "Used only for a prediction that missed and its measured value, always together with the word miss."
+)
+LEGEND_STATUS = "Status words"
+# The four words as the bench accepts them (`bench.specfiles.discovered.STATUSES`); the legend checks this.
+STATUS_VALIDATED_WORD = "validated"
+STATUS_PARTLY_WORD = "partly"
+STATUS_OBSERVED_WORD = "observed"
+STATUS_REJECTED_WORD = "rejected"
+LEGEND_STATUS_INTRO = (
+    "Dr. Kiro gives each row of its discovered spec table one status word. The bench checks the word "
+    "against the record when the session ends. In a table, the word is shown as a stamp, with a label that "
+    "says whether the bench checked it."
+)
+STATUS_VALIDATED = (
+    "every cited prediction was a hit, and at least one hit was a new combination or outside the tried range."
+)
+STATUS_PARTLY = "the row cites at least one hit and at least one miss."
+STATUS_OBSERVED = "seen in experiments; no cited prediction missed; Dr. Kiro does not claim validated"
+STATUS_REJECTED = (
+    "the row cites at least one miss and names the row that replaces it. "
+    "It is struck through and stays in its place in the table."
+)
