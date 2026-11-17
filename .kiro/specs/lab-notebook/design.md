@@ -301,6 +301,11 @@ class Segment:
 - Ink from author: record text with author `dr-kiro` -> `DRKIRO`; bench-written record text and numbers the build
   computes from record fields -> `PENCIL`; strings from `text.py` -> `COMMENTARY`; status words -> `STAMP` (4.1,
   15.2); tags and attributes from templates -> `MARKUP`.
+- Exception for Dr. Kiro's fixed words (4.2, N29): the verdict word of a `verdict` entry and Dr. Kiro's label of a
+  prediction in a `register` entry are plain strings in the record, with no author, but Dr. Kiro passed them to
+  the bench. The pages show them as `DRKIRO` segments (`pages/session.py`, `_drkiro_word`; 15.1, 17.4), with the
+  source of their log entry. They are the only `DRKIRO` segments that do not come from a value recorded with
+  author `dr-kiro`, and they are also scanned at the builder level (Components 11).
 - Scan author per ink: `DRKIRO` -> `dr-kiro`; all others -> `bench` (the sidecar format knows only `bench` and
   `dr-kiro`; `bench` is scanned at the builder level, `bench.scan.levels.AUTHOR_LEVEL`).
 - `html.text(seg)` wraps a non-markup segment in `<span class="ink-<k>">` (or `<pre>`/`<div>` for blocks) and
@@ -374,6 +379,12 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
    name the source file and line (20.2).
 2. Every finished text file: the pieces built from its `(text, ranges)` exactly as `sidecar_pieces` builds them,
    so the escaped forms the site holds pass the scan that the sidecars describe (how `publish` scans is N25).
+
+Extra segments, scanned in pass 1 but not a file of their own (`scan.check(..., extra)`): the choice reasons at
+the builder level (`scan.choice_segments`, 12.8), and Dr. Kiro's fixed words at the builder level
+(`scan.drkiro_word_segments`: every verdict word and every Dr. Kiro label of a prediction of every record, as
+pencil segments named by their log entry; 4.2, N29). Where a page shows a fixed word, it is also scanned there at
+Dr. Kiro's level, in both passes.
 
 Pictures pass `check_picture` in phase 1 (20.4). The scanner also flags this machine's home folder and the
 repository path (`local_paths`), which guards Requirement 21.1 against absolute paths.
@@ -505,7 +516,10 @@ segment's escaped form lies inside one `dr-kiro` range, and every other segment 
 
 *For any* generated record, every segment made from an authored value has the ink of its recorded author
 (`dr-kiro` -> Dr. Kiro's ink, `bench` -> pencil), every status word has the stamp ink, and a generated entry with a
-text field that has no author fails the build naming the record and line.
+text field that has no author fails the build naming the record and line. The one exception is Dr. Kiro's fixed
+words (N29): on the session page, a Dr. Kiro's ink segment from a log entry is either a value recorded with author
+`dr-kiro` or a verdict word or Dr. Kiro's label of a prediction of that entry; each such word is shown in Dr.
+Kiro's ink and is also a builder-level scan segment.
 
 **Validates: Requirements 4.1, 4.2**
 
@@ -869,6 +883,14 @@ changes `bench/`.
   attributes are `data-tile-width` and `data-tile-height`; and the general rule in Components 11 holds. Ids are
   checked as in Components 9. The `http:` check stays strict. Extends N9 (Requirements 3.2, 6.5, 20.1, 20.2,
   requirements Decision 46).
+- **N29 Dr. Kiro's fixed words (user, 2026-11-17).** Task 12.1 found that the verdict word and Dr. Kiro's label of
+  a prediction are recorded as plain strings with no author (the bench's scan treats them as bench strings),
+  while the same values appear with author `dr-kiro` in the `given` of a refusal. Decided: they are shown in Dr.
+  Kiro's ink, as the exception of Requirement 4.2, and `scan.drkiro_word_segments` adds each of them, from every
+  record, as a builder-level segment to the scan, besides the Dr. Kiro level scan where a page shows it. Property
+  3 states the exception: on a session page, a `DRKIRO` segment from a log entry is a value recorded with author
+  `dr-kiro` or one of these words, and every such word is shown in Dr. Kiro's ink. `bench/` and the records are
+  not changed (Components 8, 11; Requirements 4.2, 15.1, 17.4, 20.1; requirements Decision 47).
 
 ## Open questions
 

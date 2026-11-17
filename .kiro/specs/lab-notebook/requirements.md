@@ -204,7 +204,10 @@ them, so that I can tell its claims from our comments and from the measurements.
    (Requirements 8.2, 15.2).
 2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or,
    for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build
-   SHALL fail, naming the text's place in the record.
+   SHALL fail, naming the text's place in the record. Exception: values Dr. Kiro passed to the bench that the bench
+   records as fixed words without an author (the verdict word and Dr. Kiro's label of a prediction) SHALL be shown
+   in Dr. Kiro's ink (Requirements 15.1, 17.4), and THE build SHALL scan each of them at the builder level as well
+   as at Dr. Kiro's level (Requirement 20.1) (Decision 47).
 3. THE site SHALL show text written by Dr. Kiro as written: the same characters in the same order, with its line
    breaks, HTML-escaped, and not rendered as Markdown or HTML. The cells of a discovered spec table are shown as
    the bench's table reader gives them.
@@ -890,6 +893,15 @@ exception to a rule.
     inline SVG without `xmlns`; the picture layout attributes are `data-tile-width` and `data-tile-height`; the
     `http:` check stays strict. A scan finding in builder text is always fixed by rewording (design N28)
     (Requirements 3.2, 6.5, 11.1, 20.1, 20.2).
+
+47. **Dr. Kiro's fixed words** (user, 2026-11-17). Task 12.1 found that the verdict word and Dr. Kiro's label of a
+    prediction are recorded in the bench's `verdict` and `register` entries as plain strings with no author (the
+    bench's scan treats them as bench strings), while the same values appear with author `dr-kiro` in the `given`
+    of a refusal. Requirements 15.1 and 17.4 ask for Dr. Kiro's ink, and 4.2 says ink follows the recorded author.
+    Decided: these words keep Dr. Kiro's ink, as an exception written into Requirement 4.2, because Dr. Kiro chose
+    them and the bench only checked them against its fixed set; and the build scans each of them at the builder
+    level as well as at Dr. Kiro's level, so the exception cannot let a term through. The bench and the records
+    are not changed (Requirements 4.2, 15.1, 17.4, 20.1; design N29).
 
 ## Open questions
 

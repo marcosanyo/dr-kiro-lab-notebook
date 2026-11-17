@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `d9439ef16fdc4faad94bc6630915453c0af033d7743336d108d631958bbb9549`
+> 原文 SHA-256: `75b10c566d035de45f0fc47e8b5a03a16cd186fe8ff0f5b6ab1ff5932f9dbcdf`
 
 # Design: lab-notebook
 
@@ -225,6 +225,7 @@ class Segment:
 ```
 
 - 書き手からインクへ: 書き手が `dr-kiro` の記録のテキスト -> `DRKIRO`。ベンチが書いた記録のテキストと、記録のフィールドからビルドが計算した数 -> `PENCIL`。`text.py` の文字列 -> `COMMENTARY`。ステータスの語 -> `STAMP`（4.1、15.2）。テンプレートのタグと属性 -> `MARKUP`。
+- Dr. Kiro の固定の語の例外（4.2、N29）: `verdict` エントリーの判定の語と、`register` エントリーの予測についての Dr. Kiro のラベルは、記録では書き手のない素の文字列だが、Dr. Kiro がベンチに渡したものである。ページはこれらを、そのログエントリーのソースつきの `DRKIRO` セグメントとして見せる（`pages/session.py`、`_drkiro_word`。15.1、17.4）。これらは、書き手 `dr-kiro` で記録された値から来ない唯一の `DRKIRO` セグメントであり、ビルダーのレベルでもスキャンされる（Components 11）。
 - インクごとのスキャンの書き手: `DRKIRO` -> `dr-kiro`。それ以外はすべて -> `bench`（サイドカーの形式は `bench` と `dr-kiro` しか知らない。`bench` はビルダーレベルでスキャンされる、`bench.scan.levels.AUTHOR_LEVEL`）。
 - `html.text(seg)` は、マークアップでないセグメントを `<span class="ink-<k>">`（ブロックなら `<pre>`/`<div>`）で包み、エスケープする: `html.escape(text, quote=True)`、その後 `\r` -> `&#13;`。Dr. Kiro のテキストは要素の内容にだけ置き、属性には決して置かない。その要素は `white-space: pre-wrap` を使うので、改行は書かれたとおりに見える（4.3）。タブ、改行、キャリッジリターン以外の C0 制御文字を含む Dr. Kiro のテキストは、HTML で書かれたとおりには見せられないので、そのソースを名指ししてビルドを失敗させる（N6）。
 - アドレスと属性に使う id（`E<n>`、`T<n>`、`H<n>.P<n>`、`R<n>`）は、`bench.core.ids` のパターンと `discovered.py` の行のパターンで検査する。それ以外は決して属性に入れず、パターンに合わない id はビルドを失敗させる。
@@ -264,6 +265,8 @@ HTML は、シート全体の `<img>`（JavaScript なしで動き、「シー�
 
 1. すべてのセグメント: `scanner.scan_text(seg.text, level, seg.source)`。レベルはそのスキャンの書き手から取る。検出はソースのファイルと行を名指しする（20.2）。
 2. 完成したすべてのテキストファイル: `(text, ranges)` から、`sidecar_pieces` がまったく同じ作り方で作る断片を使う。サイトが持つエスケープ後の形が、サイドカーが記述するスキャンを通る（`publish` がどうスキャンするかは N25）。
+
+追加のセグメント。パス 1 でスキャンされるが、それ自身のファイルではない（`scan.check(..., extra)`）: ビルダーのレベルの選択の理由（`scan.choice_segments`、12.8）と、ビルダーのレベルの Dr. Kiro の固定の語（`scan.drkiro_word_segments`: すべての記録のすべての判定の語と、予測についてのすべての Dr. Kiro のラベルを、そのログエントリーで名指しされるペンシルのセグメントとして。4.2、N29）。ページが固定の語を見せるところでは、そこで Dr. Kiro のレベルでも、両方のパスでスキャンされる。
 
 画像はフェーズ 1 で `check_picture` を通す（20.4）。スキャナーは、このマシンのホームフォルダーとリポジトリのパス（`local_paths`）にも印をつけ、絶対パスについての要件 21.1 を守る。
 
@@ -370,7 +373,7 @@ trial = "T1"
 
 ### Property 3: Ink follows the recorded author
 
-*任意の* 生成された記録について、書き手つきの値から作ったすべてのセグメントは、記録された書き手のインクを持つ（`dr-kiro` -> Dr. Kiro のインク、`bench` -> 鉛筆）。すべてのステータスの語はスタンプのインクを持つ。書き手のないテキストのフィールドを持つ生成エントリーは、記録と行を名指ししてビルドを失敗させる。
+*任意の* 生成された記録について、書き手つきの値から作ったすべてのセグメントは、記録された書き手のインクを持つ（`dr-kiro` -> Dr. Kiro のインク、`bench` -> 鉛筆）。すべてのステータスの語はスタンプのインクを持つ。書き手のないテキストのフィールドを持つ生成エントリーは、記録と行を名指ししてビルドを失敗させる。唯一の例外は Dr. Kiro の固定の語（N29）である: セッションページで、ログエントリーから来る Dr. Kiro のインクのセグメントは、書き手 `dr-kiro` で記録された値か、そのエントリーの判定の語または予測についての Dr. Kiro のラベルのどちらかである。そうした語はそれぞれ Dr. Kiro のインクで見せられ、ビルダーのレベルのスキャンのセグメントでもある。
 
 **Validates: Requirements 4.1, 4.2**
 
@@ -597,6 +600,7 @@ trial = "T1"
 - **N26 Unreadable middle-step table shown as written (user).** 途中のステップでの `TableError` は `Unreadable` になり、`## Discovered spec` の節は書かれたとおりに、ラベルつきの文とともに見せる。行は推測しない（Components 3、要件 16.6、要件の Decision 18、ユーザーが確定）。以前の Open question 2 だったもの。
 - **N27 A table the reader does not accept (user, 2026-11-17).** `parse_table` が拒否する表は、行のない表（`end` より前の実記録のすべてのスナップショット）を含め、`## Discovered spec` の節を書かれたとおりに（Dr. Kiro のインク）、リーダーのメッセージ（ペンシル）、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析せず、2 つ目のリーダーも持たない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使う。wt-002 は最後のスナップショットをこの形で、"not checked by the bench" のラベルつきで見せる（Components 3、要件 10.9、10.14、14.6、16.6、要件の Decision 45）。N26 を拡張。
 - **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** タスク 8.1 によるビルダー自身のテキストのスキャンは、(1) 相対リンクの `../` がラボの外を指すパスと読まれること、(2) `notebook.css` に派生語 `linear`、`thickness`、`spacing` があること、(3) `deco.svg` に `xmlns="http://www.w3.org/2000/svg"` があり、`http:` のサイト検査（タスク 9.5）が拒否すること、(4) 画像の属性とスクリプトの名前がスキャン語であることを見つけた。決定: サイトのレイアウトはフラットで、すべてのページがルートにある（Components 9 の表）。`p/` と `a/` だけがフォルダーなので、どのリンクにも `..` はいらない。CSS は印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾は `xmlns` のないインライン SVG で、`deco.svg` はアセットではない。画像の属性は `data-tile-width` と `data-tile-height`。Components 11 の一般規則が成り立つ。id は Components 9 のとおり検査する。`http:` 検査は厳格なまま。N9 を拡張する（要件 3.2、6.5、20.1、20.2、requirements Decision 46）。
+- **N29 Dr. Kiro's fixed words (user, 2026-11-17).** タスク 12.1 で、判定の語と予測についての Dr. Kiro のラベルが書き手のない素の文字列として記録されていること（ベンチのスキャンはこれらをベンチの文字列として扱う）、一方で同じ値が拒否の `given` には書き手 `dr-kiro` つきで現れることがわかった。決定: これらは要件 4.2 の例外として Dr. Kiro のインクで見せる。`scan.drkiro_word_segments` が、すべての記録からそれぞれをビルダーのレベルのセグメントとしてスキャンに加える。ページが見せるところでの Dr. Kiro のレベルのスキャンとは別である。Property 3 はこの例外を明記する: セッションページで、ログエントリーから来る `DRKIRO` セグメントは、書き手 `dr-kiro` で記録された値か、これらの語のどちらかであり、そうした語はすべて Dr. Kiro のインクで見せられる。`bench/` と記録は変えない（Components 8、11、要件 4.2、15.1、17.4、20.1、requirements Decision 47）。
 
 ## Open questions
 

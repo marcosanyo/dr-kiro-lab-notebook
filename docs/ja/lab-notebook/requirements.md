@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `768624ed73ef6a02eb6b19cbd3757985613e413f6c837e6fc2f62dce3c341615`
+> 原文 SHA-256: `3d3108210ece9c20c4b7e039bbd0eabba86877fa458fc26bb61276e8ce85e5e2`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -88,7 +88,7 @@ Spec: `lab-notebook`。
 **User Story:** 訪問者として、すべての文を誰が書いたかを見たい。また Dr. Kiro の言葉を、書かれたとおりに読みたい。主張を、私たちの解説や計測と区別できるようにするためである。
 #### Acceptance criteria
 1. THE site SHALL show every text in one of three inks, with fixed meanings used everywhere: Dr. Kiro's ink for text whose recorded author is Dr. Kiro; pencil for text whose recorded author is the bench (measurements, outcomes, condition classes, reasons, counts) and for numbers the build computes from them; commentary ink for the builder's text. Status words are the one exception: they are shown in the bench's stamp style (Requirements 8.2, 15.2)。
-2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or, for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build SHALL fail, naming the text's place in the record。
+2. THE ink of a text SHALL follow from the author recorded with it in the record (`lab-bench` Requirement 9.5), or, for the notebook's own text, from the build source. IF the author of a text cannot be determined, THEN THE build SHALL fail, naming the text's place in the record。例外: Dr. Kiro がベンチに渡し、ベンチが書き手のない固定の語として記録する値（判定の語と、予測についての Dr. Kiro のラベル）は、Dr. Kiro のインクで見せる SHALL（要件 15.1、17.4）。THE build SHALL それぞれを、Dr. Kiro のレベルに加えてビルダーのレベルでもスキャンする（要件 20.1）（Decision 47）。
 3. THE site SHALL show text written by Dr. Kiro as written: the same characters in the same order, with its line breaks, HTML-escaped, and not rendered as Markdown or HTML. The cells of a discovered spec table are shown as the bench's table reader gives them。
 4. FOR ALL texts written by Dr. Kiro、the text content of the element that shows the text, parsed from the written HTML, SHALL equal the text in the record character for character, including line breaks (round-trip property)。
 5. THE ink SHALL be distinguishable without colour: each ink SHALL also differ in typeface or style, and a legend of the three inks SHALL be reachable from every page。
@@ -345,6 +345,8 @@ Spec: `lab-notebook`。
 45. **A table the bench reader does not accept**（user、2026-11-17）。`parse_table` は行のない表に対して `TableError` を送出する（"the discovered spec table has no rules"）。そのため実記録の `end` より前のスナップショットはすべて、リーダーが受理しない表であり、行のない表を、メッセージを解析することも 2 つ目のリーダーを持つこともなく（要件 2.6）、他の受理されない表と見分けることはできない。決定: リーダーが受理しない表は、行がなくても他の理由でも、`## Discovered spec` の節を Dr. Kiro のインクで書かれたとおりに、リーダーが返したメッセージをペンシルで、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析しない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使い、そこでは外れた予測をすべて一覧する。wt-002（停止、最後のスナップショットに行なし）は、最後のスナップショットの節をメッセージつきで、"not checked by the bench" のラベルで見せる。N12 の端のケースは変えない: 置き換え先のセルが行自身を指せば "names this row itself"、一致なし（空を含む）なら "names no row of this table"、2 つ以上なら "names more than one row"（要件 10.9、10.14、14.6、16.6、設計 N27。Decision 18 を拡張）。
 
 46. **Flat site and wording that avoids scan terms**（user、2026-11-17）。ビルダー自身のテキストのスキャン（タスク 8.1）は 4 点に印をつけた: 相対リンクの `../`（ラボの外を指すパスと読まれる）、スタイルシートの派生語 `linear`、`thickness`、`spacing`、装飾ファイルの `xmlns` の URL（サイトの `http:` 検査が拒否する）、スキャン語である画像の属性名とスクリプトの名前。決定: すべてのページをサイトのルートに置く。アドレスは `index.html`、`how.html`、`built.html`、`legend.html`、`<app>.html`、`<app>-<session>.html`、`<app>-<session>-replay-<n>.html`。画像は `p/<sha256>.png`、アセットは `a/notebook.css` と `a/notebook.js`。どのリンクにも `..` を含めない。ビルドは、application と session の id が小文字、数字、単独のハイフンだけであること、2 つのページが同じアドレスを持たないことを検査する。スタイルシートは、印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾はインライン SVG で、`xmlns` を持たない。画像のレイアウト属性は `data-tile-width` と `data-tile-height`。サイトの `http:` 検査は厳格なまま。ビルダーのテキストへのスキャンの指摘は、常に言い換えで直す（design N28）（要件 3.2、6.5、11.1、20.1、20.2）。
+
+47. **Dr. Kiro's fixed words**（user、2026-11-17）。タスク 12.1 で、判定の語と予測についての Dr. Kiro のラベルが、ベンチの `verdict` と `register` のエントリーに書き手のない素の文字列として記録されていること（ベンチのスキャンはこれらをベンチの文字列として扱う）、一方で同じ値が拒否の `given` には書き手 `dr-kiro` つきで現れることがわかった。要件 15.1 と 17.4 は Dr. Kiro のインクを求め、4.2 はインクが記録された書き手に従うとしている。決定: これらの語は Dr. Kiro のインクのままとし、要件 4.2 に例外として書く。Dr. Kiro がこれらを選び、ベンチは固定の集合と照らして検査しただけだからである。さらにビルドはそれぞれを Dr. Kiro のレベルに加えてビルダーのレベルでもスキャンし、この例外から語が漏れないようにする。ベンチと記録は変えない（要件 4.2、15.1、17.4、20.1、design N29）。
 
 ## Open questions
 なし。
