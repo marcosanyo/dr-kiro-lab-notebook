@@ -172,7 +172,8 @@ def link_problems(site: Path) -> list[str]:
 
 def page_problems(site: Path) -> list[str]:
     """Per page: the one stylesheet and the one script of the site, no inline script, buttons only for the
-    moving pictures, and a link to the ink legend (3.1, 3.3, 3.4, 4.5)."""
+    moving pictures, a link to the ink legend (3.1, 3.3, 3.4, 4.5) and a link to how the lab works (footer,
+    user 2026-11-17)."""
     out = []
     for page in pages(site):
         p = parse(site, page)
@@ -186,9 +187,10 @@ def page_problems(site: Path) -> list[str]:
         for b in p.buttons:
             if b.get("type") != "button" or b.get("data-action") not in BUTTON_ACTIONS:
                 out.append(f"{page}: a button that is not a moving picture control: {b}")
-        legend = [v for tag, name, v in p.links if tag == "a" and name == "href" and v == addresses.LEGEND]
-        if not legend:
-            out.append(f"{page}: no link to {addresses.LEGEND}")
+        anchors = {v for tag, name, v in p.links if tag == "a" and name == "href"}
+        for target in (addresses.LEGEND, addresses.HOW):
+            if target not in anchors:
+                out.append(f"{page}: no link to {target}")
         if not "".join(p.text).strip():
             out.append(f"{page}: no text outside scripts")
     return out

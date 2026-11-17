@@ -1,4 +1,4 @@
-"""Shared page parts: stamp, sticky note, tab, legend link (design 9). Task 7.5.
+"""Shared page parts: stamp, sticky note, tab, footer links (design 9). Task 7.5.
 
 Every part returns a list of segments. Commentary comes only from `text.py` (`say`); record text keeps the ink
 of its recorded author. Every `href` comes from `addresses.py`, which checks the ids it puts in an address.
@@ -131,15 +131,26 @@ def decoration() -> list[Segment]:
     )
 
 
-def legend_link() -> list[Segment]:
-    """The footer link to the ink legend (Requirement 4.5). Every page is at the site root (design N28)."""
-    return html.element("footer", {"class": "footer"}, link(addresses.LEGEND, say_text("LEGEND_LINK")))
+def footer() -> list[Segment]:
+    """The page footer: the link to the ink legend (Requirement 4.5) and, next to it, the link to how the lab
+    works, `how.html` (user, 2026-11-17). Every page is at the site root, so both links are relative without
+    `..` (design N28)."""
+    return html.element(
+        "footer",
+        {"class": "footer"},
+        [
+            *link(addresses.LEGEND, say_text("LEGEND_LINK")),
+            *say_text("LIST_SEPARATOR"),
+            *link(addresses.HOW, say_text("HOW_LINK")),
+        ],
+    )
 
 
 def page(title: str, children: list[Segment]) -> list[Segment]:
     """A whole page at the site root: the head with the stylesheet, the decoration, `children` in the content
-    column, the footer link to the ink legend, and the page script. `title` is the name of a string in
-    `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an ink element."""
+    column, the footer with its links to the ink legend and to how the lab works, and the page script. `title`
+    is the name of a string in `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an ink
+    element."""
     head = html.element(
         "head",
         None,
@@ -156,7 +167,7 @@ def page(title: str, children: list[Segment]) -> list[Segment]:
         [
             *decoration(),
             *html.element("main", {"class": "page"}, children),
-            *legend_link(),
+            *footer(),
             *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),
         ],
     )

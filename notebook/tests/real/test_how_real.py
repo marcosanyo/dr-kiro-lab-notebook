@@ -88,7 +88,14 @@ def test_the_page_names_the_four_tools_and_links_only_pages_of_the_site(loaded, 
     shown = "".join(page.text)
     for tool in ("register_hypothesis", "run_experiment", "record_verdict", "end_session"):
         assert tool in shown
-    expected = {addresses.COVER, addresses.LEGEND, addresses.STYLESHEET, "body-lab.html", "wind-tunnel.html"}
+    expected = {
+        addresses.COVER,
+        addresses.LEGEND,
+        addresses.HOW,
+        addresses.STYLESHEET,
+        "body-lab.html",
+        "wind-tunnel.html",
+    }
     expected |= {f"{r.application}-{r.session}.html" for r in loaded}
     assert set(page.links) == expected
     # The commentary names no folder (18.5). Recorded refusal messages name lab spec files and are shown as

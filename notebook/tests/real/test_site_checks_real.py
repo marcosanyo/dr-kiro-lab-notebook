@@ -43,7 +43,7 @@ def test_every_real_link_is_relative_into_the_flat_site(site):
     assert site_checks.link_problems(site) == []
 
 
-def test_every_real_page_has_one_script_one_stylesheet_picture_buttons_and_the_legend_link(site):
+def test_every_real_page_has_one_script_one_stylesheet_picture_buttons_and_the_footer_links(site):
     assert site_checks.page_problems(site) == []
 
 

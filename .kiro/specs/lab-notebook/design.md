@@ -323,7 +323,7 @@ class Segment:
 ### 9. Pages (Requirements 3, 8, 10, 13, 14, 16-19)
 
 Pages are Python functions that return a list of segments; no template engine. Every page links the ink legend
-(4.5) in its footer.
+(4.5) in its footer, and next to it `how.html`, how the lab works (18; user, 2026-11-17).
 
 | Address | Page |
 |---|---|
@@ -891,6 +891,13 @@ changes `bench/`.
   3 states the exception: on a session page, a `DRKIRO` segment from a log entry is a value recorded with author
   `dr-kiro` or one of these words, and every such word is shown in Dr. Kiro's ink. `bench/` and the records are
   not changed (Components 8, 11; Requirements 4.2, 15.1, 17.4, 20.1; requirements Decision 47).
+- **N30 Declaration columns on `how.html` and the footer link (user, 2026-11-17).** Task 14.1 found that the
+  sealed body-1 record's declaration differs from body-2's only in a field the page does not show. Decided: on
+  `how.html` records of one application are shown in separate columns only when the five items of Requirement 18.3
+  differ (knobs and their ranges, measurements, budget, picture kind, goal); every other field of the declaration,
+  such as how the measurements are made (`measured_by`) and the knob descriptions, is not shown and does not make a
+  column (`how.declaration_key`). Every page's footer links `how.html` next to the ink legend link (Components 9).
+  The records and `bench/` are not changed (Requirement 18.3).
 
 ## Open questions
 

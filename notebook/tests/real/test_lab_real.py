@@ -145,11 +145,12 @@ def test_the_legend_names_the_inks_and_every_status_word_in_commentary(loaded) -
     assert addresses.LEGEND in _parse(segments).links
 
 
-def test_every_lab_page_and_the_legend_link_the_legend(loaded) -> None:
+def test_every_lab_page_and_the_legend_link_the_legend_and_how_the_lab_works(loaded) -> None:
     pages = lab.pages(loaded)
     assert sorted(pages) == ["body-lab.html", "wind-tunnel.html"]
     for segments in [*pages.values(), lab.legend()]:
-        assert addresses.LEGEND in _parse(segments).links
+        links = _parse(segments).links
+        assert addresses.LEGEND in links and addresses.HOW in links
 
 
 def test_the_new_commentary_passes_the_word_check(loaded) -> None:

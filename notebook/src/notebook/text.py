@@ -37,7 +37,8 @@ REFUSED_END_NO_COPY = "the record holds no copy of the table that was refused"
 # Shared labels (Requirements 4.5, 12.7, 8.2).
 WRITTEN_BY_DRKIRO = "written by Dr. Kiro"
 CHOSEN_BY_A_PERSON = "chosen by a person"
-LEGEND_LINK = "ink legend: who wrote each text"
+LEGEND_LINK = "ink legend"
+HOW_LINK = "how the lab works"
 LIST_SEPARATOR = ", "
 
 # Labels below a status stamp (Requirements 8.2, 10.7).

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `75b10c566d035de45f0fc47e8b5a03a16cd186fe8ff0f5b6ab1ff5932f9dbcdf`
+> 原文 SHA-256: `41bcb33bc266131363d2e4d1adaa083ea1f81a4705380cea03ed6690451c0a24`
 
 # Design: lab-notebook
 
@@ -233,7 +233,7 @@ class Segment:
 
 ### 9. Pages (Requirements 3, 8, 10, 13, 14, 16-19)
 
-ページは、セグメントのリストを返す Python の関数である。テンプレートエンジンは使わない。すべてのページはフッターにインクの凡例（4.5）へのリンクを持つ。
+ページは、セグメントのリストを返す Python の関数である。テンプレートエンジンは使わない。すべてのページはフッターにインクの凡例（4.5）へのリンクを持ち、その隣に `how.html`（ラボの仕組み、18。ユーザー、2026-11-17）へのリンクを持つ。
 
 | Address | Page |
 |---|---|
@@ -601,6 +601,7 @@ trial = "T1"
 - **N27 A table the reader does not accept (user, 2026-11-17).** `parse_table` が拒否する表は、行のない表（`end` より前の実記録のすべてのスナップショット）を含め、`## Discovered spec` の節を書かれたとおりに（Dr. Kiro のインク）、リーダーのメッセージ（ペンシル）、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析せず、2 つ目のリーダーも持たない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使う。wt-002 は最後のスナップショットをこの形で、"not checked by the bench" のラベルつきで見せる（Components 3、要件 10.9、10.14、14.6、16.6、要件の Decision 45）。N26 を拡張。
 - **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** タスク 8.1 によるビルダー自身のテキストのスキャンは、(1) 相対リンクの `../` がラボの外を指すパスと読まれること、(2) `notebook.css` に派生語 `linear`、`thickness`、`spacing` があること、(3) `deco.svg` に `xmlns="http://www.w3.org/2000/svg"` があり、`http:` のサイト検査（タスク 9.5）が拒否すること、(4) 画像の属性とスクリプトの名前がスキャン語であることを見つけた。決定: サイトのレイアウトはフラットで、すべてのページがルートにある（Components 9 の表）。`p/` と `a/` だけがフォルダーなので、どのリンクにも `..` はいらない。CSS は印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾は `xmlns` のないインライン SVG で、`deco.svg` はアセットではない。画像の属性は `data-tile-width` と `data-tile-height`。Components 11 の一般規則が成り立つ。id は Components 9 のとおり検査する。`http:` 検査は厳格なまま。N9 を拡張する（要件 3.2、6.5、20.1、20.2、requirements Decision 46）。
 - **N29 Dr. Kiro's fixed words (user, 2026-11-17).** タスク 12.1 で、判定の語と予測についての Dr. Kiro のラベルが書き手のない素の文字列として記録されていること（ベンチのスキャンはこれらをベンチの文字列として扱う）、一方で同じ値が拒否の `given` には書き手 `dr-kiro` つきで現れることがわかった。決定: これらは要件 4.2 の例外として Dr. Kiro のインクで見せる。`scan.drkiro_word_segments` が、すべての記録からそれぞれをビルダーのレベルのセグメントとしてスキャンに加える。ページが見せるところでの Dr. Kiro のレベルのスキャンとは別である。Property 3 はこの例外を明記する: セッションページで、ログエントリーから来る `DRKIRO` セグメントは、書き手 `dr-kiro` で記録された値か、これらの語のどちらかであり、そうした語はすべて Dr. Kiro のインクで見せられる。`bench/` と記録は変えない（Components 8、11、要件 4.2、15.1、17.4、20.1、requirements Decision 47）。
+- **N30 Declaration columns on `how.html` and the footer link (user, 2026-11-17).** タスク 14.1 で、封印済みの body-1 の記録の宣言は、body-2 の宣言と、ページが見せないフィールドだけが違うことがわかった。決定: `how.html` では、1 つのアプリケーションの記録を別々の列で見せるのは、要件 18.3 の 5 つの項目（ノブとその範囲、測定、予算、画像の種類、目標）が違うときだけである。宣言のそれ以外のフィールド、たとえば測定の作り方（`measured_by`）やノブの説明は見せず、列を作らない（`how.declaration_key`）。すべてのページのフッターは、インクの凡例へのリンクの隣に `how.html` へのリンクを持つ（Components 9）。記録と `bench/` は変えない（要件 18.3）。
 
 ## Open questions
 

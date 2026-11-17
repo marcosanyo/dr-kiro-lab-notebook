@@ -47,7 +47,7 @@ def _segments(
         out += session.table_section(views.full(record), chosen, pin)
     for trial in record.trials:
         out += pin(trial)
-    out += parts.legend_link()
+    out += parts.footer()
     return out
 
 

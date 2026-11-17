@@ -66,7 +66,7 @@ def planted_record(tmp_path_factory, term) -> records.RecordModel:
 def test_a_term_planted_in_a_text_py_string_fails_naming_the_source(scanner, term, monkeypatch) -> None:
     monkeypatch.setattr(text, "LEGEND_LINK", f"ink legend of the {term}")
     with pytest.raises(scan.ScanFailed) as caught:
-        scan.check(scanner, {"legend.html": parts.legend_link()})
+        scan.check(scanner, {"legend.html": parts.footer()})
     found = caught.value.findings
     # Pass 1 names the text.py string; pass 2 names the finished file.
     assert any(f.file == text.source("LEGEND_LINK") and f.kind == "term" and f.match == term for f in found)

@@ -1,4 +1,4 @@
-"""Shared page parts (task 7.5): stamp classes, the tab, the legend link."""
+"""Shared page parts (task 7.5): stamp classes, the tab, the footer links."""
 
 import pytest
 
@@ -33,10 +33,13 @@ def test_a_bad_row_id_is_never_put_in_a_link() -> None:
         parts.row_link('R1" onclick="x', "fixture", [])
 
 
-def test_legend_link_is_relative_at_the_site_root() -> None:
-    page = _html(parts.legend_link())
-    assert '<footer class="footer"><a href="legend.html">' in page
-    assert ".." not in page and "/" not in page.split('href="', 1)[1].split('"', 1)[0]
+def test_footer_links_the_legend_and_how_the_lab_works_relative_at_the_site_root() -> None:
+    page = _html(parts.footer())
+    assert page.startswith('<footer class="footer"><a href="legend.html">')
+    hrefs = [part.split('"', 1)[0] for part in page.split('href="')[1:]]
+    assert hrefs == ["legend.html", "how.html"]
+    assert text.HOW_LINK in page
+    assert ".." not in page and all("/" not in href for href in hrefs)
 
 
 def test_sticky_note_and_blocks_use_no_generic_block_element() -> None:

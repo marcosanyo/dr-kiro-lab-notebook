@@ -61,7 +61,7 @@ def test_every_link_is_relative_into_the_flat_site(fixture_site):
     assert site_checks.link_problems(site) == []
 
 
-def test_every_page_has_the_one_script_and_stylesheet_only_picture_buttons_and_the_legend_link(fixture_site):
+def test_every_page_has_the_one_script_and_stylesheet_only_picture_buttons_and_the_footer_links(fixture_site):
     _, site = fixture_site
     assert site_checks.page_problems(site) == []
 
