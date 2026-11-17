@@ -78,8 +78,11 @@ def test_absent_and_empty_out_pass_the_check(tmp_path):
     assert not (tmp_path / "absent").exists()
 
 
-def test_build_not_written_yet_fails_with_exit_1(tmp_path, capsys):
+def test_a_failed_check_exits_1_naming_the_input_and_writes_nothing(tmp_path, capsys):
     assert cli.main(_argv(out=tmp_path / "out")) == 1
     err = capsys.readouterr().err
-    assert err.startswith("notebook-build: notebook-build: ")
+    assert err.startswith("notebook-build: no-such/scan_sources.toml") or err.startswith(
+        "notebook-build: blind scan: "
+    )
     assert not (tmp_path / "out").exists()
+    assert not (tmp_path / ".out.staging").exists()

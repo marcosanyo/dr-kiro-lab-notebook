@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
+from notebook import build
 from notebook.errors import NotebookError
 from notebook.inputs import Inputs, check_out
 
@@ -57,9 +58,9 @@ def parse(argv: list[str]) -> Inputs:
 
 
 def run(inputs: Inputs) -> None:
-    """Run the build. The phases (design "Overview") are written in later tasks; until then this fails."""
+    """Run the build (design "Overview"). The command line never accepts fake records (design N19)."""
     check_out(inputs.out)
-    raise NotebookError(PROG, "the build phases are not written yet (lab-notebook task 9.2)")
+    build.build(inputs, allow_fake=False)
 
 
 def main(argv: list[str] | None = None) -> int:

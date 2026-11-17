@@ -7,7 +7,8 @@ of its recorded author. Every `href` comes from `addresses.py`, which checks the
 from bench.specfiles.discovered import STATUSES
 
 from notebook import addresses, html, text
-from notebook.ink import Segment, commentary, markup
+from notebook.errors import NotebookError
+from notebook.ink import Ink, Segment, commentary, markup
 
 
 def say(name: str) -> Segment:
@@ -160,3 +161,16 @@ def page(title: str, children: list[Segment]) -> list[Segment]:
         ],
     )
     return [markup("<!doctype html>\n"), *html.element("html", {"lang": "en"}, [*head, *body]), markup("\n")]
+
+
+def with_fixture_banner(segments: list[Segment], where: str) -> list[Segment]:
+    """A whole page (from `page`) with the "test fixture" banner as the first thing in its body (design N19).
+    Only `build(..., allow_fake=True)` calls this; the command line cannot."""
+    opens = [i for i, s in enumerate(segments) if s.ink is Ink.MARKUP and s.text == "<body>"]
+    if len(opens) != 1:
+        raise NotebookError(
+            where, f"a page needs exactly one <body> to carry the fixture banner, found {len(opens)}"
+        )
+    banner = sticky(html.element("p", None, say_text("FIXTURE_BANNER")))
+    at = opens[0] + 1
+    return [*segments[:at], *banner, *segments[at:]]

@@ -25,7 +25,8 @@ from notebook.errors import NotebookError
 from notebook.ink import Authored, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
 from notebook.pages import parts
-from notebook.pages.parts import chosen, drkiro_block, row_link, say_text, stamp, sticky, tab
+from notebook.pages.parts import chosen, drkiro_block, link, row_link, say_text, stamp, sticky, tab
+from notebook.pages.photo import PictureFile, Pins
 from notebook.records import Outcome, Prediction, RecordModel, Snapshot, Trial
 from notebook.views import View
 
@@ -322,3 +323,36 @@ def table_section(view: View, choices: Choices, pin: Pin | None = None) -> list[
     return html.element(
         "section", {"class": "with-margin", "id": "table"}, [*page, *_margin(view, choices, pin)]
     )
+
+
+# The page
+
+
+def has_page(record: RecordModel) -> bool:
+    """Whether the session page of this record is written yet. A record without a snapshot (wt-003) gets its
+    own page in task 13.1 (Requirements 14.6, 16.9); until then the build writes no page for it."""
+    return bool(record.snapshots)
+
+
+def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple[PictureFile, ...]]:
+    """The session page as of `view` and the pictures it shows. Today it holds the table section with its
+    margin (Requirement 10.1); task 12.1 adds the other sections after it."""
+    record = view.record
+    start = _entry_source(record, 1)
+    lab_page = addresses.lab(record.application, start)
+    addresses.session(record.application, record.session, start)
+    heading = [
+        *say_text("SESSION_HEADING"),
+        *html.text(pencil(record.session, start)),
+        *say_text("SESSION_OF_LAB"),
+        *html.text(pencil(record.application, start)),
+    ]
+    body = [
+        *html.element("p", None, link(lab_page, say_text("BACK_TO_LAB"))),
+        *html.element("h1", None, heading),
+        *table_section(view, choices, pins),
+    ]
+    unique: dict[str, PictureFile] = {}
+    for picture in pins.files:
+        unique.setdefault(picture.path, picture)
+    return parts.page("SESSION_TITLE", body), tuple(unique.values())

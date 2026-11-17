@@ -197,3 +197,14 @@ STATUS_REJECTED = (
     "the row cites at least one miss and names the row that replaces it. "
     "It is struck through and stays in its place in the table."
 )
+
+# The session page, `<app>-<session>.html` (Requirement 10). Task 12.1 adds its other sections.
+SESSION_TITLE = "A session"
+SESSION_HEADING = "Session "
+SESSION_OF_LAB = " of the lab "
+BACK_TO_LAB = "back to the lab's sessions"
+
+# The banner of a build from labelled test fixtures (design N19). The command line never shows it.
+FIXTURE_BANNER = (
+    "test fixture: this page is built from labelled fixture records, and nothing on it is a result."
+)
