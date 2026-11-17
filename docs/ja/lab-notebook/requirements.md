@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `6216ac699eb62eae78fb1c609beb6d6c20c5618c12f9682774572ee579bcb8b3`
+> 原文 SHA-256: `84f06c023f560baf593bb46d0c7503dce6921519b3840ef80e2c8422ce49167e`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -124,7 +124,7 @@ Spec: `lab-notebook`。
 6. THE site SHALL show a moving picture by showing the cells of the sheet in reading order (left to right, then top to bottom), one at a time at a fixed rate set in the visual system, and then starting again。
 7. THE site SHALL copy each picture as recorded, byte for byte, under a name made from its blob hash, and SHALL NOT re-encode it。
 8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once。
-9. FOR each trial's moving picture, except the small pictures of the lab cards (Requirement 13.4)、THE site SHALL show beside it an enlarged picture of the range of the track: a magnified view, derived by the build from the record's own picture sheet, in which the body in its cell is readable. THE build SHALL derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5) (Decision 50)。
+9. FOR each trial's moving picture, except the small pictures of the lab cards (Requirement 13.4)、THE site SHALL show beside it an enlarged picture of the moving body: a magnified view, derived by the build from the record's own picture sheet, in which the body in its cell is readable. THE build SHALL choose the region of the enlarged picture as the box, over all frames of the sheet, of the pixels that change between frames, plus a margin of 4 pixels, clipped to its cell; SHALL scale it by the smallest whole-number factor (nearest neighbour) that makes it at least as large as the frame; and, WHEN no pixel changes, SHALL use the whole cell. THE build SHALL NOT use the track to choose the region, because the records hold no mapping from track coordinates to picture pixels. THE build SHALL derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5) (Decision 50)。
 ### Requirement 8: The discovered spec table
 **対象:** 訪問者とビルダー。表を書いたのは Dr. Kiro で、検査したのはベンチ。
 **User Story:** 訪問者として、発見された spec の表を中心に置き、各規則のステータスをベンチの言葉で、その証拠をひと押しで見たい。何が見つかり、どれほど確かかが分かるようにするためである。
@@ -354,6 +354,6 @@ Spec: `lab-notebook`。
 
 48. **This version stops after the prediction chart**（user、2026-11-17）。この版に含めないもの: 封印された記録のリプレイ（要件 16 のすべての基準。本物の記録は最後のステップまで表が空なので、リプレイはほとんどのステップで空の表を見せることになる）、等しい試行の一覧（要件 14.5）、body-lab の入力の線（要件 9.8）、実験エントリーの中の記録された軌跡（要件 10.10）。タスク 19、20、21（予測チャートより後のマイルストーン 3 の残り）は止める。予測チャート（要件 17）と要件 5.4 はこの版に残り、カバーの軌跡（要件 13.7）も残る。これらの要件、設計の節、Property 9 と等しい試行の Property は、「not in this version」と印をつけて文書に残し、ビルドは実装しない。これは Decision 40 の納品順序を変える（要件 9.8、10.1、10.10、14.5、14.6、16、22.3、22.5、design の Delivery order）。
 49. **Rejected-row tab open by default**（user、2026-11-17）。`rejected` の行の "replaced by" タブは、表を見せるときに開いており、置き換える規則がクリックなしで読める。中身とリンクは Decision 32 のとおり（要件 8.13、design N31）。
-50. **Enlarged picture of the body**（user、2026-11-17）。各試行の動く画像の隣に、軌跡の範囲を拡大した画像を見せ、セルの中の体が読めるようにする。記録された画像シートからビルド時に導出する。記録された PNG ファイルは変えない。代替テキストは、隣の画像の拡大表示であることを述べ、コメンタリーの語のリストの語を使わない（要件 7.9、design N32）。
+50. **Enlarged picture of the body**（user、2026-11-17）。各試行の動く画像の隣に、動く体を拡大した画像を見せ、セルの中の体が読めるようにする。領域は、フレーム間で変わるピクセルの箱に 4 px の余白を足し、そのセルで切ったもの。フレーム以上の大きさになる最小の整数倍で拡大する（何も動かなければセル全体）。記録には軌跡の座標から画像のピクセルへの対応がないので、軌跡は使わない。記録された画像シートからビルド時に導出する。記録された PNG ファイルは変えない。代替テキストは、隣の画像の拡大表示であることを述べ、コメンタリーの語のリストの語を使わない（要件 7.9、design N32）。
 ## Open questions
 なし。

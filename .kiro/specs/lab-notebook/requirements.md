@@ -290,9 +290,13 @@ numbers.
    re-encode it.
 8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once.
 9. FOR each trial's moving picture, except the small pictures of the lab cards (Requirement 13.4), THE site SHALL show
-   beside it an enlarged picture of the range of the track: a magnified view, derived by the build from the
-   record's own picture sheet, in which the body in its cell is readable. THE build SHALL derive the enlarged picture
-   at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the
+   beside it an enlarged picture of the moving body: a magnified view, derived by the build from the record's own
+   picture sheet, in which the body in its cell is readable. THE build SHALL choose the region of the enlarged picture
+   as the box, over all frames of the sheet, of the pixels that change between frames, plus a margin of 4 pixels,
+   clipped to its cell; SHALL scale it by the smallest whole-number factor (nearest neighbour) that makes it at least
+   as large as the frame; and, WHEN no pixel changes, SHALL use the whole cell. THE build SHALL NOT use the track to
+   choose the region, because the records hold no mapping from track coordinates to picture pixels. THE build SHALL
+   derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the
    enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
    "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
    (Decision 50).
@@ -931,8 +935,11 @@ exception to a rule.
     the table is shown, so that the replacing rule is readable without a click. Its content and link are as in
     Decision 32 (Requirement 8.13; design N31).
 50. **Enlarged picture of the body** (user, 2026-11-17). Beside each trial's moving picture, the site shows an
-    enlarged picture of the range of the track, so that the body in its cell is readable. It is derived at build time
-    from the record's own picture sheet; the recorded PNG file is not changed. Its alt text says that it is a
+    enlarged picture of the moving body, so that the body in its cell is readable. Its region is the box of the pixels
+    that change between frames, plus a 4 px margin, clipped to its cell, scaled by the smallest whole-number factor
+    that makes it at least as large as the frame (the whole cell if nothing moves); the track is not used, because
+    the records have no mapping from track coordinates to picture pixels. It is derived at build time from the
+    record's own picture sheet; the recorded PNG file is not changed. Its alt text says that it is a
     magnified view of the picture beside it, and uses no word of the commentary word list (Requirement 7.9; design
     N32).
 

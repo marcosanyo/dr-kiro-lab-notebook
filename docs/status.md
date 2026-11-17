@@ -3,13 +3,13 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: ローカル、2026-11-17、`lab-notebook` のチェックポイント 11（タスク 11）の答えを記録した後。
+最終更新: ローカル、2026-11-17、`lab-notebook` を PR にする前（拡大画像の領域の規則を確定した後）。
 
 ## brief の改訂（ブランチ `docs/brief-final-edit`）
 - `docs/brief.md` を今の方針に合わせた: 題は Dr. Kiro's Lab Notebook、決め台詞は The experiment gets the final edit.。ノートは発見した spec の表が中心
   （ベンチの状態の語 4 つを文字で出す）。新しい spec `build-from-spec`（4.5）を足し、publish は 4.6 になった。`angle` [0, 15]°、画像は PNG の画像シート、
   MCP は決定済み、レイアウトは今のフォルダーに合わせた。`.kiro/steering/product.md` も合わせた。
-- **次の一手:** `lab-notebook` の設計、続いてタスク（下の「ラボノートブック」を参照）。その後に `build-from-spec` の要件を作る（4.5）。
+- **次の一手:** `lab-notebook` の PR（下の「ラボノートブック」を参照）。その後に `build-from-spec` の要件を作る（4.5）。
 - **済み:** Dr. Kiro の雛形（`bench/src/bench/drkiro/files/workflow.md` と各ラボの `lab/.kiro/steering/workflow.md`）に
   「否定された規則は表から消さず、`rejected` の行として残す」の 1 文を足した。`partly` と `rejected` のどちらに書くかは Dr. Kiro に任せたまま。
   これから始めるセッションは、この 1 文がある条件で始まる。`dr-kiro` の spec（要件 3.7、設計 5.2、Decision 8）に記録した。
@@ -25,14 +25,18 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   3. `rejected` の行: 取り消し線は行の文だけにかけ、スタンプのラベルにはかけない。
   4. 選んだ外れの付箋: 測定の名前を分けて読みやすくする（「measured x: <値>」）。
 - 1、3、4 は `.kiro/steering/notebook-visual.md` に先に書き、その後にページを直した（要件 6.6）。
-- **次の一手:** マイルストーン 2、タスク 12.1 から。
+- この後の進み方は下の「ラボノートブック」を参照。
 
-## ラボノートブック（ブランチ `spec/lab-notebook`、worktree `.worktrees/lab-notebook`）
-- 要件、設計、タスクを書き、それぞれの日本語の参考訳（`docs/ja/lab-notebook/`）まで済み。body-2 を含む封印済み記録が前提。
-- タスク 1〜10 は済み、チェックポイント 11 の答えは上に記録した。納品の順序は Decision 40。
-- **ユーザーの決定（要件 Decision 42）:** ブラインドスキャンが各アダプターの宣言を import するので、ノートブックは `bench` と両方のアダプターにパスで依存する
-  （MuJoCo と `wind-tunnel-model` はインストールされるが、シミュレーターもソルバーも Docker も動かさない）。
-- 途中の段で読めない表は書かれたまま出す（ユーザーが確定、要件 Decision 18、設計 N26）。未決の質問はなし。
+## ラボノートブック（ブランチ `feat/lab-notebook`、PR はこのブランチのもの）
+- **今の状態:** タスク 1〜18 と 8.1 は済み。15.2 と 17 も済み。この版は予測のグラフまでで止める（Decision 48）:
+  リプレイ、同じ試行数の比較、入力の線、試行ごとの軌跡はこの版に入れない。タスク 19〜21 は止めた。リプレイのコードはリポジトリに残るが、ビルドには入らない。
+- Decision 49: `rejected` の行の「replaced by」タブは、表を出したときに開いている（要件 8.13、設計 N31）。
+- Decision 50: 各試行の動く画像の隣に、体の拡大画像を出す。領域は、フレーム間で変わるピクセルの箱に 4 px の余白を足し、セルで切ったもの。
+  フレーム以上になる最小の整数倍で最近傍拡大し、何も動かなければセル全体。記録には軌跡の座標から画像のピクセルへの対応がないので、軌跡は使わない（要件 7.9、設計 N32）。
+- **まだ:** タスク 22〜24（`built.html`、done-when のテスト、引き渡し）。拡大画像と開いたタブを 360px の幅でブラウザーで見ていない。
+- **未決:** body-1 の `measured_by`（下の未決の質問 7）。
+- 納品の順序は Decision 40。ブラインドスキャンのため、ノートブックは `bench` と両方のアダプターにパスで依存する（Decision 42。シミュレーターやソルバーは動かさない）。
+- 途中の段で読めない表は書かれたまま出す（要件 Decision 18、設計 N26）。
 - ルート `.kiro/` へのリンクは置かない（README を書くときに決める）。公開時のサイトの再スキャン方法は publish の spec で決める。
 - **README のステップへ:** README の限界に 1 行: ベンチの end 拒否文の中の引用 `H11.P3: hit/not-comparable` は、記録では書き手が Dr. Kiro になっている（ベンチの意図、`bench/src/bench/specfiles/discovered.py` の `_summary`）。ノートは記録どおり Dr. Kiro のインクで出し、注記を添える。ベンチは直さない（ユーザーの決定）。
 ## Dr. Kiro の spec の写し（ブランチ `feat/discovered-spec-export`）
