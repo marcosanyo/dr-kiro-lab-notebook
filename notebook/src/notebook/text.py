@@ -82,3 +82,16 @@ MEASURED = ", measured "
 PINNED_CONTRAST = "contrast"
 PINNED_BEST = "best result"
 PINNED_NONE = "none. The reason given: "
+
+# Moving pictures (Requirements 7.6, 7.8; design 10). The buttons are shown by the page script; without it the
+# whole sheet is shown.
+PHOTO_ALT = "the trial's picture sheet, every cell in reading order"
+PHOTO_TRIAL = "trial "
+PHOTO_PLAY = "play"
+PHOTO_PAUSE = "pause"
+PHOTO_STEP = "step one cell"
+PHOTO_SHEET = "whole sheet"
+
+# Overhead track of a trial (Requirements 10.10, 13.7; design N21).
+TRACK_CAPTION = "recorded track seen from above, equal scale on both axes; the circle marks the start"
+TRACK_NOT_MEASURED = "No track is drawn: the recorded series is not measured. "
