@@ -80,7 +80,7 @@ def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expe
 def test_every_picture_is_named_by_the_sha256_of_its_bytes(loaded, table) -> None:
     for record in loaded.values():
         for trial in record.trials:
-            _, (picture, _) = photo.photo(record, trial, table[record.application])
+            _, (picture, *_) = photo.photo(record, trial, table[record.application])
             assert picture.data == trial.picture.data
             assert picture.path == f"p/{hashlib.sha256(picture.data).hexdigest()}.png"
 
