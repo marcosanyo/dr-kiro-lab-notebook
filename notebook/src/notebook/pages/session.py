@@ -1115,7 +1115,7 @@ def _refusal(view: View, refusal: Refusal) -> list[Segment]:
 
 
 def _refusals(view: View) -> list[Segment]:
-    items = [s for r in view.refusals for s in _refusal(view, r)]
+    items = [s for r in view.events for s in _refusal(view, r)]
     content = (
         [
             *html.element("p", None, say_text("REFUSALS_INTRO")),

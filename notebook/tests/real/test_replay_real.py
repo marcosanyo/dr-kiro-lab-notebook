@@ -102,10 +102,13 @@ def test_body_2_has_the_refusals_of_the_end_step_only_after_e11(site, loaded):
     record = loaded[("body-lab", "body-2")]
     before_end = _parse(_step_path(site, record, 11))
     end = _parse(_step_path(site, record, 12))
-    # The register refusal (entry 2) is in every step from step 1; the two end refusals (entries 122 and 123)
-    # come after the E11 verdict step (entry 121) and so only in the end step (Requirement 16.12).
-    assert len(before_end.find_all("li", "refusal")) == 1
-    assert len(end.find_all("li", "refusal")) == 3
+    # The register refusal (entry 2) is an event of step 1, the first step after it, and of no later
+    # step. The two end refusals (entries 122 and 123) come after the E11 verdict step (entry 121), so
+    # they are events of the end step only (Requirement 16.12, Property 9).
+    first = _parse(_step_path(site, record, 1))
+    assert len(first.find_all("li", "refusal")) == 1
+    assert len(before_end.find_all("li", "refusal")) == 0
+    assert len(end.find_all("li", "refusal")) == 2
 
 
 def test_body_2_middle_steps_are_not_yet_checked_and_the_end_step_is_checked(site, loaded):

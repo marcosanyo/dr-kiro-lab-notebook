@@ -9,7 +9,7 @@ page uses `upto = len(entries)`. There is one code path for both (design 2).
 state (design N3); a test compares the two on a fake session.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from bench.core.state import State, apply
@@ -41,7 +41,8 @@ class View:
     outcomes: tuple[Outcome, ...]
     verdicts: tuple[Verdict, ...]
     flags: tuple[Flag, ...]
-    refusals: tuple[Refusal, ...]
+    refusals: tuple[Refusal, ...]  # every refusal of the prefix; the refused-end note reads these (10.11)
+    events: tuple[Refusal, ...]  # the refusals this view shows as events (16.12); see `step_view`
     snapshots: tuple[Snapshot, ...]
     shown: Snapshot | None  # the snapshot whose table, plan and requirements are shown
     checked: bool  # True only when `shown` is the accepted `end` snapshot
@@ -111,6 +112,7 @@ def view(record: RecordModel, upto: int, *, replay: bool = False) -> View:
         verdicts=_upto(record.verdicts, upto),
         flags=_upto(record.flags, upto),
         refusals=_upto(record.refusals, upto),
+        events=_upto(record.refusals, upto),
         snapshots=snapshots,
         shown=shown,
         checked=shown is not None and shown.for_ == "end",
@@ -131,8 +133,15 @@ def steps(record: RecordModel) -> list[Step]:
 
 
 def step_view(record: RecordModel, step: Step) -> View:
-    """The view of one replay step: the record entries up to and including the step's snapshot (16.2)."""
-    return view(record, step.seq, replay=True)
+    """The view of one replay step: the record entries up to and including the step's snapshot (16.2).
+
+    A refusal is an event of one step only (16.12, Property 9): the first step whose snapshot comes after it.
+    So `events` keeps the refusals after the previous step's snapshot and before this step's snapshot. A
+    refusal after the last step belongs to no step and no replay step shows it. `refusals` keeps every refusal
+    of the prefix, because the refused-end note is attached to a row of a table the step holds (16.12)."""
+    previous = steps(record)[step.number - 2].seq if step.number > 1 else 0
+    prefix = view(record, step.seq, replay=True)
+    return replace(prefix, events=tuple(r for r in prefix.refusals if r.seq > previous))
 
 
 def evidence(v: View) -> Evidence:
