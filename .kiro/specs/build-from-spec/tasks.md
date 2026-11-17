@@ -52,8 +52,8 @@ Dr. Kiro takes no part.
 
 ### Part 1: lab-bench amendments (design 3.14)
 
-- [ ] 1. Ending without the discovered spec table
-  - [ ] 1.1 Add the `discovered_table` setting to the core and the session config
+- [x] 1. Ending without the discovered spec table
+  - [x] 1.1 Add the `discovered_table` setting to the core and the session config
     - `SessionConfig` (`bench/src/bench/core/session.py`): new field `discovered_table: str`, no default.
       `Session._check_config` refuses any value other than `"required"` and `"not-required"`, naming the setting.
       The start entry holds `"discovered_table"`; `Session.open` compares it with the config like `seed`.
@@ -69,7 +69,7 @@ Dr. Kiro takes no part.
       unchanged.
     - Verified by: the checks of part 1.
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7_
-  - [ ] 1.2 Make the `end_session` description depend on the setting
+  - [x] 1.2 Make the `end_session` description depend on the setting
     - `bench/src/bench/frontend/describe.py`: `END_BASE`, `END_TABLE` and `descriptions(decl, discovered_table)` as
       in design 3.14.1; an unknown value raises naming the setting. `bench/src/bench/frontend/server.py`:
       `BenchServer` calls `descriptions(session.declaration, session.config.discovered_table)`, its only caller.
@@ -79,7 +79,7 @@ Dr. Kiro takes no part.
       unknown value raises; a server started with each value lists the matching `end_session` text.
     - Verified by: the checks of part 1; the body-lab golden told text is unchanged.
     - _Requirements: 8.3, 12.5, 12.9_
-  - [ ] 1.3 Test that records sealed before the amendment stay valid
+  - [x] 1.3 Test that records sealed before the amendment stay valid
     - A test runs `bench-verify` and `final_spec` on `sessions/body-lab/body-1`, `sessions/body-lab/body-2` and
       `sessions/wind-tunnel/wt-004`, whose start entries have no `discovered_table`, and both pass.
     - Before merging, confirm with `bench.drkiro.session.open_sessions` that no session in `bench-run/` is open
@@ -87,8 +87,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 1.
     - _Requirements: 12.8_
 
-- [ ] 2. `bench-check-discovered` skips the run records
-  - [ ] 2.1 Skip `sessions/build-from-spec/` in `check_copies`
+- [x] 2. `bench-check-discovered` skips the run records
+  - [x] 2.1 Skip `sessions/build-from-spec/` in `check_copies`
     - `bench/src/bench/record/spec_copy.py`: `RUN_RECORDS = "build-from-spec"`; `_records` skips that folder;
       `check_copies` adds the report line `build-from-spec: reader run records, no copies` when the folder exists.
       Nothing else changes.
@@ -100,8 +100,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 1; `bench-check-discovered sessions discovered` passes on the repository.
     - _Requirements: 13.7_
 
-- [ ] 3. Wording in the `lab-bench` and `dr-kiro` specs
-  - [ ] 3.1 Write the amendments into the `lab-bench` and `dr-kiro` specs
+- [x] 3. Wording in the `lab-bench` and `dr-kiro` specs
+  - [x] 3.1 Write the amendments into the `lab-bench` and `dr-kiro` specs
     - `.kiro/specs/lab-bench/requirements.md`, `design.md` and `tasks.md`: one amendment section each, in the style
       of the existing amendments, for the ending setting with its `end_session` sentence (this spec's Requirement 12,
       design 3.14.1) and for the skip of `sessions/build-from-spec/` (Requirement 13.7, design 3.14.2), with the
@@ -114,7 +114,7 @@ Dr. Kiro takes no part.
       way this spec does not settle, **stop and report**.
     - Verified by: `validate_spec_format` passes on each changed spec file.
     - _Requirements: 12.5, 13.7_
-  - [ ] 3.2 Update the Japanese translations of the changed spec files
+  - [x] 3.2 Update the Japanese translations of the changed spec files
     - `docs/ja/lab-bench/` and `docs/ja/dr-kiro/`: the translation of every file changed in 3.1, with its
       `原文 SHA-256` header (`japanese-translations.md`).
     - Verified by: `sh scripts/ja-check.sh` reports nothing stale for `lab-bench` and `dr-kiro`.
@@ -127,8 +127,8 @@ Dr. Kiro takes no part.
 
 ### Part 2: the `build-from-spec/` project
 
-- [ ] 5. Project and application table
-  - [ ] 5.1 Create the `build-from-spec/` uv project and `apps.py`
+- [x] 5. Project and application table
+  - [x] 5.1 Create the `build-from-spec/` uv project and `apps.py`
     - `build-from-spec/pyproject.toml`: Python `>=3.12,<3.13`, dependencies `lab-bench` (without the `frontend`
       group) and `body-lab-adapter` by path; console scripts `bfs-check-request`, `bfs-run`, `bfs-run-file`,
       `bfs-check-runs`; dev group `pytest`, `hypothesis`, `ruff`; ruff config as in `bench`. Run `uv lock`.
@@ -141,8 +141,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2; `sh bench/scripts/check.sh` still passes in `bench/`.
     - _Requirements: 1.1, 1.2, 1.3, 4.3, 4.7_
 
-- [ ] 6. Request file
-  - [ ] 6.1 Write `request.py`: parse, print, inside
+- [x] 6. Request file
+  - [x] 6.1 Write `request.py`: parse, print, inside
     - `PassRange`, `Request`, `RequestError`, `parse_request`, `print_request`, `inside` as design 3.2, with the
       refusals in the order of Requirement 2.2, each naming the file and the field or line.
     - Unit tests: the three committed requests parse; each refusal of Requirement 2.2 on a hand-written file; an int
@@ -150,18 +150,22 @@ Dr. Kiro takes no part.
       inside.
     - Verified by: the checks of part 2.
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
-  - [ ] 6.2 Write property test for the request round trip
+  - [x] 6.2 Write property test for the request round trip
     - **Property 1: Request round trip**
     - **Validates: Requirements 2.1, 2.4**
-  - [ ] 6.3 Write property test for malformed requests
+  - [x] 6.3 Write property test for malformed requests
     - **Property 2: Malformed requests are refused by name**
     - **Validates: Requirements 2.2**
-  - [ ] 6.4 Write `check_request` and `bfs-check-request`
+  - [x] 6.4 Write `check_request` and `bfs-check-request`
     - `check_request` and the command as design 3.2: parse, then scan `id` and `words` at the builder level with
       `Scanner.from_config([App.scan_sources], stop_list)`; findings as `<file>:<line>: <kind>: <match>`, exit 1;
-      "no findings", exit 0; writes nothing.
-    - Unit tests: the three committed requests give no findings and change no file; a planted fake term in `words` and
-      in `id` (in a copy, with the fake application's scan sources) fails naming the line; a format error fails
+      the source check `source_trials_inside` with `--source <record path>` (required, no default; Requirement 3.5,
+      Decision 19); "no findings", exit 0; writes nothing.
+    - Unit tests: `stop-ahead` with `--source sessions/body-lab/body-2` gives no findings and changes no file;
+      `straight-ahead` is refused naming T31, T34, T35, T37, T38 and T39, and `turn-right` naming T19, T25 and T29
+      (Decision 18); a request whose range contains a trial of a fake source is refused naming that trial; a missing
+      `--source` is refused; a source that does not verify is refused naming the path; a planted fake term in `words`
+      and in `id` (in a copy, with the fake application's scan sources) fails naming the line; a format error fails
       naming the field.
     - Verified by: the checks of part 2.
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
@@ -412,7 +416,9 @@ Dr. Kiro takes no part.
       its bench session starts (Requirement 17.4), so no uncounted body-lab rehearsal is made; if the user wants one,
       **stop and ask**, because it needs a change to the requirements.
     - Confirm: tasks 11.3, 16.3 and 18 passed and their results are in the README; the three request files are
-      committed and unchanged, and `bfs-check-request` reports no findings for each; `bench-verify` passes on
+      committed and unchanged, and `bfs-check-request --source sessions/body-lab/body-2` gives the result of
+      Decision 19 (Requirement 3.5): `stop-ahead` has no findings, `straight-ahead` is refused naming trials T31,
+      T34, T35, T37, T38 and T39, and `turn-right` is refused naming trials T19, T25 and T29; `bench-verify` passes on
       `sessions/body-lab/body-2`; no session in `bench-run/build-from-spec/state/` is open; `KIRO_API_KEY` is set
       in the builder's environment only.
     - Ask the user in Japanese for the seed, the model and the effort of the `stop-ahead` runs; write nothing

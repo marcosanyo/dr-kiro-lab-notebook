@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/tasks.md`](../../../.kiro/specs/build-from-spec/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `3954f7faa6b70ca15bd0142d959a2681637db67068863ad1de854cbe4320c7c7`
+> 原文 SHA-256: `09f96633a83db19c978c21bb44f7dc5648e4002f5a81f12bbacbe2b4d0e5af67`
 # 実装計画: build-from-spec
 ## Overview
 `build-from-spec` のタスクです。`requirements.md`（要件 1-19）と `design.md` から作りました。このワークツリーではなく、**メインフォルダー** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook` で実行します。実装は、別のチャットのノートブックの作業が main にマージされ、ユーザーが go と言ってからだけ始めます。両方がメインフォルダーを使うためです（決定 18）。この計画のどれも、それまでは始めません。
@@ -76,8 +76,8 @@
     - **Property 2: Malformed requests are refused by name**
     - **Validates: Requirements 2.2**
   - **6.4 `check_request` と `bfs-check-request` を書く** — 未着手
-    - 設計 3.2 のとおりの `check_request` とコマンド: parse し、そのあと `id` と `words` を `Scanner.from_config([App.scan_sources], stop_list)` でビルダーレベルでスキャンする。検出は `<file>:<line>: <kind>: <match>` で、終了コード 1。"no findings" で終了コード 0。何も書かない。
-    - ユニットテスト: コミット済みの 3 つのリクエストで検出なし、ファイルの変更なし。`words` と `id` に仕込んだフェイクの語（コピーの中で、フェイクのアプリケーションのスキャンのソースを使う）は、行を挙げて失敗する。形式の誤りはフィールドを挙げて失敗する。
+    - 設計 3.2 のとおりの `check_request` とコマンド: parse し、そのあと `id` と `words` を `Scanner.from_config([App.scan_sources], stop_list)` でビルダーレベルでスキャンする。検出は `<file>:<line>: <kind>: <match>` で、終了コード 1。元の確認 `source_trials_inside` と `--source <record path>`（必須、デフォルトなし。要件 3.5、決定 19）。"no findings" で終了コード 0。何も書かない。
+    - ユニットテスト: `--source sessions/body-lab/body-2` 付きの `stop-ahead` で検出なし、ファイルの変更なし。`straight-ahead` は T31、T34、T35、T37、T38、T39 を挙げて拒否され、`turn-right` は T19、T25、T29 を挙げて拒否される（決定 18）。範囲にフェイクの元の試行を含むリクエストは、その試行を挙げて拒否される。`--source` がなければ拒否される。検証に通らない元は、パスを挙げて拒否される。`words` と `id` に仕込んだフェイクの語（コピーの中で、フェイクのアプリケーションのスキャンのソースを使う）は、行を挙げて失敗する。形式の誤りはフィールドを挙げて失敗する。
     - 確認方法: パート 2 のチェック。
     - _要件: 3.1, 3.2, 3.3, 3.4_
 - **7. ラップするアダプター** — 未着手
@@ -217,7 +217,7 @@
 - **19. 最初の本物の実行の前の準備 — Stop and ask（止めて確認）** **[local Mac]** — 未着手
   - **19.1 準備を確認し、実行の引数を尋ねる** — 未着手
     - 設計には `bfs-run` のドライランモードがなく、`APPS` には body-lab しかないので、リハーサルはタスク 16.3 のフェイクの実行と、フェイクのアプリケーションでのタスク 18 の手でのチェックです。body-lab の実行は、そのベンチセッションが始まった瞬間からカウントされる（要件 17.4）ので、カウントされない body-lab のリハーサルは行いません。ユーザーが望むなら、要件の変更が必要になるので、**止めて尋ねます**。
-    - 確認すること: タスク 11.3、16.3、18 が通り、その結果が README にある。3 つのリクエストファイルがコミット済みで変更なし、`bfs-check-request` がそれぞれで検出なしと報告する。`sessions/body-lab/body-2` で `bench-verify` が通る。`bench-run/build-from-spec/state/` に開いているセッションがない。`KIRO_API_KEY` がビルダーの環境だけに設定されている。
+    - 確認すること: タスク 11.3、16.3、18 が通り、その結果が README にある。3 つのリクエストファイルがコミット済みで変更なし、`bfs-check-request --source sessions/body-lab/body-2` が決定 19（要件 3.5）の結果を返す: `stop-ahead` は検出なし、`straight-ahead` は試行 T31、T34、T35、T37、T38、T39 を挙げて拒否され、`turn-right` は試行 T19、T25、T29 を挙げて拒否される。`sessions/body-lab/body-2` で `bench-verify` が通る。`bench-run/build-from-spec/state/` に開いているセッションがない。`KIRO_API_KEY` がビルダーの環境だけに設定されている。
     - `stop-ahead` の実行のシード、モデル、エフォートをユーザーに日本語で尋ねる。ユーザーが答えるまで何も書かない。答えを `docs/status.md` に記録する。
     - _要件: 4.4, 10.6, 17.3_
 - **20. 6 つの `stop-ahead` の実行** **[local Mac]** — 未着手

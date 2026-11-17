@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/design.md`](../../../.kiro/specs/build-from-spec/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `00ef08250b1b57c37442c1c323f4a3facc7dc98a1bedbb2f802ebb9010903503`
+> 原文 SHA-256: `64e81cf2a03da13bdf7eb4e58e1f8eb73b361c7c60b1ab6828bc36bc9217505c`
 
 # 設計: build-from-spec
 
@@ -87,7 +87,7 @@ sessions/build-from-spec/body-lab/<run-id>.run.json.authors.json   its author si
 
 | コマンド | すること | 要件 |
 |---|---|---|
-| `bfs-check-request <request file>` | `id` と `words` の形式確認とビルダーレベルのブラインドスキャン。何も書かない。 | 2, 3 |
+| `bfs-check-request <request file> --source <record path>` | 形式確認、`id` と `words` のビルダーレベルのブラインドスキャン、そして元の確認: 元の記録のカウントされる試行のうち、挙げられたすべての計測項目が合格範囲の中にあるものがない。`--source` は必須で、デフォルトはない。何も書かない。 | 2, 3.1-3.5 |
 | `bfs-run --request <file> --setup <setup> --source <record> --seed <n> --run <n> --model <m> --effort <e>` | 確認し、準備し、ベンチセッションを開始し、ターンを実行し、実行情報ファイルを書く。 | 4-11, 13, 17 |
 | `bfs-run-file <run-id>` | 封印済み実行記録の実行情報ファイルを書く。`bfs-run` は最後に同じ関数を呼ぶ。このコマンドは、封印後にスクリプトが中断された実行のためにある。 | 14, 16.2 |
 | `bfs-check-runs` | すべての実行情報ファイルを、その記録とコミット済みのリクエストと照合し、1 つのリクエストの実行どうしを照合し、ノートブックが表示するものを導出する。 | 14.3, 14.6, 16, 18 |
@@ -150,14 +150,17 @@ class RequestError(Exception): ...          # file, where (field or line), probl
 def parse_request(path: Path, apps) -> Request
 def print_request(request: Request) -> str
 def inside(value: float, p: PassRange) -> bool   # p.low <= value <= p.high (Req 2.3)
-def check_request(path: Path, apps, stop_list: Path) -> list[str]   # bfs-check-request
+def source_trials_inside(request: Request, record: Path) -> list[str]   # ids of counted trials inside every pass range (Req 3.5)
+def check_request(path: Path, source: Path, apps, stop_list: Path) -> list[str]   # bfs-check-request
 ```
 
 `parse_request` は `tomllib` でファイルを読み、要件 2.2 の順序で、ファイルとフィールド（`id`、`words`、`pass[2].range` など）、または TOML エラー自身のテキストとその行を挙げて拒否する: TOML ではない。フィールドの欠け。最上位の余分なフィールド、または `[[pass]]` テーブルの余分なフィールド。`id` が `[a-z0-9-]+` でない、またはファイルの語幹と異なる。`application` が表にない。`words` が空、または空白だけ。`[[pass]]` がない。範囲の端が数でない（int は float として扱い、bool は拒否する）、または有限でない（TOML は `inf` と `nan` を許す）。`low` が `high` より厳密に小さくない。計測項目が 2 回挙げられている。計測項目が、そのアプリケーションのアダプターの宣言で種類 `scalar` でない（アダプターは `App.adapter` から作られ、宣言を尋ねられる。body-lab のスカラーは `x`、`y`、`heading`）。
 
 `print_request` は `id`、`application`、`words` の順に書き、続いて範囲ごとに 1 つの `[[pass]]` テーブルを順に書く。文字列は `json.dumps(..., ensure_ascii=False)` で書く: JSON のエスケープはすべて有効な TOML の基本文字列のエスケープである。範囲の端は、読み戻して同じ float になる `repr` で書く。往復は値について成り立つ（要件 2.4）: 出力されたテキストが、コミット済みファイルのバイトと等しい必要はない。
 
-`check_request` は、パースしてから、`Scanner.from_config([App.scan_sources], stop_list)` で `id` と `words` をビルダーレベルでスキャンする。各所見の行は、ファイルの中で `id =` または `words =` で始まる行である。各所見を `<file>:<line>: <kind>: <match>` として出力して終了コード 1 で終わるか、「no findings」を出力して終了コード 0 で終わる（要件 3.2、3.4）。それ以外は何も判定しない（要件 3.3）。
+`check_request` は、パースしてから、`Scanner.from_config([App.scan_sources], stop_list)` で `id` と `words` をビルダーレベルでスキャンする。各所見の行は、ファイルの中で `id =` または `words =` で始まる行である。各所見を `<file>:<line>: <kind>: <match>` として出力して終了コード 1 で終わるか、「no findings」を出力して終了コード 0 で終わる（要件 3.2、3.4）。下の元の確認を除いて、それ以外は何も判定しない（要件 3.3）。
+
+`source_trials_inside(request, record)` は元の確認である（要件 3.5、Kiro の決定 K27）。記録を `verify(record, sealed=True)`（`bench.record.chain`）で検証し、`judge.py`（節 3.8）の `counted_trials(entries)` でカウントされる試行を取り、リクエストに挙げられたすべての計測項目が数であり、かつ `inside` が成り立つ試行の id を、ログの順に返す。未計測の値は、節 3.8 と同じく範囲外とする。挙げられた計測項目が試行にない場合は、節 3.8 と同じく、コマンドが失敗する。`check_request` は元のパスをデフォルトなしの引数として受け取り、リストが空でないときに失敗して、リクエストファイルと各試行の id を挙げる。検証に通らない元は、パスを挙げて失敗する（rules.md 2）。実行スクリプトは、その実行の元で `check_request` を呼ぶ（節 3.9、ステップ A2）ので、確認は実行が結び付く記録と同じ記録に対して行われる。
 
 ### 3.3 ラッピングアダプター（`wrap.py`、要件 8）
 
@@ -331,7 +334,7 @@ def judge_record(record: Path, request: Request, allowed: frozenset[str]) -> Jud
 **A. 確認。何も書かない**（要件 5.7、K14）。順に、各拒否は失敗したものを挙げる:
 
 1. リクエストファイルが追跡されていて（`git ls-files --error-unmatch`）、`HEAD` と、ステージの有無にかかわらず等しい（`git diff --quiet HEAD -- <file>`）（要件 11.2）。その最後に変更したコミットは `git log -1 --format=%H -- <file>`。その SHA-256 はファイルから取る（要件 11.3）。
-2. `parse_request` と節 3.2 のリクエストの確認（要件 11.4）。
+2. `parse_request` と、その実行の元での節 3.2 のリクエストの確認（要件 11.4、3.5）。
 3. アプリケーションが `APPS` にある（要件 4.7）。
 4. 元: フォルダーで、`sessions/build-from-spec/` の中にない（要件 5.5）。`read_end` がそれを検証し、その終わり方、アプリケーション、最終仕様を与える。`ended` で、最終仕様を持ち、リクエストのアプリケーションのものでなければならない（要件 5.2）。その封印ハッシュは最後のエントリのハッシュである。
 5. この実行 ID の作業フォルダー、実行記録、実行情報ファイルがない（要件 7.1）。
@@ -655,7 +658,7 @@ resume = true
 
 | 場所 | 失敗 | 起こること |
 |---|---|---|
-| `bfs-check-request` | 形式エラーまたは所見 | ファイル、行またはフィールド、項目を出力する。終了コード 1。何も書かない。 |
+| `bfs-check-request` | 形式エラー、所見、範囲の中にあるカウントされる元の試行、または検証に通らない元 | ファイル、行またはフィールド、項目（または試行の id、または元のパス）を出力する。終了コード 1。何も書かない。 |
 | `bfs-run`、フェーズ A | どの確認でも | 理由を出力する。終了コード 2。何も書かない。実行は何もカウントしない（要件 17.4）。 |
 | フェーズ B | 書き込みエラー、コピーの確認、ハッシュの違い、ブラインドスキャンの所見 | 理由と作業フォルダーを出力する。終了コード 1。フォルダーは残る。ベンチセッションは開始されない（要件 11.7、11.10）。 |
 | フェーズ C | `Session.start` が拒否する | ベンチのメッセージを出力する。終了コード 1。セッションはない。フォルダーは残る。 |
@@ -678,7 +681,7 @@ resume = true
 
 | テスト | 要件 |
 |---|---|
-| コミット済みの両方のリクエストに対する `bfs-check-request`: 所見なし、ファイルは変わらない。`words` と `id` に仕込んだフェイクの用語は、行を挙げて失敗する。 | 3 |
+| コミット済みのリクエストに対する `--source sessions/body-lab/body-2` 付きの `bfs-check-request`: `stop-ahead` は所見なしでファイルは変わらない。`straight-ahead` は T31、T34、T35、T37、T38、T39 を挙げて拒否される。`turn-right` は T19、T25、T29 を挙げて拒否される（決定 18）。`words` と `id` に仕込んだフェイクの用語は、行を挙げて失敗する。範囲にフェイクの元の試行を含むリクエストは、その試行を挙げて拒否される。 | 3 |
 | body-2 の許される ID: `spec` は R1-R14 と `none`。`record` は H1-H11、E1-E11 と `none`。`none` は `none` だけ。 | 10.2, 10.5 |
 | フェイクセッションが、予測ブロックが頼るコメントで始まる H1 を登録する。記録された凍結ブロブがその行をバイト単位で持つ。本物の実行より前に実行する。 | 10.6 |
 | 1 つのリクエストの 3 つの作業フォルダー（`spec`、`none`、`record`）は、`given/` の外で同一の木とバイトを持つ。`none` の `given/` は空。`request.md` と宣言されたゴールは `words` と等しい。`given/` の外のどのファイルも、実行 ID、元セッション ID、パスを持たない。 | 4.2, 4.5, 7.2, 7.7, 8.4 |
