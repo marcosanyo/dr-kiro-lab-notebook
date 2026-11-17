@@ -3,8 +3,13 @@
 ## Overview
 
 Tasks for `build-from-spec`, from `requirements.md` (Requirements 1-19) and `design.md`. They are carried out in the
-**main folder** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook`, not in this worktree, and only after the user
-says go. Nothing in this plan is started before that.
+**main folder** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook`, not in this worktree. Implementation starts only
+after the other chat's notebook work is merged into main and the user says go, because both use the main folder
+(Decision 18). Nothing in this plan is started before that.
+
+The request that is run is `build-from-spec/requests/stop-ahead.toml`: six runs, `n` = 1 and 2 in `spec`, `none`
+and `record`, source session `sessions/body-lab/body-2`. `straight-ahead` and `turn-right` stay committed and are
+not run, because body-2 already holds trials inside their pass ranges (Decision 18).
 
 The order is: first the two `lab-bench` amendments with their tests and the matching wording in the `lab-bench` and
 `dr-kiro` specs (part 1, design 3.14); then the `build-from-spec/` uv project, module by module in dependency order,
@@ -140,8 +145,8 @@ Dr. Kiro takes no part.
   - [ ] 6.1 Write `request.py`: parse, print, inside
     - `PassRange`, `Request`, `RequestError`, `parse_request`, `print_request`, `inside` as design 3.2, with the
       refusals in the order of Requirement 2.2, each naming the file and the field or line.
-    - Unit tests: both committed requests parse; each refusal of Requirement 2.2 on a hand-written file; an int bound
-      is read as a float and a bool bound is refused; `inf` and `nan` are refused; a value equal to a bound is
+    - Unit tests: the three committed requests parse; each refusal of Requirement 2.2 on a hand-written file; an int
+      bound is read as a float and a bool bound is refused; `inf` and `nan` are refused; a value equal to a bound is
       inside.
     - Verified by: the checks of part 2.
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
@@ -155,7 +160,7 @@ Dr. Kiro takes no part.
     - `check_request` and the command as design 3.2: parse, then scan `id` and `words` at the builder level with
       `Scanner.from_config([App.scan_sources], stop_list)`; findings as `<file>:<line>: <kind>: <match>`, exit 1;
       "no findings", exit 0; writes nothing.
-    - Unit tests: both committed requests give no findings and change no file; a planted fake term in `words` and
+    - Unit tests: the three committed requests give no findings and change no file; a planted fake term in `words` and
       in `id` (in a copy, with the fake application's scan sources) fails naming the line; a format error fails
       naming the field.
     - Verified by: the checks of part 2.
@@ -406,16 +411,16 @@ Dr. Kiro takes no part.
       of task 16.3 and the hand checks of task 18 with the fake application. A body-lab run counts from the moment
       its bench session starts (Requirement 17.4), so no uncounted body-lab rehearsal is made; if the user wants one,
       **stop and ask**, because it needs a change to the requirements.
-    - Confirm: tasks 11.3, 16.3 and 18 passed and their results are in the README; both request files are committed
-      and unchanged, and `bfs-check-request` reports no findings for each; `bench-verify` passes on
+    - Confirm: tasks 11.3, 16.3 and 18 passed and their results are in the README; the three request files are
+      committed and unchanged, and `bfs-check-request` reports no findings for each; `bench-verify` passes on
       `sessions/body-lab/body-2`; no session in `bench-run/build-from-spec/state/` is open; `KIRO_API_KEY` is set
       in the builder's environment only.
-    - Ask the user in Japanese for the seed, the model and the effort of the `straight-ahead` runs; write nothing
+    - Ask the user in Japanese for the seed, the model and the effort of the `stop-ahead` runs; write nothing
       until the user gives them. Record the answer in `docs/status.md`.
     - _Requirements: 4.4, 10.6, 17.3_
 
-- [ ] 20. The six `straight-ahead` runs **[local Mac]**
-  - Each run: `uv run --project build-from-spec bfs-run --request build-from-spec/requests/straight-ahead.toml
+- [ ] 20. The six `stop-ahead` runs **[local Mac]**
+  - Each run: `uv run --project build-from-spec bfs-run --request build-from-spec/requests/stop-ahead.toml
     --setup <setup> --source sessions/body-lab/body-2 --seed <seed> --run <n> --model <model> --effort <effort>`
     with the values of task 19.1. Then commit the run record folder, the run file and its sidecar, each added by
     name; then `bench-verify` on the run record, `bfs-check-runs` and `bench-scan` on `sessions/build-from-spec/`
@@ -425,34 +430,27 @@ Dr. Kiro takes no part.
     nothing: report it and use the same `n` (after the user removes a kept working folder, Requirement 11.10).
   - **Stop and ask** when sealing fails (Requirement 13.5), when a scan finds an item in a run record or run file
     (Requirement 16.4), when `bench-stop` fails, or when `bfs-check-runs` fails.
-  - [ ] 20.1 Run `straight-ahead-spec-1`
+  - [ ] 20.1 Run `stop-ahead-spec-1`
     - _Requirements: 13.2, 13.3, 17.1_
-  - [ ] 20.2 Run `straight-ahead-none-1`
+  - [ ] 20.2 Run `stop-ahead-none-1`
     - _Requirements: 13.2, 13.3, 17.1_
-  - [ ] 20.3 Run `straight-ahead-record-1`
+  - [ ] 20.3 Run `stop-ahead-record-1`
     - _Requirements: 13.2, 13.3, 17.1_
-  - [ ] 20.4 Run `straight-ahead-spec-2`
+  - [ ] 20.4 Run `stop-ahead-spec-2`
     - _Requirements: 13.2, 13.3, 17.1_
-  - [ ] 20.5 Run `straight-ahead-none-2`
+  - [ ] 20.5 Run `stop-ahead-none-2`
     - _Requirements: 13.2, 13.3, 17.1_
-  - [ ] 20.6 Run `straight-ahead-record-2`
+  - [ ] 20.6 Run `stop-ahead-record-2`
     - Then report the six results in Japanese as `bfs-check-runs` prints them, with the end, the relied-on ids and
       the continue-line count of each run.
     - _Requirements: 13.2, 13.3, 17.1, 19.6_
 
-- [ ] 21. The `turn-right` runs, only if the user says there is time **[local Mac]**
-  - [ ] 21.1 Ask the user whether there is time for `turn-right` — **Stop and ask**
-    - Ask in Japanese, and ask for the seed, model and effort of `turn-right` if the answer is yes. Record the answer
-      in `docs/status.md`.
-    - _Requirements: 17.2_
-  - [ ] 21.2 Run `turn-right` n = 1 and 2 in each setup (only if the user said yes)
-    - The same procedure and stop conditions as task 20, with `build-from-spec/requests/turn-right.toml`, source
-      `sessions/body-lab/body-2`, in the order spec-1, none-1, record-1, spec-2, none-2, record-2. No run of any
-      further request.
-    - _Requirements: 17.2, 17.3, 17.4_
-  - [ ] 21.3 Record `turn-right` as not run (only if the user said no)
-    - Write in `build-from-spec/README.md` and in `docs/status.md` that `turn-right` is committed and not run. The
-      request file stays unchanged.
+- [ ] 21. The requests that are not run
+  - [ ] 21.1 Record `straight-ahead` and `turn-right` as not run
+    - Write in `build-from-spec/README.md` and in `docs/status.md` that `straight-ahead` and `turn-right` are
+      committed and not run, with the reason of Decision 18: the source record `sessions/body-lab/body-2` already
+      holds trials inside their pass ranges, so they would not compare the setups. Make no run of either; both
+      request files stay unchanged. No run of any other request without the user's approval.
     - _Requirements: 17.2_
 
 - [ ] 22. Hand-over to the `lab-notebook` spec
@@ -472,10 +470,10 @@ Dr. Kiro takes no part.
     `bench-verify` on every run record in `sessions/build-from-spec/`; `bfs-check-runs`;
     `bench-check-discovered sessions discovered`; `bench-scan` on `sessions/`, `discovered/` and both labs;
     `sh scripts/ja-check.sh`.
-  - Update `docs/status.md` in Japanese: what was done, the run results, whether `turn-right` ran, the README
-    outcome of the picture check, the next step (the `lab-notebook` "Built from the spec" tasks), and anything that
-    applies to one environment only. Commit `tasks.md` and `docs/ja/build-from-spec/tasks.md` together, each added
-    by name, after `sh scripts/ja-check.sh` reports nothing stale (`handoff.md`).
+  - Update `docs/status.md` in Japanese: what was done, the run results, that `straight-ahead` and `turn-right` are
+    not run, the README outcome of the picture check, the next step (the `lab-notebook` "Built from the spec"
+    tasks), and anything that applies to one environment only. Commit `tasks.md` and
+    `docs/ja/build-from-spec/tasks.md` together, each added by name, after `sh scripts/ja-check.sh` reports nothing stale (`handoff.md`).
   - Done when (Requirement 19.6), as far as this spec reaches: the six runs exist, are sealed and pass
     `bench-verify`; every run file passes `bfs-check-runs` and the blind scan; the picture outcome is in the README;
     the results are computed mechanically. The notebook showing every run is checked by the `lab-notebook` tasks.
@@ -487,11 +485,10 @@ Dr. Kiro takes no part.
 - Each task references the requirements it covers. Property tests validate the universal properties of the design;
   unit and example tests cover the cases of the design's Testing Strategy and the real records named there.
 - Waves keep tasks that write the same file apart: `folder.py` (9.1, 10.4), `runfile.py` (13.1, 13.4),
-  `build-from-spec/README.md` (8.1, 18.1, 18.2, 18.3, 21.3) and `docs/status.md` (19.1, 21.1, 21.3, 22.1) are each
-  written by one task per wave. The runs of tasks 20 and 21 are one per wave, because only one reader session may be
-  open at a time (design B17). Checkpoints (4, 17, 23) are not in the graph; task 18 and task 19 block every later
-  wave until the user's answer is recorded. Tasks 21.2 and 21.3 are alternatives: only the one that matches the
-  user's answer in 21.1 is done.
+  `build-from-spec/README.md` (8.1, 18.1, 18.2, 18.3, 21.1) and `docs/status.md` (19.1, 21.1, 22.1) are each
+  written by one task per wave. The runs of task 20 are one per wave, because only one reader session may be open
+  at a time (design B17). Checkpoints (4, 17, 23) are not in the graph; task 18 and task 19 block every later wave
+  until the user's answer is recorded.
 
 ## Task Dependency Graph
 
@@ -525,9 +522,7 @@ Dr. Kiro takes no part.
     { "id": 24, "tasks": ["20.5"] },
     { "id": 25, "tasks": ["20.6"] },
     { "id": 26, "tasks": ["21.1"] },
-    { "id": 27, "tasks": ["21.2"] },
-    { "id": 28, "tasks": ["21.3"] },
-    { "id": 29, "tasks": ["22.1"] }
+    { "id": 27, "tasks": ["22.1"] }
   ]
 }
 ```

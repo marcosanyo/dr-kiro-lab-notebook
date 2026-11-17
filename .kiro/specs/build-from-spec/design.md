@@ -38,8 +38,9 @@ copy, the relied-on line, the result program, the turn loop, the run file and th
 ```
 build-from-spec/                       own uv project (Req 1.2)
   pyproject.toml, uv.lock, README.md
-  requests/straight-ahead.toml         committed before any run (unchanged by this spec)
-  requests/turn-right.toml
+  requests/stop-ahead.toml             committed before any run (unchanged by this spec); the request run
+  requests/straight-ahead.toml         committed, not run (Decision 18)
+  requests/turn-right.toml             committed, not run (Decision 18)
   src/build_from_spec/
     apps.py        the application table: wrapped adapter, scan sources, reader budget
     request.py     request file: parse, print, check (bfs-check-request)
@@ -186,10 +187,10 @@ judges nothing else (Req 3.3).
 The session config names the adapter as
 
 ```toml
-adapter = "build_from_spec.wrap:reader/body-lab/straight-ahead/12"
+adapter = "build_from_spec.wrap:reader/body-lab/stop-ahead/12"
 ```
 
-`bench.frontend.config` imports `build_from_spec.wrap` and calls `getattr(module, "reader/body-lab/straight-ahead/12")`.
+`bench.frontend.config` imports `build_from_spec.wrap` and calls `getattr(module, "reader/body-lab/stop-ahead/12")`.
 The module defines `__getattr__(name)` (PEP 562): for a name that does not start with `__` it returns a factory for
 that name; dunder names raise `AttributeError` as usual. The factory, called with no arguments as the bench calls
 every adapter factory:

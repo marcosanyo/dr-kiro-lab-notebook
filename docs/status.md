@@ -46,7 +46,8 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 ## build-from-spec（ブランチ `spec/build-from-spec`、worktree `.worktrees/build-from-spec`）
 - 要件は承認済み、設計まで完成（訳も `docs/ja/build-from-spec/`）。元のセッションは `sessions/body-lab/body-2`。
-- 依頼 2 つをコミット済み: `build-from-spec/requests/straight-ahead.toml`（最初に走らせる）、`turn-right.toml`（時間があれば）。範囲は走らせた後に変えない。
+- 本命の依頼は `build-from-spec/requests/stop-ahead.toml`（6 回）。body-2 の 39 試行に範囲内のものは無いと確認済み。`straight-ahead` と `turn-right` は body-2 に範囲内の試行があるため走らせない（Decision 18）。範囲は走らせた後に変えない。
+- 実装は、別のチャットのノートが main に入り、ユーザーが「始めて」と言ってから。
 - **次の一手:** ユーザーに声をかけてから、元のフォルダーで実装する。最初に lab-bench の 2 つの修正（`discovered_table` 設定、`check_copies` が `sessions/build-from-spec/` を飛ばす）。
 - 実装時に確かめること: 設計 9 節（headless の `kiro-cli chat --no-interactive` で確認が出ないか、`--resume`、ハッシュ名の画像が開けるか など）。
 

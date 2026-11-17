@@ -21,8 +21,10 @@ steering in `.kiro/steering/` applies, in particular `rules.md`.
 The first and, in this version, only target application is body-lab. The second body-lab session, body-2, is
 sealed as `ended` with an end snapshot, and is on main together with `final_spec()` (PR #24, `bench-export-spec`).
 The source session of every body-lab run is `sessions/body-lab/body-2`; the copy of its final spec is
-`discovered/body-lab/body-2/`. The two requests are `build-from-spec/requests/straight-ahead.toml` (first) and
-`build-from-spec/requests/turn-right.toml` (second), committed before any run (Appendix A).
+`discovered/body-lab/body-2/`. The request that is run is `build-from-spec/requests/stop-ahead.toml`. The two
+earlier requests, `build-from-spec/requests/straight-ahead.toml` and `build-from-spec/requests/turn-right.toml`,
+stay committed and are not run, because the source record already holds trials inside their pass ranges
+(Decision 18, Appendix A).
 
 Each requirement says which Kiro it is about:
 
@@ -478,11 +480,11 @@ what a spec teaches, not what leaked.
 
 #### Acceptance criteria
 
-1. FOR the first request, `straight-ahead`, THE builder SHALL make runs `n` = 1 and 2 in each setup, six runs in
-   total, all with `sessions/body-lab/body-2` as the source session.
-2. WHERE time allows after the runs of Requirement 17.1, THE builder SHALL make runs `n` = 1 and 2 in each setup for
-   the second request, `turn-right`, with `sessions/body-lab/body-2` as the source session. THE builder SHALL make
-   no run of any further request without the user's approval.
+1. FOR the request `stop-ahead`, THE builder SHALL make runs `n` = 1 and 2 in each setup, six runs in total, all
+   with `sessions/body-lab/body-2` as the source session.
+2. THE builder SHALL make no run of `straight-ahead` or `turn-right`, SHALL keep both request files committed, and
+   SHALL report both as not run, because the source record already holds trials inside their pass ranges
+   (Decision 18). THE builder SHALL make no run of any other request without the user's approval.
 3. THE builder SHALL make a run only when its request file is committed. THE pass ranges of a request file SHALL
    NOT be changed after the first run of that request.
 4. A run SHALL count once its bench session has started, whatever its result or end, and THE builder SHALL make no
@@ -561,7 +563,7 @@ exactly as recorded.
    open them is checked at implementation; if not, it is written down as a limit. (Requirement 6)
 7. **Placement.** Left to Kiro (see Kiro's decisions K1, K9).
 8. **Number of runs.** Two runs per setup; first one request, six runs in total; up to three requests if there is
-   time. (Requirement 17; updated by Decision 16)
+   time. (Requirement 17; updated by Decisions 16 and 18)
 9. **Request words.** The words avoid part names and other forbidden terms; a check lets the user confirm this with
    the blind scan before committing the request file. (Requirement 3)
 10. **Same conditions.** Three setups with the same tools, agent configuration, budget (body-lab 12 trials) and
@@ -581,9 +583,18 @@ exactly as recorded.
     (first, six runs) and `build-from-spec/requests/turn-right.toml` (second, two runs per setup if time allows).
     Their pass ranges are never changed after a run. If `turn-right` is not run, its file stays and is reported as
     not run; the notebook shows a committed request with no runs as "not run". No further request without the
-    user. This updates Decision 8. (Requirement 17, Appendix A)
+    user. This updates Decision 8. (Requirement 17, Appendix A; updated by Decision 18)
 17. **Left to Kiro.** The blind-scan level source of the run file (Requirement 14.4) and the reader start mode
     (Requirement 11.6) are decided by Kiro in the design.
+18. **Requests replaced before any run.** Before any run, the user found in the source record
+    `sessions/body-lab/body-2` (39 trials) trials already inside the pass ranges: for `straight-ahead` T31, T34,
+    T35, T37, T38 and T39; for `turn-right` T19, T25 and T29 (Kiro confirmed these from the record). The `record`
+    setup could pass by copying a recorded trial, and the `none` setup by basic probing, so these two requests
+    would not compare the setups. For this reason both are kept as committed files and are not run. The new main
+    request is `build-from-spec/requests/stop-ahead.toml`, with the six runs (`n` = 1 and 2 in `spec`, `none` and
+    `record`, source session body-2). No other request is run without the user. Implementation waits until the
+    other chat's notebook work is merged into main, because both use the main folder. This updates Decisions 8
+    and 16. (Introduction, Requirement 17, Appendix A)
 
 ### By Kiro (the user may change these)
 
@@ -667,17 +678,47 @@ exactly as recorded.
 
 ## Appendix A: Committed requests
 
-The user wrote both requests and decided every number. The committed files in `build-from-spec/requests/` are the
-source; the content below quotes them. Before commit, the `id` and `words` of each file passed a builder-level blind
-scan with body-lab's scan sources and the reviewed stop list (no findings), and the format of each file was checked
-against Requirement 2. The pass ranges are not changed after a run (Decision 16).
+The user wrote the three requests and decided every number. The committed files in `build-from-spec/requests/` are
+the source; the content below quotes them. Before commit, the `id` and `words` of each file passed a builder-level
+blind scan with body-lab's scan sources and the reviewed stop list (no findings), and the format of each file was
+checked against Requirement 2. The pass ranges are not changed after a run (Decision 16). Only `stop-ahead` is run;
+`straight-ahead` and `turn-right` are not run (Decision 18).
 
 body-lab gives three scalars at the end of a trial, relative to the start of that trial: `x` (m, the direction the
 body faces at the start), `y` (m, to its left), `heading` (deg, counter-clockwise seen from above, in (-180, 180]).
 The declaration's `measured_by` text says the camera view spans `x` from -0.84 to 1.74 m and `y` from -0.73 to
 0.73 m. Leaving the view gives `lost`, which is a fail, so every range must lie inside the view.
 
-### First request: `build-from-spec/requests/straight-ahead.toml`
+### Main request: `build-from-spec/requests/stop-ahead.toml`
+
+The six runs of Requirement 17.1. Before commit, Kiro checked the file: its format against Requirement 2; a
+builder-level blind scan of the file with body-lab's scan sources and the reviewed stop list, with no findings; and
+the 39 trials of `sessions/body-lab/body-2`, none of which has all three values inside the ranges (no trial is
+`lost`). The nearest recorded trials, for context: T37 `x` 0.613 m, `y` 0.116 m, `heading` 2.438°; T33 `x`
+0.263 m, `y` 0.052 m, `heading` -0.288°; T32 `x` 0.469 m, `y` -0.015 m, `heading` -29.068°.
+
+```toml
+id = "stop-ahead"
+application = "body-lab"
+words = "Move ahead by about 0.45 m and stop there, keeping the heading within 12 degrees of the start heading."
+
+[[pass]]
+measurement = "x"
+range = [0.36, 0.54]
+
+[[pass]]
+measurement = "heading"
+range = [-12.0, 12.0]
+
+[[pass]]
+measurement = "y"
+range = [-0.15, 0.15]
+```
+
+### Not run (Decision 18): `build-from-spec/requests/straight-ahead.toml`
+
+Not run (Decision 18): the source record holds trials T31, T34, T35, T37, T38 and T39 inside its pass ranges. The
+file stays committed and is reported as not run.
 
 ```toml
 id = "straight-ahead"
@@ -697,9 +738,10 @@ measurement = "y"
 range = [-0.3, 0.3]
 ```
 
-### Second request: `build-from-spec/requests/turn-right.toml`
+### Not run (Decision 18): `build-from-spec/requests/turn-right.toml`
 
-Run if time allows (Requirement 17.2). If it is not run, the file stays and is reported as not run.
+Not run (Decision 18): the source record holds trials T19, T25 and T29 inside its pass ranges. The file stays
+committed and is reported as not run.
 
 ```toml
 id = "turn-right"

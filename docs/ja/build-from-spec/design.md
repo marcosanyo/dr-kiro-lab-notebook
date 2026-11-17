@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/design.md`](../../../.kiro/specs/build-from-spec/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `737a895fd3607401c06299918ebfb3801ce394dad5c811a286b368ace7c2305a`
+> 原文 SHA-256: `00ef08250b1b57c37442c1c323f4a3facc7dc98a1bedbb2f802ebb9010903503`
 
 # 設計: build-from-spec
 
@@ -36,8 +36,9 @@
 ```
 build-from-spec/                       own uv project (Req 1.2)
   pyproject.toml, uv.lock, README.md
-  requests/straight-ahead.toml         committed before any run (unchanged by this spec)
-  requests/turn-right.toml
+  requests/stop-ahead.toml             committed before any run (unchanged by this spec); the request run
+  requests/straight-ahead.toml         committed, not run (Decision 18)
+  requests/turn-right.toml             committed, not run (Decision 18)
   src/build_from_spec/
     apps.py        the application table: wrapped adapter, scan sources, reader budget
     request.py     request file: parse, print, check (bfs-check-request)
@@ -163,10 +164,10 @@ def check_request(path: Path, apps, stop_list: Path) -> list[str]   # bfs-check-
 セッション設定は、アダプターを次のように指名する
 
 ```toml
-adapter = "build_from_spec.wrap:reader/body-lab/straight-ahead/12"
+adapter = "build_from_spec.wrap:reader/body-lab/stop-ahead/12"
 ```
 
-`bench.frontend.config` は `build_from_spec.wrap` を import し、`getattr(module, "reader/body-lab/straight-ahead/12")` を呼ぶ。モジュールは `__getattr__(name)`（PEP 562）を定義する: `__` で始まらない名前に対して、その名前のファクトリを返し、ダンダー名は通常どおり `AttributeError` を送出する。ファクトリは、ベンチがすべてのアダプターファクトリを呼ぶのと同じく引数なしで呼ばれ、次のことを行う:
+`bench.frontend.config` は `build_from_spec.wrap` を import し、`getattr(module, "reader/body-lab/stop-ahead/12")` を呼ぶ。モジュールは `__getattr__(name)`（PEP 562）を定義する: `__` で始まらない名前に対して、その名前のファクトリを返し、ダンダー名は通常どおり `AttributeError` を送出する。ファクトリは、ベンチがすべてのアダプターファクトリを呼ぶのと同じく引数なしで呼ばれ、次のことを行う:
 
 1. 名前を `/` で分割する。ちょうど 4 つの部分が必要で、最初は `reader`。そうでなければ、欠けているもの、つまりアプリケーション、リクエスト、予算を挙げて `WrapError` を送出する（要件 8.5）。
 2. アプリケーションを `APPS` で調べる。なければ `WrapError`「no reader budget is decided for <application>」（要件 8.6）。

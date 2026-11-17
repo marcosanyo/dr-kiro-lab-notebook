@@ -1,8 +1,10 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/tasks.md`](../../../.kiro/specs/build-from-spec/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `bea1fab17d18f233d6e9dbb0d6c7b7c3c84c1d1adbd6b4f8dda73e4207f36ffd`
+> 原文 SHA-256: `3954f7faa6b70ca15bd0142d959a2681637db67068863ad1de854cbe4320c7c7`
 # 実装計画: build-from-spec
 ## Overview
-`build-from-spec` のタスクです。`requirements.md`（要件 1-19）と `design.md` から作りました。このワークツリーではなく、**メインフォルダー** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook` で実行し、ユーザーが go と言ってからだけ始めます。この計画のどれも、それまでは始めません。
+`build-from-spec` のタスクです。`requirements.md`（要件 1-19）と `design.md` から作りました。このワークツリーではなく、**メインフォルダー** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook` で実行します。実装は、別のチャットのノートブックの作業が main にマージされ、ユーザーが go と言ってからだけ始めます。両方がメインフォルダーを使うためです（決定 18）。この計画のどれも、それまでは始めません。
+
+実行するリクエストは `build-from-spec/requests/stop-ahead.toml` です: 6 回の実行、`spec`、`none`、`record` で `n` = 1 と 2、元セッションは `sessions/body-lab/body-2`。`straight-ahead` と `turn-right` はコミットされたままで、実行しません。body-2 がその合格範囲の内側の試行をすでに含んでいるためです（決定 18）。
 順序は次のとおりです。まず `lab-bench` の 2 つの改訂を、そのテストと、`lab-bench` および `dr-kiro` 仕様の対応する文言とともに行います（パート 1、設計 3.14）。次に `build-from-spec/` の uv プロジェクトを、依存の順にモジュールごとに、それぞれのテストとプロパティテストとともに作ります（パート 2）。そのあと、設計の第 9 節の実装時チェック、準備の確認、実行を行います（パート 3）。最後に `lab-notebook` 仕様への引き継ぎと最終チェックポイントです。
 どの Kiro か: すべてのタスクは **ビルダー** が行います。リーダーが現れるのはパート 3 だけで、実行スクリプトが起動します。Dr. Kiro は関わりません。
 ## Notes for the user and for every sub-agent
@@ -64,7 +66,7 @@
 - **6. リクエストファイル** — 未着手
   - **6.1 `request.py` を書く: parse、print、inside** — 未着手
     - 設計 3.2 のとおりの `PassRange`、`Request`、`RequestError`、`parse_request`、`print_request`、`inside`。拒否は要件 2.2 の順で、それぞれファイルとフィールドまたは行を挙げる。
-    - ユニットテスト: コミット済みの両方のリクエストが parse される。手書きのファイルでの要件 2.2 の各拒否。int の境界は float として読まれ、bool の境界は拒否される。`inf` と `nan` は拒否される。境界と等しい値は範囲の内側。
+    - ユニットテスト: コミット済みの 3 つのリクエストが parse される。手書きのファイルでの要件 2.2 の各拒否。int の境界は float として読まれ、bool の境界は拒否される。`inf` と `nan` は拒否される。境界と等しい値は範囲の内側。
     - 確認方法: パート 2 のチェック。
     - _要件: 2.1, 2.2, 2.3, 2.4_
   - **6.2 リクエストの往復のプロパティテストを書く** — 未着手
@@ -75,7 +77,7 @@
     - **Validates: Requirements 2.2**
   - **6.4 `check_request` と `bfs-check-request` を書く** — 未着手
     - 設計 3.2 のとおりの `check_request` とコマンド: parse し、そのあと `id` と `words` を `Scanner.from_config([App.scan_sources], stop_list)` でビルダーレベルでスキャンする。検出は `<file>:<line>: <kind>: <match>` で、終了コード 1。"no findings" で終了コード 0。何も書かない。
-    - ユニットテスト: コミット済みの両方のリクエストで検出なし、ファイルの変更なし。`words` と `id` に仕込んだフェイクの語（コピーの中で、フェイクのアプリケーションのスキャンのソースを使う）は、行を挙げて失敗する。形式の誤りはフィールドを挙げて失敗する。
+    - ユニットテスト: コミット済みの 3 つのリクエストで検出なし、ファイルの変更なし。`words` と `id` に仕込んだフェイクの語（コピーの中で、フェイクのアプリケーションのスキャンのソースを使う）は、行を挙げて失敗する。形式の誤りはフィールドを挙げて失敗する。
     - 確認方法: パート 2 のチェック。
     - _要件: 3.1, 3.2, 3.3, 3.4_
 - **7. ラップするアダプター** — 未着手
@@ -215,35 +217,29 @@
 - **19. 最初の本物の実行の前の準備 — Stop and ask（止めて確認）** **[local Mac]** — 未着手
   - **19.1 準備を確認し、実行の引数を尋ねる** — 未着手
     - 設計には `bfs-run` のドライランモードがなく、`APPS` には body-lab しかないので、リハーサルはタスク 16.3 のフェイクの実行と、フェイクのアプリケーションでのタスク 18 の手でのチェックです。body-lab の実行は、そのベンチセッションが始まった瞬間からカウントされる（要件 17.4）ので、カウントされない body-lab のリハーサルは行いません。ユーザーが望むなら、要件の変更が必要になるので、**止めて尋ねます**。
-    - 確認すること: タスク 11.3、16.3、18 が通り、その結果が README にある。両方のリクエストファイルがコミット済みで変更なし、`bfs-check-request` がそれぞれで検出なしと報告する。`sessions/body-lab/body-2` で `bench-verify` が通る。`bench-run/build-from-spec/state/` に開いているセッションがない。`KIRO_API_KEY` がビルダーの環境だけに設定されている。
-    - `straight-ahead` の実行のシード、モデル、エフォートをユーザーに日本語で尋ねる。ユーザーが答えるまで何も書かない。答えを `docs/status.md` に記録する。
+    - 確認すること: タスク 11.3、16.3、18 が通り、その結果が README にある。3 つのリクエストファイルがコミット済みで変更なし、`bfs-check-request` がそれぞれで検出なしと報告する。`sessions/body-lab/body-2` で `bench-verify` が通る。`bench-run/build-from-spec/state/` に開いているセッションがない。`KIRO_API_KEY` がビルダーの環境だけに設定されている。
+    - `stop-ahead` の実行のシード、モデル、エフォートをユーザーに日本語で尋ねる。ユーザーが答えるまで何も書かない。答えを `docs/status.md` に記録する。
     - _要件: 4.4, 10.6, 17.3_
-- **20. 6 つの `straight-ahead` の実行** **[local Mac]** — 未着手
-  - 各実行: `uv run --project build-from-spec bfs-run --request build-from-spec/requests/straight-ahead.toml --setup <setup> --source sessions/body-lab/body-2 --seed <seed> --run <n> --model <model> --effort <effort>`。値はタスク 19.1 のもの。そのあと、実行記録のフォルダー、実行情報ファイル、そのサイドカーを、1 つずつ名前を指定してコミットする。そのあと、実行記録での `bench-verify`、`bfs-check-runs`、`sessions/build-from-spec/` での `bench-scan` が通る。一度に 1 つの実行。
+- **20. 6 つの `stop-ahead` の実行** **[local Mac]** — 未着手
+  - 各実行: `uv run --project build-from-spec bfs-run --request build-from-spec/requests/stop-ahead.toml --setup <setup> --source sessions/body-lab/body-2 --seed <seed> --run <n> --model <model> --effort <effort>`。値はタスク 19.1 のもの。そのあと、実行記録のフォルダー、実行情報ファイル、そのサイドカーを、1 つずつ名前を指定してコミットする。そのあと、実行記録での `bench-verify`、`bfs-check-runs`、`sessions/build-from-spec/` での `bench-scan` が通る。一度に 1 つの実行。
   - 実行は、結果や終了にかかわらず、そのセッションが始まった時点でカウントされる。次の実行はそのあとに続く。ユーザーの承認なしに、同じリクエストとセットアップの実行を増やさない（要件 17.4）。セッションが始まる前の拒否は何もカウントしない。報告して、同じ `n` を使う（ユーザーが残された作業フォルダーを取り除いたあと、要件 11.10）。
   - 封印が失敗したとき（要件 13.5）、スキャンが実行記録または実行情報ファイルの項目を見つけたとき（要件 16.4）、`bench-stop` が失敗したとき、`bfs-check-runs` が失敗したときは、**Stop and ask（止めて確認）**。
-  - **20.1 `straight-ahead-spec-1` を実行する** — 未着手
+  - **20.1 `stop-ahead-spec-1` を実行する** — 未着手
     - _要件: 13.2, 13.3, 17.1_
-  - **20.2 `straight-ahead-none-1` を実行する** — 未着手
+  - **20.2 `stop-ahead-none-1` を実行する** — 未着手
     - _要件: 13.2, 13.3, 17.1_
-  - **20.3 `straight-ahead-record-1` を実行する** — 未着手
+  - **20.3 `stop-ahead-record-1` を実行する** — 未着手
     - _要件: 13.2, 13.3, 17.1_
-  - **20.4 `straight-ahead-spec-2` を実行する** — 未着手
+  - **20.4 `stop-ahead-spec-2` を実行する** — 未着手
     - _要件: 13.2, 13.3, 17.1_
-  - **20.5 `straight-ahead-none-2` を実行する** — 未着手
+  - **20.5 `stop-ahead-none-2` を実行する** — 未着手
     - _要件: 13.2, 13.3, 17.1_
-  - **20.6 `straight-ahead-record-2` を実行する** — 未着手
+  - **20.6 `stop-ahead-record-2` を実行する** — 未着手
     - そのあと、6 つの結果を、`bfs-check-runs` が出力するとおりに、各実行の終了、頼る id、再開の一文の回数とともに、日本語で報告する。
     - _要件: 13.2, 13.3, 17.1, 19.6_
-- **21. `turn-right` の実行。ユーザーが時間があると言った場合だけ** **[local Mac]** — 未着手
-  - **21.1 `turn-right` の時間があるかをユーザーに尋ねる — Stop and ask（止めて確認）** — 未着手
-    - 日本語で尋ね、答えが yes なら `turn-right` のシード、モデル、エフォートも尋ねる。答えを `docs/status.md` に記録する。
-    - _要件: 17.2_
-  - **21.2 各セットアップで `turn-right` の n = 1 と 2 を実行する（ユーザーが yes と言った場合だけ）** — 未着手
-    - タスク 20 と同じ手順と停止条件で、`build-from-spec/requests/turn-right.toml`、元は `sessions/body-lab/body-2`、順序は spec-1、none-1、record-1、spec-2、none-2、record-2。他のリクエストの実行はしない。
-    - _要件: 17.2, 17.3, 17.4_
-  - **21.3 `turn-right` を未実行として記録する（ユーザーが no と言った場合だけ）** — 未着手
-    - `build-from-spec/README.md` と `docs/status.md` に、`turn-right` はコミット済みで未実行と書く。リクエストファイルは変えない。
+- **21. 実行しないリクエスト** — 未着手
+  - **21.1 `straight-ahead` と `turn-right` を未実行として記録する** — 未着手
+    - `build-from-spec/README.md` と `docs/status.md` に、`straight-ahead` と `turn-right` はコミット済みで未実行と、決定 18 の理由とともに書く: 元の記録 `sessions/body-lab/body-2` が、その合格範囲の内側の試行をすでに含んでいるため、セットアップを比較できない。どちらも実行しない。両方のリクエストファイルは変えない。ユーザーの承認なしに、他のどのリクエストも実行しない。
     - _要件: 17.2_
 - **22. `lab-notebook` 仕様への引き継ぎ** — 未着手
   - **22.1 実行を `lab-notebook` 仕様に引き継ぐ** — 未着手
@@ -252,13 +248,13 @@
     - _要件: 18.3_
 - **23. 最終チェックポイント** — 未着手
   - すべてのテストが通ることを確認し、疑問があればユーザーに尋ねる。走らせるもの: `sh bench/scripts/check.sh`。`build-from-spec/` での `uv run pytest`、`uv run ruff check`、`uv run ruff format --check`。body-lab アダプターのテスト。`sessions/build-from-spec/` のすべての実行記録での `bench-verify`。`bfs-check-runs`。`bench-check-discovered sessions discovered`。`sessions/`、`discovered/`、両方のラボでの `bench-scan`。`sh scripts/ja-check.sh`。
-  - `docs/status.md` を日本語で更新する: 行ったこと、実行の結果、`turn-right` を実行したか、画像のチェックの README の結果、次のステップ（`lab-notebook` の "Built from the spec" のタスク）、1 つの環境にだけ当てはまること。`sh scripts/ja-check.sh` が古いものなしと報告したあと、`tasks.md` と `docs/ja/build-from-spec/tasks.md` を、1 つずつ名前を指定して一緒にコミットする（`handoff.md`）。
+  - `docs/status.md` を日本語で更新する: 行ったこと、実行の結果、`straight-ahead` と `turn-right` が未実行であること、画像のチェックの README の結果、次のステップ（`lab-notebook` の "Built from the spec" のタスク）、1 つの環境にだけ当てはまること。`sh scripts/ja-check.sh` が古いものなしと報告したあと、`tasks.md` と `docs/ja/build-from-spec/tasks.md` を、1 つずつ名前を指定して一緒にコミットする（`handoff.md`）。
   - 完了条件（要件 19.6）、この仕様が及ぶ範囲で: 6 つの実行が存在し、封印され、`bench-verify` に通る。すべての実行情報ファイルが `bfs-check-runs` とブラインドスキャンに通る。画像の結果が README にある。結果は機械的に計算される。すべての実行を見せるノートブックは、`lab-notebook` のタスクがチェックする。
   - _要件: 13.2, 16.2, 19.6_
 ## Notes
 - すべてのタスクは必須で、オプションのものはありません。
 - 各タスクは、それが扱う要件を参照します。プロパティテストは設計の普遍的な性質を検証し、ユニットテストと例のテストは、設計の Testing Strategy のケースと、そこで名指しされる本物の記録を扱います。
-- 波は、同じファイルに書くタスクを分けます: `folder.py`（9.1、10.4）、`runfile.py`（13.1、13.4）、`build-from-spec/README.md`（8.1、18.1、18.2、18.3、21.3）、`docs/status.md`（19.1、21.1、21.3、22.1）は、それぞれ 1 つの波につき 1 タスクだけが書きます。タスク 20 と 21 の実行は、リーダーのセッションを一度に 1 つしか開けないので、1 つの波に 1 つです（設計 B17）。チェックポイント（4、17、23）はグラフに入っていません。タスク 18 とタスク 19 は、ユーザーの答えが記録されるまで、後のすべての波を止めます。タスク 21.2 と 21.3 は択一で、21.1 のユーザーの答えに合うほうだけを行います。
+- 波は、同じファイルに書くタスクを分けます: `folder.py`（9.1、10.4）、`runfile.py`（13.1、13.4）、`build-from-spec/README.md`（8.1、18.1、18.2、18.3、21.1）、`docs/status.md`（19.1、21.1、22.1）は、それぞれ 1 つの波につき 1 タスクだけが書きます。タスク 20 の実行は、リーダーのセッションを一度に 1 つしか開けないので、1 つの波に 1 つです（設計 B17）。チェックポイント（4、17、23）はグラフに入っていません。タスク 18 とタスク 19 は、ユーザーの答えが記録されるまで、後のすべての波を止めます。
 ## Task Dependency Graph
 ```json
 {
@@ -290,9 +286,7 @@
     { "id": 24, "tasks": ["20.5"] },
     { "id": 25, "tasks": ["20.6"] },
     { "id": 26, "tasks": ["21.1"] },
-    { "id": 27, "tasks": ["21.2"] },
-    { "id": 28, "tasks": ["21.3"] },
-    { "id": 29, "tasks": ["22.1"] }
+    { "id": 27, "tasks": ["22.1"] }
   ]
 }
 ```
