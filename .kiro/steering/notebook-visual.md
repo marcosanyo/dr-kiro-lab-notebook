@@ -15,6 +15,15 @@ Which Kiro: the builder writes the pages; visitors read them. Dr. Kiro and the r
 The site looks like a scientist's paper notebook, not a dashboard. It has one theme and no theme switch
 (Requirement 6.2). Only system font stacks are used; no font file is fetched or shipped (Requirement 3.2).
 
+## Wording of the stylesheet
+
+The stylesheet, the script and the markup are builder text and pass the blind scan at the builder level. They avoid
+the terms the scan derives from the model files (design N28): a finding is fixed by rewording, never through the
+stop list. So where this file names a property or a keyword that is such a term (for example letter spacing of the
+stamp, line thickness, linear timing, the word "spacing" in "Type and spacing"), the stylesheet gets the same look
+another way or the look is dropped, and the stylesheet's own wording is what counts. Links never contain `..` (the
+site is flat, design N28).
+
 ## Paper
 
 - Background `--paper` `#fbf7ec`.
@@ -88,12 +97,12 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 
 ## Halloween (Requirement 6.5)
 
-- One small ink-drawn bat and a cobweb corner, in `assets/deco.svg`. The file holds no text (no `<text>`, no
-  `<title>`, no `<desc>`).
+- One small ink-drawn bat and a cobweb corner, as inline SVG in the page markup (no file, no `xmlns` attribute).
+  The drawing holds no text (no `<text>`, no `<title>`, no `<desc>`).
 - Shown only at viewports of 1000px and wider, in the page gutter: at that width the body reserves a 96px left
   gutter and the decoration (`.deco`) is fixed inside it, so it never overlaps any text, table, chart or experiment
   entry. Hidden below 1000px.
-- Used as `<img class="deco" src="…/a/deco.svg" alt="" aria-hidden="true">`; `pointer-events: none`.
+- Used as `<svg class="deco" aria-hidden="true">…</svg>`; `pointer-events: none`.
 - It sits behind nothing and never changes the colour of any text.
 
 ## Motion (Requirements 3.6, 7.6)

@@ -176,7 +176,8 @@ that it is fast, private and lasts.
 1. THE site SHALL be plain HTML, CSS and JavaScript, written by the build, with no framework, no third-party
    library and no build step in Node.
 2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote
-   image. Every asset SHALL be a file of the site, referenced by a relative URL.
+   image. Every asset SHALL be a file of the site, referenced by a relative URL that contains no `..`. Every page SHALL be at
+   the site root, and only pictures and assets SHALL be in subfolders (Decision 46).
 3. THE site SHALL have no chat box and no control that starts an experiment, a session or a build-from-spec run,
    and SHALL send no data anywhere.
 4. THE text, the discovered spec tables and the experiment entries SHALL be present in the HTML as written by the
@@ -254,7 +255,8 @@ record of work.
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with
    the word "miss".
 5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or
-   experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6.
+   experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the
+   page markup, not a separate file, and SHALL carry no namespace URL (Decision 46).
 6. WHEN the user describes a difference from the reference, THE builder SHALL update this requirement or the
    steering file first, and the pages after.
 
@@ -875,6 +877,19 @@ exception to a rule.
     a replaced-by cell naming the row itself gives "names this row itself", no match (including empty) gives
     "names no row of this table", two or more give "names more than one row" (Requirements 10.9, 10.14, 14.6, 16.6;
     design N27; extends Decision 18).
+
+46. **Flat site and wording that avoids scan terms** (user, 2026-11-17). The builder's scan of its own text (task
+    8.1) flagged four things: `../` in relative links (read as a path outside the lab), the derived terms `linear`,
+    `thickness` and `spacing` in the stylesheet, the `xmlns` URL in the decoration file (which the `http:` check
+    of the site rejects), and picture attribute and script names that are scan terms. Decided: every page is at the
+    site root, addresses are `index.html`, `how.html`, `built.html`, `legend.html`, `<app>.html`,
+    `<app>-<session>.html` and `<app>-<session>-replay-<n>.html`, pictures are `p/<sha256>.png`, assets are
+    `a/notebook.css` and `a/notebook.js`, and no link contains `..`; the build checks that application and session
+    ids are lower case letters, digits and single hyphens and that no two pages have the same address; the
+    stylesheet is reworded without the flagged words, never through the stop list; the Halloween decoration is
+    inline SVG without `xmlns`; the picture layout attributes are `data-tile-width` and `data-tile-height`; the
+    `http:` check stays strict. A scan finding in builder text is always fixed by rewording (design N28)
+    (Requirements 3.2, 6.5, 11.1, 20.1, 20.2).
 
 ## Open questions
 

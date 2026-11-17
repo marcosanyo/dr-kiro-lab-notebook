@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `6a78935ea790a9545ef35a11bf473b113e8ca43a4dec3bf7a27e0f2a75e8909d`
+> 原文 SHA-256: `d9439ef16fdc4faad94bc6630915453c0af033d7743336d108d631958bbb9549`
 
 # Design: lab-notebook
 
@@ -85,7 +85,8 @@ notebook/
     ink.py                Ink, Segment, escape, joining segments into text and author ranges
     html.py               element helpers over segments (plain string templates)
     pages/                cover.py, lab.py, session.py, replay.py, how.py, built.py, parts.py
-    assets/               notebook.css, notebook.js, deco.svg (builder files, copied byte for byte)
+    assets/               notebook.css, notebook.js (builder files, copied byte for byte); the Halloween decoration is inline SVG in
+                          the page markup (parts.py), not a file (N28)
     scan.py               the bench Scanner over segments and finished files
     site.py               Site: path -> bytes and ranges; sidecars; staging and rename
     build.py              the four phases
@@ -238,14 +239,16 @@ class Segment:
 | `index.html` | カバー（13） |
 | `how.html` | ラボのしくみ（18） |
 | `built.html` | spec から作る（19） |
-| `<app>/index.html` | ラボのページ（14.1-14.4） |
-| `<app>/<session>/index.html` | セッションページ（10、14.5、14.6、17） |
-| `<app>/<session>/replay-<n>.html` | リプレイのステップ n、1 始まり（16.8） |
+| `<app>.html` | ラボのページ（14.1-14.4） |
+| `<app>-<session>.html` | セッションページ（10、14.5、14.6、17） |
+| `<app>-<session>-replay-<n>.html` | リプレイのステップ n、1 始まり（16.8） |
 | `legend.html` | インクの凡例と、解説で定義するステータスの語（4.5、15.2） |
 | `p/<sha256>.png` | 画像。バイト単位でコピー（7.7） |
-| `a/notebook.css`, `a/notebook.js`, `a/deco.svg` | アセット |
+| `a/notebook.css`, `a/notebook.js` | アセット |
 
-セッションページのアンカー: `#row-R<n>`、`#E<n>`（実験エントリー、`<details>`）、`#E<n>-T<n>`、`#E<n>-H<n>.P<n>`、`#E<n>-file`、一度も走らなかった予測のための `#H<n>.P<n>`（11）。すべてのリンクは相対（3.2）。JavaScript は、アドレスが指す `<details>` を開く（11.2）。JavaScript がなくても、エントリーは存在し、手で開ける。
+サイトはフラットである（N28）: すべてのページはサイトのルートにあり、サブフォルダーは `p/` と `a/` だけである。リンクは相対で、`..` を含まない。ページは `legend.html`、`<app>.html`、`p/<sha256>.png`、`a/notebook.css` などを直接リンクする。アドレスが衝突しないことはビルドが検査する: application と session の id は `[a-z0-9]+(-[a-z0-9]+)*` に一致しなければならない（実際の id は `body-lab`、`wind-tunnel`、`body-1`、`wt-004`）。`Site` は、すでにあるパスの追加を、両方の持ち主を挙げて拒否する（たとえば application `a` の session id `x-replay-1` は session `x` のステップ 1 と衝突するので、ここで見つかる。`how` という名前の application も同じ）。ベンチは application と session の id のパターンを定めていないので、この検査はノートブック自身のもので、id を挙げてビルドを失敗させる。小文字だけなので、大文字小文字を区別しないファイルシステムでも 2 つのアドレスが大文字小文字だけで違うことはない。
+
+セッションページのアンカー: `#row-R<n>`、`#E<n>`（実験エントリー、`<details>`）、`#E<n>-T<n>`、`#E<n>-H<n>.P<n>`、`#E<n>-file`、一度も走らなかった予測のための `#H<n>.P<n>`（11）。すべてのリンクは相対で、`..` を含まない（3.2、N28）。JavaScript は、アドレスが指す `<details>` を開く（11.2）。JavaScript がなくても、エントリーは存在し、手で開ける。
 
 セッションページの順序（10.1）: 表のページ（選んだ外れへの付箋と、余白にピンで留めた選んだ画像を伴う）、ハイライト、進み具合（予測チャートを含む、17）、Dr. Kiro の計画（`tasks.md`。`requirements.md` はその下に折りたたむ、N18）、すべての実験エントリー、等しい試行の一覧（14.5）、リプレイの操作（16）。wt-003 は 14.2 と "the record has no snapshot to replay" だけを得る（14.6、16.9）。
 
@@ -253,7 +256,7 @@ class Segment:
 
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
-HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、セルの幅と高さ）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
+HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
 
 ### 11. Scan (Requirement 20)
 
@@ -264,9 +267,11 @@ HTML は、シート全体の `<img>`（JavaScript なしで動き、「シー�
 
 画像はフェーズ 1 で `check_picture` を通す（20.4）。スキャナーは、このマシンのホームフォルダーとリポジトリのパス（`local_paths`）にも印をつけ、絶対パスについての要件 21.1 を守る。
 
+一般規則（N28）: ビルダー自身のテキスト、CSS、JavaScript、HTML の属性名とクラス名は、スキャンがモデルとソルバーのファイルから導く語（およびスキャンがラボの外を指すパスと読む、リンクの `..`）を避けて書く。指摘は、ビルダーのテキストの言い換えまたは構成の変更で直す。除外リストでも、スキャナーの例外でも直さない。既知の例: CSS に `linear`、`thickness`、`spacing` を使わない。JavaScript に `window.` と `tagName` を使わない。セル幅を表す名前の代わりに `data-tile-width` を使う。
+
 ### 12. Site writing (Requirements 2.7, 20.3, 21)
 
-`Site` は、相対パスをバイト列に対応づける。各 `.html`、`.css`、`.js`、`.svg` のファイルは `<file>.authors.json` を得る: `{"ranges": [...]}` を `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` と最後の改行で書く。アセットは `bench` の範囲 1 つである。書き出し: `<parent>/.<out-name>.staging` を作り（すでにあれば拒否）、すべてのファイルをパスの並び順で書き、`os.replace(staging, out)`（out は存在しないか、空のフォルダー）。
+`Site` は、相対パスをバイト列に対応づける。各 `.html`、`.css`、`.js` のファイルは `<file>.authors.json` を得る: `{"ranges": [...]}` を `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` と最後の改行で書く。アセットは `bench` の範囲 1 つである。書き出し: `<parent>/.<out-name>.staging` を作り（すでにあれば拒否）、すべてのファイルをパスの並び順で書き、`os.replace(staging, out)`（out は存在しないか、空のフォルダー）。
 
 ## Data Models
 
@@ -496,7 +501,7 @@ trial = "T1"
 - 引数: 欠けているオプションはそれぞれ名指しされる。空でない出力フォルダーは拒否される（1.3、1.4）。
 - スキャン: スキャンのソースの語を `text.py` の文字列に仕込むとビルドが失敗する。同じ語がフィクスチャの記録の Dr. Kiro のテキストにあっても失敗しない（20.5）。選択の理由に仕込んだ語は失敗する（12.8）。
 - 解説: `text.py` のすべての文字列が語のリストを通る。仕込んだリストの語は失敗する（5.5）。`<details>` の外にあるカバーの解説は、最大 60 トークン（13.6）。
-- サイト: どのファイルにも `http:`、`https:`、URL の先頭の `//`、`<form`、リプレイと画像のボタン以外の `<input`、`<iframe` が含まれない（3.1-3.3）。テキストはスクリプトなしで HTML の中にある（3.4）。すべての画像の名前は、そのバイト列の SHA-256 である（7.7）。すべてのページが `legend.html` にリンクする（4.5）。
+- サイト: すべてのページがルートにあり、どのリンクにも `..` がない。2 つのアドレスを等しくしうる id はビルドを失敗させる（N28）。どのファイルにも `xmlns`、`http:`、`https:`、URL の先頭の `//`、`<form`、リプレイと画像のボタン以外の `<input`、`<iframe` が含まれない（3.1-3.3）。テキストはスクリプトなしで HTML の中にある（3.4）。すべての画像の名前は、そのバイト列の SHA-256 である（7.7）。すべてのページが `legend.html` にリンクする（4.5）。
 - 色: ビジュアルのステアリングで宣言された前景と背景の組はすべて、CSS のカスタムプロパティから WCAG の式で計算したコントラスト比が 4.5:1 以上である（4.6、6.5）。
 - `uv.lock` に `mcp` がない。`git diff --stat bench/` が、タスクの検証ステップで空である（7.4）。
 
@@ -521,7 +526,7 @@ trial = "T1"
 | Strike-through | 2px の黒鉛色の `line-through`。文字は十分なコントラストのまま。"replaced by" タブは、行の右端に紙のタブとして置く |
 | Type and spacing | 基準 17px / 1.5。間隔の尺度は 4、8、16、24、40px |
 | Narrow screen | 360px では 1 列。余白の写真は表の下へ移る。幅の広い表は、それ自身の箱の中でスクロールする |
-| Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（`deco.svg`）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
+| Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（ページのマークアップの中のインライン SVG。ファイルなし、`xmlns` 属性なし、テキストなし）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
 | Motion | 1 セルあたり 500 ms。モーション低減は一時停止で始まる（3.6） |
 
 上のすべての文字色は、その背景（紙と付箋の黄色）の上で 4.5:1 以上に達します。テストが、CSS から各組を確認します。
@@ -591,6 +596,7 @@ trial = "T1"
 
 - **N26 Unreadable middle-step table shown as written (user).** 途中のステップでの `TableError` は `Unreadable` になり、`## Discovered spec` の節は書かれたとおりに、ラベルつきの文とともに見せる。行は推測しない（Components 3、要件 16.6、要件の Decision 18、ユーザーが確定）。以前の Open question 2 だったもの。
 - **N27 A table the reader does not accept (user, 2026-11-17).** `parse_table` が拒否する表は、行のない表（`end` より前の実記録のすべてのスナップショット）を含め、`## Discovered spec` の節を書かれたとおりに（Dr. Kiro のインク）、リーダーのメッセージ（ペンシル）、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析せず、2 つ目のリーダーも持たない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使う。wt-002 は最後のスナップショットをこの形で、"not checked by the bench" のラベルつきで見せる（Components 3、要件 10.9、10.14、14.6、16.6、要件の Decision 45）。N26 を拡張。
+- **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** タスク 8.1 によるビルダー自身のテキストのスキャンは、(1) 相対リンクの `../` がラボの外を指すパスと読まれること、(2) `notebook.css` に派生語 `linear`、`thickness`、`spacing` があること、(3) `deco.svg` に `xmlns="http://www.w3.org/2000/svg"` があり、`http:` のサイト検査（タスク 9.5）が拒否すること、(4) 画像の属性とスクリプトの名前がスキャン語であることを見つけた。決定: サイトのレイアウトはフラットで、すべてのページがルートにある（Components 9 の表）。`p/` と `a/` だけがフォルダーなので、どのリンクにも `..` はいらない。CSS は印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾は `xmlns` のないインライン SVG で、`deco.svg` はアセットではない。画像の属性は `data-tile-width` と `data-tile-height`。Components 11 の一般規則が成り立つ。id は Components 9 のとおり検査する。`http:` 検査は厳格なまま。N9 を拡張する（要件 3.2、6.5、20.1、20.2、requirements Decision 46）。
 
 ## Open questions
 

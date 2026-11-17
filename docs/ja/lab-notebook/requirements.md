@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `bd70a1d35757beaed4788aeeb61debb9fa608575fb7eb5228c64b46988443971`
+> 原文 SHA-256: `768624ed73ef6a02eb6b19cbd3757985613e413f6c837e6fc2f62dce3c341615`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -77,7 +77,7 @@ Spec: `lab-notebook`。
 **User Story:** 訪問者として、スマートフォンで動き、他のサーバーに何も求めない素朴な Web サイトがほしい。速く、プライベートで、長持ちするようにするためである。
 #### Acceptance criteria
 1. THE site SHALL be plain HTML, CSS and JavaScript, written by the build, with no framework, no third-party library and no build step in Node。
-2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote image. Every asset SHALL be a file of the site, referenced by a relative URL。
+2. THE site SHALL make no request to any host other than its own: no CDN, remote font, analytics, embed or remote image. Every asset SHALL be a file of the site, referenced by a relative URL that contains no `..`. Every page SHALL be at the site root, and only pictures and assets SHALL be in subfolders (Decision 46)。
 3. THE site SHALL have no chat box and no control that starts an experiment, a session or a build-from-spec run, and SHALL send no data anywhere。
 4. THE text, the discovered spec tables and the experiment entries SHALL be present in the HTML as written by the build, and SHALL need no script to be shown; moving pictures and the replay controls MAY need JavaScript。
 5. WHEN the viewport is 360 CSS pixels wide、THE page's scroll width SHALL NOT exceed the viewport width; a wide table MAY scroll inside its own box。
@@ -110,7 +110,7 @@ Spec: `lab-notebook`。
 2. THE site SHALL have one theme and no theme switch。
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown as sticky notes。
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with the word "miss"。
-5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6。
+5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the page markup, not a separate file, and SHALL carry no namespace URL (Decision 46)。
 6. WHEN the user describes a difference from the reference、THE builder SHALL update this requirement or the steering file first, and the pages after。
 ### Requirement 7: Picture sheets and moving pictures
 **対象:** ビルダーと訪問者。
@@ -343,6 +343,8 @@ Spec: `lab-notebook`。
 43. **No link to the root `.kiro/`**（user）。"How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがない。ノートブックはラボの外のファイルやフォルダーを名指しせず、リンクもしない。この問いは README を書くとき（README のステップ、`docs/brief.md` セクション 5 項目 8）に改めて決める。これにより以前の Open question 2 は解決して削除される（要件 18.5）。
 44. **Rescanning the written site for `publish`**（user）。`publish` が書き出されたサイトをどう再走査するか（ベンチのフォルダースキャンはすべてのファイルをテキストとして読むので、サイトの PNG ファイルは失敗する）は、`publish` の spec を書くときに決める。ノートブックは今までどおりテキストファイルごとにサイドカーを 1 つ書き（要件 20.3）、書き出す前の自前のスキャンも残る（要件 20.1、20.2）。
 45. **A table the bench reader does not accept**（user、2026-11-17）。`parse_table` は行のない表に対して `TableError` を送出する（"the discovered spec table has no rules"）。そのため実記録の `end` より前のスナップショットはすべて、リーダーが受理しない表であり、行のない表を、メッセージを解析することも 2 つ目のリーダーを持つこともなく（要件 2.6）、他の受理されない表と見分けることはできない。決定: リーダーが受理しない表は、行がなくても他の理由でも、`## Discovered spec` の節を Dr. Kiro のインクで書かれたとおりに、リーダーが返したメッセージをペンシルで、コメンタリー "the bench's table reader did not accept this table" とともに見せる。ビルドはメッセージを解析しない。"no table" は `end` スナップショットのない終了済みセッション（body-1）にだけ使い、そこでは外れた予測をすべて一覧する。wt-002（停止、最後のスナップショットに行なし）は、最後のスナップショットの節をメッセージつきで、"not checked by the bench" のラベルで見せる。N12 の端のケースは変えない: 置き換え先のセルが行自身を指せば "names this row itself"、一致なし（空を含む）なら "names no row of this table"、2 つ以上なら "names more than one row"（要件 10.9、10.14、14.6、16.6、設計 N27。Decision 18 を拡張）。
+
+46. **Flat site and wording that avoids scan terms**（user、2026-11-17）。ビルダー自身のテキストのスキャン（タスク 8.1）は 4 点に印をつけた: 相対リンクの `../`（ラボの外を指すパスと読まれる）、スタイルシートの派生語 `linear`、`thickness`、`spacing`、装飾ファイルの `xmlns` の URL（サイトの `http:` 検査が拒否する）、スキャン語である画像の属性名とスクリプトの名前。決定: すべてのページをサイトのルートに置く。アドレスは `index.html`、`how.html`、`built.html`、`legend.html`、`<app>.html`、`<app>-<session>.html`、`<app>-<session>-replay-<n>.html`。画像は `p/<sha256>.png`、アセットは `a/notebook.css` と `a/notebook.js`。どのリンクにも `..` を含めない。ビルドは、application と session の id が小文字、数字、単独のハイフンだけであること、2 つのページが同じアドレスを持たないことを検査する。スタイルシートは、印のついた語を使わない言い換えにする（除外リストは使わない）。Halloween の装飾はインライン SVG で、`xmlns` を持たない。画像のレイアウト属性は `data-tile-width` と `data-tile-height`。サイトの `http:` 検査は厳格なまま。ビルダーのテキストへのスキャンの指摘は、常に言い換えで直す（design N28）（要件 3.2、6.5、11.1、20.1、20.2）。
 
 ## Open questions
 なし。

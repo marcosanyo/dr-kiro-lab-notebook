@@ -92,7 +92,8 @@ notebook/
     ink.py                Ink, Segment, escape, joining segments into text and author ranges
     html.py               element helpers over segments (plain string templates)
     pages/                cover.py, lab.py, session.py, replay.py, how.py, built.py, parts.py
-    assets/               notebook.css, notebook.js, deco.svg (builder files, copied byte for byte)
+    assets/               notebook.css, notebook.js (builder files, copied byte for byte); the Halloween decoration is inline SVG in
+                          the page markup (parts.py), not a file (N28)
     scan.py               the bench Scanner over segments and finished files
     site.py               Site: path -> bytes and ranges; sidecars; staging and rename
     build.py              the four phases
@@ -324,15 +325,25 @@ Pages are Python functions that return a list of segments; no template engine. E
 | `index.html` | cover (13) |
 | `how.html` | how the lab works (18) |
 | `built.html` | built from the spec (19) |
-| `<app>/index.html` | lab page (14.1-14.4) |
-| `<app>/<session>/index.html` | session page (10, 14.5, 14.6, 17) |
-| `<app>/<session>/replay-<n>.html` | replay step n, 1-based (16.8) |
+| `<app>.html` | lab page (14.1-14.4) |
+| `<app>-<session>.html` | session page (10, 14.5, 14.6, 17) |
+| `<app>-<session>-replay-<n>.html` | replay step n, 1-based (16.8) |
 | `legend.html` | ink legend and status words defined in commentary (4.5, 15.2) |
 | `p/<sha256>.png` | picture, copied byte for byte (7.7) |
-| `a/notebook.css`, `a/notebook.js`, `a/deco.svg` | assets |
+| `a/notebook.css`, `a/notebook.js` | assets |
+
+The site is flat (N28): every page is at the site root, and the only subfolders are `p/` and `a/`. A link is
+relative and never contains `..`: a page links `legend.html`, `<app>.html`, `p/<sha256>.png`, `a/notebook.css`
+and so on directly. Addresses cannot collide, because the build checks it: application and session ids must match
+`[a-z0-9]+(-[a-z0-9]+)*` (the real ids are `body-lab`, `wind-tunnel`, `body-1`, `wt-004`), and `Site` refuses to add
+a path that is already present, naming both owners (for example a session id `x-replay-1` of application `a`
+against step 1 of session `x` would be caught here, as would an application named `how`). The bench defines no id
+pattern for applications and sessions, so this check is the notebook's own and fails the build, naming the id.
+Lower case only, so two addresses cannot differ by case on a case-insensitive file system.
 
 Anchors on a session page: `#row-R<n>`; `#E<n>` (experiment entry, a `<details>`); `#E<n>-T<n>`; `#E<n>-H<n>.P<n>`;
-`#E<n>-file`; `#H<n>.P<n>` for predictions never run (11). All links are relative (3.2). JavaScript opens the
+`#E<n>-file`; `#H<n>.P<n>` for predictions never run (11). All links are relative and contain no `..` (3.2,
+N28). JavaScript opens the
 `<details>` named by the address (11.2); without JavaScript the entry is present and can be opened by hand.
 
 Session page order (10.1): table page (with the sticky note to the chosen miss and pinned chosen pictures in its
@@ -348,7 +359,8 @@ the commentary "not run at this step" (16.2).
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
 The HTML holds a `<figure class="photo">` with an `<img>` of the whole sheet (works without JavaScript and is the
-"whole sheet" view) and `data-` attributes: columns, rows, gap, cell width and height. `notebook.js` replaces the
+"whole sheet" view) and `data-` attributes: columns, rows, gap, and `data-tile-width` and `data-tile-height` for
+the cell size (N28). `notebook.js` replaces the
 visible image with a `<canvas>` of one cell and draws cell k with `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)`,
 where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + gap)`, in reading order, one cell per
 500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
@@ -366,9 +378,15 @@ where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + g
 Pictures pass `check_picture` in phase 1 (20.4). The scanner also flags this machine's home folder and the
 repository path (`local_paths`), which guards Requirement 21.1 against absolute paths.
 
+General rule (N28): the builder's own text, the CSS, the JavaScript and the HTML attribute and class names are
+written to avoid the terms the scan derives from the model and solver files (and `..` in links, which the scan
+reads as a path outside the lab). A finding is fixed by rewording or restructuring the builder's text, never by
+the stop list and never by an exception in the scanner. Known cases: no `linear`, `thickness` or `spacing` in the
+CSS, no `window.` or `tagName` in the JavaScript, `data-tile-width` instead of a cell-width name.
+
 ### 12. Site writing (Requirements 2.7, 20.3, 21)
 
-`Site` maps relative paths to bytes. Each `.html`, `.css`, `.js` and `.svg` file gets `<file>.authors.json`:
+`Site` maps relative paths to bytes. Each `.html`, `.css` and `.js` file gets `<file>.authors.json`:
 `{"ranges": [...]}` written with `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` and a
 final newline. Assets are one `bench` range. Writing: create `<parent>/.<out-name>.staging` (refuse if it
 exists), write every file in sorted path order, then `os.replace(staging, out)` (out absent or an empty folder).
@@ -689,7 +707,8 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
   of a fixture record does not (20.5). A planted term in a choice reason fails (12.8).
 - Commentary: every string in `text.py` passes the word list; a planted listed word fails (5.5). Cover commentary
   outside `<details>` is at most 60 tokens (13.6).
-- Site: no file contains `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
+- Site: every page is at the root and no link contains `..`; ids that could make two addresses equal fail the
+  build (N28); no file contains `xmlns`, `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
   picture buttons, or `<iframe` (3.1-3.3); text is in the HTML without script (3.4); every picture's name is the
   SHA-256 of its bytes (7.7); every page links `legend.html` (4.5).
 - Colours: each foreground and background pair declared in the visual steering has a contrast ratio of at least
@@ -720,7 +739,7 @@ into the steering file first (6.6). Only system font stacks are used; no font fi
 | Strike-through | `line-through` 2px graphite; text stays at full contrast; the "replaced by" tab sits at the row's right edge as a paper tab |
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
 | Narrow screen | at 360px one column; margin photos move below the table; wide tables scroll inside their own box |
-| Halloween | one small ink-drawn bat and a cobweb corner (`deco.svg`), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
+| Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
 | Motion | 500 ms per cell; reduced motion starts paused (3.6) |
 
 All text colours above reach at least 4.5:1 on their backgrounds (paper and sticky yellow); the test checks each
@@ -840,6 +859,16 @@ changes `bench/`.
   table"; the build does not parse the message and has no second reader. "No table" is only for an ended session
   without an `end` snapshot (body-1). wt-002 shows its last snapshot this way, labelled "not checked by the
   bench" (Components 3, Requirements 10.9, 10.14, 14.6, 16.6, requirements Decision 45). Extends N26.
+- **N28 Flat site, wording avoids scan terms (user, 2026-11-17).** Task 8.1's scan of the builder's own text found
+  that (1) relative links with `../` are read as paths pointing outside the lab, (2) `notebook.css` held the
+  derived terms `linear`, `thickness` and `spacing`, (3) `deco.svg` held `xmlns="http://www.w3.org/2000/svg"`, which
+  the `http:` site check (task 9.5) rejects, and (4) the picture attributes and the JavaScript used names that are
+  scan terms. Decided: the site layout is flat, with every page at the root (table in Components 9) and `p/` and
+  `a/` the only folders, so no link needs `..`; the CSS is reworded without the flagged words (never the stop
+  list); the Halloween decoration is inline SVG with no `xmlns`, and `deco.svg` is not an asset; the picture
+  attributes are `data-tile-width` and `data-tile-height`; and the general rule in Components 11 holds. Ids are
+  checked as in Components 9. The `http:` check stays strict. Extends N9 (Requirements 3.2, 6.5, 20.1, 20.2,
+  requirements Decision 46).
 
 ## Open questions
 
