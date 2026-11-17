@@ -203,10 +203,22 @@ def _assert_page(record: RecordModel) -> None:
     builder = scan.drkiro_word_segments([record])
     assert Counter((s.source, s.text) for s in builder) == fixed
     assert {scan.level(s) for s in builder} <= {"builder"}
-    if not session.has_page(record):
-        event("no snapshot: no session page")
-        return
     log = f"{record.name}/{LOG_NAME}"
+    if not record.snapshots:
+        # The page of Requirement 14.6 shows only what the record holds, as the lab page lists it: no
+        # hypothesis text and no fixed word, and nothing in Dr. Kiro's ink from a log entry but values
+        # recorded with author `dr-kiro`.
+        event("no snapshot: the page of Requirement 14.6")
+        segments, _ = session.page(views.full(record), _choices(record), Pins(record, LAYOUT))
+        drkiro_values = {
+            (item.source, item.text)
+            for item in _model_authored(record)
+            if isinstance(item, Authored) and item.author == "dr-kiro"
+        }
+        for seg in segments:
+            if seg.ink is Ink.DRKIRO and seg.source.startswith(log):
+                assert (seg.source, seg.text) in drkiro_values, seg
+        return
     drkiro = {
         (item.source, item.text)
         for item in _model_authored(record)

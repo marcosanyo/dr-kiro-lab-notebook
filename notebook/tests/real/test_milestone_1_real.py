@@ -244,8 +244,10 @@ def test_every_row_of_every_table_shows_its_status_word_as_the_record_holds_it(s
     seen = 0
     for record in loaded.values():
         page_file = site / f"{record.application}-{record.session}.html"
-        if not page_file.exists():
-            continue  # wt-003: see the known gap below
+        assert page_file.is_file(), record.name  # every record has its page (Requirement 2.8)
+        if not record.snapshots:
+            assert _rows(_parse(page_file)) == []  # wt-003: no snapshot, no table (14.6)
+            continue
         view_end = tables.end_snapshot(record)
         snapshot = view_end if view_end is not None else (record.snapshots[-1] if record.snapshots else None)
         shown_rows = _rows(_parse(page_file))
@@ -308,12 +310,14 @@ def test_wt_002_shows_its_last_snapshot_section_with_the_readers_message(site, l
     assert text.NO_TABLE not in texts and section.find_all("table") == []
 
 
-def test_known_gap_wt_003_has_no_page_yet(site, loaded):
-    """KNOWN GAP, to be replaced in task 13.1: wt-003 (stopped, no snapshot) gets a page with only the content
-    of Requirement 14.2 and the sentence of 16.9. Until then the build writes no page for it."""
+def test_wt_003_has_a_page_with_only_what_the_record_holds_and_no_replay(site, loaded):
+    """wt-003 (stopped, no snapshot) has a page with only the content of Requirement 14.2 and the sentence of
+    16.9 (14.6). The page in detail: `test_stopped_real.py`."""
     record = loaded["wt-003"]
     assert not record.snapshots
-    assert not (site / "wind-tunnel-wt-003.html").exists()
+    page = _session_page(site, record)
+    assert page.find("p", "no-replay").text() == text.NO_REPLAY
+    assert page.find_all("table") == [] and page.find_all("details", "entry") == []
 
 
 # The cover (Requirements 13.1, 13.2, 13.7)

@@ -121,8 +121,6 @@ def _legend(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]
 def _sessions(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
     out = {}
     for record in m.checked.records:
-        if not session.has_page(record):
-            continue
         layout = layouts.layout_for(m.checked.layouts, record.application, record.name)
         chosen = m.checked.choices[(record.application, record.session)]
         path = addresses.session(record.application, record.session, f"{record.name}/log.jsonl line 1")

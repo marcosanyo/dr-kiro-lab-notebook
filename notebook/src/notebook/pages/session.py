@@ -25,7 +25,7 @@ from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
-from notebook.pages import parts
+from notebook.pages import lab, parts
 from notebook.pages.parts import chosen, drkiro_block, link, row_link, say_text, stamp, sticky, tab
 from notebook.pages.photo import PictureFile, Pins
 from notebook.records import (
@@ -1119,17 +1119,8 @@ def _refusals(view: View) -> list[Segment]:
 # The page
 
 
-def has_page(record: RecordModel) -> bool:
-    """Whether the session page of this record is written yet. A record without a snapshot (wt-003) gets its
-    own page in task 13.1 (Requirements 14.6, 16.9); until then the build writes no page for it."""
-    return bool(record.snapshots)
-
-
-def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple[PictureFile, ...]]:
-    """The session page as of `view` and the pictures it shows, in the section order of Requirement 10.1:
-    the table with its margin, the highlight, the progress, Dr. Kiro's plan, every experiment entry; then the
-    hypotheses never run and the refusals. Tasks 14-19 add the sections that follow (14.5, 16, 17)."""
-    record = view.record
+def _top(record: RecordModel) -> list[Segment]:
+    """The link back to the lab page and the page heading."""
     start = _entry_source(record, 1)
     lab_page = addresses.lab(record.application, start)
     addresses.session(record.application, record.session, start)
@@ -1139,9 +1130,56 @@ def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple
         *say_text("SESSION_OF_LAB"),
         *html.text(pencil(record.application, start)),
     ]
-    body = [
+    return [
         *html.element("p", None, link(lab_page, say_text("BACK_TO_LAB"))),
         *html.element("h1", None, heading),
+    ]
+
+
+def _no_snapshot_page(record: RecordModel) -> list[Segment]:
+    """The page of a session whose record has no snapshot (wt-003): only the content of Requirement 14.2, as
+    the lab page lists it, and the sentence of 16.9 in place of the replay (14.6).
+
+    A snapshot is taken after every run, so such a record holds no experiment and no trial. If one did, this
+    page would leave it out, so the build fails instead (Requirement 2.8)."""
+    if record.experiments or record.trials:
+        raise NotebookError(
+            record.name,
+            f"the record has {len(record.experiments)} experiments and {len(record.trials)} trials but no "
+            "snapshot, so its page would leave them out",
+        )
+    body = [
+        *_top(record),
+        *html.element(
+            "section",
+            {"class": "record-holds", "id": "record"},
+            [*html.element("h2", None, say_text("NO_SNAPSHOT_HEADING")), *lab.content(record)],
+        ),
+        *html.element(
+            "section",
+            {"class": "replay", "id": "replay"},
+            [
+                *html.element("h2", None, say_text("REPLAY_HEADING")),
+                *html.element("p", {"class": "no-replay"}, say_text("NO_REPLAY")),
+            ],
+        ),
+    ]
+    return parts.page("SESSION_TITLE", body)
+
+
+def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple[PictureFile, ...]]:
+    """The session page as of `view` and the pictures it shows, in the section order of Requirement 10.1:
+    the table with its margin, the highlight, the progress, Dr. Kiro's plan, every experiment entry; then the
+    hypotheses never run and the refusals. Tasks 14-19 add the sections that follow (14.5, 16, 17).
+
+    A record without a snapshot (wt-003) gets the page of Requirement 14.6 instead, with no picture."""
+    record = view.record
+    if choices.record != record.name:
+        raise NotebookError(choices.file, f"the choice file is for {choices.record}, not {record.name}")
+    if not record.snapshots:
+        return _no_snapshot_page(record), ()
+    body = [
+        *_top(record),
         *table_section(view, choices, pins),
         *_highlight(view, choices, pins),
         *_progress(view),

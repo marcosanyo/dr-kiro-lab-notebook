@@ -1,7 +1,7 @@
 """One full build of the committed records through the command line into `tmp_path` (task 9.2).
 
-The paths asserted are the pages that exist so far; later tasks add `how.html` (14.1), `built.html` (22.1),
-the replay steps (18.1) and wt-003's page (13.1). Links to those pages are listed in `NOT_YET_WRITTEN`.
+The paths asserted are the pages that exist so far; later tasks add `how.html` (14.1), `built.html` (22.1)
+and the replay steps (18.1). Links to those pages are listed in `NOT_YET_WRITTEN`.
 """
 
 import re
@@ -14,7 +14,7 @@ from notebook import cli
 
 ROOT = Path(__file__).resolve().parents[3]
 # Pages that pages link to but later tasks write.
-NOT_YET_WRITTEN = {"wind-tunnel-wt-003.html"}
+NOT_YET_WRITTEN: set[str] = set()
 PAGES = {
     "index.html",
     "legend.html",
@@ -23,6 +23,7 @@ PAGES = {
     "body-lab-body-1.html",
     "body-lab-body-2.html",
     "wind-tunnel-wt-002.html",
+    "wind-tunnel-wt-003.html",
     "wind-tunnel-wt-004.html",
 }
 _HREF = re.compile(r'(?:href|src)="([^"#]*)(?:#[^"]*)?"')

@@ -139,15 +139,29 @@ def _values(record: RecordModel) -> dict[str, list[Segment]]:
     }
 
 
-def _record(record: RecordModel) -> list[Segment]:
+def _fields(record: RecordModel, names: tuple[str, ...]) -> list[Segment]:
     values = _values(record)
     if tuple(values) != FIELDS:
         raise NotebookError(record.name, "the lab page fields are not the fixed field list")
     items: list[Segment] = []
-    for name in FIELDS:
+    for name in names:
         items += html.element("dt", None, say_text(name))
         items += html.element("dd", None, values[name])
-    return html.element("li", {"class": "lab-record"}, html.element("dl", None, items))
+    return items
+
+
+def _record(record: RecordModel) -> list[Segment]:
+    return html.element("li", {"class": "lab-record"}, html.element("dl", None, _fields(record, FIELDS)))
+
+
+# The content of Requirement 14.2: every field of the lab page but the link to the session page.
+CONTENT_FIELDS = FIELDS[1:]
+
+
+def content(record: RecordModel) -> list[Segment]:
+    """What the record holds, as the lab page lists it (Requirement 14.2), for the page of a session whose
+    record has no snapshot (14.6). The same fields and wording as the lab page, so the two cannot differ."""
+    return html.element("dl", {"class": "record-content"}, _fields(record, CONTENT_FIELDS))
 
 
 def page(application: str, records: list[RecordModel]) -> list[Segment]:

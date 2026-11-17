@@ -11,8 +11,8 @@ per `experiment` entry, one trial block per `trial` entry, one moving picture pe
 per row the bench's reader returns for the shown snapshot (the `end` snapshot, else the last snapshot; none
 for an ended session without an `end` snapshot, and none when the reader does not accept the table).
 
-A record with no snapshot (wt-003-like) gets its session page in task 13.1 (`session.has_page`). That case
-is its own test, marked as an expected failure until 13.1 adds the page.
+A record with no snapshot (wt-003-like) gets the page of Requirement 14.6 (task 13.1). That case is its own
+test below, so it is checked over at least 100 such records.
 """
 
 # Feature: lab-notebook, Property 17: Nothing is skipped
@@ -22,13 +22,12 @@ import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 
-import pytest
 from bench.specfiles.discovered import TableError, parse_table
 from hypothesis import HealthCheck, event, given, settings
 from hypothesis import strategies as st
 
 from fixtures.synth import DESIGN_FILE, SynthRecord, records, write_all
-from notebook import ink, views
+from notebook import ink, text, views
 from notebook import records as notebook_records
 from notebook.choices import Choice, Choices
 from notebook.layouts import Layout
@@ -136,14 +135,10 @@ def _check_page(synth: SynthRecord, record: RecordModel) -> None:
 @given(records(rounds=st.integers(0, 4)))
 def test_nothing_of_a_record_is_skipped(synth: SynthRecord) -> None:
     record = _load(synth)
-    if not record.snapshots:
-        event("no snapshot: covered by the test of task 13.1 below")
-        return
-    assert session.has_page(record)
+    event("no snapshot" if not record.snapshots else "with snapshots")
     _check_page(synth, record)
 
 
-@pytest.mark.xfail(strict=True, reason="task 13.1: a record with no snapshot gets no session page yet")
 @settings(
     max_examples=100,
     deadline=None,
@@ -156,5 +151,7 @@ def test_nothing_of_a_record_is_skipped(synth: SynthRecord) -> None:
 )
 def test_a_record_with_no_snapshot_has_a_complete_page(synth: SynthRecord) -> None:
     record = _load(synth)
-    assert session.has_page(record)
     _check_page(synth, record)
+    # The page of Requirement 14.6: what the record holds and the sentence of 16.9, nothing else.
+    page, _ = ink.join(session.page(views.full(record), _choices(record), Pins(record, LAYOUT))[0])
+    assert page.count(text.NO_REPLAY) == 1

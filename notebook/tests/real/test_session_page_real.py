@@ -15,9 +15,8 @@ from real.test_milestone_1_real import SESSIONS, Node, _argv, _parse
 # Requirement 10.1: these sections first, in this order; the others follow.
 SECTION_ORDER = ["table", "highlight", "progress", "plan", "experiments", "never-run", "refusals"]
 
-# KNOWN GAP, to be replaced in task 13.1: wt-003 (stopped, no snapshot) has no page yet, so no link may
-# point into it, and it is the one record left out of the anchor check below.
-WT_003_PAGE = "wind-tunnel-wt-003.html"
+# wt-003 (stopped, no snapshot) has the page of Requirement 14.6 instead of these sections, so the tests of
+# the sections below leave it out; its page is checked in `test_stopped_real.py`.
 
 
 @pytest.fixture(scope="module")
@@ -188,8 +187,6 @@ def test_every_fragment_link_of_the_real_site_resolves(site):
                 continue
             target, fragment = href.split("#", 1)
             target = target or name
-            if target == WT_003_PAGE:
-                continue  # KNOWN GAP: task 13.1
             checked += 1
             if target not in ids or fragment not in ids[target]:
                 problems.append(f"{name}: {href}")

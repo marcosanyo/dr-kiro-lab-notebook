@@ -226,6 +226,12 @@ SESSION_HEADING = "Session "
 SESSION_OF_LAB = " of the lab "
 BACK_TO_LAB = "back to the lab's sessions"
 
+# The page of a session whose record has no snapshot (Requirements 14.2, 14.6, 16.9): only what the record
+# holds, and the sentence in place of the replay.
+NO_SNAPSHOT_HEADING = "What the record holds"
+REPLAY_HEADING = "Replay"
+NO_REPLAY = "the record has no snapshot to replay"
+
 # The highlight (Requirements 10.3, 10.4, 12.7).
 HIGHLIGHT_HEADING = "Highlight"
 HIGHLIGHT_CONTRAST = "A contrast: two trials side by side"
