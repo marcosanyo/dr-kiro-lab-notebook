@@ -144,6 +144,7 @@ def _config_file(lab: Lab, tmp: Path, **changes: object) -> Path:
         "seed": 3,
         "scan_sources": [str(FAKE_SOURCES)],
         "stop_list": str(STOP_LIST),
+        "discovered_table": "required",
         "resume": False,
     }
     values.update(changes)
@@ -166,10 +167,22 @@ def test_config_file_starts_and_resumes(lab: Lab, tmp_path: Path) -> None:
     resumed.close()
 
 
-@pytest.mark.parametrize("field", ["resume", "stop_list", "sessions_dir", "application", "seed"])
+@pytest.mark.parametrize(
+    "field", ["resume", "stop_list", "sessions_dir", "application", "seed", "discovered_table"]
+)
 def test_config_file_missing_field(lab: Lab, tmp_path: Path, field: str) -> None:
     with pytest.raises(config_file.ConfigError, match=f"missing field.*{field}"):
         config_file.load(_config_file(lab, tmp_path, **{field: None}))
+
+
+def test_config_file_discovered_table_must_be_a_string(lab: Lab, tmp_path: Path) -> None:
+    with pytest.raises(config_file.ConfigError, match="discovered_table must be a string"):
+        config_file.load(_config_file(lab, tmp_path, discovered_table=1))
+
+
+def test_config_file_passes_the_discovered_table_setting_on(lab: Lab, tmp_path: Path) -> None:
+    config = config_file.load(_config_file(lab, tmp_path, discovered_table="not-required"))
+    assert config.session.discovered_table == "not-required"
 
 
 def test_missing_session_config_variable_stops_the_server() -> None:

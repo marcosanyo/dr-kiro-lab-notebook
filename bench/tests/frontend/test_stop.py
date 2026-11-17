@@ -23,6 +23,7 @@ def config(lab: Lab, tmp: Path) -> Path:
         "seed": 7,
         "scan_sources": [str(FAKE_SOURCES)],
         "stop_list": str(STOP_LIST),
+        "discovered_table": "required",
         "resume": True,
     }
     path = tmp / "session.toml"

@@ -72,7 +72,7 @@ def load(path: Path) -> ServerConfig:
     sources = data["scan_sources"]
     if not (isinstance(sources, list) and sources and all(isinstance(s, str) and s for s in sources)):
         raise ConfigError(f"{where}: scan_sources must be a non-empty list of paths")
-    for name in ("session_id", "application", "experiments_dir"):
+    for name in ("session_id", "application", "experiments_dir", "discovered_table"):
         if not isinstance(data[name], str):
             raise ConfigError(f"{where}: {name} must be a string")
     if isinstance(data["seed"], bool) or not isinstance(data["seed"], int):
@@ -89,6 +89,7 @@ def load(path: Path) -> ServerConfig:
         seed=data["seed"],
         scan_sources=tuple(base / s for s in sources),
         stop_list=base / data["stop_list"],
+        discovered_table=data["discovered_table"],
     )
     return ServerConfig(session, data["resume"])
 

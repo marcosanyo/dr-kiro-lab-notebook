@@ -5,9 +5,10 @@ from pathlib import Path
 import pytest
 
 from bench.core.outcome import BenchFailure, Quote, Ran, Refused
-from bench.core.session import SEAL_FAILED, WITHHELD, Accepted, RunResult, Session
+from bench.core.session import SEAL_FAILED, WITHHELD, Accepted, RunResult, Session, SessionError
 from bench.fake.adapter import FAIL_AT_GAIN, RAISE_AT_GAIN, FakeAdapter
 from bench.record.chain import verify
+from bench.record.spec_copy import final_spec
 from labkit import DESIGN_START, SPEC_DIR, Lab, exp_file, hyp_block
 
 STATEMENT = "WHEN amp rises, THE distance SHALL rise."
@@ -77,7 +78,9 @@ def test_start_refuses_bad_builder_versions(lab: Lab) -> None:
     refused(Session.start(replace(lab.config, adapter=Bad())), "builder versions")
 
 
-@pytest.mark.parametrize("field", ["seed", "lab_dir", "adapter", "stop_list", "experiments_dir"])
+@pytest.mark.parametrize(
+    "field", ["seed", "lab_dir", "adapter", "stop_list", "experiments_dir", "discovered_table"]
+)
 def test_start_refuses_a_missing_field(lab: Lab, field: str) -> None:
     refused(Session.start(replace(lab.config, **{field: None})), f"{field} is missing")
 
@@ -262,6 +265,53 @@ def test_end_seals_and_verifies(lab: Lab) -> None:
     entries = verify(session.sealed_path, sealed=True)
     assert entries[-1]["body"]["end"] == "ended"
     refused(session.run("experiments/e1.py"), "the session has ended")
+
+
+def test_not_required_end_without_table_seals_with_an_end_snapshot(lab: Lab) -> None:
+    session = lab.start(discovered_table="not-required")
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    session.verdict("E1", "supported", "held")
+    final_design = DESIGN_START  # no table
+    lab.write("design.md", final_design)
+    outcome = session.end()
+    assert isinstance(outcome, Ran) and outcome.result == Accepted(11)
+    entries = verify(session.sealed_path, sealed=True)
+    assert entries[-1]["body"]["end"] == "ended"
+    assert [e["kind"] for e in entries[-2:]] == ["snapshot", "seal"]
+    final = entries[-2]["body"]
+    assert final["for"] == "end"
+    assert blob_text(session, final["files"]["design"]) == final_design
+    spec = final_spec(session.sealed_path)
+    assert (spec.application, spec.session) == ("fake", "s1")
+    assert spec.files["design.md"] == final_design.encode()
+
+
+def test_not_required_end_still_refuses_a_pending_verdict(lab: Lab) -> None:
+    session = lab.start(discovered_table="not-required")
+    registered(lab, session)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+    refused(session.end(), "E1 needs a verdict")
+    assert session.state.sealed is None
+
+
+@pytest.mark.parametrize("value", ["maybe", "Required", "", "true"])
+def test_start_refuses_an_unknown_discovered_table_value(lab: Lab, value: str) -> None:
+    refused(Session.start(replace(lab.config, discovered_table=value)), "discovered_table must be required")
+
+
+def test_start_records_the_discovered_table_setting(lab: Lab) -> None:
+    session = lab.start(discovered_table="not-required")
+    (start,) = session.store.entries
+    assert start["body"]["discovered_table"] == "not-required"
+
+
+def test_reopen_refuses_a_different_discovered_table_setting(lab: Lab) -> None:
+    session = lab.start()
+    session.close()
+    with pytest.raises(SessionError, match="discovered_table differs from the config"):
+        Session.open(replace(lab.config, discovered_table="not-required"))
+    assert Session.open(lab.config).state.sealed is None
 
 
 def blob_text(session: Session, reference: dict) -> str:

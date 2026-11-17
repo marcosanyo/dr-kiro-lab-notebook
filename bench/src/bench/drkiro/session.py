@@ -23,6 +23,7 @@ from bench.record.chain import VerifyError, verify
 FILES = resources.files("bench.drkiro") / "files"
 SPEC_FILES = tuple(TEMPLATES.values())
 EXPERIMENTS = "experiments"
+DISCOVERED_TABLE = "required"  # Dr. Kiro's sessions always need the table (build-from-spec 12.4)
 PICTURES = "pictures"
 
 
@@ -108,6 +109,7 @@ def new_session(args: argparse.Namespace) -> Path:
         seed=args.seed,
         scan_sources=(Path(args.scan_sources),),
         stop_list=Path(args.stop_list),
+        discovered_table=DISCOVERED_TABLE,
     )
     outcome = Session.start(config)
     if not isinstance(outcome, Ran):
@@ -126,6 +128,7 @@ def new_session(args: argparse.Namespace) -> Path:
         "seed": args.seed,
         "scan_sources": [_relative(Path(args.scan_sources), base)],
         "stop_list": _relative(Path(args.stop_list), base),
+        "discovered_table": DISCOVERED_TABLE,
         "resume": True,
     }
     config_out.write_text("".join(f"{k} = {json.dumps(v)}\n" for k, v in values.items()), encoding="utf-8")
