@@ -124,6 +124,11 @@ class Pins:
         self.files: list[PictureFile] = []
 
     def __call__(self, trial: Trial) -> list[Segment]:
-        figure, picture = photo(self.record, trial, self.layout, "small")
+        return self.figure(trial, "small")
+
+    def figure(self, trial: Trial, size: str = "") -> list[Segment]:
+        """The instant photo of `trial` in `size` (see `photo`); its picture file is kept in `files`. The
+        highlight and the experiment entries use this (task 12.1)."""
+        figure, picture = photo(self.record, trial, self.layout, size)
         self.files.append(picture)
         return figure

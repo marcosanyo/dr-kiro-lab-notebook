@@ -202,11 +202,88 @@ STATUS_REJECTED = (
     "It is struck through and stays in its place in the table."
 )
 
-# The session page, `<app>-<session>.html` (Requirement 10). Task 12.1 adds its other sections.
+# The session page, `<app>-<session>.html` (Requirement 10).
 SESSION_TITLE = "A session"
 SESSION_HEADING = "Session "
 SESSION_OF_LAB = " of the lab "
 BACK_TO_LAB = "back to the lab's sessions"
+
+# The highlight (Requirements 10.3, 10.4, 12.7).
+HIGHLIGHT_HEADING = "Highlight"
+HIGHLIGHT_CONTRAST = "A contrast: two trials side by side"
+HIGHLIGHT_BEST = "The best result"
+HIGHLIGHT_NONE = "none. The reason given: "
+
+# Measured values of a trial (Requirements 5.3, 5.4). Lists round to 4 significant digits; the opened trial
+# shows every recorded value in full.
+VALUES_ROUNDED = "Measured, rounded to 4 significant digits:"
+VALUE_SEPARATOR = ": "
+SERIES_OF = "a series of "
+SERIES_SAMPLES = " recorded samples, listed in full when the trial is opened"
+NOT_MEASURED_REASON = ", the bench's reason: "
+VALUES_FULL = "every recorded value in full"
+PARAMS_FULL = "Parameter values as recorded:"
+MEASURED_FULL = "Measured values as recorded:"
+
+# The progress (Requirement 10.5).
+PROGRESS_HEADING = "Progress"
+PROGRESS_BUDGET = "Budget used: "
+PROGRESS_PHASES = "Experiments by phase:"
+PROGRESS_OUTCOMES = "Prediction outcomes, one for each registered prediction:"
+
+# Dr. Kiro's plan (Requirement 10.6, design N18).
+PLAN_HEADING = "Dr. Kiro's plan"
+PLAN_NOTE = "The plan file of the session's last snapshot, as written."
+PLAN_REQUIREMENTS = "Dr. Kiro's requirements file of the same snapshot, as written"
+
+# The experiment entries (Requirements 10.8, 11, 15.1, 15.3).
+ENTRIES_HEADING = "Experiments"
+ENTRIES_NONE = "The record holds no experiment."
+ENTRY_PHASE = " phase "
+ENTRY_MODE = ", mode "
+ENTRY_HYPOTHESIS = "Hypothesis "
+ENTRY_FROZEN = ", the part frozen at registration:"
+ENTRY_PREDICTIONS = "Predictions registered with it:"
+PREDICTION_RANGE = " registered range "
+PREDICTION_WHEN = " when "
+PREDICTION_CLASS = "; condition class, classified at registration: "
+PREDICTION_LABEL = "; Dr. Kiro's label: "
+PREDICTION_STATE = "; outcome: "
+ENTRY_FILE = "The experiment file "
+ENTRY_FILE_END = ", as run:"
+ENTRY_PARAMS = "Parameter names declared: "
+ENTRY_SWEEP = "; swept: "
+ENTRY_TRIALS = "Trials"
+TRIAL_SEED = ", seed "
+TRIAL_PARAMS = "Parameter values: "
+ENTRY_OUTCOMES = "Prediction outcomes"
+OUTCOMES_NONE = "No prediction outcome is recorded for this experiment."
+OUTCOME_TRIAL = " in trial "
+OUTCOME_MEASURED = ", measured "
+OUTCOME_NOT_MEASURED = ", not measured: "
+OUTCOME_IS = ", outcome "
+VERDICT_ON = "verdict on "
+VERDICT_COLON = ": "
+VERDICT_NONE = "No verdict is recorded for this experiment."
+FLAG_NOTE = (
+    "Bench note: the bench flagged this verdict against the recorded outcomes of its predictions. Counts: "
+)
+FLAG_COUNT = " "
+
+# Hypotheses that no experiment names (Requirement 11.3).
+NEVER_RUN_HEADING = "Hypotheses registered and never run"
+NEVER_RUN_NONE_SESSION = "Every registered hypothesis has an experiment."
+
+# Refusals (Requirements 10.13, 18.4).
+REFUSALS_HEADING = "Refusals"
+REFUSALS_INTRO = (
+    "Each action the bench refused, with its message as recorded. A refused action runs nothing and "
+    "uses no budget."
+)
+REFUSALS_NONE = "The bench refused no action in this session."
+REFUSAL_ACTION = "Refused action: "
+REFUSAL_GIVEN = "; given "
+REFUSAL_MESSAGE = "The bench's message: "
 
 # The banner of a build from labelled test fixtures (design N19). The command line never shows it.
 FIXTURE_BANNER = (

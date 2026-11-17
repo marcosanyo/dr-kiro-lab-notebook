@@ -390,6 +390,47 @@ a {
   margin: 0;
 }
 
+/* The session page after the table (pages/session.py). */
+
+.side-by-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.highlight-trial {
+  max-width: 100%;
+}
+
+.entry {
+  margin: var(--space-3) 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule-line);
+}
+
+.entry > summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.values,
+.predictions,
+.outcomes,
+.phases,
+.outcome-counts,
+.refusals {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+}
+
+.bench-note {
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--ink-pencil);
+  border-radius: 6px;
+}
+
 /* The lab pages and the ink legend (pages/lab.py). Every record is drawn alike, in one type size. */
 
 .lab-list {

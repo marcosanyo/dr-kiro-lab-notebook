@@ -69,9 +69,9 @@ def _all_files(out: Path) -> set[str]:
 def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(fixture_inputs, built):
     _, inputs = fixture_inputs
     (record,) = records.load(inputs.sessions, allow_fake=True)
-    by_id = {t.id: t for t in record.trials}
-    # Pictures shown: the cover's miss trial (H2.P1 ran in T7), the card T1, the pinned T1, T2 and T7.
-    pictures = {f"p/{hashlib.sha256(by_id[t].picture.data).hexdigest()}.png" for t in ("T1", "T2", "T7")}
+    # Pictures shown: every trial's, in its experiment entry (Requirement 10.8), which includes the cover's
+    # and the margin's.
+    pictures = {f"p/{hashlib.sha256(t.picture.data).hexdigest()}.png" for t in record.trials}
     texts = {"index.html", "fake.html", "legend.html", "fake-s1.html", "a/notebook.css", "a/notebook.js"}
     expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures
     assert _all_files(built) == expected

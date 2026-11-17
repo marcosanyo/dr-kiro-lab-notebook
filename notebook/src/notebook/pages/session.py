@@ -17,17 +17,28 @@ Task 7.5 writes the first section, the discovered spec table as a notebook page 
 
 from collections.abc import Callable
 
+from bench.conditions import NOT_RUN
 from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, refusals, tables
 from notebook.choices import Choice, Choices
 from notebook.errors import NotebookError
-from notebook.ink import Authored, Segment, commentary, markup, pencil
+from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
 from notebook.pages import parts
 from notebook.pages.parts import chosen, drkiro_block, link, row_link, say_text, stamp, sticky, tab
 from notebook.pages.photo import PictureFile, Pins
-from notebook.records import Outcome, Prediction, RecordModel, Snapshot, Trial
+from notebook.records import (
+    Experiment,
+    Hypothesis,
+    NotMeasuredValue,
+    Outcome,
+    Prediction,
+    RecordModel,
+    Refusal,
+    Snapshot,
+    Trial,
+)
 from notebook.views import View
 
 # The pinned picture of one chosen trial: `pages.photo.Pins(record, layout)` returns the trial's instant
@@ -339,6 +350,569 @@ def table_section(view: View, choices: Choices, pin: Pin | None = None) -> list[
     )
 
 
+# Measured values (Requirements 5.3, 5.4)
+
+
+def _short_values(record: RecordModel, trial: Trial) -> list[Segment]:
+    """Every recorded measurement of `trial` in record order, rounded to 4 significant digits; a series by
+    its number of samples; a not-measured value by its outcome name and the bench's reason, never a
+    number."""
+    source = _entry_source(record, trial.seq)
+    items: list[Segment] = []
+    for name, value in trial.measurements:
+        where = f"{source}: {trial.id} {name}"
+        line: list[Segment] = [*html.text(pencil(name, source)), *say_text("VALUE_SEPARATOR")]
+        if isinstance(value, NotMeasuredValue):
+            line += [
+                *html.text(pencil(value.outcome, source)),
+                *say_text("NOT_MEASURED_REASON"),
+                *html.text(value.reason.segment()),
+            ]
+        elif isinstance(value, tuple):
+            line += [
+                *say_text("SERIES_OF"),
+                *html.text(pencil(str(len(value)), source)),
+                *say_text("SERIES_SAMPLES"),
+            ]
+        else:
+            line += html.text(pencil(numbers.short(value, where), source))
+        items += html.element("li", None, line)
+    return [
+        *html.element("p", None, say_text("VALUES_ROUNDED")),
+        *html.element("ul", {"class": "values"}, items),
+    ]
+
+
+def _full_values(record: RecordModel, trial: Trial) -> list[Segment]:
+    """The opened trial: every parameter value and every recorded measurement in full (Requirement 5.3)."""
+    source = _entry_source(record, trial.seq)
+    params: list[Segment] = []
+    for param in trial.params:
+        where = f"{source}: {trial.id} {param.name.text}"
+        params += html.element(
+            "li",
+            None,
+            [
+                *html.text(param.name.segment()),
+                *say_text("VALUE_SEPARATOR"),
+                *html.text(pencil(numbers.full(param.value, where), source)),
+            ],
+        )
+    measured: list[Segment] = []
+    for name, value in trial.measurements:
+        where = f"{source}: {trial.id} {name}"
+        line: list[Segment] = [*html.text(pencil(name, source)), *say_text("VALUE_SEPARATOR")]
+        if isinstance(value, NotMeasuredValue):
+            line += [
+                *html.text(pencil(value.outcome, source)),
+                *say_text("NOT_MEASURED_REASON"),
+                *html.text(value.reason.segment()),
+            ]
+        elif isinstance(value, tuple):
+            line += html.text(pencil(", ".join(numbers.full(v, where) for v in value), source))
+        else:
+            line += html.text(pencil(numbers.full(value, where), source))
+        measured += html.element("li", None, line)
+    return html.element(
+        "details",
+        {"class": "full-values"},
+        [
+            *html.element("summary", None, say_text("VALUES_FULL")),
+            *html.element("p", None, say_text("PARAMS_FULL")),
+            *html.element("ul", {"class": "values"}, params),
+            *html.element("p", None, say_text("MEASURED_FULL")),
+            *html.element("ul", {"class": "values"}, measured),
+        ],
+    )
+
+
+# The highlight (Requirements 10.3, 10.4)
+
+
+def _highlight_trial(view: View, trial: Trial, pins: Pins) -> list[Segment]:
+    return html.element(
+        "section",
+        {"class": "highlight-trial"},
+        [*pins.figure(trial), *_short_values(view.record, trial)],
+    )
+
+
+def _highlight_choice(view: View, choice: Choice, name: str, pins: Pins) -> list[Segment]:
+    heading = html.element("h3", None, say_text(name))
+    if choice.value is None:
+        return [
+            *heading,
+            *html.element("p", None, [*say_text("HIGHLIGHT_NONE"), *_reason(choice)]),
+            *chosen(),
+        ]
+    by_id = {t.id: t for t in view.trials}
+    shown: list[Segment] = []
+    for tid in choice.value:
+        trial = by_id.get(tid)
+        if trial is None:
+            # Only a replay step before the trial can lack it; task 18.1 shows that step's commentary.
+            continue
+        shown += _highlight_trial(view, trial, pins)
+    return [*heading, *html.element("section", {"class": "side-by-side"}, shown), *chosen()]
+
+
+def _highlight(view: View, choices: Choices, pins: Pins) -> list[Segment]:
+    return html.element(
+        "section",
+        {"class": "highlight", "id": "highlight"},
+        [
+            *html.element("h2", None, say_text("HIGHLIGHT_HEADING")),
+            *_highlight_choice(view, choices.contrast, "HIGHLIGHT_CONTRAST", pins),
+            *_highlight_choice(view, choices.best, "HIGHLIGHT_BEST", pins),
+        ],
+    )
+
+
+# The progress (Requirement 10.5)
+
+# The order in which outcome counts are shown: the bench's outcome words, then the bench's word for a
+# registered prediction without an outcome.
+OUTCOME_ORDER = ("hit", "miss", "not-checkable", NOT_RUN.kind)
+
+
+def _outcome_counts(view: View) -> list[tuple[str, int]]:
+    """The bench state's outcome of every registered prediction, counted by kind (`bench.core.state`)."""
+    kinds = [o.kind for o in view.state.outcomes.values()]
+    unknown = sorted(set(kinds) - set(OUTCOME_ORDER))
+    if unknown:
+        raise NotebookError(view.record.name, f"the bench state holds unknown outcome kinds {unknown}")
+    return [(kind, kinds.count(kind)) for kind in OUTCOME_ORDER]
+
+
+def _progress(view: View) -> list[Segment]:
+    record = view.record
+    source = f"{record.name}/log.jsonl, entries 1 to {view.upto}"
+    used = view.state.budget - view.state.remaining
+    budget = [
+        *say_text("PROGRESS_BUDGET"),
+        *html.text(pencil(str(used), source)),
+        *say_text("BUDGET_OF"),
+        *html.text(pencil(str(view.state.budget), source)),
+    ]
+    phases: dict[str, list[Experiment]] = {}
+    for experiment in view.experiments:
+        phases.setdefault(experiment.phase, []).append(experiment)
+    phase_items: list[Segment] = []
+    for phase, experiments in phases.items():
+        line: list[Segment] = [
+            *html.text(pencil(phase, source)),
+            *say_text("VALUE_SEPARATOR"),
+            *html.text(pencil(str(len(experiments)), source)),
+            markup(" ("),
+        ]
+        for i, experiment in enumerate(experiments):
+            if i:
+                line += say_text("LIST_SEPARATOR")
+            esource = _entry_source(record, experiment.seq)
+            eid = addresses.experiment(experiment.id, esource)
+            line += link(addresses.here(eid), html.text(pencil(eid, esource)))
+        line.append(markup(")"))
+        phase_items += html.element("li", None, line)
+    outcome_items: list[Segment] = []
+    for kind, count in _outcome_counts(view):
+        outcome_items += html.element(
+            "li",
+            None,
+            [
+                *html.text(pencil(kind, source)),
+                *say_text("VALUE_SEPARATOR"),
+                *html.text(pencil(str(count), source)),
+            ],
+        )
+    return html.element(
+        "section",
+        {"class": "progress", "id": "progress"},
+        [
+            *html.element("h2", None, say_text("PROGRESS_HEADING")),
+            *html.element("p", None, budget),
+            *html.element("p", None, say_text("PROGRESS_PHASES")),
+            *html.element("ul", {"class": "phases"}, phase_items),
+            *html.element("p", None, say_text("PROGRESS_OUTCOMES")),
+            *html.element("ul", {"class": "outcome-counts"}, outcome_items),
+        ],
+    )
+
+
+# Dr. Kiro's plan (Requirement 10.6, design N18)
+
+
+def _plan(view: View) -> list[Segment]:
+    if not view.snapshots:
+        raise NotebookError(view.record.name, "the record has no snapshot, so its page has no plan")
+    last = view.snapshots[-1]
+    requirements = html.element(
+        "details",
+        {"class": "plan-requirements"},
+        [
+            *html.element("summary", None, say_text("PLAN_REQUIREMENTS")),
+            *drkiro_block(last.requirements.text().segment()),
+        ],
+    )
+    return html.element(
+        "section",
+        {"class": "plan", "id": "plan"},
+        [
+            *html.element("h2", None, say_text("PLAN_HEADING")),
+            *html.element("p", None, say_text("PLAN_NOTE")),
+            *drkiro_block(last.tasks.text().segment()),
+            *requirements,
+        ],
+    )
+
+
+# The experiment entries (Requirements 10.8, 11, 15.1, 15.3)
+
+
+def _code(segment: Segment) -> list[Segment]:
+    """A block of code as written, with the label "written by Dr. Kiro" when it is Dr. Kiro's
+    (`.code-k` in the visual steering)."""
+    k = segment.ink.value
+    label = (
+        html.element("span", {"class": "block-label"}, say_text("WRITTEN_BY_DRKIRO"))
+        if segment.ink is Ink.DRKIRO
+        else []
+    )
+    return [*label, *html.element("p", {"class": f"ink-{k} code-{k}"}, [segment])]
+
+
+def _drkiro_word(word: str, source: str) -> Segment:
+    """A word Dr. Kiro gave the bench, which the bench recorded as a plain string after checking it: the
+    verdict word and Dr. Kiro's label of a prediction. Shown in Dr. Kiro's ink (Requirements 15.1, 17.4)."""
+    return Segment(word, Ink.DRKIRO, source)
+
+
+def _conditions(prediction: Prediction, source: str) -> list[Segment]:
+    out: list[Segment] = []
+    for i, param in enumerate(prediction.when):
+        if i:
+            out += say_text("LIST_SEPARATOR")
+        where = f"{source}: {prediction.id} {param.name.text}"
+        out += [
+            *html.text(param.name.segment()),
+            *html.text(pencil(f" = {numbers.short(param.value, where)}", source)),
+        ]
+    return out
+
+
+class _Anchors:
+    """The ids of one page, each given once. A second element with the same id fails the build."""
+
+    def __init__(self, record: RecordModel) -> None:
+        self.record = record
+        self.given: set[str] = set()
+
+    def take(self, fragment: str, source: str) -> str:
+        if fragment in self.given:
+            raise NotebookError(
+                source, f"the session page of {self.record.name} would hold #{fragment} twice"
+            )
+        self.given.add(fragment)
+        return fragment
+
+
+def _prediction_item(view: View, prediction: Prediction, source: str, anchors: _Anchors) -> list[Segment]:
+    """One registered prediction: id, measurement, range, conditions, condition class (labelled "classified
+    at registration"), Dr. Kiro's label, and its outcome in the bench state. A prediction never run gets its
+    own address `#H<n>.P<n>` (design 9)."""
+    pid = html.check_id("prediction", prediction.id, source)
+    where = f"{source}: prediction {pid}"
+    kind = view.state.outcomes[pid].kind
+    line: list[Segment] = [
+        *html.text(pencil(pid, source)),
+        markup(" "),
+        *html.text(pencil(prediction.measurement, source)),
+        *say_text("PREDICTION_RANGE"),
+        *html.text(
+            pencil(
+                f"[{numbers.short(prediction.low, where)}, {numbers.short(prediction.high, where)}]", source
+            )
+        ),
+    ]
+    if prediction.when:
+        line += [*say_text("PREDICTION_WHEN"), *_conditions(prediction, source)]
+    line += [
+        *say_text("PREDICTION_CLASS"),
+        *html.text(pencil(prediction.condition_class, source)),
+        *say_text("PREDICTION_LABEL"),
+        *html.text(_drkiro_word(prediction.label, source)),
+        *say_text("PREDICTION_STATE"),
+        *html.text(pencil(kind, source)),
+    ]
+    attrs = None
+    if kind == NOT_RUN.kind and addresses.never_run(pid, source) not in anchors.given:
+        attrs = {"id": anchors.take(addresses.never_run(pid, source), source)}
+    return html.element("li", attrs, line)
+
+
+def _hypothesis(view: View, hypothesis: Hypothesis, anchors: _Anchors) -> list[Segment]:
+    """The hypothesis's frozen part as written and its predictions."""
+    source = _entry_source(view.record, hypothesis.seq)
+    hid = html.check_id("hypothesis", hypothesis.id, source)
+    items = [s for p in hypothesis.predictions for s in _prediction_item(view, p, source, anchors)]
+    return [
+        *html.element(
+            "p",
+            None,
+            [*say_text("ENTRY_HYPOTHESIS"), *html.text(pencil(hid, source)), *say_text("ENTRY_FROZEN")],
+        ),
+        *drkiro_block(hypothesis.frozen.text().segment()),
+        *html.element("p", None, say_text("ENTRY_PREDICTIONS")),
+        *html.element("ul", {"class": "predictions"}, items),
+    ]
+
+
+def _experiment_file(experiment: Experiment, source: str, anchors: _Anchors) -> list[Segment]:
+    eid = experiment.id
+    names: list[Segment] = []
+    for i, name in enumerate(experiment.params):
+        if i:
+            names += say_text("LIST_SEPARATOR")
+        names += html.text(name.segment())
+    declared: list[Segment] = [*say_text("ENTRY_PARAMS"), *names]
+    if experiment.sweep:
+        declared += say_text("ENTRY_SWEEP")
+        for i, name in enumerate(experiment.sweep):
+            if i:
+                declared += say_text("LIST_SEPARATOR")
+            declared += html.text(name.segment())
+    return html.element(
+        "section",
+        {"class": "experiment-file", "id": anchors.take(addresses.experiment_file(eid, source), source)},
+        [
+            *html.element(
+                "p",
+                None,
+                [*say_text("ENTRY_FILE"), *html.text(experiment.file.segment()), *say_text("ENTRY_FILE_END")],
+            ),
+            *_code(experiment.source.text().segment()),
+            *html.element("p", None, declared),
+        ],
+    )
+
+
+def _trial(view: View, experiment: Experiment, trial: Trial, pins: Pins, anchors: _Anchors) -> list[Segment]:
+    record = view.record
+    source = _entry_source(record, trial.seq)
+    tid = html.check_id("trial", trial.id, source)
+    params: list[Segment] = [*say_text("TRIAL_PARAMS")]
+    for i, param in enumerate(trial.params):
+        if i:
+            params += say_text("LIST_SEPARATOR")
+        where = f"{source}: {tid} {param.name.text}"
+        params += [
+            *html.text(param.name.segment()),
+            *html.text(pencil(f" = {numbers.short(param.value, where)}", source)),
+        ]
+    heading = [
+        *say_text("PHOTO_TRIAL"),
+        *html.text(pencil(tid, source)),
+        *say_text("TRIAL_SEED"),
+        *html.text(pencil(str(trial.seed), source)),
+    ]
+    return html.element(
+        "section",
+        {"class": "trial", "id": anchors.take(addresses.trial(experiment.id, tid, source), source)},
+        [
+            *html.element("h4", None, heading),
+            *pins.figure(trial),
+            *html.element("p", None, params),
+            *_short_values(record, trial),
+            *_full_values(record, trial),
+        ],
+    )
+
+
+def _outcome(view: View, outcome: Outcome, anchors: _Anchors) -> list[Segment]:
+    """One prediction outcome; a miss in miss red with the word "miss" (Requirement 6.4)."""
+    record = view.record
+    source = _entry_source(record, outcome.seq)
+    pid = html.check_id("prediction", outcome.prediction, source)
+    where = f"{source}: prediction {pid}"
+    line: list[Segment] = [*html.text(pencil(pid, source))]
+    if outcome.trial is not None:
+        tid = html.check_id("trial", outcome.trial, source)
+        line += [
+            *say_text("OUTCOME_TRIAL"),
+            *link(
+                addresses.here(addresses.trial(outcome.experiment, tid, source)),
+                html.text(pencil(tid, source)),
+            ),
+        ]
+    miss = outcome.outcome == "miss"
+    if outcome.value is not None:
+        value = pencil(numbers.short(outcome.value, where), source)
+        line += say_text("OUTCOME_MEASURED")
+        line += html.element("span", {"class": "ink-p miss-value"}, [value]) if miss else html.text(value)
+    elif outcome.not_measured is not None:
+        line += [*say_text("OUTCOME_NOT_MEASURED"), *html.text(pencil(outcome.not_measured, source))]
+    line += say_text("OUTCOME_IS")
+    word = pencil(outcome.outcome, source)
+    line += html.element("span", {"class": "ink-p miss"}, [word]) if miss else html.text(word)
+    fragment = anchors.take(addresses.outcome(outcome.experiment, pid, source), source)
+    return html.element("li", {"id": fragment}, line)
+
+
+def _verdict(view: View, experiment: Experiment) -> list[Segment]:
+    """ "verdict on H<n>:" with the word and Dr. Kiro's words in Dr. Kiro's ink (Requirement 15.1), and the
+    bench's flag with its recorded counts beside it (15.3)."""
+    record = view.record
+    verdicts = [v for v in view.verdicts if v.experiment == experiment.id]
+    if not verdicts:
+        return html.element("p", None, say_text("VERDICT_NONE"))
+    out: list[Segment] = []
+    for verdict in verdicts:
+        source = _entry_source(record, verdict.seq)
+        hid = html.check_id("hypothesis", verdict.hypothesis, source)
+        out += html.element(
+            "p",
+            {"class": "verdict"},
+            [
+                *say_text("VERDICT_ON"),
+                *html.text(pencil(hid, source)),
+                *say_text("VERDICT_COLON"),
+                *html.text(_drkiro_word(verdict.verdict, source)),
+            ],
+        )
+        out += drkiro_block(verdict.words.segment())
+    for flag in (f for f in view.flags if f.experiment == experiment.id):
+        source = _entry_source(record, flag.seq)
+        counts: list[Segment] = []
+        for i, (kind, count) in enumerate(flag.counts):
+            if i:
+                counts += say_text("LIST_SEPARATOR")
+            counts += [
+                *html.text(pencil(kind, source)),
+                *say_text("FLAG_COUNT"),
+                *html.text(pencil(str(count), source)),
+            ]
+        out += html.element(
+            "aside",
+            {"class": "bench-note"},
+            html.element("p", None, [*say_text("FLAG_NOTE"), *counts]),
+        )
+    return out
+
+
+def _entry(view: View, experiment: Experiment, pins: Pins, anchors: _Anchors) -> list[Segment]:
+    record = view.record
+    source = _entry_source(record, experiment.seq)
+    eid = anchors.take(addresses.experiment(experiment.id, source), source)
+    hypotheses = [h for h in record.hypotheses if h.id == experiment.hypothesis and h.seq <= view.upto]
+    if len(hypotheses) != 1:
+        raise NotebookError(
+            source, f"{eid} names {experiment.hypothesis}, which is not one registered hypothesis"
+        )
+    summary = [
+        *html.text(pencil(eid, source)),
+        markup(" "),
+        *html.text(experiment.title.segment()),
+        *say_text("ENTRY_PHASE"),
+        *html.text(pencil(experiment.phase, source)),
+        *say_text("ENTRY_MODE"),
+        *html.text(pencil(experiment.mode, source)),
+    ]
+    trials = [t for t in view.trials if t.experiment == experiment.id]
+    unlisted = [t.id for t in trials if t.id not in experiment.trials]
+    if unlisted:
+        raise NotebookError(source, f"trials {unlisted} are recorded for {eid}, which does not list them")
+    trial_parts = [s for t in trials for s in _trial(view, experiment, t, pins, anchors)]
+    outcomes = [o for o in view.outcomes if o.experiment == experiment.id]
+    outcome_items = [s for o in outcomes for s in _outcome(view, o, anchors)]
+    outcome_part = (
+        html.element("ul", {"class": "outcomes"}, outcome_items)
+        if outcome_items
+        else html.element("p", None, say_text("OUTCOMES_NONE"))
+    )
+    return html.element(
+        "details",
+        {"class": "entry", "id": eid},
+        [
+            *html.element("summary", None, summary),
+            *_hypothesis(view, hypotheses[0], anchors),
+            *_experiment_file(experiment, source, anchors),
+            *html.element("h3", None, say_text("ENTRY_TRIALS")),
+            *trial_parts,
+            *html.element("h3", None, say_text("ENTRY_OUTCOMES")),
+            *outcome_part,
+            *_verdict(view, experiment),
+        ],
+    )
+
+
+def _entries(view: View, pins: Pins, anchors: _Anchors) -> list[Segment]:
+    entries = [s for e in view.experiments for s in _entry(view, e, pins, anchors)]
+    if not entries:
+        entries = html.element("p", None, say_text("ENTRIES_NONE"))
+    return html.element(
+        "section",
+        {"class": "entries", "id": "experiments"},
+        [*html.element("h2", None, say_text("ENTRIES_HEADING")), *entries],
+    )
+
+
+def _never_run(view: View, anchors: _Anchors) -> list[Segment]:
+    """Hypotheses registered in the view that no experiment of the view names, with their predictions, each
+    at its own address `#H<n>.P<n>` (Requirement 11.3)."""
+    run = {e.hypothesis for e in view.experiments}
+    never = [h for h in view.record.hypotheses if h.seq <= view.upto and h.id not in run]
+    content: list[Segment] = []
+    for hypothesis in never:
+        content += html.element("section", {"class": "never-run"}, _hypothesis(view, hypothesis, anchors))
+    if not content:
+        content = html.element("p", None, say_text("NEVER_RUN_NONE_SESSION"))
+    return html.element(
+        "section",
+        {"class": "never-run-list", "id": "never-run"},
+        [*html.element("h2", None, say_text("NEVER_RUN_HEADING")), *content],
+    )
+
+
+def _refusal(view: View, refusal: Refusal) -> list[Segment]:
+    """One refusal: the action, what Dr. Kiro gave, and the message with each part in its recorded author's
+    ink and the commentary note on quotes (Requirements 10.12, 10.13)."""
+    source = _entry_source(view.record, refusal.seq)
+    head: list[Segment] = [*say_text("REFUSAL_ACTION"), *html.text(pencil(refusal.action, source))]
+    for key, value in refusal.given:
+        head += [
+            *say_text("REFUSAL_GIVEN"),
+            *html.text(pencil(key, source)),
+            *say_text("VALUE_SEPARATOR"),
+            *html.text(value.segment()),
+        ]
+    shown = refusals.message(refusal)
+    body = [
+        *html.element("p", None, head),
+        *html.element(
+            "p", None, [*say_text("REFUSAL_MESSAGE"), *(s for part in shown.parts for s in html.text(part))]
+        ),
+    ]
+    if shown.note is not None:
+        body += html.element("p", {"class": "quote-note"}, html.text(shown.note))
+    return html.element("li", {"class": "refusal"}, body)
+
+
+def _refusals(view: View) -> list[Segment]:
+    items = [s for r in view.refusals for s in _refusal(view, r)]
+    content = (
+        [
+            *html.element("p", None, say_text("REFUSALS_INTRO")),
+            *html.element("ul", {"class": "refusals"}, items),
+        ]
+        if items
+        else html.element("p", None, say_text("REFUSALS_NONE"))
+    )
+    return html.element(
+        "section",
+        {"class": "refusal-list", "id": "refusals"},
+        [*html.element("h2", None, say_text("REFUSALS_HEADING")), *content],
+    )
+
+
 # The page
 
 
@@ -349,8 +923,9 @@ def has_page(record: RecordModel) -> bool:
 
 
 def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple[PictureFile, ...]]:
-    """The session page as of `view` and the pictures it shows. Today it holds the table section with its
-    margin (Requirement 10.1); task 12.1 adds the other sections after it."""
+    """The session page as of `view` and the pictures it shows, in the section order of Requirement 10.1:
+    the table with its margin, the highlight, the progress, Dr. Kiro's plan, every experiment entry; then the
+    hypotheses never run and the refusals. Tasks 14-19 add the sections that follow (14.5, 16, 17)."""
     record = view.record
     start = _entry_source(record, 1)
     lab_page = addresses.lab(record.application, start)
@@ -365,7 +940,12 @@ def page(view: View, choices: Choices, pins: Pins) -> tuple[list[Segment], tuple
         *html.element("p", None, link(lab_page, say_text("BACK_TO_LAB"))),
         *html.element("h1", None, heading),
         *table_section(view, choices, pins),
+        *_highlight(view, choices, pins),
+        *_progress(view),
+        *_plan(view),
     ]
+    anchors = _Anchors(record)
+    body += [*_entries(view, pins, anchors), *_never_run(view, anchors), *_refusals(view)]
     unique: dict[str, PictureFile] = {}
     for picture in pins.files:
         unique.setdefault(picture.path, picture)
