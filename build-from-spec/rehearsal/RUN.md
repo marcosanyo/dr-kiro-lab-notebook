@@ -146,3 +146,27 @@ The first real run must not start until the cause of the bench-mcp startup failu
 After K31 (the reader's bench entry has no `env` entry), the rehearsal must be run again, from step (c), to see
 whether the failure is gone. If bench-mcp fails to start, `<run-id>.mcp-startup.log` next to the session config
 gives the builder-side reason.
+
+## Result of the rehearsal 2 (not counted)
+
+The second rehearsal run (step (c2), run id `rehearsal-fake-record-2`) stopped before its session started. No reader
+turn ran.
+
+- The step (c2) command was started at about 23:16 JST. `bfs-run` refused it at once and exited with code 1. The
+  refusal is the run's own consistency check, not a bench or Kiro failure.
+- The refusal message: the working folder `bench-run/build-from-spec/rehearsal-fake-record-2` differs from an
+  earlier run of this request, and `.kiro/agents/reader.json` has a different hash than in
+  `rehearsal-fake-record-1.run.json`. The folder was kept, not deleted.
+- Observed: the new `reader.json` has the bench server entry `{"command": "bench-mcp", "args": []}` without the
+  `env` entry. The first rehearsal's `reader.json` has `"env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}`.
+  This is the change that K31 asked for in the first entry, and it changed the file hash.
+- Not observed: no Kiro CLI output, no turn-1 exit code, no `<run-id>.turn-1.log`, no `<run-id>.session.toml`, no
+  `<run-id>.mcp-startup.log`, and no `bench-mcp` process. Nothing was started, so `pgrep -fl bench-mcp` was clear
+  before and after the refused call.
+- The earlier cause, the `${BENCH_SESSION_CONFIG}` expansion, was not reached in this attempt. Its `env` entry is
+  removed in the new file, so this attempt says nothing about whether the expansion works.
+- Steps (d) and (e) were not run.
+
+Decision needed before another rehearsal run: whether the first run's working folder and its `run.json` are
+regenerated for the changed `reader.json`, or a new request run is started under a new run id. This is a choice
+of the builder, and no command was changed to get past the check.
