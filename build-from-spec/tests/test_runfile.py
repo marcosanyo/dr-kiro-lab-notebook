@@ -134,10 +134,19 @@ def test_continue_lines_must_count_the_continue_turns():
         check_run_file(data, "run.json")
 
 
-def test_a_run_id_that_does_not_match_its_request_and_setup_is_refused():
+def test_a_run_id_that_does_not_match_its_request_is_refused_naming_the_request_field():
     data = run_file(["none"], None)
     data["run"] = "other-none-1"
-    with pytest.raises(RunFileError, match="run id of its request"):
+    with pytest.raises(
+        RunFileError, match=r"run\.json\.request\.id: '.*' is not the request of run 'other-none-1'"
+    ):
+        check_run_file(data, "run.json")
+
+
+def test_a_setup_that_does_not_match_its_run_id_is_refused_naming_the_setup_field():
+    data = run_file(["none"], None)
+    data["setup"] = "record"
+    with pytest.raises(RunFileError, match=r"run\.json\.setup: 'record' is not the setup of run"):
         check_run_file(data, "run.json")
 
 

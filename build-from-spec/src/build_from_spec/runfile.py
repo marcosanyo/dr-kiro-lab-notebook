@@ -201,8 +201,14 @@ def _check_common(data: dict[str, Any], where: str) -> str:
     _pattern(request["commit"], COMMIT, f"{where}.request.commit", "a git commit hash in lowercase hex")
     _sha(request["sha256"], f"{where}.request.sha256")
     found = RUN_ID.fullmatch(run)
-    if found is None or found.group("setup") != setup or found.group("request") != request["id"]:
-        raise RunFileError(f"{where}.run: {run!r} is not the run id of its request and setup")
+    if found is None:
+        raise RunFileError(
+            f"{where}.run: {run!r} is not a run id of the form <request>-<spec|none|record>-<n>"
+        )
+    if found.group("setup") != setup:
+        raise RunFileError(f"{where}.setup: {setup!r} is not the setup of run {run!r}")
+    if found.group("request") != request["id"]:
+        raise RunFileError(f"{where}.request.id: {request['id']!r} is not the request of run {run!r}")
     source = _fields(data["source"], SOURCE_FIELDS, f"{where}.source")
     _text(source["application"], f"{where}.source.application")
     _text(source["session"], f"{where}.source.session")
