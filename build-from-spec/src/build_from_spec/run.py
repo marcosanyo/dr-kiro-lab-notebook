@@ -21,6 +21,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -207,6 +208,19 @@ def _request_tracked(root: Path, request_file: Path) -> str:
     return rel
 
 
+def _declared_application(request_file: Path) -> str:
+    """The `application` of a request file, before the request is parsed. The budget check (Requirement 4.7)
+    needs it first. A file that is not TOML is refused here, naming the file."""
+    try:
+        data = tomllib.loads(request_file.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+        raise RunRefused(f"{request_file} is not valid TOML ({error})") from error
+    name = data.get("application")
+    if not isinstance(name, str):
+        raise RunRefused(f"{request_file}: application must be a text naming the application")
+    return name
+
+
 def _source_checks(root: Path, source: Path, request: Request) -> tuple[str, str]:
     """Check 4 (Requirement 5): a sealed record of the request's application, ended, with a final spec. Return
     its session id and seal hash."""
@@ -249,6 +263,7 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
         raise RunRefused(f"--request {arguments.request}: no such file")
     try:
         rel = _request_tracked(root, request_file)
+        app_for(_declared_application(request_file), apps)
         request = parse_request(request_file, apps)
         if request_file.resolve() != (root / REQUESTS / f"{request.id}.toml").resolve():
             raise RunRefused(
