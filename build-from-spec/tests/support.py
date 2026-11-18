@@ -10,8 +10,11 @@ from bench.record.chain import BLOB_DIR, ENTRY_KINDS, LOG_NAME
 from bench.record.store import Store
 from hypothesis import strategies as st
 
+from build_from_spec.folder import SPEC_FILES
 from build_from_spec.relied import format_ids
 from build_from_spec.request import PassRange, Request
+from build_from_spec.runfile import ENDS, NULL_IDS_PROBLEMS, PROBLEMS, RESULTS
+from build_from_spec.turns import KINDS
 
 SCALARS = ("x", "y", "heading")  # the scalar measurements of body-lab (its declaration)
 
@@ -245,3 +248,71 @@ def write_record(folder: Path, spec: list[RecordEntrySpec]) -> Path:
         return entries
 
     return seal_record(folder, build)
+
+
+# ---- Run files (runfile.py, properties 10 and 11) ----
+
+RUN_SETUPS = ("spec", "none", "record")
+TOOL_NAMES = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
+sha256_hex = st.from_regex(r"\A[0-9a-f]{64}\Z", fullmatch=True)
+commit_hex = st.from_regex(r"\A[0-9a-f]{40}\Z", fullmatch=True)
+# Any characters but unpaired surrogates, which cannot be written as UTF-8. Quotes, backslashes,
+# line breaks and non-ASCII text all occur.
+free_text = st.text(min_size=1, max_size=12, alphabet=st.characters(blacklist_categories=("Cs",)))
+working_paths = st.from_regex(r"\A[a-z]{1,6}(/[a-z]{1,6}){0,2}\Z", fullmatch=True)
+turn_times = st.from_regex(r"\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z", fullmatch=True)
+trial_ids = st.integers(min_value=1, max_value=999).map(lambda number: f"T{number}")
+
+prompt_entries = st.fixed_dictionaries(
+    {
+        "kind": st.sampled_from(KINDS),
+        "sha256": sha256_hex,
+        "time": turn_times,
+        "exit": st.integers(min_value=0, max_value=255),
+        "entries_before": st.integers(min_value=0, max_value=500),
+        "entries_after": st.integers(min_value=0, max_value=500),
+    }
+)
+
+
+def given_for(setup: str) -> st.SearchStrategy:
+    """What `given` holds for a setup (design 4.4): the spec hashes, the removed entries, or nothing."""
+    if setup == "none":
+        return st.just({})
+    if setup == "spec":
+        return st.fixed_dictionaries({"spec": st.fixed_dictionaries({n: sha256_hex for n in SPEC_FILES})})
+    removed = st.lists(
+        st.fixed_dictionaries({"seq": st.integers(min_value=0, max_value=500), "hash": sha256_hex}),
+        max_size=3,
+    )
+    return st.fixed_dictionaries({"record": st.fixed_dictionaries({"removed": removed})})
+
+
+@st.composite
+def run_file_contents(draw) -> dict:
+    """Any valid run file: any setup, relied-on ids of any characters, null markers, any number of turns."""
+    setup = draw(st.sampled_from(RUN_SETUPS))
+    request_id = draw(request_ids)
+    problem = draw(st.sampled_from((None, *PROBLEMS)))
+    ids = None if problem in NULL_IDS_PROBLEMS else draw(st.lists(free_text, min_size=1, max_size=4))
+    prompts = draw(st.lists(prompt_entries, max_size=5))
+    last = draw(st.none() | st.fixed_dictionaries({"trial": trial_ids, "phase": free_text}))
+    return {
+        "format": 1,
+        "run": f"{request_id}-{setup}-{draw(st.integers(min_value=1, max_value=99))}",
+        "setup": setup,
+        "request": {"id": request_id, "commit": draw(commit_hex), "sha256": draw(sha256_hex)},
+        "source": {"application": "body-lab", "session": draw(free_text), "seal": draw(sha256_hex)},
+        "record": {"seal": draw(sha256_hex), "end": draw(st.sampled_from(ENDS))},
+        "seed": draw(st.integers(min_value=0, max_value=2**31)),
+        "kiro": {"version": draw(free_text), "model": draw(free_text), "effort": draw(free_text)},
+        "files": draw(st.dictionaries(working_paths, sha256_hex, max_size=4)),
+        "tools": draw(st.fixed_dictionaries({name: sha256_hex for name in TOOL_NAMES})),
+        "given": draw(given_for(setup)),
+        "relied_on": {"ids": ids, "problem": problem},
+        "result": draw(st.sampled_from(RESULTS)),
+        "first_in_range": draw(st.none() | trial_ids),
+        "last_trial": last,
+        "prompts": prompts,
+        "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
+    }
