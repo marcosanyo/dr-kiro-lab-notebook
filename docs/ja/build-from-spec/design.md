@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/design.md`](../../../.kiro/specs/build-from-spec/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `64e81cf2a03da13bdf7eb4e58e1f8eb73b361c7c60b1ab6828bc36bc9217505c`
+> 原文 SHA-256: `f3d6951dee6e9170fdd681b8f8dd676a6316137a3631a32d7b9cfcf11a1740bc`
 
 # 設計: build-from-spec
 
@@ -789,6 +789,7 @@ resume = true
 - **B24. コマンドはリポジトリのルートから実行し**、他の場所では拒否するので、すべてのパスはルートからの相対になる。
 - **B25. 実行情報ファイルにパスなし。** リクエストと元は ID で指名され、そのパスは導出される。コミット済みのテキストの中のパスは、スキャンが指摘するものがもう 1 つ増えるだけである。
 - **B26. 停止の理由** は固定のベンチの言葉である: 「the reader's Kiro CLI exited with code <n>」と「the reader called no bench tool in two turns in a row」。
+- **K28. 要求の生成器からフィルタを外す（テストコードのみ）。** 性質 1 と性質 2 は、合格範囲の 2 つの境界を独立に引き、`assume(low < high)` で捨てていた。リクエストには合格範囲が最大 3 つあるため、範囲ごとに約半分の引きが捨てられ、hypothesis が `FailedHealthCheck: filter_too_much` で失敗した（性質 1 で `--hypothesis-seed=9` のとき観測）。生成器は `low` を [-1e6, 1e6) から、`high` を (low, 1e6] から引くようにした。引いた値はすべて有効な合格範囲になり、捨てる引きはない。範囲（±1e6 内の有限な境界で `low < high`）、検査する性質、`max_examples=100` は変えておらず、ヘルスチェックも抑止していない。
 
 ## 未決事項
 

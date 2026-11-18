@@ -2,7 +2,6 @@
 
 import json
 
-from hypothesis import assume
 from hypothesis import strategies as st
 
 from build_from_spec.request import PassRange, Request
@@ -11,7 +10,6 @@ SCALARS = ("x", "y", "heading")  # the scalar measurements of body-lab (its decl
 
 request_ids = st.from_regex(r"\A[a-z0-9-]{1,40}\Z", fullmatch=True)
 request_words = st.text(min_size=1, max_size=200).filter(lambda text: text.strip() != "")
-bounds = st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False)
 
 
 @st.composite
@@ -20,8 +18,9 @@ def requests(draw) -> Request:
     names = draw(st.lists(st.sampled_from(SCALARS), min_size=1, max_size=3, unique=True))
     passes = []
     for name in names:
-        low, high = draw(bounds), draw(bounds)
-        assume(low < high)
+        # high is drawn above low, so no draw is thrown away (a filter here made hypothesis give up).
+        low = draw(st.floats(min_value=-1e6, max_value=1e6, exclude_max=True, allow_nan=False))
+        high = draw(st.floats(min_value=low, max_value=1e6, exclude_min=True, allow_nan=False))
         passes.append(PassRange(name, low, high))
     return Request(draw(request_ids), "body-lab", draw(request_words), tuple(passes))
 

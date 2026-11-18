@@ -1098,6 +1098,13 @@ this design (B1-B7).
   committed text would be one more thing for the scan to flag.
 - **B26. Stop reasons** are fixed bench wording: "the reader's Kiro CLI exited with code <n>" and "the reader called
   no bench tool in two turns in a row".
+- **K28. Request generator without a filter (test code only).** Property 1 and Property 2 drew the two bounds of each
+  pass range independently and dropped the draw with `assume(low < high)`. A request has up to three pass ranges, so
+  the test threw away about half of the draws per range, and hypothesis failed with `FailedHealthCheck:
+  filter_too_much` (seen with `--hypothesis-seed=9` on Property 1). The generator now draws `low` from [-1e6, 1e6)
+  and `high` from (low, 1e6], so every draw is a valid pass range and nothing is discarded. The domain is the same
+  (finite bounds with `low < high`, within ±1e6), the checked properties and `max_examples=100` are unchanged, and no
+  health check is suppressed.
 
 ## Open items
 
