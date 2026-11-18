@@ -241,10 +241,11 @@ class ReaderAdapter:
 ### 3.4 Reader files (`files/`, Req 9)
 
 **`reader.json`** is `dr-kiro.json` with three fields changed: `name` `reader`, a one-line `description`, and
-`prompt` `file://./reader-prompt.md`. `resources`, `mcpServers` (the `bench` entry running `bench-mcp` with
-`BENCH_SESSION_CONFIG` from the environment), `tools` (`read`, `write`, `@bench`), `includeMcpJson`,
-`includePowers` and `permissions` are the same. No shell (Req 9.1). A test compares the two files as JSON with
-those three fields removed.
+`prompt` `file://./reader-prompt.md`. `resources`, `mcpServers` (the `bench` entry runs `bench-mcp` with no `env`
+entry: `BENCH_SESSION_CONFIG` reaches it from the environment that Kiro CLI is started with, K31), `tools` (`read`,
+`write`, `@bench`), `includeMcpJson`, `includePowers` and `permissions` are the same. No shell (Req 9.1). A test
+compares the two files as JSON with those three fields removed and with the `env` entry of `bench` removed from
+`dr-kiro.json`; that `env` entry is the only other difference (K31).
 
 **`reader-prompt.md`**, about eight lines: you are the reader; you answer one request about a system you know
 nothing about except what the bench tools describe and what is in `given/`; the request is in `request.md` and is
@@ -1123,6 +1124,17 @@ this design (B1-B7).
   (`check_run`) recomputes it from the setup and refuses a different value, naming the run file and the field
   `limits`. The same text is shown in `build-from-spec/README.md` under "Limits of this version", and wherever a
   `record` result is shown. Not chosen: a free text per run, which would let the value drift from the setup.
+- **K31. The reader's `bench` entry has no `env` entry.** `reader.json` copied Dr. Kiro's `bench` entry, which sets
+  `BENCH_SESSION_CONFIG` to `${BENCH_SESSION_CONFIG}`. In the rehearsal (`build-from-spec/rehearsal/RUN.md`, step c),
+  Kiro CLI exited with code 3 at its first turn and reported that the `bench` MCP server failed to start
+  ("Connection closed"). The expansion of that entry was the suspected cause. A one-turn experiment with the real
+  Kiro CLI (`bench-run/build-from-spec/envtest-2026-11-18/RESULT.md`) showed two things: the entry expands to the
+  absolute path, and an MCP server with no `env` entry receives the same absolute path from the environment of the
+  Kiro CLI process. So the expansion is not the cause of the failure. The `env` entry is removed from the reader's
+  `bench` entry, and `BENCH_SESSION_CONFIG` reaches `bench-mcp` from the environment that `bfs-run` gives Kiro CLI
+  (section 3.9, step D). The experiment does not show that this clears the rehearsal failure; the rehearsal must be
+  run again after this change. Not chosen: keeping the entry, which the experiment shows is not needed, and
+  renaming the variable, which no evidence supports.
 
 ## Open items
 

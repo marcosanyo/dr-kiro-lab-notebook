@@ -134,3 +134,13 @@ def test_a_failure_during_a_turn_stops_the_session_and_keeps_a_run_file(repo: Pa
     data = read_run_file(repo / RECORDS / FAKE / "probe-none-1.run.json")
     assert data["record"]["end"] == "stopped"
     assert "the fake launch broke" in seal_body(repo, "probe-none-1")
+
+
+def test_kiro_cli_is_started_with_the_session_config_in_its_environment(repo: Path) -> None:
+    # K31: the reader's bench entry has no env entry, so bench-mcp gets BENCH_SESSION_CONFIG only from this
+    # environment. It must be the absolute path of the config the script wrote for this run.
+    kiro = FakeKiro(reader_ends)
+    run_script(run_args("none"), repo, TEST_APPS, kiro)
+    config = (repo / RUN_DATA / "probe-none-1.session.toml").resolve()
+    assert config.is_file()
+    assert kiro.envs[0]["BENCH_SESSION_CONFIG"] == str(config)

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/design.md`](../../../.kiro/specs/build-from-spec/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `fdcab6b6147bfb74ca381312c26ff7309f1f74a0edad6ef9a858d849cc2ed68b`
+> 原文 SHA-256: `653d675181c482b82bae1c43e00bb2c4fdf0e6121d145f2009e0d324fc6858e6`
 
 # 設計: build-from-spec
 
@@ -193,7 +193,7 @@ class ReaderAdapter:
 
 ### 3.4 リーダーのファイル（`files/`、要件 9）
 
-**`reader.json`** は `dr-kiro.json` の 3 つのフィールドを変えたものである: `name` を `reader`、1 行の `description`、`prompt` を `file://./reader-prompt.md`。`resources`、`mcpServers`（環境から `BENCH_SESSION_CONFIG` を受けて `bench-mcp` を実行する `bench` の項目）、`tools`（`read`、`write`、`@bench`）、`includeMcpJson`、`includePowers`、`permissions` は同じである。シェルはない（要件 9.1）。テストは、その 3 つのフィールドを取り除いた 2 つのファイルを JSON として比べる。
+**`reader.json`** は `dr-kiro.json` の 3 つのフィールドを変えたものである: `name` を `reader`、1 行の `description`、`prompt` を `file://./reader-prompt.md`。`resources`、`mcpServers`（`bench-mcp` を実行する `bench` の項目。`env` 項目はない。`BENCH_SESSION_CONFIG` は、Kiro CLI が起動された環境から届く。K31）、`tools`（`read`、`write`、`@bench`）、`includeMcpJson`、`includePowers`、`permissions` は同じである。シェルはない（要件 9.1）。テストは、その 3 つのフィールドと、`dr-kiro.json` の `bench` の `env` 項目を取り除いた 2 つのファイルを JSON として比べる。その `env` 項目が、唯一の他の違いである（K31）。
 
 **`reader-prompt.md`** は約 8 行: あなたはリーダーである。あなたは、ベンチツールが説明するものと `given/` にあるもの以外、何も知らないシステムについての 1 つのリクエストに答える。リクエストは `request.md` にあり、ベンチツールではゴールである。あなたは単独で働き、ユーザーに何も尋ねず、答えを待たない。`end_session` が成功するか、ベンチがセッションの終了を報告するまで続ける。ステアリングに従う。
 
@@ -795,6 +795,7 @@ resume = true
 - **K28. 要求の生成器からフィルタを外す（テストコードのみ）。** 性質 1 と性質 2 は、合格範囲の 2 つの境界を独立に引き、`assume(low < high)` で捨てていた。リクエストには合格範囲が最大 3 つあるため、範囲ごとに約半分の引きが捨てられ、hypothesis が `FailedHealthCheck: filter_too_much` で失敗した（性質 1 で `--hypothesis-seed=9` のとき観測）。生成器は `low` を [-1e6, 1e6) から、`high` を (low, 1e6] から引くようにした。引いた値はすべて有効な合格範囲になり、捨てる引きはない。範囲（±1e6 内の有限な境界で `low < high`）、検査する性質、`max_examples=100` は変えておらず、ヘルスチェックも抑止していない。
 - **K29. 効果 `default` では `--effort` を付けない。** `kiro-cli` は既定の効果を表示しない（`kiro-cli chat --help` に既定値がなく、`kiro-cli settings list` に効果の設定もない）。そのため既定の効果に書ける値がない。リーダーの効果は実行で `default` とし、`kiro_command` は `--effort` を付けない。既定値は Kiro CLI が使うものになり、実行データに記録する Kiro CLI のバージョン（B5）がどの既定値かの記録になる。それ以外の値は `--effort <値>` として渡す。`--model` は必須のままで、空の効果は引き続き拒否する。採らなかった案: 既定値として数値を書くこと。それは作った値になる（rules.md 4）。
 - **K30. 実行情報ファイルのフィールド `limits`（絵の制限）。** セットアップ `record` のピクチャーブロブは、Kiro CLI の読み取りツールでは開けなかった。ユーザーの決定により、実行情報ファイルはこれを制限として記録する。各実行情報ファイルにフィールド `limits`（文字列のリスト）がある。セットアップ `record` では厳密に `["生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル"]`、`spec` と `none` では `[]`。`write_run_file` がセットアップから設定し（`runfile.py` の `limits_for`）、`check_run` はセットアップから再計算して、違う値を、実行情報ファイルの名前とフィールド `limits` を挙げて拒否する。同じ文は `build-from-spec/README.md` の「Limits of this version」の節に、また `record` の結果を示すところすべてに示す。採らなかった案: 実行ごとの自由な文。値がセットアップからずれるため。
+- **K31. リーダーの `bench` 項目には `env` 項目がない。** `reader.json` は、`dr-kiro` の `bench` 項目を写していた。その項目は `BENCH_SESSION_CONFIG` を `${BENCH_SESSION_CONFIG}` に設定する。リハーサル（`build-from-spec/rehearsal/RUN.md`、手順 c）では、Kiro CLI が最初のターンで終了コード 3 で終わり、`bench` の MCP サーバーが起動できなかったと報告した（"Connection closed"）。疑われた原因は、その項目の展開だった。実際の Kiro CLI での 1 ターンの実験（`bench-run/build-from-spec/envtest-2026-11-18/RESULT.md`）は 2 つを示した。項目は絶対パスに展開される。また `env` 項目のない MCP サーバーも、Kiro CLI のプロセスの環境から同じ絶対パスを受け取る。よって展開は失敗の原因ではない。リーダーの `bench` 項目から `env` 項目を取り除き、`BENCH_SESSION_CONFIG` は `bfs-run` が Kiro CLI に与える環境から `bench-mcp` に届く（設計 3.9 の段階 D）。この実験は、リハーサルの失敗が解消したことを示さない。この変更のあとに、リハーサルを再度行う必要がある。採らなかった案: 実験上不要と分かった項目を残すこと、変数名を変えること（根拠がない）。
 
 ## 未決事項
 
