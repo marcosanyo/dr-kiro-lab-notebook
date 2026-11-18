@@ -471,8 +471,8 @@ class _Reader:
         )
 
     def _start(self, body: Any) -> tuple[str, str, int, int, int, Declaration]:
-        # `discovered_table` is in the start entry of a record made after the bench began to write it. A record
-        # made before has no such key and is read as it is; a value other than the bench's two fails.
+        # `discovered_table` is in the start entry of a record made after the bench began to write it.
+        # A record made before has no such key and is read as it is; any other value than the two fails.
         if isinstance(body, dict) and "discovered_table" in body:
             if body["discovered_table"] not in DISCOVERED_TABLE_VALUES:
                 raise self.fail(f"discovered_table {body['discovered_table']!r} is not a known setting")
