@@ -8,7 +8,7 @@ import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 from bench.scan.scan import Scanner
 
-from notebook import ink
+from notebook import addresses, ink
 from notebook.pages import parts
 
 PROJECT = Path(__file__).resolve().parents[2]
@@ -142,9 +142,26 @@ def test_miss_red_is_used_only_by_the_miss_classes():
     assert "var(--miss-red)" not in root
 
 
-def test_no_remote_or_font_file_in_the_stylesheet():
+def test_the_stylesheet_fetches_only_the_typefaces_shipped_with_the_site():
     css = CSS.read_text(encoding="utf-8")
-    assert "url(" not in css and "@import" not in css and "@font-face" not in css
+    assert "@import" not in css
+    urls = re.findall(r"url\(([^)]*)\)", css)
+    assert urls, "the stylesheet names no typeface file"
+    # Every url() is one of the shipped typeface files, written without a folder (the stylesheet is in `a/`).
+    assert sorted(set(urls)) == sorted(addresses.FONT_FILES)
+    for name in addresses.FONT_FILES:
+        assert (ASSETS / "fonts" / name).is_file(), name
+    # Every @font-face names its file through url() and a face: no other source such as local().
+    for selector, body in _rules(css):
+        if selector == "@font-face":
+            src = _declarations(body)["src"]
+            assert re.fullmatch(r"url\([a-z0-9-]+\.woff2\) format\(\"woff2\"\)", src), src
+
+
+def test_the_typeface_licences_are_shipped_and_named():
+    licence = (ASSETS / "fonts" / "LICENSE.txt").read_text(encoding="utf-8")
+    for family in ("Caveat", "Lora", "IBM Plex Mono", "SIL Open Font License, Version 1.1"):
+        assert family in licence, family
 
 
 def test_decoration_holds_no_text_and_is_hidden_from_assistive_technology():

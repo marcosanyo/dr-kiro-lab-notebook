@@ -18,9 +18,9 @@ The commentary visible before any detail is opened is at most `MAX_VISIBLE_WORDS
 file names ended sessions only (14.4, checked in `choices.load_cover`).
 """
 
-from bench.specfiles.discovered import Row, Table
+from bench.specfiles.discovered import STATUSES, Row, Table
 
-from notebook import addresses, html, numbers, plots, tables
+from notebook import addresses, html, numbers, plots, readerruns, tables
 from notebook.choices import Card, Cover
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, markup, pencil
@@ -31,7 +31,8 @@ from notebook.pages.parts import chosen, link, say_text
 from notebook.pages.photo import PictureFile, photo
 from notebook.records import Hypothesis, Outcome, Prediction, RecordModel, Snapshot, Trial
 
-MAX_VISIBLE_WORDS = 60
+# Was 60 (13.6) before the reader line and the lab tabs were added to the cover (user, polish pass).
+MAX_VISIBLE_WORDS = 90
 
 
 def _source(record: RecordModel, seq: int) -> str:
@@ -72,51 +73,70 @@ def _stamp(snapshot: Snapshot, row: Row) -> list[Segment]:
     return html.element("span", {"class": "cover-status"}, parts.stamp(segment, "CHECKED"))
 
 
-def _row(record: RecordModel, snapshot: Snapshot, row: Row) -> list[Segment]:
-    """A row by its id, linked to its place in the session page's table, with its rule and status."""
+def _cell(snapshot: Snapshot, row: Row, value: str) -> list[Segment]:
+    return html.text(
+        Authored(value, snapshot.design.author, f"{snapshot.design.source} line {row.line}").segment()
+    )
+
+
+def _row_target(record: RecordModel, snapshot: Snapshot, row: Row) -> str:
     source = f"{snapshot.design.source} line {row.line}"
-
-    def cell(value: str) -> list[Segment]:
-        return html.text(Authored(value, snapshot.design.author, source).segment())
-
     page = addresses.session(record.application, record.session, source)
-    target = addresses.on_page(page, addresses.row(row.id, source))
-    return [
-        *link(target, cell(row.id)),
-        markup(" "),
-        *html.element("span", {"class": "cover-rule"}, cell(row.rule)),
-        markup(" "),
-        *_stamp(snapshot, row),
+    return addresses.on_page(page, addresses.row(row.id, source))
+
+
+def _card_of_row(
+    record: RecordModel, snapshot: Snapshot, view: tables.TableView, rv: tables.RowView
+) -> list[Segment]:
+    """One rule card: the row's id (linked to its place in the session page's table), its stamp and its rule.
+    A `rejected` row has its rule struck, and one line "replaced by <id> <rule of that row>" below it; the
+    replacing row is not drawn again as a card (user, polish pass)."""
+    row = rv.row
+    inner = [
+        *html.element(
+            "span",
+            {"class": "rule-head"},
+            [*link(_row_target(record, snapshot, row), _cell(snapshot, row, row.id)), *_stamp(snapshot, row)],
+        ),
+        *html.element("span", {"class": "cover-rule"}, _cell(snapshot, row, row.rule)),
     ]
+    if rv.struck:
+        if view.tab_id(rv) is not None:
+            replacing = view.rows[rv.target].row
+            inner += html.element(
+                "span",
+                {"class": "cover-replaced"},
+                [
+                    *say_text("REPLACED_BY"),
+                    *link(_row_target(record, snapshot, replacing), _cell(snapshot, replacing, replacing.id)),
+                    markup(" "),
+                    *html.element(
+                        "span", {"class": "rule-small"}, _cell(snapshot, replacing, replacing.rule)
+                    ),
+                ],
+            )
+        else:
+            # Only possible in a table the bench did not accept at the end; shown as the table shows it.
+            inner += say_text(
+                {
+                    tables.NOTE_NO_ROW: "REPLACED_NAMES_NO_ROW",
+                    tables.NOTE_MANY_ROWS: "REPLACED_NAMES_MANY_ROWS",
+                    tables.NOTE_ITSELF: "REPLACED_NAMES_ITSELF",
+                }[rv.note]
+            )
+    classes = "rule-card row-rejected" if rv.struck else "rule-card row-cited"
+    if row.status in STATUSES:
+        classes += f" st-{row.status}"
+    return html.element("li", {"class": classes}, inner)
 
 
 def _rows(record: RecordModel, snapshot: Snapshot, table: Table, pid: str) -> list[Segment]:
-    """Every row that cites `pid`, in table order, each `rejected` one with its replacing row (13.2)."""
+    """Every row that cites `pid`, in table order, each as one rule card (13.2)."""
     view = tables.table_view(table)
     items: list[Segment] = []
     for rv in view.rows:
-        if pid not in rv.row.predictions:
-            continue
-        line = _row(record, snapshot, rv.row)
-        if rv.struck:
-            target = view.tab_id(rv)
-            if target is not None:
-                replacing = view.rows[rv.target].row
-                line += html.element(
-                    "span",
-                    {"class": "cover-replaced"},
-                    [*say_text("REPLACED_BY"), *_row(record, snapshot, replacing)],
-                )
-            else:
-                # Only possible in a table the bench did not accept at the end; shown as the table shows it.
-                line += say_text(
-                    {
-                        tables.NOTE_NO_ROW: "REPLACED_NAMES_NO_ROW",
-                        tables.NOTE_MANY_ROWS: "REPLACED_NAMES_MANY_ROWS",
-                        tables.NOTE_ITSELF: "REPLACED_NAMES_ITSELF",
-                    }[rv.note]
-                )
-        items += html.element("li", {"class": "row-rejected" if rv.struck else "row-cited"}, line)
+        if pid in rv.row.predictions:
+            items += _card_of_row(record, snapshot, view, rv)
     if not items:
         return html.element("p", None, say_text("COVER_NO_ROW"))
     return html.element("ul", {"class": "cover-rows"}, items)
@@ -229,9 +249,10 @@ def _miss(
     source = _source(record, hypothesis.seq)
     pid = html.check_id("prediction", prediction.id, source)
     claim: list[Segment] = [
+        *chosen(),
         *html.element(
             "p",
-            None,
+            {"class": "claim-statement"},
             [
                 *html.text(pencil(pid, source)),
                 markup(" "),
@@ -240,7 +261,7 @@ def _miss(
         ),
         *html.element(
             "p",
-            None,
+            {"class": "claim-measure"},
             [
                 *html.text(pencil(prediction.measurement, source)),
                 *say_text("COVER_RANGE"),
@@ -254,7 +275,6 @@ def _miss(
                 *_value(record, outcome, where),
             ],
         ),
-        *chosen(),
     ]
     end = tables.end_snapshot(record)
     if end is not None:
@@ -271,12 +291,93 @@ def _miss(
     return section, pictures
 
 
-# The lab cards
+# The reader line
 
 
-def _card(
+def _reader_line(runs: list[readerruns.Run]) -> list[Segment]:
+    """One line under the missed prediction: how many runs of each setup passed. Nothing when the build has no
+    reader run. The line does not name the request: its id holds a word the blind scan refuses in builder
+    text, and the line is only right for one request, so a second request fails the build. Every number comes
+    from the run files."""
+    if not runs:
+        return []
+    requests = sorted({r.request_id for r in runs})
+    if len(requests) != 1:
+        raise NotebookError(
+            readerruns.FOLDER, f"the cover's reader line is for one request; the runs hold {len(requests)}"
+        )
+    source = f"{readerruns.FOLDER}: the runs of one request"
+    chips: list[Segment] = []
+    for setup, passes, total, other in readerruns.tally(runs, requests[0]):
+        chips += html.element(
+            "span",
+            {"class": f"reader-chip reader-{setup}"},
+            html.text(pencil(f"{setup} {passes}/{total}", source)),
+        )
+        for word, count in sorted(other.items()):
+            chips += say_text("COVER_READER_OTHER") + html.text(pencil(f"{count} {word}", source))
+    return html.element(
+        "section",
+        {"class": "cover-reader"},
+        html.element("p", {"class": "cover-reader-line"}, [*say_text("COVER_READER"), *chips]),
+    )
+
+
+# The lab tabs and their sessions
+
+MAX_TABS = 4  # the stylesheet knows this many radio-driven tabs
+
+
+def _status_counts(record: RecordModel) -> list[Segment]:
+    """The rows of the accepted end table by status word, or the reason the record has none."""
+    end = tables.end_snapshot(record)
+    source = _source(record, record.seal.seq)
+    if end is None:
+        return html.element("span", {"class": "session-rows"}, say_text("COVER_SESSION_NO_TABLE"))
+    table = tables.read(record, end)
+    if not isinstance(table, Table):
+        raise NotebookError(end.design.source, "the accepted end table cannot be read")
+    chips: list[Segment] = []
+    for status in STATUSES:
+        count = sum(1 for r in table.rows if r.status == status)
+        if not count:
+            continue
+        chips += html.element(
+            "span",
+            {"class": f"status-count count-{status}"},
+            html.text(pencil(f"{status} {count}", source)),
+        )
+    return html.element("span", {"class": "session-rows"}, [*say_text("COVER_SESSION_ROWS"), *chips])
+
+
+def _session_line(record: RecordModel) -> list[Segment]:
+    start = _source(record, 1)
+    seal = _source(record, record.seal.seq)
+    page = addresses.session(record.application, record.session, start)
+    return html.element(
+        "li",
+        {"class": "session-line"},
+        [
+            *html.element(
+                "span",
+                {"class": "session-id"},
+                [*link(page, html.text(pencil(record.session, start)))],
+            ),
+            *html.element("span", {"class": "session-end"}, html.text(pencil(record.seal.end, seal))),
+            *html.element(
+                "span",
+                {"class": "session-trials"},
+                [*say_text("COVER_SESSION_TRIALS"), *html.text(pencil(str(len(record.trials)), seal))],
+            ),
+            *_status_counts(record),
+        ],
+    )
+
+
+def _panel(
     records: list[RecordModel], card: Card, layouts: dict[str, Layout]
 ) -> tuple[list[Segment], PictureFile]:
+    """One lab's panel: one chosen trial as an instant photo, and the ended sessions of the lab."""
     record = _record(records, card.application, card.session, card.source)
     trial = _trial(record, card.trial, f"{card.source} trial")
     # A lab card is exempt from the magnified picture (Requirement 7.9).
@@ -288,17 +389,76 @@ def _card(
         trial_word=False,
         magnified=False,
     )
+    # Only ended sessions: a stopped session never reaches the cover (14.4); its lab page lists it.
+    mine = sorted(
+        (r for r in records if r.application == card.application and r.seal.end == "ended"),
+        key=lambda r: r.session,
+    )
     source = _source(record, 1)
-    heading = html.element(
-        "p",
-        {"class": "card-heading"},
+    sessions = html.element(
+        "section",
+        {"class": "panel-sessions"},
         [
-            *link(addresses.lab(record.application, source), html.text(pencil(record.application, source))),
-            markup(" "),
-            *html.text(pencil(record.session, source)),
+            *html.element("ul", {"class": "session-list"}, [s for r in mine for s in _session_line(r)]),
+            *html.element(
+                "p",
+                {"class": "panel-link"},
+                link(addresses.lab(record.application, source), say_text("COVER_ALL_SESSIONS")),
+            ),
         ],
     )
-    return html.element("section", {"class": "card"}, [*heading, *figure]), picture
+    return (
+        html.element(
+            "section",
+            {
+                "class": "tab-panel",
+                "id": f"panel-{addresses.site_id('application', card.application, source)}",
+            },
+            [*html.element("section", {"class": "panel-photo"}, [*chosen(), *figure]), *sessions],
+        ),
+        picture,
+    )
+
+
+def _tabs(
+    records: list[RecordModel], cover: Cover, layouts: dict[str, Layout]
+) -> tuple[list[Segment], list[PictureFile]]:
+    """The lab tabs: one radio and one label per lab, one panel per lab. Only the checked tab's panel shows,
+    through the stylesheet alone (no script)."""
+    if not 1 <= len(cover.cards) <= MAX_TABS:
+        raise NotebookError(
+            "choices/cover.toml", f"the cover has {len(cover.cards)} labs; it shows 1 to {MAX_TABS} tabs"
+        )
+    radios: list[Segment] = []
+    labels: list[Segment] = []
+    panels: list[Segment] = []
+    pictures: list[PictureFile] = []
+    for i, card in enumerate(cover.cards):
+        source = f"{card.source} application"
+        app = addresses.site_id("application", card.application, source)
+        attrs = {"type": "radio", "name": "lab-tab", "id": f"tab-{app}", "class": "tab-radio"}
+        if i == 0:
+            attrs["checked"] = "checked"
+        radios += html.void("input", attrs)
+        labels += html.element(
+            "label", {"for": f"tab-{app}", "class": "tab-label"}, html.text(pencil(card.application, source))
+        )
+        panel, picture = _panel(records, card, layouts)
+        panels += panel
+        pictures.append(picture)
+    section = html.element(
+        "section",
+        {"class": "cover-labs"},
+        [
+            *html.element("p", {"class": "tabs-caption"}, say_text("COVER_TABS_LABEL")),
+            *html.element(
+                "section",
+                {"class": "tabs"},
+                [*radios, *html.element("p", {"class": "tab-bar"}, labels), *panels],
+            ),
+        ],
+    )
+    return section, pictures
 
 
 # The page
@@ -331,15 +491,16 @@ def visible_words(segments: list[Segment]) -> list[str]:
 
 
 def page(
-    records: list[RecordModel], cover: Cover, layouts: dict[str, Layout]
+    records: list[RecordModel],
+    cover: Cover,
+    layouts: dict[str, Layout],
+    runs: list[readerruns.Run],
 ) -> tuple[list[Segment], tuple[PictureFile, ...]]:
-    """The cover page and the pictures it shows (each once, in the order first shown)."""
+    """The cover page and the pictures it shows (each once, in the order first shown). Order: the title, the
+    missed prediction with its rows, the reader line, the lab tabs with their sessions (user, polish pass)."""
     miss, pictures = _miss(records, cover, layouts)
-    cards: list[Segment] = []
-    for card in cover.cards:
-        segments, picture = _card(records, card, layouts)
-        cards += segments
-        pictures.append(picture)
+    tabs, tab_pictures = _tabs(records, cover, layouts)
+    pictures += tab_pictures
     head = html.element(
         "header",
         {"class": "cover-head"},
@@ -348,16 +509,7 @@ def page(
             *html.element("p", {"class": "cover-tagline"}, say_text("TAGLINE")),
         ],
     )
-    body = [
-        *head,
-        *miss,
-        # The label sits directly above the cards it labels (visual steering, "Cover layout").
-        *html.element(
-            "section",
-            {"class": "cover-cards"},
-            [*chosen(), *html.element("section", {"class": "card-row"}, cards)],
-        ),
-    ]
+    body = [*head, *miss, *_reader_line(runs), *tabs]
     segments = parts.page("SITE_TITLE", body)
     words = visible_words(segments)
     if len(words) > MAX_VISIBLE_WORDS:

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 
-from notebook import choices, ink, layouts, plots, records, refusals, scan, views
+from notebook import choices, ink, layouts, plots, readerruns, records, refusals, scan, views
 from notebook.pages import cover, how, lab, parts, photo, replay, session
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -131,7 +131,9 @@ def test_dr_kiros_fixed_words_of_every_record_pass_at_the_builder_level(scanner,
 
 
 def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
-    segments, _ = cover.page(loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS))
+    segments, _ = cover.page(
+        loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS), readerruns.load(SESSIONS)
+    )
     written, _ = scan.check(scanner, {"index.html": segments})["index.html"]
     _links_stay_in_the_site("index.html", written)
     assert "<div" not in written and "xmlns" not in written and "http" not in written

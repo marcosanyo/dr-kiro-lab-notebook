@@ -80,7 +80,7 @@ def _fitting_cover(record: RecordModel, loaded: list[RecordModel], choices: Path
     for prediction in misses or ["none"]:
         (choices / "cover.toml").write_text(_cover(record, prediction))
         try:
-            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table)
+            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table, [])
         except NotebookError as error:
             if "words of commentary" not in error.problem:
                 raise
@@ -181,8 +181,8 @@ def test_the_build_is_deterministic(synthesized, rng):
         forbidden = [str(p) for p in (out_a, out_b, out_c, first_root, second_root, tmp_root)]
         forbidden += [str(Path.home()), str(REPO), str(tmp_root.resolve())]
         for path, data in site_a.items():
-            if path.endswith(".png"):
-                continue
+            if path.endswith((".png", ".woff2")):
+                continue  # pictures and typefaces are copied bytes, not text
             content = data.decode("utf-8")
             for value in forbidden:
                 assert value not in content, (path, value)

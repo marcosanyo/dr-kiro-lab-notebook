@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import SIDECAR_SUFFIX
 
-from notebook import cli
+from notebook import addresses, cli
 
 ROOT = Path(__file__).resolve().parents[3]
 # Pages that pages link to but later tasks write.
@@ -55,7 +55,10 @@ def site(tmp_path_factory) -> Path:
 def test_the_real_build_writes_every_page_written_so_far_with_sidecars(site):
     files = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()}
     texts = PAGES | {"a/notebook.css", "a/notebook.js"}
-    assert {f for f in files if not f.startswith("p/")} == texts | {t + SIDECAR_SUFFIX for t in texts}
+    shipped = {addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES)}
+    assert {f for f in files if not f.startswith("p/")} == texts | {
+        t + SIDECAR_SUFFIX for t in texts
+    } | shipped
     assert all(re.fullmatch(r"p/[0-9a-f]{64}\.png", f) for f in files if f.startswith("p/"))
     assert not (site.parent / ".site.staging").exists()
 

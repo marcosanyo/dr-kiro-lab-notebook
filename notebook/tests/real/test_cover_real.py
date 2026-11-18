@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from notebook import choices, ink, layouts, records, text, views, words
+from notebook import choices, ink, layouts, readerruns, records, text, views, words
 from notebook.ink import Ink
 from notebook.pages import cover, photo, session
 
@@ -30,7 +30,7 @@ def table() -> dict[str, layouts.Layout]:
 
 @pytest.fixture(scope="module")
 def built(loaded, table):
-    return cover.page(loaded, choices.load_cover(CHOICES, loaded), table)
+    return cover.page(loaded, choices.load_cover(CHOICES, loaded), table, readerruns.load(SESSIONS))
 
 
 def _by_session(loaded, session_id: str) -> records.RecordModel:
@@ -63,9 +63,16 @@ def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:
     page = ink.join(built[0])[0]
     rows = re.findall(r'href="body-lab-body-2\.html#row-(R\d+)"', page)
     assert rows == ["R4", "R5"]
-    assert '<li class="row-rejected"><a href="body-lab-body-2.html#row-R4">' in page
+    assert (
+        '<li class="rule-card row-rejected st-rejected"><span class="rule-head">'
+        '<a href="body-lab-body-2.html#row-R4">' in page
+    )
     assert '<span class="stamp stamp-rejected"><span class="ink-s">rejected</span></span>' in page
-    assert '<span class="stamp stamp-observed"><span class="ink-s">observed</span></span>' in page
+    # R5 is one line under R4 ("replaced by R5 ..."), not a second card with its own stamp.
+    replaced = '<span class="cover-replaced"><span class="ink-c">replaced by </span>'
+    assert replaced + '<a href="body-lab-body-2.html#row-R5">' in page
+    assert page.count('class="rule-card') == 1
+    assert '<span class="stamp stamp-observed">' not in page
 
 
 def test_cover_cards_and_labels(loaded, built) -> None:
@@ -111,3 +118,17 @@ def test_session_margin_pins_the_chosen_trials_as_photos(loaded, table) -> None:
     recorded = [p.path for p in pins.files[::2]]
     assert recorded == [f"p/{_trial(record, tid).picture.digest}.png" for tid in ("T25", "T30", "T36")]
     assert len(pins.files) == 6
+
+
+def test_cover_reader_line_gives_the_passes_of_the_six_runs(built) -> None:
+    page = ink.join(built[0])[0]
+    chips = re.findall(r'<span class="reader-chip reader-(\w+)"><span class="ink-p">([^<]+)</span>', page)
+    assert chips == [("spec", "spec 2/2"), ("record", "record 1/2"), ("none", "none 0/2")]
+    assert page.index("cover-miss") < page.index("cover-reader") < page.index("cover-labs")
+
+
+def test_cover_tabs_list_the_ended_sessions_of_each_lab(built) -> None:
+    page = ink.join(built[0])[0]
+    assert page.count('<input type="radio" name="lab-tab"') == 2
+    sessions = re.findall(r'<li class="session-line"><span class="session-id"><a href="([^"]+)"', page)
+    assert sessions == ["body-lab-body-1.html", "body-lab-body-2.html", "wind-tunnel-wt-004.html"]

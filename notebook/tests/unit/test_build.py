@@ -14,7 +14,7 @@ import pytest
 from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
 from fixtures.session import FAKE_SOURCES, STOP_LIST, Lab, accepted_session
-from notebook import build, cli, records, site, text
+from notebook import addresses, build, cli, records, site, text
 from notebook.errors import NotebookError
 from notebook.ink import markup
 from notebook.inputs import Inputs
@@ -82,7 +82,8 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
         "a/notebook.css",
         "a/notebook.js",
     }
-    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures
+    shipped = {addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES)}
+    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures | shipped
     assert _all_files(built) == expected
     for path in pictures:
         data = (built / path).read_bytes()

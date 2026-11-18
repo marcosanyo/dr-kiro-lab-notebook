@@ -167,7 +167,16 @@ COVER_ROWS = (
 )
 COVER_OUTCOME_LINK = "this prediction's outcome in its experiment entry"
 COVER_TABLE_LINK = "the session's discovered spec table"
-COVER_CARDS = "One trial of each lab, chosen by a person. Each card opens the list of that lab's sessions."
+COVER_CARDS = "Beside the sessions of each lab, one of its trials, chosen by a person."
+# The reader line and the lab tabs of the cover (user, polish pass). The reader line sits directly under the
+# missed prediction; the tabs sit under the reader line.
+COVER_READER = "reader runs passed: "
+COVER_READER_OTHER = " "
+COVER_TABS_LABEL = "labs"
+COVER_SESSION_TRIALS = "trials "
+COVER_SESSION_ROWS = "rows "
+COVER_SESSION_NO_TABLE = "no table"
+COVER_ALL_SESSIONS = "all sessions of this lab"
 
 # The lab pages, `<app>.html` (Requirement 14). Every record shows the same fields (14.1, 14.2).
 LAB_TITLE = "Sessions of a lab"

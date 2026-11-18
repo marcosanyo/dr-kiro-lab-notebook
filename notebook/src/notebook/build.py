@@ -18,7 +18,7 @@ from pathlib import Path
 
 from bench.scan.scan import Scanner
 
-from notebook import addresses, choices, layouts, records, scan, tables, text, views, words
+from notebook import addresses, choices, layouts, readerruns, records, scan, tables, text, views, words
 from notebook.choices import Choices, Cover
 from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
@@ -47,6 +47,7 @@ class Checked:
     cover: Cover
     scanner: Scanner
     allow_fake: bool
+    runs: tuple[readerruns.Run, ...]
 
 
 @dataclass(frozen=True)
@@ -90,7 +91,8 @@ def check_inputs(inputs: Inputs, *, allow_fake: bool) -> Checked:
     cover_file = choices.load_cover(inputs.choices, list(loaded))
     for record in loaded:
         tables.check_end(record)
-    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake)
+    runs = tuple(readerruns.load(inputs.sessions))
+    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs)
 
 
 # Phase 2
@@ -107,7 +109,11 @@ Pages = Callable[[Model], dict[str, tuple[list[Segment], tuple[PictureFile, ...]
 
 
 def _cover(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {addresses.COVER: cover.page(list(m.checked.records), m.checked.cover, m.checked.layouts)}
+    return {
+        addresses.COVER: cover.page(
+            list(m.checked.records), m.checked.cover, m.checked.layouts, list(m.checked.runs)
+        )
+    }
 
 
 def _labs(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
@@ -171,6 +177,14 @@ def render(m: Model) -> dict[str, bytes]:
     for path, name in ASSET_FILES.items():
         source = f"{ASSET_SOURCE}/{name}"
         site.add_text(path, [markup((ASSETS / name).read_text(encoding="utf-8"), source)], source)
+    fonts = ASSETS / "fonts"
+    for name in addresses.FONT_FILES:
+        site.add_bytes(
+            f"{addresses.ASSET_DIR}/{name}", (fonts / name).read_bytes(), f"{ASSET_SOURCE}/fonts/{name}"
+        )
+    site.add_bytes(
+        addresses.FONT_LICENSE, (fonts / "LICENSE.txt").read_bytes(), f"{ASSET_SOURCE}/fonts/LICENSE.txt"
+    )
     extra = [
         *scan.choice_segments(m.checked.choices[k] for k in sorted(m.checked.choices)),
         *scan.drkiro_word_segments(m.checked.records),
