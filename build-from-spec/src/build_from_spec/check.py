@@ -22,14 +22,21 @@ from bench.record.chain import VerifyError, verify
 from bench.record.spec_copy import SpecCopyError, final_spec
 from bench.scan.levels import SIDECAR_SUFFIX
 
-from build_from_spec.apps import APPS, App, AppError, require_repository_root
+from build_from_spec.apps import APPS, REQUESTS, App, AppError, require_repository_root
 from build_from_spec.folder import SPEC_FILES
 from build_from_spec.judge import JudgeError, Judgement, judge_record
 from build_from_spec.reduced import ReducedError, plan
 from build_from_spec.relied import ReliedError, allowed_ids
 from build_from_spec.request import Request, RequestError, parse_request
-from build_from_spec.runfile import REQUESTS, RunFileError, committed_request, read_run_file, run_file_texts
+from build_from_spec.runfile import (
+    RunFileError,
+    committed_request,
+    limits_for,
+    read_run_file,
+    run_file_texts,
+)
 from build_from_spec.runs import (
+    RECORDS,
     RunsError,
     application_folders,
     differences,
@@ -39,7 +46,7 @@ from build_from_spec.runs import (
 )
 from build_from_spec.turns import CONTINUE_LINE, START_LINE
 
-SESSIONS = Path("sessions")
+SESSIONS = Path("sessions")  # the sealed source records of the bench, one folder per application
 
 
 class CheckError(Exception):
@@ -155,7 +162,7 @@ def check_run(run_file: Path, root: Path, apps: Mapping[str, App]) -> Checked:
     request_id = run["request"]["id"]
     commit = run["request"]["commit"]
     with _field(label, "request.commit"):
-        request_bytes = committed_request(root, commit, request_id)
+        request_bytes = committed_request(root, commit, request_id, REQUESTS)
     _same(label, "request.sha256", _digest(request_bytes), run["request"]["sha256"])
     request_path = (REQUESTS / f"{request_id}.toml").as_posix()
     with _field(label, "request.commit"):
@@ -211,6 +218,7 @@ def check_run(run_file: Path, root: Path, apps: Mapping[str, App]) -> Checked:
         )
 
     _check_turns(label, run, len(entries))
+    _same(label, "limits", limits_for(setup), run["limits"])
 
     # The run file holds exactly the text that its fields give, and its sidecar the authors of that text.
     text, sidecar = run_file_texts(run)
@@ -235,7 +243,7 @@ def derive_run(run_file: Path, root: Path, apps: Mapping[str, App]) -> dict[str,
     own_setup = run_id_parts(run["run"]).setup
     others = sorted(
         run_id
-        for run_id in runs_of_request(root, run_file.parent.name, request.id)
+        for run_id in runs_of_request(root / RECORDS, run_file.parent.name, request.id)
         if run_id_parts(run_id).setup != own_setup
     )
     last = checked.judged.last_trial
@@ -269,8 +277,8 @@ def check_all(root: Path, apps: Mapping[str, App]) -> tuple[list[str], list[str]
     problems, one line each. Refuse, with RunsError, when a run record and its run file do not pair."""
     passed: list[str] = []
     problems: list[str] = []
-    for application in application_folders(root):
-        runs = paired_runs(root, application)
+    for application in application_folders(root / RECORDS):
+        runs = paired_runs(root / RECORDS, application)
         for path in runs.values():
             try:
                 item = derive_run(path, root, apps)
@@ -280,7 +288,7 @@ def check_all(root: Path, apps: Mapping[str, App]) -> tuple[list[str], list[str]
             passed.append(f"{path}: ok: result {item['result']}, end {item['end']}")
         for request_id in sorted({run_id_parts(run_id).request for run_id in runs}):
             loaded = []
-            for path in runs_of_request(root, application, request_id).values():
+            for path in runs_of_request(root / RECORDS, application, request_id).values():
                 try:
                     loaded.append((path, read_run_file(path)))
                 except RunFileError as error:

@@ -19,6 +19,8 @@ GOOD = [
     "Claude Sonnet 5.5",
     "--effort",
     "medium",
+    "--sessions",
+    "sessions/build-from-spec",
 ]
 
 
@@ -33,16 +35,17 @@ def replaced(name: str, value: str) -> list[str]:
     return values
 
 
-def test_all_seven_arguments_are_read_as_given() -> None:
+def test_all_eight_arguments_are_read_as_given() -> None:
     arguments = parse_arguments(GOOD)
     assert arguments.request == "build-from-spec/requests/stop-ahead.toml"
     assert arguments.setup == "spec"
     assert arguments.source == "sessions/body-lab/body-2"
     assert (arguments.seed, arguments.run) == (3, 1)
     assert (arguments.model, arguments.effort) == ("Claude Sonnet 5.5", "medium")
+    assert arguments.sessions == "sessions/build-from-spec"
 
 
-@pytest.mark.parametrize("name", ["request", "setup", "source", "seed", "run", "model", "effort"])
+@pytest.mark.parametrize("name", ["request", "setup", "source", "seed", "run", "model", "effort", "sessions"])
 def test_a_missing_argument_is_refused_by_the_parser(name: str) -> None:
     with pytest.raises(SystemExit):
         parse_arguments(without(name))

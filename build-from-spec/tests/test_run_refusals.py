@@ -10,9 +10,10 @@ from pathlib import Path
 import pytest
 
 from build_from_spec import folder as folder_module
+from build_from_spec.apps import REQUESTS
 from build_from_spec.request import Request, print_request
 from build_from_spec.run import Arguments, RunRefused, RunStopped, run_script
-from build_from_spec.runfile import REQUESTS, RUN_DATA, read_run_file
+from build_from_spec.runfile import RUN_DATA, read_run_file
 from build_from_spec.runs import RECORDS
 from run_support import (
     FAKE,
@@ -226,6 +227,16 @@ def test_a_different_kiro_cli_version_is_refused_naming_both(repo: Path) -> None
     earlier_run(repo)
     message = refused(repo, run_args("none", 1), "probe-none-1", FakeKiro(version="kiro-cli other 9.9"))
     assert "kiro.version" in message and "kiro-cli other 9.9" in message
+
+
+def test_a_different_reader_file_from_an_earlier_counted_run_is_refused_after_writing(repo: Path) -> None:
+    earlier_run(repo)
+    path = repo / RECORDS / FAKE / "probe-spec-1.run.json"
+    data = read_run_file(path)
+    data["files"][".kiro/agents/reader.json"] = "0" * 64
+    save(path, data)
+    message = stopped_after_writing(repo, run_args("none", 1), "probe-none-1")
+    assert "differ in files[.kiro/agents/reader.json]" in message
 
 
 # After the working folder is written (Requirements 7.4, 7.5, 11.10)

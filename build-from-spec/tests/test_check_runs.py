@@ -12,6 +12,7 @@ import pytest
 
 from build_from_spec.apps import APPS
 from build_from_spec.check import CheckError, check_all, check_run, derive_run, main
+from build_from_spec.runfile import RECORD_LIMIT
 from build_from_spec.runs import RunsError
 from runs_support import (
     WORDS,
@@ -209,3 +210,14 @@ def test_the_command_refuses_outside_the_repository_root(tmp_path, monkeypatch):
 
     with pytest.raises(SystemExit, match="repository root"):
         main([])
+
+
+def test_a_changed_limits_value_is_refused_naming_the_run_file_and_the_field(repo):
+    path = make_run(repo, "probe-none-1")
+    data = load(path)
+    data["limits"] = [RECORD_LIMIT]
+    save(path, data)
+
+    with pytest.raises(CheckError) as refused:
+        check_run(path, repo, APPS)
+    assert str(refused.value).startswith(f"{path}: limits: ")

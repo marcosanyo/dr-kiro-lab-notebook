@@ -21,7 +21,7 @@ def read(name: str) -> str:
     return (FILES / name).read_text(encoding="utf-8")
 
 
-def test_reader_json_is_dr_kiro_json_with_name_description_and_prompt_changed():
+def test_reader_json_is_dr_kiro_json_with_name_description_and_prompt_changed_and_the_env_entry_removed():
     reader = json.loads(read("reader.json"))
     dr_kiro = json.loads(DR_KIRO_JSON.read_text(encoding="utf-8"))
     assert reader["name"] == "reader"
@@ -29,6 +29,12 @@ def test_reader_json_is_dr_kiro_json_with_name_description_and_prompt_changed():
     assert isinstance(reader["description"], str) and "\n" not in reader["description"]
     for name in ("name", "description", "prompt"):
         del reader[name], dr_kiro[name]
+    # K31: the one other difference is the env entry of the bench server. Dr. Kiro's copies
+    # BENCH_SESSION_CONFIG; the reader's has none, because the variable reaches bench-mcp from the
+    # environment of Kiro CLI.
+    assert dr_kiro["mcpServers"]["bench"]["env"] == {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}
+    assert "env" not in reader["mcpServers"]["bench"]
+    del dr_kiro["mcpServers"]["bench"]["env"]
     assert reader == dr_kiro
 
 
@@ -77,7 +83,16 @@ def test_readme_holds_the_start_and_continue_lines_and_the_install_command():
     text = (REPO_ROOT / "build-from-spec" / "README.md").read_text(encoding="utf-8")
     assert "Begin the session." in text
     assert "Continue the session." in text
-    assert "uv tool install --editable './bench[frontend]'" in text
-    assert "--with-editable ./build-from-spec --reinstall" in text
+    install_lines = [line for line in text.splitlines() if line.startswith("uv tool install")]
+    assert len(install_lines) == 1, install_lines
+    for part in (
+        "--editable './bench[frontend]'",
+        "--with-editable ./body-lab/adapter",
+        "--with-editable ./build-from-spec",
+        "--with-editable ./wind-tunnel/adapter",
+        "--with-executables-from build-from-spec",
+        "--reinstall",
+    ):
+        assert part in install_lines[0], part
     assert "## Checks at implementation" in text
     assert "## Runs" in text

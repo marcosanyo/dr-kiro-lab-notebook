@@ -38,7 +38,15 @@ from bench.record.spec_copy import SpecCopyError, final_spec, read_end
 from bench.scan.scan import Scanner
 from bench.scan.terms import ScanError
 
-from build_from_spec.apps import APPS, App, AppError, app_for, require_repository_root
+from build_from_spec.apps import (
+    APPS,
+    App,
+    AppError,
+    app_for,
+    check_records,
+    request_folder,
+    require_repository_root,
+)
 from build_from_spec.folder import (
     DISCOVERED_TABLE,
     SETUPS,
@@ -57,7 +65,6 @@ from build_from_spec.relied import ReliedError
 from build_from_spec.request import STOP_LIST, Request, RequestError, check_request, parse_request
 from build_from_spec.runfile import (
     FORMAT,
-    REQUESTS,
     RUN_DATA,
     RUN_DATA_SUFFIX,
     RunFileError,
@@ -67,13 +74,12 @@ from build_from_spec.runfile import (
     write_run_file,
 )
 from build_from_spec.runs import (
-    RECORDS,
     RUN_FILE_SUFFIX,
     RUN_ID,
     RunsError,
+    counted_runs_of_request,
     differences,
     records_folder,
-    runs_of_request,
 )
 from build_from_spec.turns import Prompt, TurnsEnd, kiro_command, run_turns
 from build_from_spec.wrap import ReaderAdapter, WrapError, build
@@ -104,6 +110,7 @@ class Arguments:
     run: int
     model: str
     effort: str
+    sessions: str  # the records folder of the run, relative to the repository root (no default, 11.1)
 
 
 @dataclass(frozen=True)
@@ -112,6 +119,7 @@ class Checked:
 
     run_id: str
     request: Request
+    records: Path  # the records folder of the run: the run record folders and run files go in it
     commit: str  # the last commit that changed the request file
     request_sha256: str
     app: App
@@ -161,11 +169,21 @@ class SubprocessKiro:
 
 
 def parse_arguments(argv: list[str] | None) -> Arguments:
-    """Seven arguments, all required, none with a default (Requirement 11.1). A refusal names the argument and
+    """Eight arguments, all required, none with a default (Requirement 11.1). A refusal names the argument and
     its value (Requirement 11.8)."""
     parser = argparse.ArgumentParser(prog="bfs-run", description="Start one reader run.")
-    for name in ("request", "setup", "source", "seed", "run", "model", "effort"):
-        parser.add_argument(f"--{name}", required=True, type=str)
+    helps = {
+        "request": "the request file, build-from-spec/requests/<id>.toml (rehearsal: see RUN.md)",
+        "setup": f"one of {', '.join(SETUPS)}",
+        "source": "the sealed source record, in sessions/<application>/<session>",
+        "seed": "the reader's seed, a whole number of zero or more",
+        "run": "the run number, 1 or more",
+        "model": "the Kiro CLI model name",
+        "effort": "the Kiro CLI effort value",
+        "sessions": "the records folder of the run: sessions/build-from-spec (production)",
+    }
+    for name in ("request", "setup", "source", "seed", "run", "model", "effort", "sessions"):
+        parser.add_argument(f"--{name}", required=True, type=str, help=helps[name])
     raw = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if raw.setup not in SETUPS:
         raise RunRefused(f"--setup {raw.setup!r} is not one of {', '.join(SETUPS)}")
@@ -177,7 +195,9 @@ def parse_arguments(argv: list[str] | None) -> Arguments:
         raise RunRefused("--model is empty; a model name is required")
     if not raw.effort.strip():
         raise RunRefused("--effort is empty; an effort value is required")
-    return Arguments(raw.request, raw.setup, raw.source, int(raw.seed), int(raw.run), raw.model, raw.effort)
+    return Arguments(
+        raw.request, raw.setup, raw.source, int(raw.seed), int(raw.run), raw.model, raw.effort, raw.sessions
+    )
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -221,54 +241,109 @@ def _declared_application(request_file: Path) -> str:
     return name
 
 
-def _source_checks(root: Path, source: Path, request: Request) -> tuple[str, str]:
+def _source_checks(records: Path, source: Path, request: Request) -> tuple[str, str]:
     """Check 4 (Requirement 5): a sealed record of the request's application, ended, with a final spec. Return
-    its session id and seal hash."""
+    its session id and seal hash. The source folder is the parent of the records folder (Checked.records)."""
     resolved = source.resolve()
-    sessions = (root / "sessions").resolve()
-    if resolved.is_relative_to((root / RECORDS).resolve()):
-        raise RunRefused(f"{source} is inside {RECORDS}; a run record is not a source")
+    sessions = records.parent.resolve()
+    if resolved.is_relative_to(records.resolve()):
+        raise RunRefused(f"{source} is inside {records}; a run record is not a source")
     if not resolved.is_relative_to(sessions):
-        raise RunRefused(f"{source} is not inside sessions/; the source is a sealed session record")
+        raise RunRefused(f"{source} is not inside {records.parent}; the source is a sealed session record")
     ended = read_end(source)
     if ended.application != request.application:
         raise RunRefused(
             f"{source} is a {ended.application} session; request {request.id} is for {request.application}"
         )
     if resolved.parent != (sessions / ended.application).resolve():
-        raise RunRefused(f"{source} is not in sessions/{ended.application}/; the source must sit there")
+        raise RunRefused(
+            f"{source} is not in {records.parent / ended.application}; the source must sit there"
+        )
     final_spec(source)  # refuses a source that is not ended, or has no end snapshot (Requirement 5.2)
     return ended.session, verify(source, sealed=True)[-1]["hash"]
 
 
-def _used_paths(root: Path, run_id: str, application: str) -> list[Path]:
+def _used_paths(root: Path, records: Path, run_id: str, application: str) -> list[Path]:
     """Check 5 (Requirement 7.1): every path that already carries this run id."""
     run_dir = _run_dir(root)
-    records = records_folder(root, application)
+    folder = records_folder(records, application)
     candidates = (
         run_dir / run_id,
         run_dir / f"{run_id}{CONFIG_SUFFIX}",
         run_dir / f"{run_id}{RUN_DATA_SUFFIX}",
         run_dir / STATE / run_id,
-        records / run_id,
-        records / f"{run_id}{RUN_FILE_SUFFIX}",
+        folder / run_id,
+        folder / f"{run_id}{RUN_FILE_SUFFIX}",
     )
     return [path for path in candidates if path.exists()]
 
 
+BENCH_MCP = "bench-mcp"
+CHECK_FLAG = "--check"
+READY_LINE = "bench-mcp: ready"
+CHECK_SECONDS = 120
+
+
+def bench_mcp_preflight() -> Path:
+    """The preflight of design K33, the first step of phase A. Return the `bench-mcp` that was checked.
+
+    Kiro CLI starts the reader's bench server by the name `bench-mcp`, from the PATH of its own
+    environment, which `execute` takes from `os.environ`. So the first `bench-mcp` on that PATH is the one
+    Kiro CLI gets, and it is run with `--check`. A failed check refuses the run, naming the path found,
+    before anything is written or Kiro CLI is started.
+    """
+    found = shutil.which(BENCH_MCP)
+    if found is None:
+        raise RunRefused(
+            f"no {BENCH_MCP} on PATH; Kiro CLI starts the reader's bench server by that name, so the run "
+            "cannot start. Install the bench tools as build-from-spec/README.md says."
+        )
+    try:
+        done = subprocess.run(
+            [found, CHECK_FLAG],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=CHECK_SECONDS,
+            env=dict(os.environ),
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RunRefused(f"{found} {CHECK_FLAG} did not finish within {CHECK_SECONDS} seconds") from error
+    except OSError as error:
+        raise RunRefused(f"{found} cannot be run: {error.strerror or type(error).__name__}") from error
+    if done.returncode == 0 and done.stdout.strip() == READY_LINE:
+        return Path(found)
+    detail = " ".join(done.stderr.split()) or " ".join(done.stdout.split()) or "no output"
+    if done.returncode == 2:
+        raise RunRefused(
+            f"the {BENCH_MCP} found at {found} cannot import its MCP parts, so Kiro CLI cannot start the "
+            f"reader's bench server ({detail}). Reinstall the bench tools as build-from-spec/README.md says, "
+            "then run again."
+        )
+    raise RunRefused(
+        f"the {BENCH_MCP} found at {found} failed its {CHECK_FLAG} check "
+        f"(exit code {done.returncode}): {detail}"
+    )
+
+
 def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro) -> Checked:
-    """Phase A (design 3.9, steps 1-9). Writes nothing. Each refusal raises RunRefused with its reason."""
+    """Phase A (design 3.9, steps 1-9). Writes nothing. Each refusal raises RunRefused with its reason.
+
+    The `bench-mcp` preflight (design K33) runs first: before the request or the records are read, and before
+    `kiro.version()` starts Kiro CLI."""
+    bench_mcp_preflight()
     request_file = root / arguments.request
+    records = root / arguments.sessions
     if not request_file.is_file():
         raise RunRefused(f"--request {arguments.request}: no such file")
     try:
         rel = _request_tracked(root, request_file)
-        app_for(_declared_application(request_file), apps)
+        declared = app_for(_declared_application(request_file), apps)
+        check_records(declared, records, root)
         request = parse_request(request_file, apps)
-        if request_file.resolve() != (root / REQUESTS / f"{request.id}.toml").resolve():
-            raise RunRefused(
-                f"{rel} is not named by its id; the request file is {REQUESTS}/{request.id}.toml"
-            )
+        folder = request_folder(declared)
+        if request_file.resolve() != (root / folder / f"{request.id}.toml").resolve():
+            raise RunRefused(f"{rel} is not named by its id; the request file is {folder}/{request.id}.toml")
         commit = _git(root, "log", "-1", "--format=%H", "--", rel).stdout.strip()
         if not commit:
             raise RunRefused(f"{rel}: git has no commit that changed it")
@@ -280,16 +355,16 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
         source = root / arguments.source
         if not source.is_dir():
             raise RunRefused(f"--source {arguments.source}: not a session record folder")
-        source_session, source_seal = _source_checks(root, source, request)
+        source_session, source_seal = _source_checks(records, source, request)
         run_id = f"{request.id}-{arguments.setup}-{arguments.run}"
         if RUN_ID.fullmatch(run_id) is None:
             raise RunRefused(f"{run_id!r} is not a run id of the form <request>-<spec|none|record>-<n>")
-        used = _used_paths(root, run_id, app.name)
+        used = _used_paths(root, records, run_id, app.name)
         if used:
             raise RunRefused(f"run id {run_id} is already used: {', '.join(map(str, used))}")
         version = kiro.version()
         name = f"reader/{app.name}/{request.id}/{app.budget}"
-        adapter = build(name, apps, root / REQUESTS)
+        adapter = build(name, apps, root)
         state = _run_dir(root) / STATE
         if state.is_dir():
             still_open = open_sessions(state)
@@ -303,7 +378,7 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
         }
         earlier = []
         lines: list[str] = []
-        for path in runs_of_request(root, app.name, request.id).values():
+        for path in counted_runs_of_request(root, app.name, request.id).values():
             data = read_run_file(path)
             earlier.append((path.name, data))
             # The hashes of the working folder are compared in phase B, after the folder is written
@@ -326,6 +401,7 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
     return Checked(
         run_id=run_id,
         request=request,
+        records=records,
         commit=commit,
         request_sha256=request_sha,
         app=app,
@@ -366,7 +442,7 @@ def _config_text(root: Path, config: Path, checked: Checked, arguments: Argument
         "spec_files": [f"{LAB_SPEC}{name}" for name in SPEC_FILES],
         "experiments_dir": "experiments",
         "state_dir": STATE,
-        "sessions_dir": _relative(root / RECORDS, base),
+        "sessions_dir": _relative(checked.records, base),
         "seed": arguments.seed,
         "scan_sources": [_relative(root / checked.app.scan_sources, base)],
         "stop_list": _relative(root / STOP_LIST, base),
@@ -382,7 +458,7 @@ def prepare(arguments: Arguments, checked: Checked, root: Path) -> Path:
     folder = run_dir / checked.run_id
     try:
         (run_dir / STATE).mkdir(parents=True, exist_ok=True)
-        (root / RECORDS).mkdir(parents=True, exist_ok=True)
+        checked.records.mkdir(parents=True, exist_ok=True)
         given = given_files(arguments.setup, checked.source)
         write_folder(folder, checked.request, given)
     except (FolderError, ReducedError, SpecCopyError) as error:
@@ -494,14 +570,14 @@ def execute(
         _stop_session(config, run_id, failure)
     elif ended is not None and not ended.sealed:
         _stop_session(config, run_id, str(ended.stop_reason))
-    destination = root / RECORDS / checked.app.name / run_id
+    destination = checked.records / checked.app.name / run_id
     if not destination.is_dir():
         raise RunStopped(
             f"sealing failed for run {run_id}: the record stayed in {state}; "
             f"read {state / 'builder.log'}. No run file was written (Requirement 13.5)."
         )
     try:
-        run_file = write_run_file(run_id, apps, root / STOP_LIST, root)
+        run_file = write_run_file(run_id, apps, root / STOP_LIST, root, checked.records)
     except (JudgeError, ReliedError, RequestError, RunFileError, ScanError) as error:
         raise RunStopped(
             f"{error}; run {run_id} is sealed, so its run file can be written with "

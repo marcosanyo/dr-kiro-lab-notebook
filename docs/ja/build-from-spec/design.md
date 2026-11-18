@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/design.md`](../../../.kiro/specs/build-from-spec/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `bac3d0c91729d59cda380fde735dbe2c00357eed8f2ef073e0479d88dc7c3c13`
+> 原文 SHA-256: `a1b02f9835875bb0c172947842ccf41d47d17503d1dbbba34b88d7f78331ab8d`
 
 # 設計: build-from-spec
 
@@ -83,7 +83,7 @@ sessions/build-from-spec/body-lab/<run-id>.run.json.authors.json   its author si
 
 ### 2.2 コマンド
 
-すべてリポジトリのルートから `uv run --project build-from-spec <command>` で実行する。どれも、現在のフォルダーに `.git` がなければ開始を拒否するので、この設計のリポジトリのパスはすべてルートからの相対である。
+すべてリポジトリのルートから、`uv tool install` が PATH に置くコマンドとして実行する。これらに `uv run` を使ってはならない。`uv run` はプロジェクトの `.venv/bin` を PATH の先頭に置くので、Kiro CLI が誤った `bench-mcp` を見つけてしまうからである（K33）。どれも、現在のフォルダーに `.git` がなければ開始を拒否するので、この設計のリポジトリのパスはすべてルートからの相対である。
 
 | コマンド | すること | 要件 |
 |---|---|---|
@@ -92,7 +92,7 @@ sessions/build-from-spec/body-lab/<run-id>.run.json.authors.json   its author si
 | `bfs-run-file <run-id>` | 封印済み実行記録の実行情報ファイルを書く。`bfs-run` は最後に同じ関数を呼ぶ。このコマンドは、封印後にスクリプトが中断された実行のためにある。 | 14, 16.2 |
 | `bfs-check-runs` | すべての実行情報ファイルを、その記録とコミット済みのリクエストと照合し、1 つのリクエストの実行どうしを照合し、ノートブックが表示するものを導出する。 | 14.3, 14.6, 16, 18 |
 
-`bench-mcp` は、Dr. Kiro の場合と同じく、Kiro CLI が `PATH` から起動する。ラッピングアダプターを import できなければならないので、ビルダーは `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --reinstall` でコマンドをインストールする（README）。
+`bench-mcp` は、Dr. Kiro の場合と同じく、Kiro CLI が `PATH` から起動する。`bfs-run` は、何かを書く前にそのコマンドを確認する（K33、節 3.9 フェーズ A）。ラッピングアダプターを import できなければならないので、ビルダーは `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --reinstall` でコマンドをインストールする（README）。
 
 ### 2.3 `bfs-run` の流れ
 
@@ -193,7 +193,7 @@ class ReaderAdapter:
 
 ### 3.4 リーダーのファイル（`files/`、要件 9）
 
-**`reader.json`** は `dr-kiro.json` の 3 つのフィールドを変えたものである: `name` を `reader`、1 行の `description`、`prompt` を `file://./reader-prompt.md`。`resources`、`mcpServers`（環境から `BENCH_SESSION_CONFIG` を受けて `bench-mcp` を実行する `bench` の項目）、`tools`（`read`、`write`、`@bench`）、`includeMcpJson`、`includePowers`、`permissions` は同じである。シェルはない（要件 9.1）。テストは、その 3 つのフィールドを取り除いた 2 つのファイルを JSON として比べる。
+**`reader.json`** は `dr-kiro.json` の 3 つのフィールドを変えたものである: `name` を `reader`、1 行の `description`、`prompt` を `file://./reader-prompt.md`。`resources`、`mcpServers`（`bench-mcp` を実行する `bench` の項目。`env` 項目はない。`BENCH_SESSION_CONFIG` は、Kiro CLI が起動された環境から届く。K31）、`tools`（`read`、`write`、`@bench`）、`includeMcpJson`、`includePowers`、`permissions` は同じである。シェルはない（要件 9.1）。テストは、その 3 つのフィールドと、`dr-kiro.json` の `bench` の `env` 項目を取り除いた 2 つのファイルを JSON として比べる。その `env` 項目が、唯一の他の違いである（K31）。
 
 **`reader-prompt.md`** は約 8 行: あなたはリーダーである。あなたは、ベンチツールが説明するものと `given/` にあるもの以外、何も知らないシステムについての 1 つのリクエストに答える。リクエストは `request.md` にあり、ベンチツールではゴールである。あなたは単独で働き、ユーザーに何も尋ねず、答えを待たない。`end_session` が成功するか、ベンチがセッションの終了を報告するまで続ける。ステアリングに従う。
 
@@ -332,6 +332,8 @@ def judge_record(record: Path, request: Request, allowed: frozenset[str]) -> Jud
 引数はすべて必須で、既定値を持つものはない（要件 11.1）: `--request`、`--setup`、`--source`、`--seed`、`--run`、`--model`、`--effort`。文字列として読み、拒否が引数と値を挙げるように検証する: `setup` は `spec`、`none`、`record` のいずれか。`seed` は整数。`run` は 1 以上の整数。`model` と `effort` は空でない（要件 11.8）。実行 ID: `<request-id>-<setup>-<n>`。
 
 **A. 確認。何も書かない**（要件 5.7、K14）。順に、各拒否は失敗したものを挙げる:
+
+0. `bench-mcp` の事前確認（K33）。Kiro CLI が得る PATH の中で最初の `bench-mcp` を `--check` で実行する。`bench-mcp: ready` と出力し、終了コード 0 でなければならない。そうでなければ、実行を拒否し、見つかったパスを挙げる。PATH に `bench-mcp` がなければ、その名前を挙げて拒否する。この手順は手順 1 より前、`kiro-cli --version` より前、フォルダーやファイルを作る前に行う。
 
 1. リクエストファイルが追跡されていて（`git ls-files --error-unmatch`）、`HEAD` と、ステージの有無にかかわらず等しい（`git diff --quiet HEAD -- <file>`）（要件 11.2）。その最後に変更したコミットは `git log -1 --format=%H -- <file>`。その SHA-256 はファイルから取る（要件 11.3）。
 2. `parse_request` と、その実行の元での節 3.2 のリクエストの確認（要件 11.4、3.5）。
@@ -562,9 +564,12 @@ resume = true
   "last_trial": {"trial": "T<n>", "phase": "<phase>"},
   "prompts": [{"kind": "start", "sha256": "<sha256>", "time": "<UTC time>", "exit": "<exit code>",
                "entries_before": "<count>", "entries_after": "<count>"}],
-  "continue_lines": "<count>"
+  "continue_lines": "<count>",
+  "limits": ["<picture limit text of K30, setup record only>"]
 }
 ```
+
+- `limits` は文字列のリストである。セットアップ `record` では厳密に `["<K30 の絵の制限の文>"]`、`spec` と `none` では `[]`。`write_run_file` がセットアップから設定し（`runfile.py` の `limits_for`）、`bfs-check-runs` はセットアップから再計算して、違う値を拒否する（実行情報ファイルの名前とフィールド `limits` を挙げる）（K30）。
 
 - `relied_on.ids` は、H1 がない、行がない、または構文の悪い行のとき `null` である: `["none"]` とは区別されるマーカー（要件 14.2）。`problem` は `null` または `PROBLEMS` のいずれか。
 - `first_in_range` は、カウントされる試行に範囲内のものがないとき `null` である: 範囲内なしマーカーで、どの試行 ID とも区別される（要件 15.5）。`last_trial` は、カウントされる試行がないとき `null` である。
@@ -791,6 +796,18 @@ resume = true
 - **B26. 停止の理由** は固定のベンチの言葉である: 「the reader's Kiro CLI exited with code <n>」と「the reader called no bench tool in two turns in a row」。
 - **K28. 要求の生成器からフィルタを外す（テストコードのみ）。** 性質 1 と性質 2 は、合格範囲の 2 つの境界を独立に引き、`assume(low < high)` で捨てていた。リクエストには合格範囲が最大 3 つあるため、範囲ごとに約半分の引きが捨てられ、hypothesis が `FailedHealthCheck: filter_too_much` で失敗した（性質 1 で `--hypothesis-seed=9` のとき観測）。生成器は `low` を [-1e6, 1e6) から、`high` を (low, 1e6] から引くようにした。引いた値はすべて有効な合格範囲になり、捨てる引きはない。範囲（±1e6 内の有限な境界で `low < high`）、検査する性質、`max_examples=100` は変えておらず、ヘルスチェックも抑止していない。
 - **K29. 効果 `default` では `--effort` を付けない。** `kiro-cli` は既定の効果を表示しない（`kiro-cli chat --help` に既定値がなく、`kiro-cli settings list` に効果の設定もない）。そのため既定の効果に書ける値がない。リーダーの効果は実行で `default` とし、`kiro_command` は `--effort` を付けない。既定値は Kiro CLI が使うものになり、実行データに記録する Kiro CLI のバージョン（B5）がどの既定値かの記録になる。それ以外の値は `--effort <値>` として渡す。`--model` は必須のままで、空の効果は引き続き拒否する。採らなかった案: 既定値として数値を書くこと。それは作った値になる（rules.md 4）。
+- **K30. 実行情報ファイルのフィールド `limits`（絵の制限）。** セットアップ `record` のピクチャーブロブは、Kiro CLI の読み取りツールでは開けなかった。ユーザーの決定により、実行情報ファイルはこれを制限として記録する。各実行情報ファイルにフィールド `limits`（文字列のリスト）がある。セットアップ `record` では厳密に `["生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル"]`、`spec` と `none` では `[]`。`write_run_file` がセットアップから設定し（`runfile.py` の `limits_for`）、`check_run` はセットアップから再計算して、違う値を、実行情報ファイルの名前とフィールド `limits` を挙げて拒否する。同じ文は `build-from-spec/README.md` の「Limits of this version」の節に、また `record` の結果を示すところすべてに示す。採らなかった案: 実行ごとの自由な文。値がセットアップからずれるため。
+- **K31. リーダーの `bench` 項目には `env` 項目がない。** `reader.json` は、`dr-kiro` の `bench` 項目を写していた。その項目は `BENCH_SESSION_CONFIG` を `${BENCH_SESSION_CONFIG}` に設定する。リハーサル（`build-from-spec/rehearsal/RUN.md`、手順 c）では、Kiro CLI が最初のターンで終了コード 3 で終わり、`bench` の MCP サーバーが起動できなかったと報告した（"Connection closed"）。疑われた原因は、その項目の展開だった。実際の Kiro CLI での 1 ターンの実験（`bench-run/build-from-spec/envtest-2026-11-18/RESULT.md`）は 2 つを示した。項目は絶対パスに展開される。また `env` 項目のない MCP サーバーも、Kiro CLI のプロセスの環境から同じ絶対パスを受け取る。よって展開は失敗の原因ではない。リーダーの `bench` 項目から `env` 項目を取り除き、`BENCH_SESSION_CONFIG` は `bfs-run` が Kiro CLI に与える環境から `bench-mcp` に届く（設計 3.9 の段階 D）。この実験は、リハーサルの失敗が解消したことを示さない。この変更のあとに、リハーサルを再度行う必要がある。採らなかった案: 実験上不要と分かった項目を残すこと、変数名を変えること（根拠がない）。
+- **K32. 以前の実行との比較は、数えられる実行だけを読む。** 実行スクリプトは、作業フォルダーを書く前に、同じリクエストの以前の実行と比べる（要件 7.4）。`bfs-check-runs` も、封印された実行を同じように比べる（14.6）。リハーサルの実行 1（`rehearsal-fake-record-1`）は K31 の前に作られたので、記録された `reader.json` が今のものと違う。リハーサルの実行 2 は、それと比べられて拒否された（`RUN.md`、結果 2）。リハーサルの実行は数えられないので、数えられる実行と比べてはならず、数えられる実行もリハーサルの実行と比べてはならない。決定: 実行スクリプトは以前の実行を、本番の記録フォルダー `sessions/build-from-spec/` からだけ取る。これは `runs.py` の `counted_runs_of_request` を通じて行い、`run.py` の `check` がそれを呼ぶ。これから始める実行の実行情報ファイルをどこに書くかは、これまでどおり、その実行の記録フォルダーで決まる。本番の規則は変えない。数えられる実行は、同じリクエストの以前の数えられる実行すべてと比べられ、そこで違う `reader.json` があれば拒否される。リハーサルの実行は、互いにも、数えられる実行とも比べない。採らなかった案: リハーサルの実行 1 を削除または作り直すこと（ユーザーが頼んでいない）、リハーサルのフォルダー内だけで比べること（K31 のあとも実行 2 が実行 1 と比べられて拒否されるため）。
+
+- **K33. `bench-mcp` の事前確認と起動ラッパー。** Kiro CLI は、リーダーのベンチサーバーを、PATH から名前 `bench-mcp` で起動する。`uv run --project build-from-spec` は、そのプロジェクトの `.venv/bin` を PATH の先頭に置いていた。そこでは `bench-mcp` がサーバーの入口であり、MCP SDK を import するが、build-from-spec のプロジェクトはそれを入れていない（要件 1.1）。そのため Kiro CLI は、設定を読む前に `ModuleNotFoundError` で失敗する `bench-mcp` を得ており、起動ログも書かれなかった。決定:
+  (a) コマンドは `uv tool install` が PATH に置くものとし、それらに `uv run` は使わない（節 2.2、README、RUN.md）。
+  (b) 事前確認（節 3.9、フェーズ A、手順 0）。`bench_mcp_preflight` は、`os.environ` の PATH（`execute` が Kiro CLI に与える PATH）から `shutil.which` で最初の `bench-mcp` を探し、`--check` で実行する。終了コード 0 で `bench-mcp: ready` と出れば通る。それ以外は `RunRefused`（終了コード 2）で拒否し、見つかったパスと、確認が出力した行を挙げる。`bench-mcp` がなければ、その名前を挙げて拒否する。何も書かず、Kiro CLI も起動しない。
+  (c) ラッパー。`bench-mcp` のコンソールスクリプトは `bench.frontend.launch:main` である。`--check` では `mcp`、`anyio`、`bench.frontend.server` を import し、`bench-mcp: ready` と出して終了コード 0 で終わる。import が失敗すると、欠けたモジュール名だけを挙げ、パスを含まない bench の行を 1 行出して終了コード 2 で終わる。
+  (d) `--check` なしでは、サーバーはこれまでどおり起動する。サーバーの import が失敗した場合、`BENCH_SESSION_CONFIG` が既存のファイルを指していれば、ビルダー側の起動ログ（`<stem>.mcp-startup.log`、コミット 1c20586 のログ）に 1 行書く。その行には時刻、プロセス ID、エラーの全文を含む。標準エラーには bench の行を出し、終了コードは 2 である。ほかのエラーは捕まえない。
+  (e) ログの関数は `bench/frontend/startup_log.py` に移す。このモジュールは SDK を import しないので、SDK の import が失敗してもラッパーがログを書ける。`server.py` はこれを import するので、呼び出し側は変わらない。
+  採らなかった案: (1) `uv run` を残し、`reader.json` に `bench-mcp` のパスを固定すること。K31 が変えたファイルをもう一度変え、リーダーのファイルを 1 台のマシンに結びつけてしまう。(2) build-from-spec で `mcp` を import すること。要件 1.1 が禁じる。(3) 別のインタプリタでサーバーを起動するフォールバック。rules.md 2 が禁じる。
+  リハーサルへの影響: この変更のあとに、リハーサルを `RUN.md` の手順 (c) から再度行う必要がある。K33 を書く間に、リハーサルも数えられる実行も行っていない。
 
 ## 未決事項
 

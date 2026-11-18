@@ -60,7 +60,7 @@ def test_a_run_record_without_its_run_file_is_refused_naming_the_record(tmp_path
     (folder / "probe-none-2").mkdir()
 
     with pytest.raises(RunsError) as refused:
-        paired_runs(tmp_path, "body-lab")
+        paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab")
     assert str(folder / "probe-none-2") in str(refused.value)
     assert "probe-none-2.run.json" in str(refused.value)
 
@@ -70,7 +70,7 @@ def test_a_run_file_without_its_run_record_is_refused_naming_the_file(tmp_path):
     (folder / "probe-spec-1.run.json").write_text("{}", encoding="utf-8")
 
     with pytest.raises(RunsError, match=r"probe-spec-1\.run\.json: the run file has no run record"):
-        paired_runs(tmp_path, "body-lab")
+        paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab")
 
 
 def test_a_file_that_is_neither_a_run_file_nor_a_sidecar_is_refused_naming_it(tmp_path):
@@ -78,7 +78,7 @@ def test_a_file_that_is_neither_a_run_file_nor_a_sidecar_is_refused_naming_it(tm
     (folder / "notes.txt").write_text("x", encoding="utf-8")
 
     with pytest.raises(RunsError, match="notes.txt"):
-        paired_runs(tmp_path, "body-lab")
+        paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab")
 
 
 def test_a_sidecar_without_its_run_file_is_refused_naming_it(tmp_path):
@@ -88,7 +88,7 @@ def test_a_sidecar_without_its_run_file_is_refused_naming_it(tmp_path):
     with pytest.raises(
         RunsError, match=r"probe-none-1\.run\.json\.authors\.json: a sidecar with no run file"
     ):
-        paired_runs(tmp_path, "body-lab")
+        paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab")
 
 
 def test_paired_runs_gives_the_run_files_by_run_id(tmp_path):
@@ -97,7 +97,9 @@ def test_paired_runs_gives_the_run_files_by_run_id(tmp_path):
     (folder / "probe-none-1.run.json").write_text("{}", encoding="utf-8")
     (folder / "probe-none-1.run.json.authors.json").write_text("{}", encoding="utf-8")
 
-    assert paired_runs(tmp_path, "body-lab") == {"probe-none-1": folder / "probe-none-1.run.json"}
+    assert paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab") == {
+        "probe-none-1": folder / "probe-none-1.run.json"
+    }
 
 
 def test_runs_of_request_takes_only_the_runs_of_that_request(tmp_path):
@@ -106,10 +108,10 @@ def test_runs_of_request_takes_only_the_runs_of_that_request(tmp_path):
         (folder / run_id).mkdir()
         (folder / f"{run_id}{RUN_FILE_SUFFIX}").write_text("{}", encoding="utf-8")
 
-    found = runs_of_request(tmp_path, "body-lab", "probe")
+    found = runs_of_request(tmp_path / "sessions" / "build-from-spec", "body-lab", "probe")
 
     assert sorted(found) == ["probe-none-1", "probe-spec-1"]
-    assert runs_of_request(tmp_path, "body-lab", "probe-x") == {
+    assert runs_of_request(tmp_path / "sessions" / "build-from-spec", "body-lab", "probe-x") == {
         "probe-x-none-1": folder / "probe-x-none-1.run.json"
     }
 
@@ -119,12 +121,12 @@ def test_an_application_folder_that_is_not_a_folder_is_refused(tmp_path):
     (tmp_path / "sessions" / "build-from-spec" / "README.md").write_text("x", encoding="utf-8")
 
     with pytest.raises(RunsError, match="only application folders belong"):
-        application_folders(tmp_path)
+        application_folders(tmp_path / "sessions" / "build-from-spec")
 
 
 def test_no_runs_folder_means_no_runs(tmp_path):
-    assert application_folders(tmp_path) == []
-    assert paired_runs(tmp_path, "body-lab") == {}
+    assert application_folders(tmp_path / "sessions" / "build-from-spec") == []
+    assert paired_runs(tmp_path / "sessions" / "build-from-spec", "body-lab") == {}
 
 
 def test_equal_runs_have_no_differences():

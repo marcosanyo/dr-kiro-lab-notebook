@@ -183,4 +183,4 @@ def make_run(
         "prompts": [_prompt("start", 1, 4), _prompt("continue", 4, 6)],
     }
     write_run_data(root / RUN_DATA / f"{run_id}.run-data.json", data)
-    return write_run_file(run_id, APPS_FOR_TESTS, STOP_LIST, root)
+    return write_run_file(run_id, APPS_FOR_TESTS, STOP_LIST, root, root / "sessions" / "build-from-spec")

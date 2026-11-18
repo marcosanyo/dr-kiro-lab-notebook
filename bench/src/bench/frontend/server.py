@@ -6,7 +6,9 @@ worker thread is not abandoned if the client cancels: the run finishes and is re
 no gate and builds no message text of its own.
 """
 
+import os
 import sys
+import traceback
 from collections.abc import Callable
 
 import anyio
@@ -20,6 +22,8 @@ from bench.frontend import config as config_file
 from bench.frontend.describe import descriptions
 from bench.frontend.pictures import NOT_DELIVERED, PictureWriteError, PictureWriter
 from bench.frontend.render import render
+from bench.frontend.startup_log import record_startup_failure, startup_log_for
+from bench.record.store import StoreInUseError
 
 TOOLS = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
 
@@ -78,6 +82,12 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
             return Session.open(cfg.session)
         except SessionError as error:
             raise StartupError(f"cannot reopen the session: {error}") from error
+        except StoreInUseError as error:
+            # No file path here: this line may reach the reader's Kiro log (rules.md 1).
+            raise StartupError(
+                f"the session {cfg.session.session_id} is in use by another process; "
+                f"stop that process or wait for it to finish"
+            ) from error
     outcome = Session.start(cfg.session)
     if not isinstance(outcome, Ran):
         raise StartupError(f"cannot start the session: {outcome.message.plain()}")
@@ -85,11 +95,18 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
 
 
 def main() -> int:
+    log = startup_log_for(os.environ.get(config_file.ENV_VAR))
     try:
         server = BenchServer(open_session(config_file.from_environment()))
     except (config_file.ConfigError, StartupError) as error:
+        record_startup_failure(log, str(error))
         print(f"bench-mcp: {error}", file=sys.stderr)
         return 2
+    except Exception as error:
+        # Not swallowed: the error is logged with its traceback, then raised as before (exit code 1).
+        message = f"unexpected {type(error).__name__}: {error}"
+        record_startup_failure(log, message, traceback.format_exc())
+        raise
     try:
         server.mcp.run("stdio")
     finally:

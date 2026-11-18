@@ -206,6 +206,20 @@ def _blind_findings(path: Path, request: Request, app: App, stop_list: Path) -> 
     return findings
 
 
+def _folder_refusal(path: Path, app: App) -> None:
+    """The rehearsal's request folder is for the rehearsal application only, and that application's requests
+    are only there (apps.request_folder). Refuse, naming the file, when the two do not match."""
+    in_rehearsal = path.resolve().parent.parts[-2:] == ("rehearsal", "requests")
+    if in_rehearsal and not app.rehearsal:
+        raise _refusal(path, "application", f"the rehearsal request folder is not for {app.name}")
+    if app.rehearsal and not in_rehearsal:
+        raise _refusal(
+            path,
+            "application",
+            f"{app.name} is the rehearsal application; its requests go in rehearsal/requests",
+        )
+
+
 def check_request(path: Path, source: Path, apps: Mapping[str, App], stop_list: Path) -> list[str]:
     """Every problem with a request, as printable lines. Empty when the check passes (Requirement 3.4).
 
@@ -214,6 +228,7 @@ def check_request(path: Path, source: Path, apps: Mapping[str, App], stop_list: 
     """
     request = parse_request(path, apps)
     app = app_for(request.application, apps)
+    _folder_refusal(path, app)
     lines = [str(f) for f in _blind_findings(path, request, app, stop_list)]
     for trial in source_trials_inside(request, source):
         lines.append(f"{path}: trial {trial} of {source} has every named measurement inside its pass range")

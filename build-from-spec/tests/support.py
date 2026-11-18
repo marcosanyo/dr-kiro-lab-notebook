@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 from build_from_spec.folder import SPEC_FILES
 from build_from_spec.relied import format_ids
 from build_from_spec.request import PassRange, Request
-from build_from_spec.runfile import ENDS, NULL_IDS_PROBLEMS, PROBLEMS, RESULTS
+from build_from_spec.runfile import ENDS, NULL_IDS_PROBLEMS, PROBLEMS, RESULTS, limits_for
 from build_from_spec.turns import KINDS
 
 SCALARS = ("x", "y", "heading")  # the scalar measurements of body-lab (its declaration)
@@ -323,4 +323,5 @@ def run_file_contents(draw) -> dict:
         "last_trial": last,
         "prompts": prompts,
         "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
+        "limits": limits_for(setup),
     }

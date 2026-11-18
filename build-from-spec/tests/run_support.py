@@ -24,10 +24,10 @@ from bench.fake.adapter import FakeAdapter
 from bench.frontend import config as config_file
 
 from build_from_spec import wrap
-from build_from_spec.apps import App
+from build_from_spec.apps import REQUESTS, App
 from build_from_spec.request import PassRange, Request, print_request
 from build_from_spec.run import Arguments
-from build_from_spec.runfile import REQUESTS, dump_text
+from build_from_spec.runfile import dump_text
 
 REPO = Path(__file__).resolve().parents[2]
 REAL_STOP_LIST = REPO / ".kiro" / "blind-scan" / "stop-list.txt"
@@ -44,7 +44,9 @@ IDENTITY = ("-c", "user.name=Test", "-c", "user.email=test@example.invalid")
 SPEC_DIR = ".kiro/specs/lab"
 STATEMENT = "WHEN amp rises, THE distance SHALL rise."
 PREDICTION = {"id": "P1", "range": [0.4, 0.6], "when": {"amp": 0.5, "gain": 1.0}}
-TEST_APPS = {FAKE: App(FAKE, "fake_app:fake_adapter", str(FAKE_SOURCES), 12)}
+TEST_APPS = {FAKE: App(FAKE, "fake_app:fake_adapter", str(FAKE_SOURCES), 12, False)}
+# The same fake application as the rehearsal application: its runs and records go under the rehearsal folder.
+TEST_REHEARSAL_APPS = {FAKE: App(FAKE, "fake_app:fake_adapter", str(FAKE_SOURCES), 12, True)}
 DESIGN = """# Design
 
 ## Discovered spec
@@ -85,14 +87,16 @@ def commit_paths(root: Path, *paths: str, message: str) -> None:
     git(root, *IDENTITY, "commit", "-q", "-m", message)
 
 
-def make_source(root: Path, session: str = SOURCE_SESSION) -> Path:
-    """Run a real session of the fake application to its end, and return the sealed record's path."""
+def make_source(root: Path, session: str = SOURCE_SESSION, sessions: Path | None = None) -> Path:
+    """Run a real session of the fake application to its end, and return the sealed record's path. The record
+    goes to `sessions` (default: root/sessions), one folder per application."""
+    sessions = root / "sessions" if sessions is None else sessions
     lab = root / f"source-lab-{session}"
     spec = lab / SPEC_DIR
     spec.mkdir(parents=True)
     (lab / "experiments").mkdir()
     (root / f"state-{session}").mkdir()
-    (root / "sessions").mkdir(exist_ok=True)
+    sessions.mkdir(parents=True, exist_ok=True)
     (spec / "requirements.md").write_text(
         "# Requirements\n\n## Hypotheses\n\n" + hypothesis_block("H1", STATEMENT), encoding="utf-8"
     )
@@ -106,7 +110,7 @@ def make_source(root: Path, session: str = SOURCE_SESSION) -> Path:
         spec_files=(f"{SPEC_DIR}/requirements.md", f"{SPEC_DIR}/design.md", f"{SPEC_DIR}/tasks.md"),
         experiments_dir="experiments",
         state_dir=root / f"state-{session}",
-        sessions_dir=root / "sessions",
+        sessions_dir=sessions,
         seed=SOURCE_SEED,
         scan_sources=(FAKE_SOURCES,),
         stop_list=REAL_STOP_LIST,
@@ -146,10 +150,11 @@ def change_words(root: Path, words: str) -> None:
     commit_paths(root, f"{REQUESTS}/{REQUEST_ID}.toml", message="change the request")
 
 
-def use_test_table(monkeypatch: pytest.MonkeyPatch, root: Path) -> None:
-    """Point the wrapping adapter at the test table and the request folder of `root`, for one test."""
-    monkeypatch.setattr(wrap, "APPS", TEST_APPS)
-    monkeypatch.setattr(wrap, "REQUESTS", root / REQUESTS)
+def use_test_table(monkeypatch: pytest.MonkeyPatch, root: Path, apps: dict = TEST_APPS) -> None:
+    """Point the wrapping adapter at the test table and the repository root `root`, for one test. The request
+    folder of each application is found under `root`."""
+    monkeypatch.setattr(wrap, "APPS", apps)
+    monkeypatch.setattr(wrap, "ROOT", root)
     monkeypatch.chdir(root)
 
 
@@ -206,6 +211,7 @@ def run_args(
     request: str = REQUEST_ID,
     model: str = "model-a",
     effort: str = "medium",
+    sessions: str = "sessions/build-from-spec",
 ) -> Arguments:
     """The arguments of one run, as the command line gives them, for the test table."""
     return Arguments(
@@ -216,6 +222,7 @@ def run_args(
         run=run,
         model=model,
         effort=effort,
+        sessions=sessions,
     )
 
 

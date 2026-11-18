@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import anyio
@@ -11,7 +12,7 @@ import pytest
 from mcp.client import Client
 
 from bench.frontend import config as config_file
-from bench.frontend.server import TOOLS, BenchServer, open_session
+from bench.frontend.server import TOOLS, BenchServer, open_session, startup_log_for
 from labkit import FAKE_SOURCES, STOP_LIST, Lab, exp_file, hyp_block
 
 STATEMENT = "WHEN amp rises, THE distance SHALL rise."
@@ -208,6 +209,48 @@ def test_config_file_passes_the_discovered_table_setting_on(lab: Lab, tmp_path: 
     assert config.session.discovered_table == "not-required"
 
 
+HOLD_LOCK = (
+    "import sys; from pathlib import Path; from bench.record.store import Store; "
+    "store = Store.open(Path(sys.argv[1])); print('locked', flush=True); sys.stdin.read(); store.close()"
+)
+RUN_MAIN = "import sys; from bench.frontend.server import main; sys.exit(main())"
+
+
+def test_state_folder_in_use_by_a_live_process_stops_with_a_bench_line(lab: Lab, tmp_path: Path) -> None:
+    open_session(config_file.load(_config_file(lab, tmp_path))).close()  # creates state/s2, releases its lock
+    resumed = _config_file(lab, tmp_path, resume=True)
+    holder = subprocess.Popen(
+        [sys.executable, "-c", HOLD_LOCK, str(lab.root / "state" / "s2")],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None and holder.stdout.readline().strip() == "locked"
+        env = {**os.environ, config_file.ENV_VAR: str(resumed)}
+        done = subprocess.run(
+            [sys.executable, "-c", RUN_MAIN],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+        )
+    finally:
+        assert holder.stdin is not None
+        holder.stdin.close()
+        holder.wait(timeout=60)
+    assert done.returncode == 2
+    assert "Traceback" not in done.stderr
+    (line,) = done.stderr.splitlines()
+    assert line.startswith("bench-mcp: the session s2 is in use by another process")
+    assert "stop that process or wait for it to finish" in line
+    assert str(lab.root) not in line
+    assert str(lab.root / "state") not in line
+    assert "/" not in line
+
+
 def test_missing_session_config_variable_stops_the_server() -> None:
     env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
     done = subprocess.run(
@@ -220,3 +263,119 @@ def test_missing_session_config_variable_stops_the_server() -> None:
     )
     assert done.returncode == 2
     assert "BENCH_SESSION_CONFIG is not set" in done.stderr
+
+
+def _run_bench_mcp(config: Path | None) -> subprocess.Popen[str]:
+    env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
+    if config is not None:
+        env[config_file.ENV_VAR] = str(config)
+    return subprocess.Popen(
+        [sys.executable, "-c", RUN_MAIN],
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+
+def _log_entries(log: Path) -> list[tuple[datetime, int, str]]:
+    """Each entry's (UTC time, process id, first line of the message), as the startup log writes them."""
+    entries = []
+    for line in log.read_text(encoding="utf-8").splitlines():
+        if line[:1].isdigit():
+            stamp, pid, message = line.split(" ", 2)
+            entries.append((datetime.fromisoformat(stamp), int(pid.removeprefix("pid=")), message))
+    return entries
+
+
+def test_startup_log_is_next_to_the_config_and_named_by_its_stem(tmp_path: Path) -> None:
+    assert startup_log_for(None) is None
+    assert startup_log_for(str(tmp_path / "missing" / "run-1.session.toml")) is None
+    assert startup_log_for(str(tmp_path / "run-1.session.toml")) == tmp_path / "run-1.mcp-startup.log"
+    assert startup_log_for(str(tmp_path / "session.toml")) == tmp_path / "session.mcp-startup.log"
+
+
+def test_missing_config_file_logs_one_line_and_stderr_has_no_path(tmp_path: Path) -> None:
+    config = tmp_path / "run-1.session.toml"
+    log = tmp_path / "run-1.mcp-startup.log"
+    pids = []
+    for attempt in (1, 2):
+        proc = _run_bench_mcp(config)
+        _, err = proc.communicate(timeout=60)
+        pids.append(proc.pid)
+        assert proc.returncode == 2
+        (line,) = err.splitlines()
+        assert line == "bench-mcp: session config: file not found"
+        assert str(tmp_path) not in err
+        assert len(_log_entries(log)) == attempt  # appended, not overwritten
+    first, second = _log_entries(log)
+    assert first[0].utcoffset() == timedelta(0)  # UTC
+    assert (first[1], second[1]) == tuple(pids)
+    assert first[2] == second[2] == "session config: file not found"
+    assert "Traceback" not in log.read_text(encoding="utf-8")
+
+
+def test_unreadable_toml_is_logged_and_stderr_stays_path_free(tmp_path: Path) -> None:
+    config = tmp_path / "run-2.session.toml"
+    config.write_text("session_id = \n", encoding="utf-8")
+    proc = _run_bench_mcp(config)
+    _, err = proc.communicate(timeout=60)
+    assert proc.returncode == 2 and str(tmp_path) not in err
+    (entry,) = _log_entries(tmp_path / "run-2.mcp-startup.log")
+    assert entry[2].startswith("session config: not valid TOML (")
+
+
+def test_unknown_adapter_module_is_logged(lab: Lab, tmp_path: Path) -> None:
+    config = _config_file(lab, tmp_path, adapter="no_such_module_for_bench_tests:Factory")
+    proc = _run_bench_mcp(config)
+    _, err = proc.communicate(timeout=60)
+    assert proc.returncode == 2
+    assert err.splitlines() == [
+        "bench-mcp: session config: cannot import adapter module no_such_module_for_bench_tests "
+        "(No module named 'no_such_module_for_bench_tests')"
+    ]
+    assert str(lab.root) not in err
+    (entry,) = _log_entries(tmp_path / "session.mcp-startup.log")
+    assert entry[2].startswith("session config: cannot import adapter module no_such_module_for_bench_tests")
+
+
+def test_unexpected_error_is_logged_with_traceback_and_still_raised(lab: Lab, tmp_path: Path) -> None:
+    # json:loads is callable, so the config loads; calling it with no argument raises TypeError at start.
+    config = _config_file(lab, tmp_path, adapter="json:loads")
+    proc = _run_bench_mcp(config)
+    _, err = proc.communicate(timeout=60)
+    assert proc.returncode == 1
+    assert "Traceback" in err  # as before this change, the traceback still goes to stderr
+    text = (tmp_path / "session.mcp-startup.log").read_text(encoding="utf-8")
+    assert text.splitlines()[0].split(" ", 2)[2].startswith("unexpected TypeError: ")
+    assert "Traceback (most recent call last)" in text and "TypeError" in text
+
+
+def test_state_folder_in_use_is_logged(lab: Lab, tmp_path: Path) -> None:
+    open_session(config_file.load(_config_file(lab, tmp_path))).close()
+    resumed = _config_file(lab, tmp_path, resume=True)
+    holder = subprocess.Popen(
+        [sys.executable, "-c", HOLD_LOCK, str(lab.root / "state" / "s2")],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None and holder.stdout.readline().strip() == "locked"
+        proc = _run_bench_mcp(resumed)
+        _, err = proc.communicate(timeout=60)
+    finally:
+        assert holder.stdin is not None
+        holder.stdin.close()
+        holder.wait(timeout=60)
+    assert proc.returncode == 2 and str(lab.root) not in err
+    (entry,) = _log_entries(tmp_path / "session.mcp-startup.log")
+    assert entry[2].startswith("the session s2 is in use by another process")
+
+
+def test_a_normal_start_writes_no_startup_log(lab: Lab, tmp_path: Path) -> None:
+    proc = _run_bench_mcp(_config_file(lab, tmp_path))
+    _, err = proc.communicate(timeout=60)
+    assert proc.returncode == 0, err
+    assert not (tmp_path / "session.mcp-startup.log").exists()
