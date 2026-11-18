@@ -55,6 +55,19 @@ def test_unaltered_copy_loads(tmp_path: Path) -> None:
     assert loaded.name == "sessions/wind-tunnel/wt-002"
 
 
+def test_the_reader_folder_is_skipped_by_name(tmp_path: Path) -> None:
+    sessions, _ = _copy(tmp_path)
+    (sessions / "build-from-spec" / "body-lab" / "run-1").mkdir(parents=True)
+    (loaded,) = records.load(sessions)
+    assert loaded.name == "sessions/wind-tunnel/wt-002"
+
+
+def test_another_unknown_folder_still_fails(tmp_path: Path) -> None:
+    sessions, _ = _copy(tmp_path)
+    (sessions / "wind-tunnel" / "stray.txt").write_text("x", encoding="utf-8")
+    _fails(sessions, "not a session record folder")
+
+
 def test_flipped_byte_in_a_log_line_fails_naming_the_line(tmp_path: Path) -> None:
     sessions, folder = _copy(tmp_path)
     log = folder / "log.jsonl"
@@ -141,3 +154,20 @@ def test_stray_file_fails(tmp_path: Path, place: str) -> None:
     parent = {"sessions": sessions, "application": folder.parent, "record": folder}[place]
     (parent / "notes.txt").write_text("stray\n", encoding="utf-8")
     _fails(sessions, "notes.txt")
+
+
+def test_a_start_entry_with_a_known_discovered_table_setting_loads(tmp_path: Path) -> None:
+    sessions, folder = _copy(tmp_path)
+    entries = _entries(folder)
+    entries[0]["body"]["discovered_table"] = "not-required"
+    _rewrite(folder, entries)
+    (loaded,) = records.load(sessions)
+    assert loaded.name == "sessions/wind-tunnel/wt-002"
+
+
+def test_a_start_entry_with_an_unknown_discovered_table_setting_fails(tmp_path: Path) -> None:
+    sessions, folder = _copy(tmp_path)
+    entries = _entries(folder)
+    entries[0]["body"]["discovered_table"] = "maybe"
+    _rewrite(folder, entries)
+    _fails(sessions, "discovered_table", "'maybe'")
