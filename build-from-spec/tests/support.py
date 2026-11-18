@@ -49,3 +49,17 @@ def render(spec: dict) -> str:
     for table in spec.get("pass", []):
         lines += ["", "[[pass]]"] + [f"{key} = {value}" for key, value in table.items()]
     return "\n".join(lines) + "\n"
+
+
+# A relied-on id: any run of characters other than a comma or whitespace, and not `none` (which stands alone).
+relied_ids = st.from_regex(r"\A[^,\s]{1,12}\Z", fullmatch=True).filter(
+    lambda identifier: identifier != "none"
+)
+
+
+@st.composite
+def relied_id_tuples(draw) -> tuple[str, ...]:
+    """Either `("none",)` or distinct ids that do not include `none`."""
+    if draw(st.booleans()):
+        return ("none",)
+    return tuple(draw(st.lists(relied_ids, min_size=1, max_size=6, unique=True)))
