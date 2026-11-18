@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from bench.record.chain import BLOB_DIR, LOG_NAME
+from bench.record.chain import BLOB_DIR, ENTRY_KINDS, LOG_NAME
 from bench.record.store import Store
 from hypothesis import strategies as st
 
@@ -206,3 +206,42 @@ def seal_record(folder: Path, build: Callable[[Store], Sequence[tuple[str, dict[
     shutil.copytree(staging / BLOB_DIR, folder / BLOB_DIR)
     shutil.rmtree(staging)
     return folder
+
+
+# Random sealed records for properties 7 and 8. Each entry: its kind, a text, the blobs it stores (bytes and
+# author), and the indices of earlier stored blobs it references again. Every stored blob is referenced by
+# its entry.
+RECORD_KINDS = tuple(sorted(ENTRY_KINDS - {"seal"}))
+RecordEntrySpec = tuple[str, str, list[tuple[bytes, str]], list[int]]
+
+
+@st.composite
+def record_specs(draw) -> list[RecordEntrySpec]:
+    entry = st.tuples(
+        st.sampled_from(RECORD_KINDS),
+        st.text(max_size=12),
+        st.lists(st.tuples(st.binary(max_size=24), st.sampled_from(["bench", "dr-kiro"])), max_size=2),
+        st.lists(st.integers(min_value=0, max_value=50), max_size=2),
+    )
+    return draw(st.lists(entry, min_size=0, max_size=10))
+
+
+def write_record(folder: Path, spec: list[RecordEntrySpec]) -> Path:
+    """Write the sealed record that `spec` describes at `folder` (its parent must exist)."""
+
+    def build(store: Store):
+        known: list[dict[str, str]] = []
+        entries = []
+        for kind, note, new, reuse in spec:
+            refs = []
+            for data, author in new:
+                ref = store.put_blob(data, author, "application/octet-stream")
+                known.append(ref)
+                refs.append(ref)
+            for index in reuse:
+                if known:
+                    refs.append(known[index % len(known)])
+            entries.append((kind, {"note": note, "refs": refs}))
+        return entries
+
+    return seal_record(folder, build)
