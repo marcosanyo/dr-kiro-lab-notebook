@@ -1,0 +1,18 @@
+{
+  "name": "reader",
+  "description": "Reader: answers one request about a system from what it is given, through the bench.",
+  "prompt": "file://./reader-prompt.md",
+  "resources": ["file://.kiro/steering/**/*.md"],
+  "mcpServers": {"bench": {"command": "bench-mcp", "args": [],
+      "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}}},
+  "tools": ["read", "write", "@bench"],
+  "includeMcpJson": false,
+  "includePowers": false,
+  "permissions": {"rules": [
+    {"capability": "fs_read",  "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": ["./**"], "effect": "allow"},
+    {"capability": "fs_write", "match": [".kiro/agents/**", ".kiro/hooks/**", ".kiro/steering/**",
+                                         ".kiro/settings/**"], "effect": "deny"},
+    {"capability": "mcp",      "match": ["bench/*"], "effect": "allow"}
+  ]}
+}
