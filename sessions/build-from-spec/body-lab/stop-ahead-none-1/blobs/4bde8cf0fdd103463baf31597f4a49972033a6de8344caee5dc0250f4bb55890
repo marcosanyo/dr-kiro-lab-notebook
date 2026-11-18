@@ -1,0 +1,15 @@
+### H4: Higher frequency on c2 gives more forward travel
+
+WHEN c2 is driven by an 8 Hz sine of amplitude 1.0 for the whole trial, THE system SHALL end with x between 0.15 and 1.0 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.15, 1.0]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+freq = 8.0
+ch = 2
+```

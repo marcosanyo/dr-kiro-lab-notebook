@@ -1,0 +1,8 @@
+# Tasks
+
+- [x] E1 constant c2, c3, c4 alone
+- [x] E2 phase-shifted sines
+- [x] E3 c1 = -1 with c0 variants
+- [x] E4 c2, c3, c4 together with c1 = -1
+- [x] E5 c2 = c3 = -1 with c1 = -1
+- [ ] Find an input with a forward push and no turn (budget used up)

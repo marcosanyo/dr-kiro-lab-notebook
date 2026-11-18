@@ -1,0 +1,11 @@
+# Design
+
+Model of the body from 12 trials, inputs are constant levels a0..a4 on c0..c4.
+
+- c0: nearly inert.
+- c2, c3, c4 held alone: settle within 0.1 s, no travel (E1).
+- c1 alone: steady turn of about 7 deg/s (left for +1, right for -1) and slow drift in x (E3, with E1 of the given record).
+- c1 = -1 with c2 = c3 = -1: forward push of about 0.2 m/s with a turn of about -45 deg/s, so the body circles (E4, E5). c4 adds little.
+- Sinusoids on all channels spin the body and drift it backwards (E2).
+
+Goal not reached: no tested input gives x near 0.45 m with heading within 12 deg.

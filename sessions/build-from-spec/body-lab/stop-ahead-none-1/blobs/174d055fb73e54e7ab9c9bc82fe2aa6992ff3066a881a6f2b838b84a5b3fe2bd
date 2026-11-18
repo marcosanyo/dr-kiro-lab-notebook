@@ -1,0 +1,41 @@
+# H3: An oscillating channel produces forward travel
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "freq", "ch"]
+TRIALS = [
+    [1.0, 2.0, 0],
+    [1.0, 2.0, 2],
+    [1.0, 2.0, 4],
+]
+
+
+def wave(t, amp, freq):
+    return amp * math.sin(2 * math.pi * freq * t)
+
+
+def c0(t, amp, freq, ch):
+    if ch == 0:
+        return wave(t, amp, freq)
+    return 0
+
+
+def c1(t, amp, freq, ch):
+    return 0
+
+
+def c2(t, amp, freq, ch):
+    if ch == 2:
+        return wave(t, amp, freq)
+    return 0
+
+
+def c3(t, amp, freq, ch):
+    return 0
+
+
+def c4(t, amp, freq, ch):
+    if ch == 4:
+        return wave(t, amp, freq)
+    return 0

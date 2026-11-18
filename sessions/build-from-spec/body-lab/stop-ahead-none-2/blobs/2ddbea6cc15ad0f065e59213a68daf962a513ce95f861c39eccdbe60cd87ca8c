@@ -1,0 +1,29 @@
+# H6: Negative c0 and c2 cancel the c1 turn
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a0", "a1", "a2", "a3", "a4"]
+TRIALS = [
+    [-0.7, -0.8, -0.7, 0, 0],
+]
+
+
+def c0(t, a0):
+    return a0
+
+
+def c1(t, a1):
+    return a1
+
+
+def c2(t, a2):
+    return a2
+
+
+def c3(t, a3):
+    return a3
+
+
+def c4(t, a4):
+    return a4

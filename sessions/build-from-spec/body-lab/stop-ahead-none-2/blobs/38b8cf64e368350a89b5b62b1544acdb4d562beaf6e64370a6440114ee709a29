@@ -1,0 +1,30 @@
+### H5: Smaller negative c1 with c0, c2, c3, c4 at 1 keeps heading small
+
+WHEN c1 is held at -0.7 and c0, c2, c3 and c4 are held at 1 for the whole trial, THE system SHALL end with heading within 15 degrees of 0 and x above 0.05 m.
+
+```prediction
+# relies on: E1, E3, E4
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30, 15]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = -0.7
+a2 = 1
+a3 = 1
+a4 = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.05, 0.3]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = -0.7
+a2 = 1
+a3 = 1
+a4 = 1
+```

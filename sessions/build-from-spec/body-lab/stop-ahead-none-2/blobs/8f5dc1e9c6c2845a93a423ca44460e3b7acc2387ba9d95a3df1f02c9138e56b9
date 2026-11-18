@@ -1,0 +1,95 @@
+# Requirements
+
+### H1: Single-channel drive moves the body
+
+WHEN channel c0 is held at 0.5 for the whole trial and c1 to c4 are 0, THE system SHALL end with x between 0.3 and 2.0 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.5
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+```
+
+Result E1: rejected. c0 alone gave no motion. c1 alone gave backward motion with CCW turn. c2 alone gave a small twitch only.
+
+### H2: c3 or c4 alone drives forward motion
+
+WHEN c3 is held at 0.5 for the whole trial and the other channels are 0, THE system SHALL end with x above 0.1 m.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 0
+a3 = 0.5
+a4 = 0
+```
+
+Result E2: rejected. c3, c4 alone and c0+c2 together gave only a settling twitch (|x| < 0.02 m).
+
+### H3: Another channel balances the c1 turn and changes the drive
+
+WHEN c1 is held at 0.5 and c0, c2, c3 and c4 are all held at 0.5, THE system SHALL end with heading within 10 degrees of 21.8 deg less than the c1-alone result or x above -0.1 m.
+
+```prediction
+# relies on: E1, E2
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30, 10]
+label = "new-combination"
+[prediction.when]
+a0 = 0.5
+a1 = 0.5
+a2 = 0.5
+a3 = 0.5
+a4 = 0.5
+```
+
+Result E3: partly. Extra channels with c1 on added CCW turn (c3+c4 about +4 deg/s, c0+c2 about +1.4 deg/s at 0.5) and left x near -0.13 to -0.16 m.
+
+### H4: Negative c1 drives forward and c3, c4 positive cancel the turn
+
+WHEN c1 is held at -1 and c3 and c4 are held at 1 for the whole trial with c0 and c2 at 0, THE system SHALL end with x above 0.15 m and heading within 12 degrees of 0.
+
+```prediction
+# relies on: E1, E3
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.15, 0.6]
+label = "outside"
+[prediction.when]
+a0 = 0
+a1 = -1
+a2 = 0
+a3 = 1
+a4 = 1
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "outside"
+[prediction.when]
+a0 = 0
+a1 = -1
+a2 = 0
+a3 = 1
+a4 = 1
+```

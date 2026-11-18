@@ -1,0 +1,33 @@
+# H2: Extending the stroke time to 3.75 s brings x closer to 0.45 m
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "f", "T"]
+TRIALS = [
+    [-1, 2, 3.75],
+]
+
+
+def c0(t, a1, f, T):
+    return 0
+
+
+def c1(t, a1, f, T):
+    if t < T:
+        return a1
+    return 0
+
+
+def c2(t, a1, f, T):
+    return 0
+
+
+def c3(t, a1, f, T):
+    if t < T:
+        return math.sin(2 * math.pi * f * t)
+    return 0
+
+
+def c4(t, a1, f, T):
+    return 0

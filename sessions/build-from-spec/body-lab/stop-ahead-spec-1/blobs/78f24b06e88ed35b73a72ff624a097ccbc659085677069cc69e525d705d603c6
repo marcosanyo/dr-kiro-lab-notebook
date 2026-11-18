@@ -1,0 +1,26 @@
+### H1: Stroking c3 with c1 = -1 for a limited time, then zeroing all inputs, stops the body near 0.45 m
+
+WHEN c1 = -1 and c3 is a unit 2 Hz sine until time T = 3.6 s and all inputs are 0 afterwards, THE system SHALL end near x = 0.45 m with heading within 12 degrees of the start.
+
+```prediction
+# relies on: R1, R11, R13
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.35, 0.55]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+f = 2
+T = 3.6
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+f = 2
+T = 3.6
+```

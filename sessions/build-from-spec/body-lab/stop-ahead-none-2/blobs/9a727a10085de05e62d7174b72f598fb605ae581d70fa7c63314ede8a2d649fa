@@ -1,0 +1,18 @@
+### H2: c3 or c4 alone drives forward motion
+
+WHEN c3 is held at 0.5 for the whole trial and the other channels are 0, THE system SHALL end with x above 0.1 m.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 0
+a2 = 0
+a3 = 0.5
+a4 = 0
+```

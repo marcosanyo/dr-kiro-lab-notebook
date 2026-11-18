@@ -1,0 +1,96 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Each of c2, c3, c4 held at 1 alone moves the body
+
+WHEN exactly one of the constant levels a2, a3, a4 is 1 and all other levels are 0 for the whole trial, THE system SHALL change x by at least 0.05 m in magnitude for at least one of them.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 0.0
+a3 = 1.0
+a4 = 0.0
+```
+
+Result: rejected (see E1 verdict). c2, c3, c4 held constant each give |x| under 0.04 m.
+
+### H2: A phase-shifted sine on all channels drives the body forward
+
+WHEN all five channels carry a sine of amplitude 1 at 2 Hz with phase step 2*pi/5 between neighbouring channels, THE system SHALL end with x above 0.05 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1.0
+a1 = 1.0
+a2 = 1.0
+a3 = 1.0
+a4 = 1.0
+f = 2.0
+ph = 1.2566
+```
+
+Result: rejected. x was -0.33, -0.30, -0.10 m and the body spun.
+
+### H3: c1 at -1 drives the body forward and c0 adjusts heading
+
+WHEN c1 is held at -1 and the other channels are 0 for the whole trial, THE system SHALL move the body forward by 0.1 to 0.4 m and turn it clockwise by 20 to 60 degrees.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-60.0, -20.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+```
+
+Result: partly. P1 and P2 hit (x 0.113, heading -35). c0 is nearly inert.
+
+### H4: c2, c3, c4 held together change how c1 = -1 moves the body
+
+WHEN c1 is held at -1 and c2, c3, c4 are all held at 1, THE system SHALL end with x above 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 1.5]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = 1.0
+a3 = 1.0
+a4 = 1.0
+```

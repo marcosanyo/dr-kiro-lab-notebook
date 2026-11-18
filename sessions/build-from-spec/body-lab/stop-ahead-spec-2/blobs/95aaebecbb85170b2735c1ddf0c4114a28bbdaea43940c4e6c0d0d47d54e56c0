@@ -1,0 +1,5 @@
+# Design
+
+Answer: c1 = -1 and c3 = sin(2π·2·t) until t = 3.7 s, then all inputs 0 (E2 T2): x 0.441 m, heading +2.5 deg, y 0.077 m. The body is still after the inputs stop.
+
+Earlier point (E1): t_stop = 3.5 gave x 0.428, heading -1.9.

@@ -1,0 +1,27 @@
+### H2: Stopping at 3.7 s lands closer to 0.45 m
+
+WHEN the same drive as H1 runs until t_stop = 3.7 s, THE system SHALL end at x between 0.43 and 0.48 m with heading within 12 deg.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.43, 0.48]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.7
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.7
+```

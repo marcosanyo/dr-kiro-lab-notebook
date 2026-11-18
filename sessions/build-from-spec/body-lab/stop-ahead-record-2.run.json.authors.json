@@ -1,0 +1,29 @@
+{
+  "ranges": [
+    {
+      "author": "bench",
+      "end": 5142,
+      "start": 0
+    },
+    {
+      "author": "dr-kiro",
+      "end": 5147,
+      "start": 5142
+    },
+    {
+      "author": "bench",
+      "end": 5155,
+      "start": 5147
+    },
+    {
+      "author": "dr-kiro",
+      "end": 5160,
+      "start": 5155
+    },
+    {
+      "author": "bench",
+      "end": 5996,
+      "start": 5160
+    }
+  ]
+}

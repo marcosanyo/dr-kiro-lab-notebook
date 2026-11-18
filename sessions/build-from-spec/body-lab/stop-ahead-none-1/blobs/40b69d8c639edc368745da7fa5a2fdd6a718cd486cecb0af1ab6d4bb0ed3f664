@@ -1,0 +1,16 @@
+### H2: Channel c3 or c4 drives the body forward
+
+WHEN c3 is held at 1.0 for the first 1.0 s and all other channels are 0, THE system SHALL end with x between 0.1 and 1.0 m.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.0]
+label = "new-combination"
+[prediction.when]
+level = 1.0
+dur = 1.0
+ch = 3
+```

@@ -1,0 +1,42 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Gated c3 stroke with c1 at -1 gives bounded forward travel
+
+WHEN c1 is held at -1 and c3 is a sine at 2 Hz for the first 1.5 s then zero, with c1 also released to zero after 1.5 s, THE system SHALL end the trial between 0.1 and 0.8 m ahead with heading within 12 degrees.
+
+```prediction
+# relies on: H10, H11
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.8]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 1.5
+rel = 1
+```
+
+Result E1: supported. x=0.183 at T=1.5, heading -1.4. T=3 gave x=0.368, heading -1.1. Travel is about 0.0613 m per 2 Hz cycle. Keeping c1 at -1 after the stroke leaves a turn (-27.6 deg).
+
+### H2: Stroke lasting 3.7 s ends near 0.45 m
+
+WHEN c1 is -1 and c3 is a 2 Hz unit sine for the first 3.7 s, with c1 and c3 zero afterwards, THE system SHALL end 0.40 to 0.50 m ahead with heading within 12 degrees.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.40, 0.50]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 3.7
+rel = 1
+```

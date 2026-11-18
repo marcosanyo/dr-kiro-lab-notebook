@@ -1,0 +1,17 @@
+### H5: Dropping c4 from the c2, c3, c4 = -1 drive reduces the turn and keeps the forward push
+
+WHEN c1 = -1, c2 = -1, c3 = -1 and c0, c4 are 0 for the whole trial, THE system SHALL end with x above 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 1.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = -1.0
+a3 = -1.0
+a4 = 0.0
+```

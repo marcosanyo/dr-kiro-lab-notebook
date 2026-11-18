@@ -1,0 +1,18 @@
+### H3: Another channel balances the c1 turn and changes the drive
+
+WHEN c1 is held at 0.5 and c0, c2, c3 and c4 are all held at 0.5, THE system SHALL end with heading within 10 degrees of 21.8 deg less than the c1-alone result or x above -0.1 m.
+
+```prediction
+# relies on: E1, E2
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30, 10]
+label = "new-combination"
+[prediction.when]
+a0 = 0.5
+a1 = 0.5
+a2 = 0.5
+a3 = 0.5
+a4 = 0.5
+```
