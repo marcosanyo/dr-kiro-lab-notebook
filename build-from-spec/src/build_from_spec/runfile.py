@@ -20,7 +20,6 @@ import sys
 import tempfile
 from collections.abc import Mapping
 from dataclasses import replace
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -369,7 +368,6 @@ def run_file_texts(run_file: Mapping[str, Any]) -> tuple[str, str]:
 
 
 RUN_DATA = Path("bench-run") / "build-from-spec"
-SUPERSEDED = RUN_DATA / "superseded"  # where --supersede moves an earlier run file and its sidecar (K34)
 
 
 def _valid_run_id(run_id: str) -> str:
@@ -401,36 +399,17 @@ def committed_request(root: Path, commit: str, request_id: str, folder: Path) ->
     return shown.stdout
 
 
-def _supersede(run_file: Path, sidecar: Path, root: Path) -> None:
-    """Move the existing run file and its sidecar into the superseded folder, each with a time suffix (K34).
-
-    The run file moves first, so no run file is left without a sidecar. Refuse before moving anything when a
-    target already exists."""
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    folder = root / SUPERSEDED
-    moves = [(run_file, folder / f"{run_file.name}.{stamp}"), (sidecar, folder / f"{sidecar.name}.{stamp}")]
-    for _, target in moves:
-        if target.exists():
-            raise RunFileError(f"{target}: already exists; a superseded run file is never overwritten")
-    folder.mkdir(parents=True, exist_ok=True)
-    for source, target in moves:
-        os.replace(source, target)
-
-
 def write_run_file(
     run_id: str,
     apps: Mapping[str, App],
     stop_list: Path,
     root: Path,
     records: Path,
-    *,
-    supersede: bool = False,
 ) -> Path:
     """Write the run file and its author sidecar of a sealed run record (design 3.11; Requirements 14.1,
     14.5, 16.2). Return the run file's path.
 
-    With `supersede` (K34), an existing run file and its sidecar are moved to the superseded folder first, and
-    a run file that does not exist is refused. Without it, an existing run file is refused.
+    An existing run file is refused: a run file is never rewritten by this command (K34).
 
     `root` is the repository root, and every path is derived from it (design B24). `records` is the records
     folder of the run (`--sessions`). The source records sit in its parent, one folder per application, so a
@@ -454,12 +433,7 @@ def write_run_file(
     application = app.name
     run_file = records / application / f"{run_id}{RUN_FILE_SUFFIX}"
     sidecar = run_file.with_name(run_file.name + SIDECAR_SUFFIX)
-    if supersede:
-        if not run_file.exists():
-            raise RunFileError(f"{run_file}: no run file to supersede; --supersede needs one")
-        if not sidecar.exists():
-            raise RunFileError(f"{sidecar}: the run file has no sidecar to supersede")
-    elif run_file.exists():
+    if run_file.exists():
         raise RunFileError(f"{run_file}: already exists; a run file is never overwritten")
     folder = records / application / run_id
     if not folder.is_dir():
@@ -534,8 +508,6 @@ def write_run_file(
         if findings:
             listed = "\n".join(str(finding) for finding in findings)
             raise RunFileError(f"the blind scan finds items; no run file was written:\n{listed}")
-        if supersede:
-            _supersede(run_file, sidecar, root)
         os.replace(temporary_sidecar, sidecar)
         os.replace(temporary, run_file)
     finally:
@@ -555,19 +527,11 @@ def main(argv: list[str] | None = None) -> None:
         help="the records folder of the run, relative to the repository root: sessions/build-from-spec "
         "for a production run",
     )
-    parser.add_argument(
-        "--supersede",
-        action="store_true",
-        help="move the existing run file and its sidecar to bench-run/build-from-spec/superseded/ and write "
-        "the new one (K34); refused if there is no run file to supersede",
-    )
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
         require_repository_root()
         root = Path.cwd()
-        written = write_run_file(
-            args.run_id, APPS, root / STOP_LIST, root, root / args.sessions, supersede=args.supersede
-        )
+        written = write_run_file(args.run_id, APPS, root / STOP_LIST, root, root / args.sessions)
     except (AppError, JudgeError, ReliedError, RequestError, RunFileError, ScanError) as error:
         sys.exit(f"bfs-run-file: {error}")
     print(f"bfs-run-file: wrote {written}")

@@ -9,7 +9,6 @@ import dataclasses
 import hashlib
 import json
 import os
-import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -127,14 +126,13 @@ def run_file_path(root: Path, run_id: str) -> Path:
     return root / "sessions" / "build-from-spec" / "body-lab" / f"{run_id}.run.json"
 
 
-def write(root: Path, run_id: str = "probe-none-1", *, supersede: bool = False) -> Path:
+def write(root: Path, run_id: str = "probe-none-1") -> Path:
     return write_run_file(
         run_id,
         APPS_FOR_TESTS,
         STOP_LIST,
         root,
         root / "sessions" / "build-from-spec",
-        supersede=supersede,
     )
 
 
@@ -145,10 +143,6 @@ def tree_bytes(folder: Path) -> dict[str, bytes]:
         for path in sorted(folder.rglob("*"))
         if path.is_file()
     }
-
-
-def superseded_names(root: Path) -> list[str]:
-    return sorted(path.name for path in (root / "bench-run" / "build-from-spec" / "superseded").iterdir())
 
 
 def test_writes_the_run_file_and_its_sidecar_and_nothing_else(repo):
@@ -179,68 +173,7 @@ def test_an_existing_run_file_is_refused_by_name_and_kept(repo):
     assert path.read_bytes() == before
 
 
-def test_supersede_moves_the_old_pair_and_writes_the_new_one(repo):
-    make_run_record(repo, "probe-none-1")
-    write_run_data_for(repo, "probe-none-1")
-    path = write(repo)
-    old_run = path.read_bytes()
-    old_sidecar = path.with_name(path.name + ".authors.json").read_bytes()
-    record_before = tree_bytes(path.parent / "probe-none-1")
-
-    written = write(repo, supersede=True)
-
-    assert written == path
-    assert read_run_file(path)["result"] == "pass"
-    superseded = repo / "bench-run" / "build-from-spec" / "superseded"
-    names = superseded_names(repo)
-    run_names = [n for n in names if re.fullmatch(r"probe-none-1\.run\.json\.\d{8}-\d{6}", n)]
-    sidecar_pattern = r"probe-none-1\.run\.json\.authors\.json\.\d{8}-\d{6}"
-    sidecar_names = [n for n in names if re.fullmatch(sidecar_pattern, n)]
-    assert len(names) == 2 and len(run_names) == 1 and len(sidecar_names) == 1
-    assert (superseded / run_names[0]).read_bytes() == old_run
-    assert (superseded / sidecar_names[0]).read_bytes() == old_sidecar
-    assert path.with_name(path.name + ".authors.json").is_file()
-    assert tree_bytes(path.parent / "probe-none-1") == record_before
-
-
-def test_supersede_refuses_when_there_is_no_run_file_and_writes_nothing(repo):
-    make_run_record(repo, "probe-none-1")
-    write_run_data_for(repo, "probe-none-1")
-
-    with pytest.raises(RunFileError, match=r"probe-none-1\.run\.json: no run file to supersede"):
-        write(repo, supersede=True)
-    assert not run_file_path(repo, "probe-none-1").exists()
-    assert not (repo / "bench-run" / "build-from-spec" / "superseded").exists()
-
-
-def test_supersede_refuses_a_run_file_without_its_sidecar_and_moves_nothing(repo):
-    make_run_record(repo, "probe-none-1")
-    write_run_data_for(repo, "probe-none-1")
-    path = write(repo)
-    path.with_name(path.name + ".authors.json").unlink()
-
-    with pytest.raises(RunFileError, match="has no sidecar to supersede"):
-        write(repo, supersede=True)
-    assert path.is_file()
-
-
-def test_supersede_refuses_an_unsealed_record_and_moves_nothing(repo):
-    make_run_record(repo, "probe-none-2", sealed=False)
-    write_run_data_for(repo, "probe-none-2")
-    path = run_file_path(repo, "probe-none-2")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("old run file\n", encoding="utf-8")
-    sidecar = path.with_name(path.name + ".authors.json")
-    sidecar.write_text("old sidecar\n", encoding="utf-8")
-
-    with pytest.raises(RunFileError, match="not sealed or does not verify"):
-        write(repo, "probe-none-2", supersede=True)
-    assert path.read_text(encoding="utf-8") == "old run file\n"
-    assert sidecar.read_text(encoding="utf-8") == "old sidecar\n"
-    assert not (repo / "bench-run" / "build-from-spec" / "superseded").exists()
-
-
-def test_without_supersede_an_existing_run_file_is_refused_and_nothing_moves(repo):
+def test_an_existing_run_file_is_refused_and_nothing_moves(repo):
     make_run_record(repo, "probe-none-1")
     write_run_data_for(repo, "probe-none-1")
     path = write(repo)
@@ -249,7 +182,6 @@ def test_without_supersede_an_existing_run_file_is_refused_and_nothing_moves(rep
     with pytest.raises(RunFileError, match="already exists"):
         write(repo)
     assert tree_bytes(path.parent) == before
-    assert not (repo / "bench-run" / "build-from-spec" / "superseded").exists()
 
 
 def test_a_record_that_is_not_sealed_is_refused(repo):

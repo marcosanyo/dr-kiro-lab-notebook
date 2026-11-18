@@ -1181,7 +1181,7 @@ this design (B1-B7).
   Req 1.1 forbids. (3) A fallback that starts the server with another interpreter, which rules.md 2 forbids.
   Effect on the rehearsal: the rehearsal must run again from step (c) of `RUN.md` after this change. No
   rehearsal or counted run was made in writing K33.
-- **K34. Judgement fixes after the six runs, and `--supersede`.** The six runs were judged after they ran, and two
+- **K34. Judgement fixes after the six runs.** The six runs were judged after they ran, and two
   bugs in the judgement were found afterwards. (1) For setup `spec`, `allowed_ids` accepted only the `R` rows of the
   final design table. `reader.md` tells the reader that the ids it may name are rule rows, hypotheses and
   experiments as they appear in `given/`. So a correct id was judged `unknown-id`; stop-ahead-spec-2 relies on E9,
@@ -1190,11 +1190,10 @@ this design (B1-B7).
   `none` and every whole-word match of `R[1-9][0-9]*`, `H[1-9][0-9]*` and `E[1-9][0-9]*` in requirements.md,
   design.md and tasks.md of the end snapshot (`allowed_ids` in `relied.py`). A design table is no longer required
   for this. For setup `record` the rule is unchanged, and `none` stays `none`. The limit text is the English text
-  of K30. The run records are not changed: they are sealed and hashed. The run files of the six runs are rewritten
-  only by `bfs-run-file --supersede`. It moves the old run file and its sidecar to
-  `bench-run/build-from-spec/superseded/`, each with a `.<YYYYMMDD-HHMMSS>` suffix, and then writes the new run file.
-  The judgements of the superseded run files are reported in `build-from-spec/README.md`. `--supersede` is the only
-  way a run file is rewritten. Not chosen: editing the old run files in place, which would remove the first
+  of K30. The run records are not changed: they are sealed and hashed. A run file is never rewritten by `bfs-run-file`, which refuses an
+  existing run file; a judgement fix needs a new decision and a new run id. The run files of the six runs were
+  re-judged by a one-time rewrite done by hand, from the old files in `bench-run/build-from-spec/superseded/before-judge-fix/`
+  (not in git, not counted). The judgements before and after are reported in `build-from-spec/README.md`. Not chosen: a command that rewrites run files, because run files stay write-once; editing the old run files in place, which would remove the first
   judgement from the record; and judging the rows by hand, which would make the judgement not mechanical.
 
 ## Open items
