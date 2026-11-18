@@ -18,10 +18,12 @@ from runs_support import (
     change_request,
     commit,
     load,
+    make_ended_source,
     make_repo,
     make_run,
     run_file_of,
     save,
+    sha,
 )
 from support import seal_record
 
@@ -108,6 +110,29 @@ def test_runs_of_another_setup_are_listed_and_compared_with_each_other(repo):
     assert len(passed) == 2
     assert derive_run(none, repo, APPS)["other_setups"] == ["probe-record-1"]
     assert derive_run(reduced, repo, APPS)["other_setups"] == ["probe-none-1"]
+
+
+def test_a_spec_run_gives_the_hashes_of_the_final_spec_of_its_source(repo):
+    make_ended_source(repo, "body-3")
+    path = make_run(repo, "probe-spec-1", setup="spec", source="body-3")
+
+    item = derive_run(path, repo, APPS)
+
+    assert item["setup"] == "spec"
+    assert item["relied_on"] == {"ids": ["none"], "problem": None}
+    assert item["result"] == "pass"
+
+
+def test_a_spec_hash_that_differs_from_the_final_spec_is_named(repo):
+    make_ended_source(repo, "body-3")
+    path = make_run(repo, "probe-spec-1", setup="spec", source="body-3")
+    data = load(path)
+    data["given"]["spec"]["design.md"] = sha(b"another design")
+    save(path, data)
+
+    with pytest.raises(CheckError) as refused:
+        check_run(path, repo, APPS)
+    assert str(refused.value).startswith(f"{path}: given.spec.design.md: ")
 
 
 def test_a_removed_entry_that_the_source_does_not_give_is_named(repo):

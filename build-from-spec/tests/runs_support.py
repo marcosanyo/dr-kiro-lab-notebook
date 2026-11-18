@@ -100,13 +100,42 @@ def _prompt(kind: str, before: int, after: int) -> dict[str, Any]:
     }
 
 
-def make_run(root: Path, run_id: str, *, seed: int = SEED, setup: str = "none") -> Path:
+DESIGN_WITH_TABLE = """# Design
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|----|------|-------|-------------|-------------|--------|-------------|
+| R1 | a rule | all | E1 | P1 | observed | - |
+| R2 | another rule | all | E2 | P1 | observed | - |
+"""
+SPEC_TEXT = {"requirements": "# Requirements\n", "design": DESIGN_WITH_TABLE, "tasks": "# Tasks\n"}
+
+
+def make_ended_source(root: Path, session: str) -> Path:
+    """A source record sealed as `ended` whose end snapshot holds the three spec files of `SPEC_TEXT`."""
+
+    def build(store) -> list[tuple[str, dict[str, Any]]]:
+        files = {
+            key: store.put_blob(text.encode("utf-8"), "dr-kiro", "text/markdown")
+            for key, text in SPEC_TEXT.items()
+        }
+        start = ("start", {"session": session, "application": "body-lab", "seed": SEED, "budget": 12})
+        return [start, ("snapshot", {"for": "end", "files": files})]
+
+    return seal_record(root / "sessions" / "body-lab" / session, build, end="ended")
+
+
+def make_run(
+    root: Path, run_id: str, *, seed: int = SEED, setup: str = "none", source: str = "body-2"
+) -> Path:
     """Seal the run record, write its run data file and its run file. Return the run file's path.
 
     Setup `none` gives nothing. Setup `record` gives the reduced copy of the source, which has no snapshot
-    entries here, so its removed list is empty. The record holds six entries: start, H1, the experiment, its
-    trial, its counting snapshot and the seal. The first turn ends after the trial, and the second seals the
-    record."""
+    entries here, so its removed list is empty. Setup `spec` gives the hashes of the final spec of `source`,
+    which must be an ended record made by `make_ended_source`. The record holds six entries: start, H1, the
+    experiment, its trial, its counting snapshot and the seal. The first turn ends after the trial, and the
+    second seals the record."""
     folder = root / RECORDS / run_id
     folder.parent.mkdir(parents=True, exist_ok=True)
 
@@ -122,7 +151,15 @@ def make_run(root: Path, run_id: str, *, seed: int = SEED, setup: str = "none") 
         ]
 
     seal_record(folder, entries, end="ended")
-    source = root / "sessions" / "body-lab" / "body-2"
+    source_folder = root / "sessions" / "body-lab" / source
+    if setup == "spec":
+        given: dict[str, Any] = {
+            "spec": {f"{key}.md": sha(text.encode("utf-8")) for key, text in SPEC_TEXT.items()}
+        }
+    elif setup == "record":
+        given = {"record": {"removed": []}}
+    else:
+        given = {}
     data = {
         "format": 1,
         "run": run_id,
@@ -134,15 +171,15 @@ def make_run(root: Path, run_id: str, *, seed: int = SEED, setup: str = "none") 
         },
         "source": {
             "application": "body-lab",
-            "session": "body-2",
-            "seal": verify(source, sealed=True)[-1]["hash"],
+            "session": source,
+            "seal": verify(source_folder, sealed=True)[-1]["hash"],
         },
         "seed": seed,
         "adapter": "build_from_spec.wrap:reader/body-lab/probe/12",
         "kiro": {"version": "kiro-cli test", "model": "model-a", "effort": "medium"},
         "files": {"request.md": sha(WORDS.encode("utf-8"))},
         "tools": {name: sha(name.encode("utf-8")) for name in TOOLS},
-        "given": {} if setup == "none" else {"record": {"removed": []}},
+        "given": given,
         "prompts": [_prompt("start", 1, 4), _prompt("continue", 4, 6)],
     }
     write_run_data(root / RUN_DATA / f"{run_id}.run-data.json", data)
