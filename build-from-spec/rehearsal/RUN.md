@@ -189,3 +189,24 @@ run stopped at its first reader turn. No trial ran, so there is no judgement and
   `bench-run/build-from-spec/rehearsal-fake-record-2` was left over from an earlier attempt and the
   `reader.json` hash differed from run 1. That refusal happened before any session, so it is not a bench failure.
   The folder was kept and was not deleted.
+
+## Result of the rehearsal 4 (not counted)
+
+Run id `rehearsal-fake-record-4`, started with step (c) and `--run 4` (the other arguments as in step (c)). The run
+completed: the reader's session ran one turn and the record was sealed as ended. Steps (d) and (e) were run.
+
+- The step (c) command ran from 23:44:03 JST and exited with code 0 at 23:44:56 JST (about 53 seconds). `bfs-run`
+  reported the run as sealed as ended.
+- Turn 1 exited with code 0. No bench-mcp startup failure was observed. No `rehearsal-fake-record-4.mcp-startup.log`
+  exists, and `pgrep -fl bench-mcp` found no process after the run.
+- Step (d), `bfs-run-file`, refused with "already exists", as RUN.md expects when step (c) wrote the run file.
+  The run file is not overwritten.
+- Step (e), `bench-verify`, printed `verified, 10 entries, 7 blobs`.
+- Judgement by `judge_record` (read only, with the request at commit `cd71b52`): result `pass`, end `ended`,
+  first in-range trial T1, last counted trial T1 (phase `best`), last value distance 3.0. The count is one counted
+  trial. The reader's answer used the record's experiment file and the source's record ids E1.
+- Observed: the reader ran one experiment with drive 1.0 and gain 3.0, which gave distance 3.0 in range 2.0 to 3.0.
+  The turn measurement was lost, so it is not counted. The raw picture could not be opened by Kiro CLI; the reader
+  used the record's text and experiment files.
+- Not observed: a bench-mcp failure. The earlier cause for rehearsals 1 and 3 did not recur in this run, so this run
+  does not say which change fixed it. Rehearsal 2 was refused before its session started and is not counted here.
