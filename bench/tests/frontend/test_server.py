@@ -245,7 +245,9 @@ def test_state_folder_in_use_by_a_live_process_stops_with_a_bench_line(lab: Lab,
     (line,) = done.stderr.splitlines()
     assert line.startswith("bench-mcp: the session s2 is in use by another process")
     assert "stop that process or wait for it to finish" in line
-    assert str(lab.root / "state" / "s2") in line
+    assert str(lab.root) not in line
+    assert str(lab.root / "state") not in line
+    assert "/" not in line
 
 
 def test_missing_session_config_variable_stops_the_server() -> None:

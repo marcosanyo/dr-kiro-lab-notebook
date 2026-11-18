@@ -8,7 +8,6 @@ no gate and builds no message text of its own.
 
 import sys
 from collections.abc import Callable
-from pathlib import Path
 
 import anyio
 import anyio.to_thread
@@ -81,10 +80,10 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
         except SessionError as error:
             raise StartupError(f"cannot reopen the session: {error}") from error
         except StoreInUseError as error:
-            folder = Path(cfg.session.state_dir) / cfg.session.session_id
+            # No file path here: this line may reach the reader's Kiro log (rules.md 1).
             raise StartupError(
                 f"the session {cfg.session.session_id} is in use by another process; "
-                f"stop that process or wait for it to finish (state folder {folder})"
+                f"stop that process or wait for it to finish"
             ) from error
     outcome = Session.start(cfg.session)
     if not isinstance(outcome, Ran):
