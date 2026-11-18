@@ -278,8 +278,60 @@ def _used_paths(root: Path, records: Path, run_id: str, application: str) -> lis
     return [path for path in candidates if path.exists()]
 
 
+BENCH_MCP = "bench-mcp"
+CHECK_FLAG = "--check"
+READY_LINE = "bench-mcp: ready"
+CHECK_SECONDS = 120
+
+
+def bench_mcp_preflight() -> Path:
+    """The preflight of design K33, the first step of phase A. Return the `bench-mcp` that was checked.
+
+    Kiro CLI starts the reader's bench server by the name `bench-mcp`, from the PATH of its own
+    environment, which `execute` takes from `os.environ`. So the first `bench-mcp` on that PATH is the one
+    Kiro CLI gets, and it is run with `--check`. A failed check refuses the run, naming the path found,
+    before anything is written or Kiro CLI is started.
+    """
+    found = shutil.which(BENCH_MCP)
+    if found is None:
+        raise RunRefused(
+            f"no {BENCH_MCP} on PATH; Kiro CLI starts the reader's bench server by that name, so the run "
+            "cannot start. Install the bench tools as build-from-spec/README.md says."
+        )
+    try:
+        done = subprocess.run(
+            [found, CHECK_FLAG],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=CHECK_SECONDS,
+            env=dict(os.environ),
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RunRefused(f"{found} {CHECK_FLAG} did not finish within {CHECK_SECONDS} seconds") from error
+    except OSError as error:
+        raise RunRefused(f"{found} cannot be run: {error.strerror or type(error).__name__}") from error
+    if done.returncode == 0 and done.stdout.strip() == READY_LINE:
+        return Path(found)
+    detail = " ".join(done.stderr.split()) or " ".join(done.stdout.split()) or "no output"
+    if done.returncode == 2:
+        raise RunRefused(
+            f"the {BENCH_MCP} found at {found} cannot import its MCP parts, so Kiro CLI cannot start the "
+            f"reader's bench server ({detail}). Reinstall the bench tools as build-from-spec/README.md says, "
+            "then run again."
+        )
+    raise RunRefused(
+        f"the {BENCH_MCP} found at {found} failed its {CHECK_FLAG} check "
+        f"(exit code {done.returncode}): {detail}"
+    )
+
+
 def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro) -> Checked:
-    """Phase A (design 3.9, steps 1-9). Writes nothing. Each refusal raises RunRefused with its reason."""
+    """Phase A (design 3.9, steps 1-9). Writes nothing. Each refusal raises RunRefused with its reason.
+
+    The `bench-mcp` preflight (design K33) runs first: before the request or the records are read, and before
+    `kiro.version()` starts Kiro CLI."""
+    bench_mcp_preflight()
     request_file = root / arguments.request
     records = root / arguments.sessions
     if not request_file.is_file():
