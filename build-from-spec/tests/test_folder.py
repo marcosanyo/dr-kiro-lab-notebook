@@ -18,7 +18,9 @@ from bench.scan.scan import Finding, Scanner
 from build_from_spec import folder, wrap
 from build_from_spec.apps import APPS, App
 from build_from_spec.folder import FolderError, GivenFiles, given_files, write_folder
+from build_from_spec.reduced import check_reduced
 from build_from_spec.request import parse_request
+from support import seal_record
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STOP_LIST = REPO_ROOT / ".kiro" / "blind-scan" / "stop-list.txt"
@@ -199,9 +201,113 @@ def test_an_existing_folder_is_refused_by_name(fresh, body_request):
     assert str(fresh) in str(error.value)
 
 
-def test_record_setup_is_refused_until_it_is_written():
-    with pytest.raises(FolderError, match="record setup is not implemented"):
-        given_files("record", BODY_2)
+def snapshot_entries(record: Path) -> list[dict]:
+    lines = (record / "log.jsonl").read_bytes().split(b"\n")[:-1]
+    return [json.loads(line) for line in lines if json.loads(line)["kind"] == "snapshot"]
+
+
+def test_record_setup_writes_the_reduced_copy_in_given_record(fresh, body_request):
+    given = given_files("record", BODY_2)
+    write_folder(fresh, body_request, given)
+    assert files_of(fresh) == SETUP_TREE | {f"given/{name}" for name in given.files}
+    assert (fresh / "given" / "record" / "blobs").is_dir()
+    assert check_reduced(fresh / "given" / "record", BODY_2) == []
+
+
+def test_record_setup_drops_the_snapshots_and_its_copy_is_the_source_minus_them(fresh, body_request):
+    write_folder(fresh, body_request, given_files("record", BODY_2))
+    source_lines = (BODY_2 / "log.jsonl").read_bytes().split(b"\n")[:-1]
+    kept = [line for line in source_lines if json.loads(line)["kind"] != "snapshot"]
+    copy = (fresh / "given" / "record" / "log.jsonl").read_bytes()
+    assert copy == b"".join(line + b"\n" for line in kept)
+
+
+def test_record_setup_returns_the_removed_snapshots_in_log_order():
+    given = given_files("record", BODY_2)
+    expected = [(e["seq"], e["hash"]) for e in snapshot_entries(BODY_2)]
+    assert [(r.seq, r.hash) for r in given.removed] == expected
+    assert given.removed, "body-2 holds snapshot entries"
+
+
+def test_three_setups_differ_only_in_given(tmp_path, body_request):
+    folders = {}
+    for setup in ("spec", "none", "record"):
+        folders[setup] = tmp_path / setup
+        write_folder(folders[setup], body_request, given_files(setup, BODY_2))
+    outside = {
+        setup: {w: d for w, d in folder.file_hashes(path).items() if not w.startswith("given/")}
+        for setup, path in folders.items()
+    }
+    assert outside["spec"] == outside["none"] == outside["record"]
+    for path in folders.values():
+        assert {p for p in files_of(path) if not p.startswith("given/")} == SETUP_TREE
+    assert all(name.startswith("given/record/") for name in files_of(folders["record"]) - SETUP_TREE)
+    assert files_of(folders["none"]) == SETUP_TREE
+
+
+def test_a_copy_that_does_not_match_its_source_is_refused_naming_the_line(tmp_path, body_request):
+    given = given_files("record", BODY_2)
+    log = given.files["record/log.jsonl"]
+    first = log.split(b"\n", 1)[0]
+    tampered = log.replace(first, first + b" ", 1)
+    target = tmp_path / "tampered"
+    with pytest.raises(FolderError, match="log.jsonl line 1: differs from source entry seq 1") as error:
+        write_folder(
+            target,
+            body_request,
+            GivenFiles({**given.files, "record/log.jsonl": tampered}, given.removed, BODY_2),
+        )
+    assert str(target / "given" / "record") in str(error.value)
+    assert (target / "given" / "record" / "log.jsonl").is_file()
+
+
+def test_a_copy_with_a_missing_blob_is_refused_naming_the_blob(tmp_path, body_request):
+    given = given_files("record", BODY_2)
+    blob = next(name for name in given.files if name.startswith("record/blobs/"))
+    files = {name: data for name, data in given.files.items() if name != blob}
+    with pytest.raises(FolderError, match=f"blobs/{blob.split('/')[-1]}: missing"):
+        write_folder(tmp_path / "missing", body_request, GivenFiles(files, given.removed, BODY_2))
+
+
+def test_the_record_setup_passes_the_blind_scan_for_body_2(tmp_path, body_request, scanner):
+    target = tmp_path / "record"
+    write_folder(target, body_request, given_files("record", BODY_2))
+    assert folder.scan_folder(scanner, target) == []
+
+
+def test_a_planted_term_in_a_recorded_bench_text_is_found_in_the_copy(tmp_path, body_request, scanner):
+    term = next(name for name in scanner.terms.values() if name.isalpha())
+
+    def build(store):
+        return [
+            ("start", {"application": "body-lab", "session": "s1"}),
+            ("trial", {"note": term}),
+            ("snapshot", {"for": "end", "files": {}}),
+        ]
+
+    (tmp_path / "sessions").mkdir()
+    record = seal_record(tmp_path / "sessions" / "s1", build)
+    target = tmp_path / "planted"
+    write_folder(target, body_request, given_files("record", record))
+    findings = folder.scan_folder(scanner, target)
+    assert Finding("given/record/log.jsonl", 2, "term", term) in findings
+
+
+def test_record_setup_is_scanned_only_through_the_record_levels(tmp_path, body_request, scanner):
+    term = next(name for name in scanner.terms.values() if name.isalpha())
+
+    def build(store):
+        ref = store.put_blob(f"{term}\n".encode(), "dr-kiro", "text/markdown")
+        return [
+            ("start", {"application": "body-lab", "session": "s1"}),
+            ("experiment", {"files": {"e.md": ref}}),
+        ]
+
+    (tmp_path / "sessions").mkdir()
+    record = seal_record(tmp_path / "sessions" / "s1", build)
+    target = tmp_path / "dr-kiro-text"
+    write_folder(target, body_request, given_files("record", record))
+    assert folder.scan_folder(scanner, target) == []
 
 
 def test_unknown_setup_is_refused_by_name():

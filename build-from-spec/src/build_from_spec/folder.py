@@ -6,21 +6,24 @@ place under `bench-run/build-from-spec/<run-id>/`.
 """
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib import resources
 from pathlib import Path
 
 from bench.frontend.describe import descriptions
 from bench.frontend.labhooks import install as install_hooks
+from bench.record.chain import BLOB_DIR
 from bench.record.spec_copy import final_spec
 from bench.scan.scan import Finding, Scanner
 
+from build_from_spec.reduced import Removed, check_reduced, plan
 from build_from_spec.request import Request
 from build_from_spec.wrap import ReaderAdapter
 
 SETUPS = ("spec", "none", "record")
 DISCOVERED_TABLE = "not-required"  # every reader run (design 4.2, Requirement 12)
 GIVEN = "given"
+RECORD = "record"  # the reduced record copy inside given/ (Requirement 6.1)
 EXPERIMENTS = "experiments"
 REQUEST = "request.md"
 SPEC_FILES = ("requirements.md", "design.md", "tasks.md")
@@ -45,6 +48,10 @@ class FolderError(Exception):
 @dataclass(frozen=True)
 class GivenFiles:
     files: dict[str, bytes]  # names relative to given/
+    removed: tuple[
+        Removed, ...
+    ] = ()  # record setup: the snapshot entries left out of the copy (Requirement 6.4)
+    copy_source: Path | None = None  # record setup: the sealed record the copy is checked against (6.3)
 
 
 def _digest(data: bytes) -> str:
@@ -66,18 +73,24 @@ def builder_files(request: Request) -> dict[str, bytes]:
 
 
 def given_files(setup: str, source: Path) -> GivenFiles:
-    """The contents of `given/` for a setup. Fail for an unknown setup, and for `record` until task 10.4."""
+    """The contents of `given/` for a setup. `spec` gives the final spec, `none` nothing, `record` the reduced
+    copy of the source record in `given/record/` (Requirement 4.1). Fail for an unknown setup."""
     if setup == "spec":
         return GivenFiles(dict(final_spec(source).files))
     if setup == "none":
         return GivenFiles({})
     if setup == "record":
-        raise FolderError("the record setup is not implemented yet")
+        made = plan(source)
+        files = {f"{RECORD}/{name}": data for name, data in made.files().items()}
+        return GivenFiles(files, made.removed, Path(source))
     raise FolderError(f"unknown setup {setup!r}; the setups are {', '.join(SETUPS)}")
 
 
 def write_folder(folder: Path, request: Request, given: GivenFiles) -> None:
-    """Write a fresh working folder. Refuse a folder that already exists (Requirement 7.1)."""
+    """Write a fresh working folder. Refuse a folder that already exists (Requirement 7.1).
+
+    For the record setup, run the copy check (Requirement 6.6) before anything can start: refuse, naming
+    each line or blob that differs. The folder is kept, so the user can see what was written."""
     folder = Path(folder)
     if folder.exists():
         raise FolderError(f"{folder} already exists; a run starts in a fresh folder")
@@ -89,6 +102,15 @@ def write_folder(folder: Path, request: Request, given: GivenFiles) -> None:
     (folder / GIVEN).mkdir()
     for name, data in given.files.items():
         _write(folder / GIVEN / name, data)
+    if given.copy_source is not None:
+        copy = folder / GIVEN / RECORD
+        (copy / BLOB_DIR).mkdir(parents=True, exist_ok=True)  # the source always has a blobs folder
+        problems = check_reduced(copy, given.copy_source)
+        if problems:
+            raise FolderError(
+                f"the reduced record copy in {copy} does not match {given.copy_source}: "
+                + "; ".join(problems)
+            )
 
 
 def _files(folder: Path) -> list[tuple[str, Path]]:
@@ -129,9 +151,18 @@ def _level(where: str, data: bytes) -> str:
 
 def scan_folder(scanner: Scanner, folder: Path) -> list[Finding]:
     """The blind scan of the working folder, each file at its level. Findings name the file relative to the
-    folder (Requirement 7.5, 7.6)."""
+    folder (Requirement 7.5, 7.6). The reduced record copy is scanned by its record, each text at the level of
+    its recorded author (7.6); its findings name `given/record/` files."""
+    folder = Path(folder)
     findings: list[Finding] = []
-    for where, path in _files(Path(folder)):
+    record = folder / GIVEN / RECORD
+    for where, path in _files(folder):
+        if where.startswith(f"{GIVEN}/{RECORD}/"):
+            continue
         data = path.read_bytes()
         findings += scanner.scan_text(data.decode("utf-8"), _level(where, data), where)
+    if record.is_dir():
+        for finding in scanner.scan_record(record):
+            where = Path(finding.file).relative_to(record).as_posix()
+            findings.append(replace(finding, file=f"{GIVEN}/{RECORD}/{where}"))
     return findings
