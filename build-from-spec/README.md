@@ -183,3 +183,73 @@ shown with it.
 ## Runs
 
 _To be filled in when the runs are made. One line per run id, with its run file in `sessions/build-from-spec/`._
+
+## Readiness for the six real runs (19.1)
+
+Checked on branch `feat/build-from-spec-rehearsal`, on the builder's Mac. Result: not ready. Item 1 (task 18 passed)
+and item 6 (`KIRO_API_KEY` set) are not confirmed. No session was started and no model was called for these checks.
+
+1. **Tasks 11.3, 16.3 and 18 passed: not confirmed (task 18).**
+   - `uv run pytest -q tests/test_frozen_relied.py tests/test_run_end_to_end.py` in `build-from-spec/`:
+     `7 passed in 2.61s`. Tasks 11.3 and 16.3 are confirmed.
+   - Task 18 is not passed. `.kiro/specs/build-from-spec/tasks.md` line 388 reads `- [ ] 18.`, 18.2 is `[-]`, 18.3 is `[ ]`.
+   - 18.1: observed (see "18.1 Install and adapter import" above).
+   - 18.2: stopped. Item 2 (`--resume` continues the same conversation) was not observed, and item 1 was only partly
+     observed. See "18.2 Headless Kiro CLI" above.
+   - 18.3: not run. The picture limit is recorded in "Limits of this version" above.
+
+2. **Request files committed and unchanged: confirmed.**
+   - `git status -s build-from-spec/requests/`: empty output.
+   - `git log --oneline -1 -- build-from-spec/requests/stop-ahead.toml`: `c137e15 build-from-spec: stop-ahead becomes the main request (Decision 18)`
+   - `git log --oneline -1 -- build-from-spec/requests/straight-ahead.toml`: `34e3093 build-from-spec: approved requirements, Japanese translation, two requests`
+   - `git log --oneline -1 -- build-from-spec/requests/turn-right.toml`: `34e3093 build-from-spec: approved requirements, Japanese translation, two requests`
+
+3. **`bfs-check-request` on `sessions/body-lab/body-2`: confirmed.**
+   - `stop-ahead`: `no findings`, exit 0.
+   - `straight-ahead`: refused, naming T31, T34, T35, T37, T38 and T39, exit 1.
+   - `turn-right`: refused, naming T19, T25 and T29, exit 1.
+
+4. **`bench-verify` on `sessions/body-lab/body-2`: confirmed.** `cd bench && uv run bench-verify ../sessions/body-lab/body-2`
+   prints `../sessions/body-lab/body-2: verified, 125 entries, 77 blobs`, exit 0.
+
+5. **No open session in `bench-run/build-from-spec/state/`: confirmed.** `open_sessions` (`bench/src/bench/drkiro/session.py`)
+   over that folder printed `[]`. The folders there are `rehearsal-fake-record-1`, `rehearsal-fake-record-3` and
+   `rehearsal-fake-record-4`.
+
+6. **`KIRO_API_KEY` set in the builder's environment: not confirmed.** `test -n "${KIRO_API_KEY:-}" && echo yes || echo no`
+   printed `no`. The value was not printed.
+
+7. **Run arguments: confirmed.**
+   - `kiro-cli chat --list-models` lists `  claude-sonnet-5.5    1.30x credits      Claude Sonnet 5.5 model with 1M context window`.
+   - `bfs-run --help` lists `--request`, `--setup`, `--source`, `--seed`, `--run`, `--model`, `--effort` and `--sessions`.
+     All are used in the commands below.
+   - `--effort default`: the help text gives no list of values. The parser accepts any non-empty value
+     (`build-from-spec/src/build_from_spec/run.py` lines 196-197). `kiro_command` leaves out `--effort` when the value is
+     `default` (`build-from-spec/src/build_from_spec/turns.py` lines 81-82). Confirmed by reading the code; not run.
+   - Seed 3 is a whole number, run 1 or 2 is a valid run number.
+
+8. **Planned run ids free: confirmed for all six.** `ls -d` under `bench-run/build-from-spec/`,
+   `bench-run/build-from-spec/state/` and `sessions/build-from-spec/body-lab/` found none of the six names.
+   `sessions/build-from-spec/body-lab/` is empty. The moved unplanned record
+   `bench-run/build-from-spec/unplanned/stop-ahead-none-1` exists and does not count.
+
+### Commands for task 20
+
+Not yet run: the user runs them, after this branch is merged into main.
+
+```
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup spec --source sessions/body-lab/body-2 --seed 3 --run 1 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup none --source sessions/body-lab/body-2 --seed 3 --run 1 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup record --source sessions/body-lab/body-2 --seed 3 --run 1 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup spec --source sessions/body-lab/body-2 --seed 3 --run 2 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup none --source sessions/body-lab/body-2 --seed 3 --run 2 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+bfs-run --request build-from-spec/requests/stop-ahead.toml --setup record --source sessions/body-lab/body-2 --seed 3 --run 2 --model claude-sonnet-5.5 --effort default --sessions sessions/build-from-spec
+```
+
+Run ids in order: `stop-ahead-spec-1`, `stop-ahead-none-1`, `stop-ahead-record-1`, `stop-ahead-spec-2`, `stop-ahead-none-2`, `stop-ahead-record-2`.
+
+### Blocks before the first run
+
+- Task 18 is not passed. 18.2 item 2 (`--resume` with the reader agent) and 18.3 (picture blob opened by the reader's file tool)
+  must be observed, or the limit must be decided with the user (`.kiro/specs/build-from-spec/tasks.md`, task 18).
+- `KIRO_API_KEY` is not set in the shell that ran these checks.
