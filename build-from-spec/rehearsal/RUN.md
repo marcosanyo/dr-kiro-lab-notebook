@@ -170,3 +170,22 @@ turn ran.
 Decision needed before another rehearsal run: whether the first run's working folder and its `run.json` are
 regenerated for the changed `reader.json`, or a new request run is started under a new run id. This is a choice
 of the builder, and no command was changed to get past the check.
+
+## Result of the rehearsal 3 (not counted)
+
+Run id `rehearsal-fake-record-3`, started with step (c) and `--run 3` (the other arguments as in step (c)). The
+run stopped at its first reader turn. No trial ran, so there is no judgement and no in-range trial. Steps (d) and
+(e) were not run.
+
+- The step (c) command ran at 23:22:39 JST and was sealed as stopped at 23:22:42 JST (about 3 seconds). `bfs-run`
+  exited with code 0 and reported the run as sealed as stopped.
+- The reader's Kiro CLI exited with code 3 at turn 1. Its output, from `rehearsal-fake-record-3.turn-1.log`, was:
+  `Error: these servers failed to start: bench: Connection closed (--require-mcp-startup enabled)`.
+- `rehearsal-fake-record-3.mcp-startup.log` does not exist. No startup log was written for this run.
+- `pgrep -fl bench-mcp` found no process after the turn.
+- Observed: the exit code 3, the Kiro CLI message above, and the "Connection closed" failure of the `bench` server.
+- Not observed: the bench's own stderr and the startup log, so the reason the connection closed is not known.
+- Run 2 was refused before its session started, because its working folder
+  `bench-run/build-from-spec/rehearsal-fake-record-2` was left over from an earlier attempt and the
+  `reader.json` hash differed from run 1. That refusal happened before any session, so it is not a bench failure.
+  The folder was kept and was not deleted.
