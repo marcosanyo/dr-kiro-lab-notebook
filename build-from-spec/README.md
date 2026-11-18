@@ -40,6 +40,10 @@ The first turn of a run sends the start line, and each later turn sends the cont
 _To be filled in by task 18 of `.kiro/specs/build-from-spec/tasks.md`, one line per check in design section 9, with
 the command used and whether it was observed._
 
+- Wheel of the reader files (task 8.1 open point): `uv build --wheel --out-dir bench-run/build-from-spec/wheel-check build-from-spec`.
+  The wheel contains `build_from_spec/files/reader.json`, `reader-prompt.md`, `reader.md`, `requirements.md`,
+  `design.md` and `tasks.md`. Observed with `unzip -l`.
+
 ## Runs
 
 _To be filled in when the runs are made. One line per run id, with its run file in `sessions/build-from-spec/`._
