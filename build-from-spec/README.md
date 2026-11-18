@@ -253,3 +253,26 @@ Run ids in order: `stop-ahead-spec-1`, `stop-ahead-none-1`, `stop-ahead-record-1
 - Task 18 is not passed. 18.2 item 2 (`--resume` with the reader agent) and 18.3 (picture blob opened by the reader's file tool)
   must be observed, or the limit must be decided with the user (`.kiro/specs/build-from-spec/tasks.md`, task 18).
 - `KIRO_API_KEY` is not set in the shell that ran these checks.
+
+## Judgements of the six real runs after the judge fix (K34)
+
+6 つの実行の判定を、判定の修正（K34）のあとにやり直した。値は封印された記録から読んだ。
+
+| 条件 | 回 | 合否（今） | 合否（修正前） | 使った試行の数 | 最初に範囲に入った試行 | 最後の試行（x, y, heading） | 頼った id |
+|---|---|---|---|---|---|---|---|
+| spec | 1 | pass | pass | 2 | T1 | T2（0.454, 0.075, -0.924） | R1, R11, R13 |
+| spec | 2 | pass | not-counted（E9 は given/ にない id として拒否） | 2 | T1 | T2（0.441, 0.077, 2.479） | R11, R13, E9 |
+| none | 1 | fail | fail | 12 | なし | T12（0.018, 0.000, 0.513） | none |
+| none | 2 | fail | fail | 12 | なし | T12（0.087, 0.019, -24.359） | none |
+| record | 1 | fail | fail | 12 | なし | T12（-0.263, -0.317, 116.103） | none |
+| record | 2 | pass | pass | 7 | T3 | T7（0.454, 0.075, -0.924） | H10, H11 |
+
+変わった回: spec 2 のみ（not-counted から pass へ）。封印記録は変えていない。
+
+原因: リーダーの steering は、`given/` にある R、H、E の id を挙げてよいと伝えていた。しかしコードは、設計表の R の行だけを受け入れていた。修正（K34）では、セットアップ spec で、与えた 3 つの spec ファイルにある id を受け入れる。また、絵の制限の文は日本語だったが、今は英語である。
+
+修正前の古い実行情報ファイルは `bench-run/build-from-spec/superseded/before-judge-fix/` にある。git にはなく、数えない。
+
+各実行のブラインドスキャンと bench-verify は通った。6 つの実行はやり直していない。
+
+観察: spec 1 の T2 と record 2 の T7 は、計算済み入力（a1=-1, f=2, T=3.75）も計測値も同じである。ただし実験は違う（E2 と E3）。2 つの記録は独立したセッションなので、写しではない。
