@@ -33,6 +33,7 @@ from build_from_spec.folder import SETUPS, SPEC_FILES
 from build_from_spec.judge import JudgeError, judge_record
 from build_from_spec.relied import ReliedError, allowed_ids
 from build_from_spec.request import STOP_LIST, RequestError, parse_request
+from build_from_spec.runs import RECORDS, RUN_FILE_SUFFIX, RUN_ID
 from build_from_spec.turns import KINDS
 
 FORMAT = 1
@@ -41,13 +42,10 @@ ENDS = ("ended", "stopped")
 PROBLEMS = ("no-h1", "no-line", "bad-syntax", "unknown-id", "late")
 # A relied-on id list is null for these problems (Requirement 14.2).
 NULL_IDS_PROBLEMS = ("no-h1", "no-line", "bad-syntax")
-# The run id of design 3.12. It is checked before any path is built from it; `runs.py` reads the same pattern.
-RUN_ID = re.compile(r"(?P<request>[a-z0-9-]+)-(?P<setup>spec|none|record)-(?P<n>[1-9][0-9]*)")
 TRIAL = re.compile(r"T[0-9]+")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 RUN_DATA_SUFFIX = ".run-data.json"
-RUN_FILE_SUFFIX = ".run.json"
 
 REQUEST_FIELDS = ("id", "commit", "sha256")
 SOURCE_FIELDS = ("application", "session", "seal")
@@ -341,7 +339,6 @@ def run_file_texts(run_file: Mapping[str, Any]) -> tuple[str, str]:
 
 
 RUN_DATA = Path("bench-run") / "build-from-spec"
-RECORDS = Path("sessions") / "build-from-spec"
 SESSIONS = Path("sessions")
 REQUESTS = Path("build-from-spec") / "requests"
 
@@ -361,7 +358,7 @@ def _sealed(folder: Path) -> list[dict[str, Any]]:
         raise RunFileError(f"{folder}: the record is not sealed or does not verify ({error})") from error
 
 
-def _committed_request(root: Path, commit: str, request_id: str) -> bytes:
+def committed_request(root: Path, commit: str, request_id: str) -> bytes:
     """The request file as it is at `commit` (Requirement 14.3), read from git, not the working tree."""
     path = (REQUESTS / f"{request_id}.toml").as_posix()
     shown = subprocess.run(
@@ -412,7 +409,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
         )
 
     request = data["request"]
-    request_bytes = _committed_request(root, request["commit"], request["id"])
+    request_bytes = committed_request(root, request["commit"], request["id"])
     request_hash = hashlib.sha256(request_bytes).hexdigest()
     if request_hash != request["sha256"]:
         raise RunFileError(
