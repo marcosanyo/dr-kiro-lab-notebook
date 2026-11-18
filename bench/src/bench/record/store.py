@@ -31,6 +31,10 @@ class StoreError(RuntimeError):
     """The record could not be written or opened."""
 
 
+class StoreInUseError(StoreError):
+    """The session folder is locked by another live process. The lock file holds no process id."""
+
+
 def authored(author: str, text: str) -> dict[str, str]:
     """A text field in the record, with its author (9.5)."""
     if author not in AUTHORS:
@@ -64,7 +68,7 @@ class Store:
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
             lock.close()
-            raise StoreError(f"session folder {folder} is in use by another process") from error
+            raise StoreInUseError(f"session folder {folder} is in use by another process") from error
         return lock
 
     @classmethod

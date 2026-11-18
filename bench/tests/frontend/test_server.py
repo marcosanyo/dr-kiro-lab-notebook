@@ -208,6 +208,46 @@ def test_config_file_passes_the_discovered_table_setting_on(lab: Lab, tmp_path: 
     assert config.session.discovered_table == "not-required"
 
 
+HOLD_LOCK = (
+    "import sys; from pathlib import Path; from bench.record.store import Store; "
+    "store = Store.open(Path(sys.argv[1])); print('locked', flush=True); sys.stdin.read(); store.close()"
+)
+RUN_MAIN = "import sys; from bench.frontend.server import main; sys.exit(main())"
+
+
+def test_state_folder_in_use_by_a_live_process_stops_with_a_bench_line(lab: Lab, tmp_path: Path) -> None:
+    open_session(config_file.load(_config_file(lab, tmp_path))).close()  # creates state/s2, releases its lock
+    resumed = _config_file(lab, tmp_path, resume=True)
+    holder = subprocess.Popen(
+        [sys.executable, "-c", HOLD_LOCK, str(lab.root / "state" / "s2")],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None and holder.stdout.readline().strip() == "locked"
+        env = {**os.environ, config_file.ENV_VAR: str(resumed)}
+        done = subprocess.run(
+            [sys.executable, "-c", RUN_MAIN],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+        )
+    finally:
+        assert holder.stdin is not None
+        holder.stdin.close()
+        holder.wait(timeout=60)
+    assert done.returncode == 2
+    assert "Traceback" not in done.stderr
+    (line,) = done.stderr.splitlines()
+    assert line.startswith("bench-mcp: the session s2 is in use by another process")
+    assert "stop that process or wait for it to finish" in line
+    assert str(lab.root / "state" / "s2") in line
+
+
 def test_missing_session_config_variable_stops_the_server() -> None:
     env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
     done = subprocess.run(

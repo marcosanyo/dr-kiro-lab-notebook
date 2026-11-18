@@ -8,6 +8,7 @@ no gate and builds no message text of its own.
 
 import sys
 from collections.abc import Callable
+from pathlib import Path
 
 import anyio
 import anyio.to_thread
@@ -20,6 +21,7 @@ from bench.frontend import config as config_file
 from bench.frontend.describe import descriptions
 from bench.frontend.pictures import NOT_DELIVERED, PictureWriteError, PictureWriter
 from bench.frontend.render import render
+from bench.record.store import StoreInUseError
 
 TOOLS = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
 
@@ -78,6 +80,12 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
             return Session.open(cfg.session)
         except SessionError as error:
             raise StartupError(f"cannot reopen the session: {error}") from error
+        except StoreInUseError as error:
+            folder = Path(cfg.session.state_dir) / cfg.session.session_id
+            raise StartupError(
+                f"the session {cfg.session.session_id} is in use by another process; "
+                f"stop that process or wait for it to finish (state folder {folder})"
+            ) from error
     outcome = Session.start(cfg.session)
     if not isinstance(outcome, Ran):
         raise StartupError(f"cannot start the session: {outcome.message.plain()}")
