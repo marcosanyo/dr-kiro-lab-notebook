@@ -1,0 +1,7 @@
+id = "rehearsal-fake"
+application = "fake"
+words = "Find the settings that make the distance reach at least 2.0 in one trial, and say which settings do it."
+
+[[pass]]
+measurement = "distance"
+range = [2.0, 3.0]
