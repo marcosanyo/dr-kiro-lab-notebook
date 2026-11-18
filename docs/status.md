@@ -143,6 +143,15 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   実セッションのシードは SHA-256 から来るので、これらと重なる可能性は事実上ない。重なりうるのは、同じセッションのシードを使い直したときだけ。
 - 確かめていないこと: 5 回の終了コード 127 とこの仕組みの関係。127 の実行は、フォルダーを移した後に起きた（`random-points.md`）。
 
+## build-from-spec（ブランチ `feat/build-from-spec-project`）
+- **済み:** タスク 1〜17（ベンチの修正、ソース試行つきのリクエストの確認、ラッピングアダプター、リーダーのファイル、作業フォルダー、縮約コピー、relied-on 行、結果プログラム、実行情報ファイル、実行チェック、ターン、テストつきの `bfs-run`）。チェックポイント 17 は通過。
+- **18.1 observed:** インストールできた。`uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --with-editable ./wind-tunnel/adapter --with-executables-from build-from-spec --reinstall`
+- **18.2 partly:** 素の Kiro CLI の `--resume` は observed（AMBER-17、往復 2 回、セッション 1 つ）。リーダーレベルのヘッドレスは not observed。
+  以前のリーダーの実行の最初のターンで `bench-mcp` が起動に失敗した（終了コード 3）。原因は未特定。有力な仮説は、別のプロセスが状態フォルダーのロックを持っていたこと（`build-from-spec/README.md` を参照）。
+- **18.3 限界あり:** 素の Kiro CLI は画像の blob を開かなかった。答えは 320x360 で、実際の大きさは 1600x360。要件 6.5 の限界であり、`record` の実行の前にユーザーの決定が要る。
+- 計画外の本物の実行 `stop-ahead-none-1`（シード 1812、数えない）が `bench-run/build-from-spec/unplanned/` にある（git 管理外）。
+- 本物の 6 回の実行は、この PR が main に入り、新しいブランチを切ってから始める。
+- **次の一手:** 画像の限界と最初のターンの失敗についてユーザーの決定、その後タスク 19.1。
 ## 環境ごとの注意
 
 - **Kiro Web**: hook は動かない。テストと ruff は `sh bench/scripts/check.sh`、訳の確認は `sh scripts/ja-check.sh` を手で実行する。

@@ -170,8 +170,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 7. Wrapping adapter
-  - [ ] 7.1 Write `wrap.py`
+- [x] 7. Wrapping adapter
+  - [x] 7.1 Write `wrap.py`
     - Module `__getattr__` (PEP 562) returning a factory for `reader/<application>/<request-id>/<budget>`, and
       `ReaderAdapter` as design 3.3: declaration with `budget` and `goal` replaced, `run_trial` passing inputs and
       seed and catching nothing, `builder_versions` and `check_inputs` set only when the wrapped adapter has them.
@@ -184,8 +184,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 8.1, 8.2, 8.4, 8.5, 8.6_
 
-- [ ] 8. Reader files
-  - [ ] 8.1 Write the reader's builder files and `build-from-spec/README.md`
+- [x] 8. Reader files
+  - [x] 8.1 Write the reader's builder files and `build-from-spec/README.md`
     - `build-from-spec/src/build_from_spec/files/`: `reader.json`, `reader-prompt.md`, `reader.md` (with
       `inclusion: always`) and the three templates, as design 3.4; included as package data. English, no path, no
       part name, no number; the H1 example uses placeholders in angle brackets.
@@ -199,8 +199,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 1.1, 9.1, 9.2, 9.4, 9.6_
 
-- [ ] 9. Working folder
-  - [ ] 9.1 Write `folder.py` for the setups `spec` and `none`
+- [x] 9. Working folder
+  - [x] 9.1 Write `folder.py` for the setups `spec` and `none`
     - `builder_files`, `given_files`, `write_folder`, `file_hashes`, `tool_hashes`, `scan_folder` as design 3.5.
       `write_folder` refuses an existing folder, writes the hooks with `labhooks.install`, copies `method.md` from
       the bench package byte for byte, writes `request.md` as the words exactly, and an empty `experiments/`.
@@ -216,21 +216,21 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 4.1, 4.2, 4.5, 5.3, 7.2, 7.3, 7.5, 7.6, 7.7, 8.4, 9.3, 9.5_
 
-- [ ] 10. Reduced record copy
-  - [ ] 10.1 Write `reduced.py`
+- [x] 10. Reduced record copy
+  - [x] 10.1 Write `reduced.py`
     - `Removed`, `reduce`, `check_reduced` as design 3.6.
     - Unit tests on a sealed fake record: the kept lines, the kept blobs and the removed list; each failure case of
       Requirement 19.3 (a changed kept line, a removed non-snapshot line, a kept snapshot entry, an extra blob, a
       missing blob) and another file added are reported naming the line or blob.
     - Verified by: the checks of part 2.
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
-  - [ ] 10.2 Write property test for the reduced copy
+  - [x] 10.2 Write property test for the reduced copy
     - **Property 7: Reduced copy keeps everything but the snapshots**
     - **Validates: Requirements 6.1, 6.2, 6.4**
-  - [ ] 10.3 Write property test for the copy check
+  - [x] 10.3 Write property test for the copy check
     - **Property 8: Copy check accepts the copy and finds every change**
     - **Validates: Requirements 6.3**
-  - [ ] 10.4 Wire the `record` setup into the working folder
+  - [x] 10.4 Wire the `record` setup into the working folder
     - `folder.given_files` for `record` writes `given/record/` with `reduce` and returns the removed entries;
       `scan_folder` scans it with `scanner.scan_record`.
     - Unit tests: three working folders of one request (`spec`, `none`, `record`) have identical trees and bytes
@@ -238,8 +238,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 4.1, 4.2, 6.1, 7.6_
 
-- [ ] 11. Relied-on line
-  - [ ] 11.1 Write `relied.py`
+- [x] 11. Relied-on line
+  - [x] 11.1 Write `relied.py`
     - `PREFIX`, `PROBLEMS`, `Relied`, `relied_line`, `parse_ids`, `format_ids`, `allowed_ids`, `relied_on` as design
       3.7, with the problems in the order `no-h1`, `no-line`, `bad-syntax`, `unknown-id`, `late`.
     - Unit tests: allowed ids of `sessions/body-lab/body-2`: `spec` gives R1-R14 and `none`; `record` gives H1-H11,
@@ -247,18 +247,18 @@ Dr. Kiro takes no part.
       prediction line that does not start with `# relies on` is `no-line`.
     - Verified by: the checks of part 2.
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
-  - [ ] 11.2 Write property test for the relied-on line
+  - [x] 11.2 Write property test for the relied-on line
     - **Property 3: Relied-on line round trip**
     - **Validates: Requirements 10.1**
-  - [ ] 11.3 Test that the frozen part keeps the relied-on comment — **Stop and ask** if it fails
+  - [x] 11.3 Test that the frozen part keeps the relied-on comment — **Stop and ask** if it fails
     - A fake session registers an H1 whose prediction block starts with `# relies on: none`; the recorded frozen
       blob holds the line byte for byte, and `relied_line` reads it back. If the frozen part does not hold the line,
       **stop and ask the user**; do not change the bench or the syntax.
     - Verified by: the checks of part 2.
     - _Requirements: 10.3, 10.6_
 
-- [ ] 12. Result program
-  - [ ] 12.1 Write `judge.py`
+- [x] 12. Result program
+  - [x] 12.1 Write `judge.py`
     - `Judgement`, `counted_trials`, `judge`, `judge_record` as design 3.8: counted trials by their
       `"for": "experiment"` snapshot, the last trial by `parse_trial_id`, in range with `inside`, not-measured as
       outside, results in the order `not-counted`, `no-trial`, `pass`, `fail`; first in range; end from the seal
@@ -268,18 +268,18 @@ Dr. Kiro takes no part.
       command).
     - Verified by: the checks of part 2.
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.9, 15.10_
-  - [ ] 12.2 Write property test for the order of the result checks
+  - [x] 12.2 Write property test for the order of the result checks
     - **Property 4: Order of the result checks**
     - **Validates: Requirements 10.3, 10.4, 15.2, 15.3**
-  - [ ] 12.3 Write property test for the last counted trial
+  - [x] 12.3 Write property test for the last counted trial
     - **Property 5: Only the last counted trial decides**
     - **Validates: Requirements 2.3, 15.4, 15.6, 15.8, 15.9, 15.10**
-  - [ ] 12.4 Write property test for the first in-range trial and idempotence
+  - [x] 12.4 Write property test for the first in-range trial and idempotence
     - **Property 6: First in-range trial, and judging twice**
     - **Validates: Requirements 15.5, 15.7**
 
-- [ ] 13. Run data file, run file and author sidecar
-  - [ ] 13.1 Write the run data and run file formats and the sidecar in `runfile.py`
+- [x] 13. Run data file, run file and author sidecar
+  - [x] 13.1 Write the run data and run file formats and the sidecar in `runfile.py`
     - The run data file (design 4.3) and run file (design 4.4) as JSON with `indent=2`, sorted keys and a final
       newline; readers that refuse a missing or extra field; the `null` markers of design 4.4; the author sidecar of
       design 3.13 built by placeholders, with the relied-on id tokens as `dr-kiro` and the rest as `bench`. No path
@@ -288,13 +288,13 @@ Dr. Kiro takes no part.
       `sidecar_pieces` accepts the pair.
     - Verified by: the checks of part 2.
     - _Requirements: 11.11, 14.2, 14.4_
-  - [ ] 13.2 Write property test for the run file round trip
+  - [x] 13.2 Write property test for the run file round trip
     - **Property 10: Run file round trip**
     - **Validates: Requirements 14.2**
-  - [ ] 13.3 Write property test for the sidecar
+  - [x] 13.3 Write property test for the sidecar
     - **Property 11: The sidecar gives every character one author**
     - **Validates: Requirements 14.4, 16.5**
-  - [ ] 13.4 Write `write_run_file` and `bfs-run-file`
+  - [x] 13.4 Write `write_run_file` and `bfs-run-file`
     - Steps 1-5 of design 3.11: refuse an existing run file; read the run data file; verify the sealed run record;
       read the source and the request at the recorded commit and compare their hashes; `allowed_ids` and
       `judge_record`; write the run file and the sidecar under temporary names, scan the run record and the run
@@ -306,8 +306,8 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 14.1, 14.2, 14.5, 16.2, 16.4, 16.5_
 
-- [ ] 14. Earlier runs and `bfs-check-runs`
-  - [ ] 14.1 Write `runs.py`
+- [x] 14. Earlier runs and `bfs-check-runs`
+  - [x] 14.1 Write `runs.py`
     - The run-id pattern of design 3.12; the run records and run files of one request in
       `sessions/build-from-spec/<application>/`; the consistency checks used by `bfs-run` phase A6 (every run record
       has a run file; same seed, source session and seal, request SHA-256 and commit, Kiro CLI version, model and
@@ -316,7 +316,7 @@ Dr. Kiro takes no part.
       named; each differing field is named with both values.
     - Verified by: the checks of part 2.
     - _Requirements: 4.6, 5.6, 7.8, 14.6, 17.5_
-  - [ ] 14.2 Write `check.py`, `derive_run` and `bfs-check-runs`
+  - [x] 14.2 Write `check.py`, `derive_run` and `bfs-check-runs`
     - Steps 1-4 of design 3.12, reading only `sessions/build-from-spec/`, `build-from-spec/requests/` at the recorded
       commits and the source records named in the run files; one line per run; exit 1 on any problem naming the run
       file and the field. `derive_run` returns the items of Requirement 18.1 and is importable by the `lab-notebook`
@@ -327,12 +327,12 @@ Dr. Kiro takes no part.
       after the request file has a later commit in the test repository.
     - Verified by: the checks of part 2.
     - _Requirements: 14.3, 14.6, 18.1, 18.2_
-  - [ ] 14.3 Write property test for the run-file check
+  - [x] 14.3 Write property test for the run-file check
     - **Property 12: The run-file check finds a changed field**
     - **Validates: Requirements 14.3, 19.5**
 
-- [ ] 15. Turns
-  - [ ] 15.1 Write `turns.py`
+- [x] 15. Turns
+  - [x] 15.1 Write `turns.py`
     - The start and continue line constants, the fixed `kiro-cli chat` command of design 3.10 with `--model`,
       `--effort` and `--resume` on later turns, `Prompt`, `TurnsEnd`, `run_turns(launch, entries, save)` with the
       four rules of design 3.10 and the stop reasons of design B26.
@@ -340,12 +340,12 @@ Dr. Kiro takes no part.
       `build-from-spec/README.md`; the stop reasons hold no forbidden term (scan at the builder level).
     - Verified by: the checks of part 2.
     - _Requirements: 9.6, 11.6_
-  - [ ] 15.2 Write property test for the turn loop
+  - [x] 15.2 Write property test for the turn loop
     - **Property 9: Turn loop**
     - **Validates: Requirements 9.6, 11.6**
 
-- [ ] 16. `bfs-run`
-  - [ ] 16.1 Write `run.py`
+- [x] 16. `bfs-run`
+  - [x] 16.1 Write `run.py`
     - Arguments of design 3.9, all required and validated as strings. Phase A checks 1-9 in order, writing nothing;
       phase B (`write_folder`, `check_reduced` for `record`, hash comparison with earlier run files, `scan_folder`,
       run data file, session config of design 4.2 with `resume = true` and `discovered_table = "not-required"`);
@@ -357,7 +357,7 @@ Dr. Kiro takes no part.
       Creates `sessions/build-from-spec/` if it does not exist.
     - Verified by: the checks of part 2.
     - _Requirements: 4.4, 4.6, 4.7, 5.1, 5.2, 5.4, 5.5, 5.6, 5.7, 7.1, 7.3, 7.4, 7.8, 11.1-11.11, 13.1, 13.5, 13.6, 17.3, 17.4, 17.5_
-  - [ ] 16.2 Write the refusal tests of `bfs-run`
+  - [x] 16.2 Write the refusal tests of `bfs-run`
     - Before writing anything (no working folder, no file): an untracked request, a changed request (staged and
       unstaged), a request with a finding, a non-body-lab application, `sessions/body-lab/body-1` as source (no end
       snapshot), a stopped record, a record that does not verify, a source of another application, a source inside
@@ -370,7 +370,7 @@ Dr. Kiro takes no part.
       started (the launch is a test function).
     - Verified by: the checks of part 2.
     - _Requirements: 4.6, 4.7, 5.2, 5.5, 5.6, 5.7, 7.1, 7.4, 7.5, 7.8, 11.2, 11.7, 11.8, 11.10, 17.5, 19.4_
-  - [ ] 16.3 Write the end-to-end tests with a fake launch
+  - [x] 16.3 Write the end-to-end tests with a fake launch
     - A fake `launch` that drives a fake session through the core (register H1 with a relied-on line, run, verdict,
       `end`) gives a record sealed `ended` in `sessions/build-from-spec/<application>/<run-id>/`, a run file and a
       sidecar, and `bfs-check-runs` passes; the record's reader texts carry the `dr-kiro` author. A `launch` that
@@ -379,7 +379,7 @@ Dr. Kiro takes no part.
     - Verified by: the checks of part 2.
     - _Requirements: 9.6, 11.6, 11.9, 13.1, 13.2, 13.4, 14.1, 15.6_
 
-- [ ] 17. Checkpoint
+- [x] 17. Checkpoint
   - Ensure all tests pass, ask the user if questions arise. Run the checks of parts 1 and 2 and `bench-scan` on the
     `build-from-spec/` builder files. Report in Japanese.
 
@@ -389,11 +389,11 @@ Dr. Kiro takes no part.
   - Each check is done by hand once, with the fake application in `bench-run/`, and its result is written in
     `build-from-spec/README.md` as observed or not observed, with the command used. A check not observed is a stop:
     report it in Japanese and ask; do not change the method, the flags or the files to get around it (`rules.md` 2).
-  - [ ] 18.1 Install the commands and check the adapter import (check 8)
+  - [x] 18.1 Install the commands and check the adapter import (check 8)
     - `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --reinstall`;
       `bench-mcp` from `PATH` imports `build_from_spec.wrap`. Write the outcome in the README.
     - _Requirements: 1.2, 8.3_
-  - [ ] 18.2 Check headless Kiro CLI (checks 1-6)
+  - [-] 18.2 Check headless Kiro CLI (checks 1-6)
     - The headless command of design 3.10 in a new folder starts without any prompt (`--trust-workspace`,
       `--trust-tools=`, `--require-mcp-startup`) and a tool that would ask is refused, not waited on; `--resume`
       with `--no-interactive` continues the same conversation (`kiro-cli chat --list-sessions` shows one after two
