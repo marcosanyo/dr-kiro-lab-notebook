@@ -29,8 +29,8 @@ folder without `.git`.
 | Command | What it does |
 |---|---|
 | `bfs-check-request <request file> --source <record path>` | Checks a request file and its source record. Writes nothing. |
-| `bfs-run --request <file> --setup <setup> --source <record> --seed <n> --run <n> --model <m> --effort <e>` | Prepares and runs one reader run. |
-| `bfs-run-file <run-id>` | Writes the run file of a sealed run record whose script stopped before writing it. |
+| `bfs-run --request <file> --setup <setup> --source <record> --seed <n> --run <n> --model <m> --effort <e> --sessions sessions/build-from-spec` | Prepares and runs one reader run. `--sessions` is the records folder; production passes `sessions/build-from-spec`. |
+| `bfs-run-file <run-id> --sessions sessions/build-from-spec` | Writes the run file of a sealed run record whose script stopped before writing it. |
 | `bfs-check-runs` | Checks every run file against its records and the committed request. |
 
 ## Turns

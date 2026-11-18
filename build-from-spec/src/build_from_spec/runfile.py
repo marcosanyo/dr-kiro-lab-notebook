@@ -28,12 +28,20 @@ from bench.scan.levels import SIDECAR_SUFFIX
 from bench.scan.scan import Scanner
 from bench.scan.terms import ScanError
 
-from build_from_spec.apps import APPS, App, AppError, app_for, require_repository_root
+from build_from_spec.apps import (
+    APPS,
+    App,
+    AppError,
+    app_for,
+    check_records,
+    request_folder,
+    require_repository_root,
+)
 from build_from_spec.folder import SETUPS, SPEC_FILES
 from build_from_spec.judge import JudgeError, judge_record
 from build_from_spec.relied import ReliedError, allowed_ids
 from build_from_spec.request import STOP_LIST, RequestError, parse_request
-from build_from_spec.runs import RECORDS, RUN_FILE_SUFFIX, RUN_ID
+from build_from_spec.runs import RUN_FILE_SUFFIX, RUN_ID
 from build_from_spec.turns import KINDS
 
 FORMAT = 1
@@ -360,8 +368,6 @@ def run_file_texts(run_file: Mapping[str, Any]) -> tuple[str, str]:
 
 
 RUN_DATA = Path("bench-run") / "build-from-spec"
-SESSIONS = Path("sessions")
-REQUESTS = Path("build-from-spec") / "requests"
 
 
 def _valid_run_id(run_id: str) -> str:
@@ -379,9 +385,11 @@ def _sealed(folder: Path) -> list[dict[str, Any]]:
         raise RunFileError(f"{folder}: the record is not sealed or does not verify ({error})") from error
 
 
-def committed_request(root: Path, commit: str, request_id: str) -> bytes:
-    """The request file as it is at `commit` (Requirement 14.3), read from git, not the working tree."""
-    path = (REQUESTS / f"{request_id}.toml").as_posix()
+def committed_request(root: Path, commit: str, request_id: str, folder: Path) -> bytes:
+    """The request file as it is at `commit` (Requirement 14.3), read from git, not the working tree.
+
+    `folder` is the request folder of the application, relative to the root (apps.request_folder)."""
+    path = (folder / f"{request_id}.toml").as_posix()
     shown = subprocess.run(
         ["git", "-C", str(root), "show", f"{commit}:{path}"], capture_output=True, check=False
     )
@@ -391,12 +399,16 @@ def committed_request(root: Path, commit: str, request_id: str) -> bytes:
     return shown.stdout
 
 
-def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: Path) -> Path:
+def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: Path, records: Path) -> Path:
     """Write the run file and its author sidecar of a sealed run record (design 3.11; Requirements 14.1,
     14.5, 16.2). Return the run file's path.
 
-    `root` is the repository root, and every path is derived from it (design B24). Nothing is written before
-    every check passes. The two files are written under temporary names first. The blind scan covers the run
+    `root` is the repository root, and every path is derived from it (design B24). `records` is the records
+    folder of the run (`--sessions`). The source records sit in its parent, one folder per application, so a
+    production source is in `sessions/` and a rehearsal source is beside its rehearsal records.
+
+    Nothing is written before every check passes. The two files are written under temporary names first. The
+    blind scan covers the run
     record and the temporary run file. A finding removes the temporary files and stops, so the run record and
     the run file stay as they were. The sidecar is renamed before the run file, so a run file never exists
     without its sidecar.
@@ -408,12 +420,13 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
     data = read_run_data(root / RUN_DATA / f"{run_id}{RUN_DATA_SUFFIX}")
     if data["run"] != run_id:
         raise RunFileError(f"{run_id}: the run data file names run {data['run']!r}")
-    application = app_for(data["source"]["application"], apps).name
-    records = root / RECORDS / application
-    run_file = records / f"{run_id}{RUN_FILE_SUFFIX}"
+    app = app_for(data["source"]["application"], apps)
+    check_records(app, records, root)
+    application = app.name
+    run_file = records / application / f"{run_id}{RUN_FILE_SUFFIX}"
     if run_file.exists():
         raise RunFileError(f"{run_file}: already exists; a run file is never overwritten")
-    folder = records / run_id
+    folder = records / application / run_id
     if not folder.is_dir():
         raise RunFileError(f"{folder}: no run record; the run file is written once the run is sealed")
     seal = _sealed(folder)[-1]["hash"]
@@ -422,7 +435,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
     session = source["session"]
     if "/" in session or session in (".", ".."):
         raise RunFileError(f"{session!r}: not the name of a session")
-    source_folder = root / SESSIONS / source["application"] / session
+    source_folder = records.parent / source["application"] / session
     source_seal = _sealed(source_folder)[-1]["hash"]
     if source_seal != source["seal"]:
         raise RunFileError(
@@ -430,7 +443,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
         )
 
     request = data["request"]
-    request_bytes = committed_request(root, request["commit"], request["id"])
+    request_bytes = committed_request(root, request["commit"], request["id"], request_folder(app))
     request_hash = hashlib.sha256(request_bytes).hexdigest()
     if request_hash != request["sha256"]:
         raise RunFileError(
@@ -476,7 +489,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
     text, sidecar = run_file_texts(run_file_data)
     scanner = Scanner.from_config([root / app.scan_sources for app in apps.values()], stop_list)
 
-    temporary = records / f".{run_id}{RUN_FILE_SUFFIX}.tmp"
+    temporary = run_file.with_name(f".{run_id}{RUN_FILE_SUFFIX}.tmp")
     temporary_sidecar = temporary.with_name(temporary.name + SIDECAR_SUFFIX)
     try:
         temporary.write_text(text, encoding="utf-8", newline="")
@@ -499,11 +512,17 @@ def main(argv: list[str] | None = None) -> None:
         prog="bfs-run-file", description="Write the run file of a sealed run record."
     )
     parser.add_argument("run_id", help="the run id, <request>-<spec|none|record>-<n>")
+    parser.add_argument(
+        "--sessions",
+        required=True,
+        help="the records folder of the run, relative to the repository root: sessions/build-from-spec "
+        "for a production run",
+    )
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
         require_repository_root()
         root = Path.cwd()
-        written = write_run_file(args.run_id, APPS, root / STOP_LIST, root)
+        written = write_run_file(args.run_id, APPS, root / STOP_LIST, root, root / args.sessions)
     except (AppError, JudgeError, ReliedError, RequestError, RunFileError, ScanError) as error:
         sys.exit(f"bfs-run-file: {error}")
     print(f"bfs-run-file: wrote {written}")

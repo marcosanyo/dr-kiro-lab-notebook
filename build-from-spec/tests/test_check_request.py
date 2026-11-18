@@ -23,7 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 REQUESTS = REPO_ROOT / "build-from-spec" / "requests"
 BODY_2 = REPO_ROOT / "sessions" / "body-lab" / "body-2"
 STOP_LIST = Path(".kiro/blind-scan/stop-list.txt")
-FAKE = {"fake": App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 5)}
+FAKE = {
+    "fake": App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 5, False)
+}
 # A blind-scan term of the fake application that is not on the stop list, and not a declared name.
 PLANTED = "wobbet"
 

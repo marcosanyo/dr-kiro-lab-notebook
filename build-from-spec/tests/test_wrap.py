@@ -10,20 +10,22 @@ from bench.fake.adapter import FAIL_AT_GAIN, RAISE_AT_GAIN, FakeAdapter
 from bench.frontend import config as bench_config
 
 from build_from_spec import wrap
-from build_from_spec.apps import APPS, App, AppError
+from build_from_spec.apps import APPS, REQUESTS, App, AppError
 from build_from_spec.request import parse_request
 from build_from_spec.wrap import ReaderAdapter, WrapError, build
 
 WORDS = 'Go "straight" on: \\ 前へ, then stop.'
-FAKE_APP = App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 12)
+FAKE_APP = App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 12, False)
 FAKE_TABLE = {"body-lab": APPS["body-lab"], "fake": FAKE_APP}
-REPO_REQUESTS = wrap.REQUESTS
+REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_REQUESTS = REPO_ROOT / REQUESTS
 
 
 @pytest.fixture
 def requests(tmp_path: Path) -> Path:
-    folder = tmp_path / "requests"
-    folder.mkdir()
+    """A repository root whose request folder holds the two test requests. The build reads them from there."""
+    folder = tmp_path / REQUESTS
+    folder.mkdir(parents=True)
     (folder / "fake-go.toml").write_text(
         'id = "fake-go"\napplication = "fake"\n'
         f"words = {json.dumps(WORDS, ensure_ascii=False)}\n\n"
@@ -35,7 +37,7 @@ def requests(tmp_path: Path) -> Path:
         '[[pass]]\nmeasurement = "x"\nrange = [0.0, 1.0]\n',
         encoding="utf-8",
     )
-    return folder
+    return tmp_path
 
 
 def test_declaration_equals_the_wrapped_one_except_budget_and_goal(requests):

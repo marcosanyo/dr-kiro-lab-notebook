@@ -14,10 +14,11 @@ from typing import Any
 
 from bench.adapter import Declaration
 
-from build_from_spec.apps import APPS, App, app_for
+from build_from_spec.apps import APPS, App, app_for, request_folder
 from build_from_spec.request import parse_request
 
-REQUESTS = Path(__file__).resolve().parents[2] / "requests"
+# The repository root. The reader runs in its own working folder, so the request folder is found from here.
+ROOT = Path(__file__).resolve().parents[3]
 PARTS = ("application", "request", "budget")
 
 
@@ -49,8 +50,11 @@ def _load_wrapped(spec: str) -> Any:
     return getattr(importlib.import_module(module_name), attribute)()
 
 
-def build(name: str, apps: Mapping[str, App], requests: Path) -> ReaderAdapter:
-    """Build the reader's adapter for one factory name, refusing and naming what is wrong (Req 8.5, 8.6)."""
+def build(name: str, apps: Mapping[str, App], root: Path) -> ReaderAdapter:
+    """Build the reader's adapter for one factory name, refusing and naming what is wrong (Req 8.5, 8.6).
+
+    The request is read from the request folder of its application under `root` (apps.request_folder), so the
+    rehearsal's request folder is read for the rehearsal application only."""
     parts = name.split("/")
     if parts[0] != "reader":
         raise WrapError(f"{name!r} is not a reader factory name; it starts with reader/")
@@ -69,7 +73,7 @@ def build(name: str, apps: Mapping[str, App], requests: Path) -> ReaderAdapter:
             f"{name!r}: budget {fields['budget']!r} is not the reader budget of {app.name}, "
             f"which is {app.budget}"
         )
-    path = requests / f"{fields['request']}.toml"
+    path = Path(root) / request_folder(app) / f"{fields['request']}.toml"
     if not path.is_file():
         raise WrapError(f"{name!r}: no request file {path}")
     request = parse_request(path, apps)
@@ -84,6 +88,6 @@ def __getattr__(name: str) -> Callable[[], ReaderAdapter]:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
     def factory() -> ReaderAdapter:
-        return build(name, APPS, REQUESTS)
+        return build(name, APPS, ROOT)
 
     return factory

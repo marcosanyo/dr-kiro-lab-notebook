@@ -16,7 +16,7 @@ from bench.record.spec_copy import final_spec
 from bench.scan.scan import Finding, Scanner
 
 from build_from_spec import folder, wrap
-from build_from_spec.apps import APPS, App
+from build_from_spec.apps import APPS, REQUESTS, App
 from build_from_spec.folder import FolderError, GivenFiles, given_files, write_folder
 from build_from_spec.reduced import check_reduced
 from build_from_spec.request import parse_request
@@ -25,11 +25,11 @@ from support import seal_record
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STOP_LIST = REPO_ROOT / ".kiro" / "blind-scan" / "stop-list.txt"
 BODY_2 = REPO_ROOT / "sessions" / "body-lab" / "body-2"
-REPO_REQUESTS = wrap.REQUESTS
+REPO_REQUESTS = REPO_ROOT / REQUESTS
 BENCH_METHOD = resources.files("bench.drkiro") / "files" / "method.md"
 WORDS = 'Go "straight" on: \\ 前へ, then stop.'
 RUN_ID = "run-7f3a"
-FAKE_APP = App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 12)
+FAKE_APP = App("fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 12, False)
 FAKE_TABLE = {"body-lab": APPS["body-lab"], "fake": FAKE_APP}
 SPEC_NAMES = ("requirements.md", "design.md", "tasks.md")
 SETUP_TREE = {
@@ -57,15 +57,16 @@ def files_of(root: Path) -> set[str]:
     return {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
 
 
-def fake_requests(folder_path: Path) -> Path:
-    """A requests folder with one request for the fake application, whose words are WORDS."""
+def fake_requests(root: Path) -> Path:
+    """A repository root whose request folder holds one request for the fake application (words: WORDS)."""
+    folder_path = root / REQUESTS
     folder_path.mkdir(parents=True)
     (folder_path / "fake-go.toml").write_text(
         f'id = "fake-go"\napplication = "fake"\nwords = {json.dumps(WORDS, ensure_ascii=False)}\n\n'
         '[[pass]]\nmeasurement = "distance"\nrange = [0.0, 1.0]\n',
         encoding="utf-8",
     )
-    return folder_path
+    return root
 
 
 @pytest.fixture(scope="module")
@@ -122,11 +123,11 @@ def test_method_is_the_bench_file_byte_for_byte_and_there_is_no_workflow(fresh, 
 
 
 def test_request_file_and_declared_goal_are_the_words(tmp_path, fresh):
-    requests = fake_requests(tmp_path / "requests")
-    request = parse_request(requests / "fake-go.toml", FAKE_TABLE)
+    root = fake_requests(tmp_path / "repo")
+    request = parse_request(root / REQUESTS / "fake-go.toml", FAKE_TABLE)
     write_folder(fresh, request, GivenFiles({}))
     assert (fresh / "request.md").read_bytes() == WORDS.encode("utf-8")
-    adapter = wrap.build("reader/fake/fake-go/12", FAKE_TABLE, requests)
+    adapter = wrap.build("reader/fake/fake-go/12", FAKE_TABLE, root)
     assert adapter.declaration().goal.encode("utf-8") == WORDS.encode("utf-8")
 
 
@@ -142,7 +143,7 @@ def test_no_file_outside_given_holds_the_run_id_source_or_a_path(fresh, body_req
 
 
 def test_tool_hashes_are_the_texts_for_not_required(tmp_path):
-    adapter = wrap.build("reader/fake/fake-go/12", FAKE_TABLE, fake_requests(tmp_path / "requests"))
+    adapter = wrap.build("reader/fake/fake-go/12", FAKE_TABLE, fake_requests(tmp_path / "repo"))
     hashes = folder.tool_hashes(adapter)
     texts = descriptions(adapter.declaration(), "not-required")
     assert hashes == {name: sha(text.encode("utf-8")) for name, text in texts.items()}

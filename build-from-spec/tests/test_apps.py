@@ -8,9 +8,14 @@ import pytest
 
 from build_from_spec.apps import (
     APPS,
+    REHEARSAL_REQUESTS,
+    REHEARSAL_ROOT,
+    REQUESTS,
     App,
     AppError,
     app_for,
+    check_records,
+    request_folder,
     require_repository_root,
     stop_not_implemented,
 )
@@ -20,8 +25,33 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def test_body_lab_entry_has_the_reader_budget_of_twelve_trials():
     app = APPS["body-lab"]
-    assert app == App("body-lab", "body_lab.adapter:BodyAdapter", "body-lab/adapter/scan_sources.toml", 12)
+    assert app == App(
+        "body-lab", "body_lab.adapter:BodyAdapter", "body-lab/adapter/scan_sources.toml", 12, False
+    )
     assert app.budget == 12
+
+
+def test_fake_entry_is_the_rehearsal_application_only():
+    app = APPS["fake"]
+    assert app == App(
+        "fake", "bench.fake.adapter:FakeAdapter", "bench/src/bench/fake/scan_sources.toml", 12, True
+    )
+    assert (REPO_ROOT / app.scan_sources).is_file()
+    assert request_folder(app) == REHEARSAL_REQUESTS
+    assert request_folder(APPS["body-lab"]) == REQUESTS
+
+
+def test_rehearsal_records_are_refused_for_body_lab_and_real_records_for_the_fake(tmp_path):
+    rehearsal = tmp_path / REHEARSAL_ROOT / "sessions" / "build-from-spec"
+    real = tmp_path / "sessions" / "build-from-spec"
+    check_records(APPS["fake"], rehearsal, tmp_path)
+    check_records(APPS["body-lab"], real, tmp_path)
+    with pytest.raises(AppError, match="rehearsal application"):
+        check_records(APPS["fake"], real, tmp_path)
+    with pytest.raises(AppError, match="do not go under"):
+        check_records(APPS["body-lab"], rehearsal, tmp_path)
+    with pytest.raises(AppError, match="bfs-check-runs reads no other folder"):
+        check_records(APPS["body-lab"], tmp_path / "elsewhere", tmp_path)
 
 
 def test_body_lab_adapter_and_scan_sources_resolve_from_the_repository_root():

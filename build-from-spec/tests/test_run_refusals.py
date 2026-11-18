@@ -10,9 +10,10 @@ from pathlib import Path
 import pytest
 
 from build_from_spec import folder as folder_module
+from build_from_spec.apps import REQUESTS
 from build_from_spec.request import Request, print_request
 from build_from_spec.run import Arguments, RunRefused, RunStopped, run_script
-from build_from_spec.runfile import REQUESTS, RUN_DATA, read_run_file
+from build_from_spec.runfile import RUN_DATA, read_run_file
 from build_from_spec.runs import RECORDS
 from run_support import (
     FAKE,

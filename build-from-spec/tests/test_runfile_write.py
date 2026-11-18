@@ -127,7 +127,7 @@ def run_file_path(root: Path, run_id: str) -> Path:
 
 
 def write(root: Path, run_id: str = "probe-none-1") -> Path:
-    return write_run_file(run_id, APPS_FOR_TESTS, STOP_LIST, root)
+    return write_run_file(run_id, APPS_FOR_TESTS, STOP_LIST, root, root / "sessions" / "build-from-spec")
 
 
 def test_writes_the_run_file_and_its_sidecar_and_nothing_else(repo):
@@ -222,7 +222,7 @@ def test_a_run_id_that_is_not_of_the_form_is_refused_before_any_path_is_built(re
 def test_the_command_refuses_outside_the_repository_root(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with pytest.raises(SystemExit, match="repository root"):
-        run_file_command(["probe-none-1"])
+        run_file_command(["probe-none-1", "--sessions", "sessions/build-from-spec"])
 
 
 def test_the_command_writes_the_run_file_in_the_repository_root(repo, monkeypatch, capsys):
@@ -234,7 +234,7 @@ def test_the_command_writes_the_run_file_in_the_repository_root(repo, monkeypatc
     write_run_data_for(repo, "probe-none-1")
     monkeypatch.chdir(repo)
 
-    run_file_command(["probe-none-1"])
+    run_file_command(["probe-none-1", "--sessions", "sessions/build-from-spec"])
 
     assert run_file_path(repo, "probe-none-1").is_file()
     assert "bfs-run-file: wrote" in capsys.readouterr().out
