@@ -8,7 +8,7 @@ dependencies = []
 [project.scripts]
 bench-scan = "bench.scan.scan:main"
 bench-verify = "bench.record.chain:main"
-bench-mcp = "bench.frontend.server:main"
+bench-mcp = "bench.frontend.launch:main"
 bench-stop = "bench.frontend.stop:main"
 bench-lab-hooks = "bench.frontend.labhooks:main"
 bench-make-lab = "bench.drkiro.lab:main"

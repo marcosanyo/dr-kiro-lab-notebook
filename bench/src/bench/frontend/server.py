@@ -10,8 +10,6 @@ import os
 import sys
 import traceback
 from collections.abc import Callable
-from datetime import UTC, datetime
-from pathlib import Path
 
 import anyio
 import anyio.to_thread
@@ -24,11 +22,10 @@ from bench.frontend import config as config_file
 from bench.frontend.describe import descriptions
 from bench.frontend.pictures import NOT_DELIVERED, PictureWriteError, PictureWriter
 from bench.frontend.render import render
+from bench.frontend.startup_log import record_startup_failure, startup_log_for
 from bench.record.store import StoreInUseError
 
 TOOLS = ("register_hypothesis", "run_experiment", "record_verdict", "end_session")
-CONFIG_SUFFIX = ".session.toml"
-STARTUP_LOG_SUFFIX = ".mcp-startup.log"
 
 
 class StartupError(Exception):
@@ -95,35 +92,6 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
     if not isinstance(outcome, Ran):
         raise StartupError(f"cannot start the session: {outcome.message.plain()}")
     return outcome.result
-
-
-def startup_log_for(config_value: str | None) -> Path | None:
-    """The builder-side startup log next to the session config, `<stem>.mcp-startup.log`.
-
-    None when the config path is not known from the environment or its folder does not exist: then only
-    stderr is written. The stem drops `.session.toml`, so the log of run `<run-id>` is
-    `<run-id>.mcp-startup.log`.
-    """
-    if not config_value:
-        return None
-    config = Path(config_value)
-    if not config.parent.is_dir():
-        return None
-    name = config.name
-    stem = name.removesuffix(CONFIG_SUFFIX) if name.endswith(CONFIG_SUFFIX) else config.stem
-    return config.parent / f"{stem}{STARTUP_LOG_SUFFIX}"
-
-
-def record_startup_failure(log: Path | None, message: str, traceback_text: str | None = None) -> None:
-    """Append one entry: UTC time, process id, the message in full, and the traceback if there is one."""
-    if log is None:
-        return
-    stamp = datetime.now(UTC).isoformat(timespec="seconds")
-    entry = f"{stamp} pid={os.getpid()} {message}\n"
-    if traceback_text:
-        entry += traceback_text if traceback_text.endswith("\n") else traceback_text + "\n"
-    with log.open("a", encoding="utf-8") as file:
-        file.write(entry)
 
 
 def main() -> int:
