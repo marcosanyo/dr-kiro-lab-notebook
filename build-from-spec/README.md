@@ -174,7 +174,7 @@ Folder: `bench-run/build-from-spec/plain-picture-2026-11-18/`.
 
 The limit text is written in every run file of setup `record` (field `limits`, Kiro decision K30):
 
-> 生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル
+> The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only.
 
 In plain terms: the reader could not use the pictures of a record. It used the record's text and the experiment
 files. The reader's own file tool was not tested with pictures. Wherever a `record` result is shown, this limit is

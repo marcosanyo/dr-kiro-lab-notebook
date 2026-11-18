@@ -211,8 +211,8 @@ def test_run_data_paths_must_stay_inside_the_working_folder(tmp_path):
 
 def test_the_limit_of_setup_record_is_the_picture_limit_text_and_the_others_have_none():
     assert RECORD_LIMIT == (
-        "生の記録の絵は Kiro CLI の読み取りでは開けなかった。"
-        "record の reader が使えたのは、記録の文字と実験のファイル"
+        "The pictures in the raw record could not be opened with Kiro CLI's file reading; "
+        "the record reader used the record's text and experiment files only."
     )
     assert limits_for("record") == [RECORD_LIMIT]
     assert limits_for("spec") == []
@@ -226,7 +226,7 @@ def test_a_run_file_with_the_record_limit_round_trips_through_its_file(tmp_path)
     data["given"] = {"record": {"removed": []}}
     data["limits"] = limits_for("record")
     path, text = write_pair(tmp_path, data)
-    assert '"limits": [\n    "生の記録の絵は' in text
+    assert '"limits": [\n    "The pictures in the raw record' in text
     assert read_run_file(path) == data
 
 

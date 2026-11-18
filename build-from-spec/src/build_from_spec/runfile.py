@@ -56,8 +56,8 @@ COMMIT = re.compile(r"[0-9a-f]{40}")
 RUN_DATA_SUFFIX = ".run-data.json"
 # What the reader could not use from the setup (Kiro decision K30). Set from the setup, checked against it.
 RECORD_LIMIT = (
-    "生の記録の絵は Kiro CLI の読み取りでは開けなかった。"
-    "record の reader が使えたのは、記録の文字と実験のファイル"
+    "The pictures in the raw record could not be opened with Kiro CLI's file reading; "
+    "the record reader used the record's text and experiment files only."
 )
 
 

@@ -1126,7 +1126,7 @@ this design (B1-B7).
   written for the default, which would be an invented value (rules.md 4).
 - **K30. Run file field `limits` (picture limit).** A picture blob of a `record` setup could not be opened with Kiro
   CLI's read tool. The user decided that the run file records this as a limit. Each run file has a field `limits`,
-  a list of texts. For setup `record` it is exactly `["生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル"]`.
+  a list of texts. For setup `record` it is exactly `["The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only."]`.
   For `spec` and `none` it is `[]`. `write_run_file` sets it from the setup (`limits_for` in `runfile.py`). The check
   (`check_run`) recomputes it from the setup and refuses a different value, naming the run file and the field
   `limits`. The same text is shown in `build-from-spec/README.md` under "Limits of this version", and wherever a
