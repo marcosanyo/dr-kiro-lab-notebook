@@ -91,3 +91,20 @@ Expected: `verified, <n> entries, <m> blobs`. The run file's `record.seal` must 
 Keep the rehearsal folders as they are; they are git-ignored builder files. Fix any problem the rehearsal shows
 before the first real run, and record the outcome in `docs/status.md`. The real runs use the real requests and
 `--sessions sessions/build-from-spec`.
+
+## Result of the rehearsal (not counted)
+
+The rehearsal stopped at its first reader turn. No trial ran, so there is no judgement and no in-range trial.
+
+- The step (c) command ran once, at 22:04:01 JST, and was sealed as stopped at 22:04:04 JST.
+- The reader's Kiro CLI exited with code 3 before any experiment. Its output said that the `bench` MCP server
+  failed to start, with "Connection closed" and `--require-mcp-startup` enabled.
+- Observed: the exit code 3, the Kiro CLI message above, and the state folder with a 0-byte `.lock`, which is the
+  normal state after a seal. No second bench-mcp process existed after the turn.
+- Not observed: the bench's own stderr. The background run printed nothing, and no bench-mcp process was checked
+  while the turn ran. The cause of the connection closing is therefore not yet known.
+- Steps (d) and (e) were not run, because the run did not complete.
+- The session files were written under `bench-run/build-from-spec/` rather than inside `rehearsal/`, as this file
+  lists them. The real runs should not rely on the `rehearsal/state/` path shown above until this is checked.
+
+The first real run must not start until the cause of the bench-mcp startup failure is found.
