@@ -261,7 +261,7 @@ Run ids in order: `stop-ahead-spec-1`, `stop-ahead-none-1`, `stop-ahead-record-1
 | 条件 | 回 | 合否（今） | 合否（修正前） | 使った試行の数 | 最初に範囲に入った試行 | 最後の試行（x, y, heading） | 頼った id |
 |---|---|---|---|---|---|---|---|
 | spec | 1 | pass | pass | 2 | T1 | T2（0.454, 0.075, -0.924） | R1, R11, R13 |
-| spec | 2 | pass | not-counted（E9 は given/ にない id として拒否） | 2 | T1 | T2（0.441, 0.077, 2.479） | R11, R13, E9 |
+| spec | 2 | pass | not-counted（修正前の規則は E9 を認めなかった） | 2 | T1 | T2（0.441, 0.077, 2.479） | R11, R13, E9 |
 | none | 1 | fail | fail | 12 | なし | T12（0.018, 0.000, 0.513） | none |
 | none | 2 | fail | fail | 12 | なし | T12（0.087, 0.019, -24.359） | none |
 | record | 1 | fail | fail | 12 | なし | T12（-0.263, -0.317, 116.103） | none |
