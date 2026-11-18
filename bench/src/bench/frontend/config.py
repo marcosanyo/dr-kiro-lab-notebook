@@ -17,6 +17,8 @@ from bench.core.session import SessionConfig
 ENV_VAR = "BENCH_SESSION_CONFIG"
 FIELDS = tuple(f.name for f in fields(SessionConfig)) + ("resume",)
 _PATH_FIELDS = ("lab_dir", "state_dir", "sessions_dir", "stop_list")
+# The messages name the config without its path: they reach stderr, which the reader's Kiro log may show.
+WHERE = "session config"
 
 
 class ConfigError(Exception):
@@ -45,9 +47,9 @@ def _adapter(spec: object, where: str) -> object:
 
 def load(path: Path) -> ServerConfig:
     path = Path(path)
-    where = str(path)
+    where = WHERE
     if not path.is_file():
-        raise ConfigError(f"{where}: session config file not found")
+        raise ConfigError(f"{where}: file not found")
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
