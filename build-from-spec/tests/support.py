@@ -1,8 +1,13 @@
 """Generators and writers shared by the property tests (tests/properties/)."""
 
 import json
+import shutil
+from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import Any, NamedTuple
 
+from bench.record.chain import BLOB_DIR, LOG_NAME
+from bench.record.store import Store
 from hypothesis import strategies as st
 
 from build_from_spec.relied import format_ids
@@ -177,3 +182,27 @@ def judge_cases(draw, categories: tuple[str, ...] = CATEGORIES) -> Case:
     ordered.append(("seal", {"end": end, "budget_remaining": 0, "reason": "ended"}))
     entries = [{"seq": n, "kind": kind, "body": body} for n, (kind, body) in enumerate(ordered)]
     return Case(request, entries, h1_frozen(first_line), category, tuple(counted), values)
+
+
+# ---- Sealed records written by the bench's Store (reduced copy tests, properties 7 and 8) ----
+
+
+def seal_record(folder: Path, build: Callable[[Store], Sequence[tuple[str, dict[str, Any]]]]) -> Path:
+    """Write a sealed record at `folder`: the entries `build` appends, then one seal entry.
+
+    `build` stores blobs with `Store.put_blob` and returns the (kind, body) pairs that reference
+    them. As the bench does when it seals, only `log.jsonl` and `blobs/` are copied to `folder`;
+    the state folder is removed."""
+    staging = folder.parent / f".{folder.name}.state"
+    store = Store.create(staging)
+    try:
+        for kind, body in build(store):
+            store.append(kind, body)
+        store.append("seal", {"end": "stopped", "budget_remaining": 0, "reason": "test"})
+    finally:
+        store.close()
+    folder.mkdir()
+    shutil.copy2(staging / LOG_NAME, folder / LOG_NAME)
+    shutil.copytree(staging / BLOB_DIR, folder / BLOB_DIR)
+    shutil.rmtree(staging)
+    return folder
