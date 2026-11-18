@@ -190,8 +190,15 @@ def judge_cases(draw, categories: tuple[str, ...] = CATEGORIES) -> Case:
 # ---- Sealed records written by the bench's Store (reduced copy tests, properties 7 and 8) ----
 
 
-def seal_record(folder: Path, build: Callable[[Store], Sequence[tuple[str, dict[str, Any]]]]) -> Path:
-    """Write a sealed record at `folder`: the entries `build` appends, then one seal entry.
+def seal_record(
+    folder: Path,
+    build: Callable[[Store], Sequence[tuple[str, dict[str, Any]]]],
+    *,
+    end: str = "stopped",
+    sealed: bool = True,
+) -> Path:
+    """Write a record at `folder`: the entries `build` appends, then one seal entry with `end` unless
+    `sealed` is False.
 
     `build` stores blobs with `Store.put_blob` and returns the (kind, body) pairs that reference
     them. As the bench does when it seals, only `log.jsonl` and `blobs/` are copied to `folder`;
@@ -201,7 +208,8 @@ def seal_record(folder: Path, build: Callable[[Store], Sequence[tuple[str, dict[
     try:
         for kind, body in build(store):
             store.append(kind, body)
-        store.append("seal", {"end": "stopped", "budget_remaining": 0, "reason": "test"})
+        if sealed:
+            store.append("seal", {"end": end, "budget_remaining": 0, "reason": "test"})
     finally:
         store.close()
     folder.mkdir()

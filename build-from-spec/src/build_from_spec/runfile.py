@@ -10,14 +10,29 @@ The author sidecar gives every character of a run file one author: the JSON stri
 are the reader's text (`dr-kiro`), everything else is the bench's (`bench`).
 """
 
+import argparse
+import hashlib
 import json
+import os
 import re
+import subprocess
+import sys
+import tempfile
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from build_from_spec.apps import stop_not_implemented
+from bench.record.chain import VerifyError, verify
+from bench.scan.levels import SIDECAR_SUFFIX
+from bench.scan.scan import Scanner
+from bench.scan.terms import ScanError
+
+from build_from_spec.apps import APPS, App, AppError, app_for, require_repository_root
 from build_from_spec.folder import SETUPS, SPEC_FILES
+from build_from_spec.judge import JudgeError, judge_record
+from build_from_spec.relied import ReliedError, allowed_ids
+from build_from_spec.request import STOP_LIST, RequestError, parse_request
 from build_from_spec.turns import KINDS
 
 FORMAT = 1
@@ -325,5 +340,151 @@ def run_file_texts(run_file: Mapping[str, Any]) -> tuple[str, str]:
     return text, dump_text({"ranges": ranges})
 
 
-def main() -> None:
-    stop_not_implemented("bfs-run-file")
+RUN_DATA = Path("bench-run") / "build-from-spec"
+RECORDS = Path("sessions") / "build-from-spec"
+SESSIONS = Path("sessions")
+REQUESTS = Path("build-from-spec") / "requests"
+
+
+def _valid_run_id(run_id: str) -> str:
+    """Refuse a run id that is not of the form of design 3.12, before any path is built from it."""
+    if RUN_ID.fullmatch(run_id) is None:
+        raise RunFileError(f"{run_id!r} is not a run id of the form <request>-<spec|none|record>-<n>")
+    return run_id
+
+
+def _sealed(folder: Path) -> list[dict[str, Any]]:
+    """The entries of a sealed record. Refuse, naming the folder, when it is not sealed or does not verify."""
+    try:
+        return verify(folder, sealed=True)
+    except VerifyError as error:
+        raise RunFileError(f"{folder}: the record is not sealed or does not verify ({error})") from error
+
+
+def _committed_request(root: Path, commit: str, request_id: str) -> bytes:
+    """The request file as it is at `commit` (Requirement 14.3), read from git, not the working tree."""
+    path = (REQUESTS / f"{request_id}.toml").as_posix()
+    shown = subprocess.run(
+        ["git", "-C", str(root), "show", f"{commit}:{path}"], capture_output=True, check=False
+    )
+    if shown.returncode != 0:
+        problem = shown.stderr.decode("utf-8", errors="replace").strip()
+        raise RunFileError(f"{path} at commit {commit} cannot be read from git: {problem}")
+    return shown.stdout
+
+
+def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: Path) -> Path:
+    """Write the run file and its author sidecar of a sealed run record (design 3.11; Requirements 14.1,
+    14.5, 16.2). Return the run file's path.
+
+    `root` is the repository root, and every path is derived from it (design B24). Nothing is written before
+    every check passes. The two files are written under temporary names first. The blind scan covers the run
+    record and the temporary run file. A finding removes the temporary files and stops, so the run record and
+    the run file stay as they were. The sidecar is renamed before the run file, so a run file never exists
+    without its sidecar.
+
+    Run ids are not checked for uniqueness here: that is the run script's check (Requirement 7.1).
+    This function refuses only an existing run file, as design 3.11 says."""
+    root = Path(root)
+    run_id = _valid_run_id(run_id)
+    data = read_run_data(root / RUN_DATA / f"{run_id}{RUN_DATA_SUFFIX}")
+    if data["run"] != run_id:
+        raise RunFileError(f"{run_id}: the run data file names run {data['run']!r}")
+    application = app_for(data["source"]["application"], apps).name
+    records = root / RECORDS / application
+    run_file = records / f"{run_id}{RUN_FILE_SUFFIX}"
+    if run_file.exists():
+        raise RunFileError(f"{run_file}: already exists; a run file is never overwritten")
+    folder = records / run_id
+    if not folder.is_dir():
+        raise RunFileError(f"{folder}: no run record; the run file is written once the run is sealed")
+    seal = _sealed(folder)[-1]["hash"]
+
+    source = data["source"]
+    session = source["session"]
+    if "/" in session or session in (".", ".."):
+        raise RunFileError(f"{session!r}: not the name of a session")
+    source_folder = root / SESSIONS / source["application"] / session
+    source_seal = _sealed(source_folder)[-1]["hash"]
+    if source_seal != source["seal"]:
+        raise RunFileError(
+            f"{source_folder}: its seal is {source_seal}, the run data file has {source['seal']}"
+        )
+
+    request = data["request"]
+    request_bytes = _committed_request(root, request["commit"], request["id"])
+    request_hash = hashlib.sha256(request_bytes).hexdigest()
+    if request_hash != request["sha256"]:
+        raise RunFileError(
+            f"{request['id']}.toml at commit {request['commit']} has SHA-256 {request_hash}, "
+            f"the run data file has {request['sha256']}"
+        )
+    with tempfile.TemporaryDirectory() as directory:
+        copy = Path(directory) / f"{request['id']}.toml"
+        copy.write_bytes(request_bytes)
+        parsed = parse_request(copy, apps)
+    if parsed.application != application:
+        raise RunFileError(
+            f"{request['id']}: the request is for {parsed.application}, the source is {application}"
+        )
+
+    judged = judge_record(folder, parsed, allowed_ids(data["setup"], source_folder))
+    prompts = data["prompts"]
+    run_file_data = {
+        "format": FORMAT,
+        "run": run_id,
+        "setup": data["setup"],
+        "request": request,
+        "source": source,
+        "record": {"seal": seal, "end": judged.end},
+        "seed": data["seed"],
+        "kiro": data["kiro"],
+        "files": data["files"],
+        "tools": data["tools"],
+        "given": data["given"],
+        "relied_on": {
+            "ids": None if judged.relied.ids is None else list(judged.relied.ids),
+            "problem": judged.relied.problem,
+        },
+        "result": judged.result,
+        "first_in_range": judged.first_in_range,
+        "last_trial": None
+        if judged.last_trial is None
+        else {"trial": judged.last_trial, "phase": judged.last_phase},
+        "prompts": prompts,
+        "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
+    }
+    text, sidecar = run_file_texts(run_file_data)
+    scanner = Scanner.from_config([root / app.scan_sources for app in apps.values()], stop_list)
+
+    temporary = records / f".{run_id}{RUN_FILE_SUFFIX}.tmp"
+    temporary_sidecar = temporary.with_name(temporary.name + SIDECAR_SUFFIX)
+    try:
+        temporary.write_text(text, encoding="utf-8", newline="")
+        temporary_sidecar.write_text(sidecar, encoding="utf-8", newline="")
+        findings = scanner.scan_record(folder)
+        findings += [replace(f, file=str(run_file)) for f in scanner.scan_file(temporary)]
+        if findings:
+            listed = "\n".join(str(finding) for finding in findings)
+            raise RunFileError(f"the blind scan finds items; no run file was written:\n{listed}")
+        os.replace(temporary_sidecar, run_file.with_name(run_file.name + SIDECAR_SUFFIX))
+        os.replace(temporary, run_file)
+    finally:
+        temporary.unlink(missing_ok=True)
+        temporary_sidecar.unlink(missing_ok=True)
+    return run_file
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(
+        prog="bfs-run-file", description="Write the run file of a sealed run record."
+    )
+    parser.add_argument("run_id", help="the run id, <request>-<spec|none|record>-<n>")
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+    try:
+        require_repository_root()
+        root = Path.cwd()
+        written = write_run_file(args.run_id, APPS, root / STOP_LIST, root)
+    except (AppError, JudgeError, ReliedError, RequestError, RunFileError, ScanError) as error:
+        sys.exit(f"bfs-run-file: {error}")
+    print(f"bfs-run-file: wrote {written}")
