@@ -87,8 +87,10 @@ The record path comes from the bench's existing rule `<sessions_dir>/<applicatio
 
 ### 2.2 Commands
 
-All are run from the repository root with `uv run --project build-from-spec <command>`. Each refuses to start when
-the current folder has no `.git`, so every repository path in this design is relative to the root.
+All are run from the repository root, as the commands that `uv tool install` puts on PATH. `uv run` must not be used
+for them, because it puts a project's `.venv/bin` first on PATH, where Kiro CLI would find the wrong `bench-mcp` (K33).
+Each refuses to start when the current folder has no `.git`, so every repository path in this design is relative to
+the root.
 
 | Command | What it does | Req |
 |---|---|---|
@@ -97,8 +99,8 @@ the current folder has no `.git`, so every repository path in this design is rel
 | `bfs-run-file <run-id>` | Writes the run file of a sealed run record. `bfs-run` calls the same function at its end; the command is for a run whose script was interrupted after sealing. | 14, 16.2 |
 | `bfs-check-runs` | Checks every run file against its records and the committed request, checks runs of one request against each other, and derives what the notebook shows. | 14.3, 14.6, 16, 18 |
 
-`bench-mcp` is started by Kiro CLI from `PATH`, as for Dr. Kiro. It must import the wrapping adapter, so the builder
-installs the commands with `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter
+`bench-mcp` is started by Kiro CLI from `PATH`, as for Dr. Kiro. `bfs-run` checks that command before it writes anything
+(K33, section 3.9 phase A). It must import the wrapping adapter, so the builder installs the commands with `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter
 --with-editable ./build-from-spec --reinstall` (README).
 
 ### 2.3 Flow of `bfs-run`
@@ -439,6 +441,11 @@ Arguments, all required, none with a default (Req 11.1): `--request`, `--setup`,
 non-empty (Req 11.8). Run id: `<request-id>-<setup>-<n>`.
 
 **A. Checks; nothing is written** (Req 5.7, K14). In order, each refusal naming what failed:
+
+0. The `bench-mcp` preflight (K33). The first `bench-mcp` on the PATH of the environment that Kiro CLI gets is run with
+   `--check`. It must print `bench-mcp: ready` and exit 0. Otherwise the run is refused, naming the path found. No
+   `bench-mcp` on PATH is refused by name. This step runs before step 1, before `kiro-cli --version` and before any
+   folder or file is created.
 
 1. The request file is tracked (`git ls-files --error-unmatch`) and equal to `HEAD`, staged or not
    (`git diff --quiet HEAD -- <file>`) (Req 11.2). Its last-change commit is `git log -1 --format=%H -- <file>`; its
@@ -1147,6 +1154,33 @@ this design (B1-B7).
   there is refused. Rehearsal runs are compared with neither each other nor counted runs. Not chosen: deleting or
   regenerating rehearsal run 1, which the user did not ask for, and comparing only within the rehearsal folder, which
   would still refuse run 2 against run 1 after K31.
+
+- **K33. The `bench-mcp` preflight and launcher.** Kiro CLI starts the reader's bench server by the name `bench-mcp`,
+  from its PATH. `uv run --project build-from-spec` put that project's `.venv/bin` first on PATH. There, `bench-mcp`
+  is the server's entry point, and it imports the MCP SDK, which the build-from-spec project does not install
+  (Req 1.1). So Kiro CLI got a `bench-mcp` that failed with `ModuleNotFoundError` before it read its config, and no
+  startup log was written. Decisions:
+  (a) The commands are the ones `uv tool install` puts on PATH, and `uv run` is not used for them (section 2.2,
+  README, RUN.md).
+  (b) Preflight (section 3.9, phase A, step 0). `bench_mcp_preflight` finds the first `bench-mcp` with
+  `shutil.which`, on the PATH of `os.environ`, which is the PATH that `execute` gives Kiro CLI. It runs that command
+  with `--check`. Exit 0 with `bench-mcp: ready` passes. Any other result refuses the run with `RunRefused` (exit
+  2), naming the path found and the line the check printed. A missing `bench-mcp` is refused by name. Nothing is
+  written and Kiro CLI is not started.
+  (c) Launcher. The `bench-mcp` console script is `bench.frontend.launch:main`. With `--check` it imports `mcp`,
+  `anyio` and `bench.frontend.server`, prints `bench-mcp: ready` and exits 0. If an import fails, it prints one
+  bench line naming the missing module, with no path, and exits 2.
+  (d) Without `--check` the server starts as before. If the import of the server fails, one line goes to the
+  builder-side startup log (`<stem>.mcp-startup.log`, the log of commit 1c20586), with the time, the process id
+  and the full error text, when `BENCH_SESSION_CONFIG` names an existing file. Stderr gets the bench line and the
+  exit code is 2. Other errors are not caught.
+  (e) The log functions move to `bench/frontend/startup_log.py`, which imports no SDK, so the launcher can write
+  the log when the SDK import fails. `server.py` imports them, so its callers do not change.
+  Not chosen: (1) keeping `uv run` and freezing a `bench-mcp` path in `reader.json`, which would change the file
+  that K31 changed and tie the reader's files to one machine. (2) Importing `mcp` in build-from-spec, which
+  Req 1.1 forbids. (3) A fallback that starts the server with another interpreter, which rules.md 2 forbids.
+  Effect on the rehearsal: the rehearsal must run again from step (c) of `RUN.md` after this change. No
+  rehearsal or counted run was made in writing K33.
 
 ## Open items
 

@@ -54,7 +54,7 @@ verdict, end). It refuses to run when the session already exists.
 ### (b) Check the request against the source
 
 ```
-uv run --project build-from-spec bfs-check-request build-from-spec/rehearsal/requests/rehearsal-fake.toml \
+bfs-check-request build-from-spec/rehearsal/requests/rehearsal-fake.toml \
   --source bench-run/build-from-spec/rehearsal/sessions/fake/rehearsal-src
 ```
 
@@ -67,7 +67,7 @@ First commit the request (`git add build-from-spec/rehearsal/requests/rehearsal-
 by name). Then:
 
 ```
-uv run --project build-from-spec bfs-run \
+bfs-run \
   --request build-from-spec/rehearsal/requests/rehearsal-fake.toml \
   --setup record \
   --source bench-run/build-from-spec/rehearsal/sessions/fake/rehearsal-src \
@@ -87,7 +87,7 @@ The same command as (c), with `--run 2` (run id `rehearsal-fake-record-2`). The 
 model, the effort and `--sessions` are the same. A run of the same request must match the earlier run on all of
 them, so `bfs-run` refuses a different value.
 ```
-uv run --project build-from-spec bfs-run \
+bfs-run \
   --request build-from-spec/rehearsal/requests/rehearsal-fake.toml \
   --setup record \
   --source bench-run/build-from-spec/rehearsal/sessions/fake/rehearsal-src \
@@ -102,7 +102,7 @@ Steps (d) and (e) apply to this run id as well, with `rehearsal-fake-record-2` i
 ### (d) Write the run file, only if (c) did not
 
 ```
-uv run --project build-from-spec bfs-run-file rehearsal-fake-record-1 \
+bfs-run-file rehearsal-fake-record-1 \
   --sessions bench-run/build-from-spec/rehearsal/sessions/build-from-spec
 ```
 
@@ -113,7 +113,7 @@ refusal is the expected result in that case.
 ### (e) Verify the run record
 
 ```
-uv run --project build-from-spec bench-verify \
+bench-verify \
   bench-run/build-from-spec/rehearsal/sessions/build-from-spec/fake/rehearsal-fake-record-1
 ```
 

@@ -23,8 +23,12 @@ exposes the four `bfs-*` commands next to the `bench-*` commands.
 
 ## Commands
 
-Run from the repository root with `uv run --project build-from-spec <command>`. Each command refuses to start in a
-folder without `.git`.
+Run from the repository root. The commands are the ones `uv tool install` puts on PATH (`bfs-check-request`, `bfs-run`,
+`bfs-run-file`, `bfs-check-runs`, `bench-verify`, `bench-check-discovered`), and `uv run` must not be used for them,
+because it puts a project's `.venv/bin` first on PATH. Each command refuses to start in a folder without `.git`.
+
+Before it writes anything, `bfs-run` runs `bench-mcp --check` on the `bench-mcp` that Kiro CLI will get from PATH. A
+failed check refuses the run and names the path found.
 
 | Command | What it does |
 |---|---|
@@ -51,6 +55,15 @@ and whether it was observed. Result of the first hand checks: stopped, see below
 - Wheel of the reader files (task 8.1 open point): `uv build --wheel --out-dir bench-run/build-from-spec/wheel-check build-from-spec`.
   The wheel contains `build_from_spec/files/reader.json`, `reader-prompt.md`, `reader.md`, `requirements.md`,
   `design.md` and `tasks.md`. Observed with `unzip -l`.
+
+### bench-mcp launcher and preflight (design K33): observed
+
+- Command: the install command above, with `--reinstall`. Exit 0. Output: `Installed 9 executables: bench-check-discovered, bench-export-spec, bench-lab-hooks, bench-make-lab, bench-mcp, bench-new-session, bench-scan, bench-stop, bench-verify`.
+- `command -v bench-mcp`: `/Users/rk/.local/bin/bench-mcp`.
+- `bench-mcp --check`, from PATH: `bench-mcp: ready`, exit 0.
+- `bfs-run --help`, from PATH: `usage: bfs-run [-h] --request REQUEST --setup SETUP --source SOURCE --seed SEED --run RUN --model`, exit 0.
+- Not run: any `bfs-run` that starts a session, any reader turn, and any `bench-mcp` against a real session config.
+- The preflight tests (`build-from-spec/tests/test_preflight.py`) and the launcher tests (`bench/tests/frontend/test_launch.py`) cover the failing `--check` cases.
 
 ### 18.1 Install and adapter import (design 9, check 8): observed
 
