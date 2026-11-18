@@ -11,10 +11,14 @@ from pathlib import Path
 from typing import Any
 
 from bench.record.chain import BLOB_DIR, VerifyError, verify
-from bench.specfiles.discovered import TableError, parse_table
 
 PREFIX = "# relies on: "
 PROBLEMS = ("no-h1", "no-line", "bad-syntax", "unknown-id", "late")
+
+# The three files of the final spec that the reader is given under setup `spec`.
+GIVEN_SPEC_FILES = ("requirements", "design", "tasks")
+# The ids the reader is told it may name: rule rows, hypotheses and experiments (reader.md).
+_SPEC_ID = re.compile(r"\b(?:R|H|E)[1-9][0-9]*\b")
 
 _LINE_START = "# relies on"
 _FENCES = ("```", "~~~")
@@ -82,13 +86,14 @@ def allowed_ids(setup: str, source: Path) -> frozenset[str]:
     ended = [e for e in entries if e["kind"] == "snapshot" and e["body"].get("for") == "end"]
     if len(ended) != 1:
         raise ReliedError(f"{source}: the source has no end snapshot, so it has no final spec")
-    design = (source / BLOB_DIR / ended[0]["body"]["files"]["design"]["blob"]).read_text(encoding="utf-8")
-    try:
-        table = parse_table(design, "design.md")
-    except TableError as error:
-        problem = f"the final spec's design.md has no readable spec table: {error}"
-        raise ReliedError(f"{source}: {problem}") from error
-    return frozenset({"none", *(row.id for row in table.rows)})
+    files = ended[0]["body"]["files"]
+    ids = {"none"}
+    for name in GIVEN_SPEC_FILES:
+        if name not in files:
+            raise ReliedError(f"{source}: the end snapshot has no {name}.md of the final spec")
+        text = (source / BLOB_DIR / files[name]["blob"]).read_text(encoding="utf-8")
+        ids.update(_SPEC_ID.findall(text))
+    return frozenset(ids)
 
 
 def relied_on(entries: list[dict[str, Any]], frozen_h1: str | None, allowed: frozenset[str]) -> Relied:
