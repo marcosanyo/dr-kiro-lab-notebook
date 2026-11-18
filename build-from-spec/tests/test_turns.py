@@ -68,6 +68,26 @@ def test_first_command_has_no_resume_and_sends_the_start_line():
     assert "--no-interactive" in command
 
 
+def test_effort_default_omits_the_effort_flag():
+    command = kiro_command("start", "model-x", "default")
+    assert "--effort" not in command
+    assert command[command.index("--model") + 1] == "model-x"
+    assert command[-1] == START_LINE
+
+
+def test_effort_default_still_resumes_on_a_continue_turn():
+    command = kiro_command("continue", "model-x", "default")
+    assert "--effort" not in command
+    assert "--resume" in command
+    assert command[-1] == CONTINUE_LINE
+
+
+def test_a_named_effort_other_than_default_is_passed_as_given():
+    for effort in ("low", "medium", "high", "xhigh", "max"):
+        command = kiro_command("start", "model-x", effort)
+        assert command[command.index("--effort") + 1] == effort
+
+
 def test_later_command_resumes_and_sends_the_continue_line():
     command = kiro_command("continue", "model-x", "high")
     assert "--resume" in command

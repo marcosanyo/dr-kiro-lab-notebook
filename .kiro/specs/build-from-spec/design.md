@@ -1105,6 +1105,12 @@ this design (B1-B7).
   and `high` from (low, 1e6], so every draw is a valid pass range and nothing is discarded. The domain is the same
   (finite bounds with `low < high`, within ±1e6), the checked properties and `max_examples=100` are unchanged, and no
   health check is suppressed.
+- **K29. Effort `default` omits `--effort`.** `kiro-cli` does not show the default effort (`kiro-cli chat --help`
+  gives no default and `kiro-cli settings list` has no effort setting), so no value can be written for it. The
+  reader's effort is `default` for the runs, which makes `kiro_command` leave out `--effort`. Kiro CLI then uses its
+  own default, and the Kiro CLI version recorded in the run data (B5) is the record of which one. Any other value is
+  passed as `--effort <value>`. `--model` stays required, and an empty effort is still refused. Not chosen: a number
+  written for the default, which would be an invented value (rules.md 4).
 
 ## Open items
 

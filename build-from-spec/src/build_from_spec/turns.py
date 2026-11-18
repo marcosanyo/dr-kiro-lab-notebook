@@ -53,8 +53,14 @@ def line_for(kind: str) -> str:
     raise TurnsError(f"unknown prompt kind {kind!r}; expected one of {', '.join(KINDS)}")
 
 
+DEFAULT_EFFORT = "default"
+
+
 def kiro_command(kind: str, model: str, effort: str) -> list[str]:
-    """The headless Kiro CLI command for one turn (design 3.10). `--resume` is set on every continue turn."""
+    """The headless Kiro CLI command for one turn (design 3.10). `--resume` is set on every continue turn.
+
+    The effort `default` omits `--effort`, so Kiro CLI uses its own default (Decision K29).
+    """
     if not model:
         raise TurnsError("the model is empty; a model name is required")
     if not effort:
@@ -71,9 +77,9 @@ def kiro_command(kind: str, model: str, effort: str) -> list[str]:
         "reader",
         "--model",
         model,
-        "--effort",
-        effort,
     ]
+    if effort != DEFAULT_EFFORT:
+        command += ["--effort", effort]
     if kind == "continue":
         command.append("--resume")
     command.append(line_for(kind))
