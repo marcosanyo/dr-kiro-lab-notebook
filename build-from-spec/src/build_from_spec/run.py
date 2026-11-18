@@ -481,16 +481,18 @@ def execute(
         prompts[:] = list(recorded)
         write_run_data(data_path, {**data, "prompts": [asdict(p) for p in recorded]})
 
+    ended: TurnsEnd | None = None
+    failure: str | None = None
     try:
-        ended: TurnsEnd = run_turns(launch, entries, save)
-    except (
-        Exception
-    ) as error:  # the session has started, so it is stopped and the failure is the reason (11.9)
-        reason = " ".join(str(error).split()) or type(error).__name__
+        ended = run_turns(launch, entries, save)
+    # The session has started, so the failure becomes the stop reason (11.9). It is not hidden: it is printed,
+    # sealed, and raised again as RunStopped after the run file is written.
+    except Exception as error:  # noqa: BLE001
+        failure = " ".join(str(error).split()) or type(error).__name__
         print(f"bfs-run: {error}", file=sys.stderr)
-        _stop_session(config, run_id, reason)
-        raise RunStopped(f"run {run_id} stopped after the session started: {reason}") from error
-    if not ended.sealed:
+    if failure is not None:
+        _stop_session(config, run_id, failure)
+    elif ended is not None and not ended.sealed:
         _stop_session(config, run_id, str(ended.stop_reason))
     destination = root / RECORDS / checked.app.name / run_id
     if not destination.is_dir():
@@ -499,12 +501,17 @@ def execute(
             f"read {state / 'builder.log'}. No run file was written (Requirement 13.5)."
         )
     try:
-        return write_run_file(run_id, apps, root / STOP_LIST, root)
+        run_file = write_run_file(run_id, apps, root / STOP_LIST, root)
     except (JudgeError, ReliedError, RequestError, RunFileError, ScanError) as error:
         raise RunStopped(
             f"{error}; run {run_id} is sealed, so its run file can be written with "
             f"bfs-run-file {run_id} once the cause is fixed"
         ) from error
+    if failure is not None:
+        raise RunStopped(
+            f"run {run_id} stopped after the session started: {failure}; the run file is {run_file}"
+        )
+    return run_file
 
 
 def run_script(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro) -> Path:

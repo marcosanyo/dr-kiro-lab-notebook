@@ -28,7 +28,6 @@ from build_from_spec.apps import App
 from build_from_spec.request import PassRange, Request, print_request
 from build_from_spec.run import Arguments
 from build_from_spec.runfile import REQUESTS, dump_text
-from build_from_spec.turns import START_LINE
 
 REPO = Path(__file__).resolve().parents[2]
 REAL_STOP_LIST = REPO / ".kiro" / "blind-scan" / "stop-list.txt"
@@ -64,7 +63,7 @@ def hypothesis_block(hid: str, statement: str) -> str:
         f'[[prediction]]\nid = "{p["id"]}"\nmeasurement = "distance"\n'
         f'range = [{p["range"][0]!r}, {p["range"][1]!r}]\nlabel = "inside"\n[prediction.when]\n{when}\n'
     )
-    return f"### {hid}: about {hid}\n\n{statement}\n\n```prediction\n{prediction}```\n"
+    return f"### {hid}: about {hid}\n\n{statement}\n\n```prediction\n# relies on: none\n{prediction}```\n"
 
 
 def experiment_text(hid: str) -> str:
@@ -155,7 +154,7 @@ def use_test_table(monkeypatch: pytest.MonkeyPatch, root: Path) -> None:
 
 
 class FakeKiro:
-    """Kiro CLI for the tests: records each command and decides each turn with `script`.
+    """Kiro CLI for the tests: records each command and its environment, and decides each turn with `script`.
 
     `script(command, folder, env, number)` returns the exit code of turn `number` (1-based). Without a script,
     each turn exits 0 and does nothing."""
@@ -164,12 +163,14 @@ class FakeKiro:
         self.script = script
         self._version = version
         self.commands: list[list[str]] = []
+        self.envs: list[dict[str, str]] = []
 
     def version(self) -> str:
         return self._version
 
     def turn(self, command: list[str], folder: Path, env, log: Path) -> int:
         self.commands.append(list(command))
+        self.envs.append(dict(env))
         log.write_text(f"fake turn {len(self.commands)}\n", encoding="utf-8")
         if self.script is None:
             return 0
@@ -177,9 +178,10 @@ class FakeKiro:
 
 
 def reader_ends(command: list[str], folder: Path, env, number: int) -> int:
-    """The fake reader on its first turn: it registers H1 in its own lab spec, runs the experiment, gives the
-    verdict and ends the session. Every bench call goes through the session the script's config names."""
-    assert command[-1] == START_LINE and "--resume" not in command, command
+    """The fake reader's ending turn: it registers H1 in its own lab spec, runs the experiment, gives the
+    verdict and ends the session. Each bench call goes through the session that the config named in the
+    environment names. The first turn is the start line; every later turn resumes with the continue line."""
+    assert ("--resume" in command) == (number > 1), command
     cfg = config_file.load(Path(env["BENCH_SESSION_CONFIG"]))
     session = Session.open(cfg.session)
     spec = folder / SPEC_DIR / "requirements.md"
