@@ -120,6 +120,43 @@ the sequence). Check 7 (18.3) was not run.
 - Not run, because 18.2 stopped with item 2 not observed. No working folder with setup `record` was built.
 - Limit to decide before any run: the reader's file tool could not be checked for `given/record/blobs/`.
 
+## Plain Kiro CLI checks (2026-11-18): not the reader
+
+These two checks used plain `kiro-cli chat` with model `claude-sonnet-5.5` and the default effort. They did not use
+the reader agent (`--agent reader`), `bench-mcp`, `bfs-run` or any experiment. Each command ran from an empty folder
+under `bench-run/build-from-spec/` with no `.kiro/`. They do not replace the reader-level checks of 18.2 and 18.3.
+
+### Item 2 of 18.2 (`--resume` continues the conversation): observed, with plain Kiro CLI
+
+Folder: `bench-run/build-from-spec/plain-resume-2026-11-18/`.
+
+- Turn 1: `kiro-cli chat --no-interactive --trust-tools= --model claude-sonnet-5.5 "Remember this code word: AMBER-17. Reply with only OK."`
+  Exit 0, about 5 s. Output: `OK`.
+- Turn 2: `kiro-cli chat --no-interactive --resume --trust-tools= --model claude-sonnet-5.5 "What code word did I ask you to remember? Reply with only the word."`
+  Exit 0, about 5 s. Output: `AMBER-17`.
+- `kiro-cli chat --list-sessions` lists one local session for this folder (`sess_b7b79d73-...`), so both turns are one session.
+
+### Picture blob opened by plain Kiro CLI: not opened
+
+Folder: `bench-run/build-from-spec/plain-picture-2026-11-18/`.
+
+- Blob: `sessions/body-lab/body-2/blobs/0292aec877f2ae5d5c2a2022a987de99b35702ed34670ca59059bc0fea29d65d`, 118830 bytes,
+  first 8 bytes are the PNG signature. This is the first of 39 PNG blobs in that folder, sorted by name. The copy has
+  no extension. `cmp` against the original passed, and `shasum -a 256` of the copy equals the file name.
+- Command: `kiro-cli chat --no-interactive --trust-tools=read --model claude-sonnet-5.5 "Open the file 0292aec877f2ae5d5c2a2022a987de99b35702ed34670ca59059bc0fea29d65d with your file reading tool. It is a picture. Reply with only its width and height in pixels, or NOT_OPENED if you cannot open it as a picture."`
+  Exit 0, about 34 s. The read tool did not ask for permission.
+- Kiro's answer: `320x360`. Its own text says the read returned PNG data, not a rendered image, and that it inferred the
+  size from header text. Two shell calls were refused: `[denied] tool permission approval is not supported in non-interactive mode. Use --trust-tools=run_command ...`.
+  The refused calls were not retried with `run_command` trusted.
+- IHDR read by hand (`uv run --no-project python`): `width 1600 height 360`.
+- Result: the answer does not match the header, so this is "not opened". This is only plain Kiro CLI with `read`.
+  The reader's own file tool was not tested.
+
+### Still not observed
+
+- The reader's file tool opening `given/record/blobs/` (18.3).
+- Resume and the picture check with the reader agent, bench and hooks (18.2 item 2 and 18.3 at reader level).
+
 ## Runs
 
 _To be filled in when the runs are made. One line per run id, with its run file in `sessions/build-from-spec/`._
