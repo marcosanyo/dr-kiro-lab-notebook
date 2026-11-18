@@ -1,0 +1,64 @@
+# Requirements
+
+Parameters: a1 = constant level of c1, s3 = amplitude of the c3 sine, f = c3 frequency (Hz), t_stop = time (s) after which all inputs are 0.
+
+### H1: Stroke at 2 Hz for 3.5 s then stop reaches about 0.45 m
+
+WHEN c1 = -1 and c3 is a unit sine at 2 Hz until t_stop = 3.5 s and every input is 0 afterwards, THE system SHALL end near x = 0.45 m with heading within 12 deg of the start.
+
+```prediction
+# relies on: R11, R13, E9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.35, 0.55]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.5
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.5
+```
+
+Result (E1): hit. x 0.428, heading -1.9, y 0.067. Body stops after inputs go to 0.
+
+### H2: Stopping at 3.7 s lands closer to 0.45 m
+
+WHEN the same drive as H1 runs until t_stop = 3.7 s, THE system SHALL end at x between 0.43 and 0.48 m with heading within 12 deg.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.43, 0.48]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.7
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+t_stop = 3.7
+```
+
+Result (E2): hit. x 0.441, heading +2.5, y 0.077. Body stops after inputs go to 0.

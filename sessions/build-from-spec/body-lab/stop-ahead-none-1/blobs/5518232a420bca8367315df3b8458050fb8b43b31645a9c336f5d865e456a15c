@@ -1,0 +1,15 @@
+### H3: An oscillating channel produces forward travel
+
+WHEN one channel is driven by a 2 Hz sine of amplitude 1.0 for the whole trial and the others are 0, THE system SHALL end with x between 0.1 and 2.0 m for at least one of c0, c2 and c4.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 2.0]
+label = "outside"
+[prediction.when]
+amp = 1.0
+freq = 2.0
+ch = 0
+```

@@ -1,0 +1,18 @@
+### H1: Single-channel drive moves the body
+
+WHEN channel c0 is held at 0.5 for the whole trial and c1 to c4 are 0, THE system SHALL end with x between 0.3 and 2.0 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 2.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.5
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+```

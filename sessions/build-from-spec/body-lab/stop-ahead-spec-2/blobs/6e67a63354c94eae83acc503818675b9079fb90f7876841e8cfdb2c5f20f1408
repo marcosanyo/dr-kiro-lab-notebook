@@ -1,0 +1,33 @@
+# H1: Stroke at 2 Hz for 3.5 s then stop reaches about 0.45 m
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f", "t_stop"]
+TRIALS = [
+    [-1, 1, 2, 3.5],
+]
+
+
+def c0(t, a1, s3, f, t_stop):
+    return 0
+
+
+def c1(t, a1, s3, f, t_stop):
+    if t < t_stop:
+        return a1
+    return 0
+
+
+def c2(t, a1, s3, f, t_stop):
+    return 0
+
+
+def c3(t, a1, s3, f, t_stop):
+    if t < t_stop:
+        return s3 * math.sin(2 * math.pi * f * t)
+    return 0
+
+
+def c4(t, a1, s3, f, t_stop):
+    return 0

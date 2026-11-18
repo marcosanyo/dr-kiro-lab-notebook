@@ -56,8 +56,8 @@ COMMIT = re.compile(r"[0-9a-f]{40}")
 RUN_DATA_SUFFIX = ".run-data.json"
 # What the reader could not use from the setup (Kiro decision K30). Set from the setup, checked against it.
 RECORD_LIMIT = (
-    "生の記録の絵は Kiro CLI の読み取りでは開けなかった。"
-    "record の reader が使えたのは、記録の文字と実験のファイル"
+    "The pictures in the raw record could not be opened with Kiro CLI's file reading; "
+    "the record reader used the record's text and experiment files only."
 )
 
 
@@ -399,9 +399,17 @@ def committed_request(root: Path, commit: str, request_id: str, folder: Path) ->
     return shown.stdout
 
 
-def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: Path, records: Path) -> Path:
+def write_run_file(
+    run_id: str,
+    apps: Mapping[str, App],
+    stop_list: Path,
+    root: Path,
+    records: Path,
+) -> Path:
     """Write the run file and its author sidecar of a sealed run record (design 3.11; Requirements 14.1,
     14.5, 16.2). Return the run file's path.
+
+    An existing run file is refused: a run file is never rewritten by this command (K34).
 
     `root` is the repository root, and every path is derived from it (design B24). `records` is the records
     folder of the run (`--sessions`). The source records sit in its parent, one folder per application, so a
@@ -424,6 +432,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
     check_records(app, records, root)
     application = app.name
     run_file = records / application / f"{run_id}{RUN_FILE_SUFFIX}"
+    sidecar = run_file.with_name(run_file.name + SIDECAR_SUFFIX)
     if run_file.exists():
         raise RunFileError(f"{run_file}: already exists; a run file is never overwritten")
     folder = records / application / run_id
@@ -486,20 +495,20 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
         "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
         "limits": limits_for(data["setup"]),
     }
-    text, sidecar = run_file_texts(run_file_data)
+    text, sidecar_text = run_file_texts(run_file_data)
     scanner = Scanner.from_config([root / app.scan_sources for app in apps.values()], stop_list)
 
     temporary = run_file.with_name(f".{run_id}{RUN_FILE_SUFFIX}.tmp")
     temporary_sidecar = temporary.with_name(temporary.name + SIDECAR_SUFFIX)
     try:
         temporary.write_text(text, encoding="utf-8", newline="")
-        temporary_sidecar.write_text(sidecar, encoding="utf-8", newline="")
+        temporary_sidecar.write_text(sidecar_text, encoding="utf-8", newline="")
         findings = scanner.scan_record(folder)
         findings += [replace(f, file=str(run_file)) for f in scanner.scan_file(temporary)]
         if findings:
             listed = "\n".join(str(finding) for finding in findings)
             raise RunFileError(f"the blind scan finds items; no run file was written:\n{listed}")
-        os.replace(temporary_sidecar, run_file.with_name(run_file.name + SIDECAR_SUFFIX))
+        os.replace(temporary_sidecar, sidecar)
         os.replace(temporary, run_file)
     finally:
         temporary.unlink(missing_ok=True)

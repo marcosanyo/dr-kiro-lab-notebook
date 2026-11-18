@@ -1,0 +1,170 @@
+{
+  "continue_lines": 0,
+  "files": {
+    ".kiro/agents/reader-prompt.md": "e9a7e97ba8f5cb04d08b82bbca8223b7ae63d0c0df7882eb862ce89bb63efc89",
+    ".kiro/agents/reader.json": "38c45cdcaf0dbd2c92dde6edee285a5bde51e5f49925bb51c5ace41a62fbe91c",
+    ".kiro/hooks/calllog-post-tool.json": "cfa69f6bbad9b2357283fbb699eb3b3023f11aae77a3f8077fd67ca9b92b39fd",
+    ".kiro/hooks/calllog-pre-tool.json": "69c044523c1ede9b1fb1053c065cf60dad23acea60db8205b1e30f854de03863",
+    ".kiro/hooks/calllog.py": "e5b1534607e4370793291998a6cb5327e4e4bbdd4133fdbd186e7f3d8d960628",
+    ".kiro/hooks/confine-pre-tool.json": "ec1171b7aaf82b9f0d6dff66eaeab5832786723ccc71fb0a4b02308e4d89c554",
+    ".kiro/hooks/confine.py": "1f523c9672e826fb8b454b4b2b5aa888f505b77ddc0cc46526e4fa1e04c85a47",
+    ".kiro/specs/lab/design.md": "2ef3a566f89e6d4ed1d38352171d5b9a693c04c68c68beb8dde017bae1917022",
+    ".kiro/specs/lab/requirements.md": "f558cf8a9b0e97aa89c5e9688ea77fb29bafd311eb7dfe3e17fa92990c94df88",
+    ".kiro/specs/lab/tasks.md": "40e9a60e708325482335436223061bf799b154a6706032ab98c8f6ab9a109bae",
+    ".kiro/steering/method.md": "fb9631b1b57313ae248401ae2e7f64bdcfb2f7901cdfb57dfdd625995a948e40",
+    ".kiro/steering/reader.md": "d4985175be93854fefc7ab4dbf507e2a3f4ffbaaaf2b197deb71b7ab85d6a115",
+    "request.md": "5cdaeb392ec744aed871f5ae5ad0589b8ded35d941838a8dcf15efacafd5a2a4"
+  },
+  "first_in_range": null,
+  "format": 1,
+  "given": {
+    "record": {
+      "removed": [
+        {
+          "hash": "3311d204fa4e1a5aac5388ddf8dde66f8a39eef3f4800c15cfb2bb7670e51edd",
+          "seq": 9
+        },
+        {
+          "hash": "b60df47b3a4f5fe9c25f0d9e18688cfb737d60a6cf7f82662f8f9de07141776b",
+          "seq": 11
+        },
+        {
+          "hash": "4d6f38a5265fc46d54da437a14f4333e97b45a95259fab608306ec99df49fe18",
+          "seq": 18
+        },
+        {
+          "hash": "909f4070af6163cfb531693d2b604b3f49562254bf8efed7e1b180c9cd5d72ad",
+          "seq": 20
+        },
+        {
+          "hash": "3ec094c82268056c2def49f011598664c7cf35448be78b257911bff45a43439f",
+          "seq": 27
+        },
+        {
+          "hash": "9eaede5cf526f9da7e21aed7e4f573cd39fcaa23fd33bf11bbf453ea2abc1465",
+          "seq": 29
+        },
+        {
+          "hash": "d4278082cf54808df2b5bc0a87d5775204992db54e395bd5ce9a29710d82676c",
+          "seq": 39
+        },
+        {
+          "hash": "ce722648893cd5f281cf81b599183009865c1dcad23e125778579b1eecf7820d",
+          "seq": 41
+        },
+        {
+          "hash": "90d62ef8553461f9f6ec3f7e219c0ca8af5f2a716be0e8fe69b31037241ee78a",
+          "seq": 51
+        },
+        {
+          "hash": "506dddb2439067ea73bbbe4a273962e6701aea06026940ee9ef55e50c1c28ab5",
+          "seq": 54
+        },
+        {
+          "hash": "a8fff50b83d27b3ffd1db4825720ec26b61256f4fd97a4572c687101a6674a7f",
+          "seq": 61
+        },
+        {
+          "hash": "a8f466c132c8b67b9e7e9e732350f99eb1e0de1e52235f6e0302df56549207e3",
+          "seq": 63
+        },
+        {
+          "hash": "9e2fd458658d310475cc8abe271aead8e1b72540a105d39c4ec52db52eba4f54",
+          "seq": 72
+        },
+        {
+          "hash": "6bee4ef8d1010736087687a08cf075b7cd5a8de813f125e5037ea6e3773f37ae",
+          "seq": 74
+        },
+        {
+          "hash": "aa69cb1659e44539e4ac51a32475f19fecdcd69b93964dd3bd3232837a4f8114",
+          "seq": 86
+        },
+        {
+          "hash": "f7f1b690699a462de940aa2758d3213d502a9d2fc044ec5ca24a29b8f42cd0f5",
+          "seq": 88
+        },
+        {
+          "hash": "eb9d65aa7089dfbd14fba662d34fc3fa89f9b37ffa9362cbf7ac196d438eeb99",
+          "seq": 97
+        },
+        {
+          "hash": "6519a0c11e7093c564e38139c5968c9663504331248f186c6dacadb470fc6e21",
+          "seq": 99
+        },
+        {
+          "hash": "4e21ae61bfea9931af13c73b8697fd1a00ceb2f66752d86a6cee07bfa25debce",
+          "seq": 108
+        },
+        {
+          "hash": "8de7aac14d7540ac2fda49283a604c81addade52d88ddf5f229af821ace72053",
+          "seq": 110
+        },
+        {
+          "hash": "7970180b65a7e9684d015e0035c1f5391eb67b9586d457baa80b137f4b19fb86",
+          "seq": 119
+        },
+        {
+          "hash": "74d4a6ac01fc7f43464f28372eb41d661bcdf4fb54b4cb2ef815901dd7f61cff",
+          "seq": 121
+        },
+        {
+          "hash": "6eda3751b1d6c6fcb7d3a9d75174072e58616a05f8e39b3bdc7664ff77f6a7e1",
+          "seq": 124
+        }
+      ]
+    }
+  },
+  "kiro": {
+    "effort": "default",
+    "model": "claude-sonnet-5.5",
+    "version": "kiro-cli 3.4.0"
+  },
+  "last_trial": {
+    "phase": "best",
+    "trial": "T12"
+  },
+  "limits": [
+    "The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only."
+  ],
+  "prompts": [
+    {
+      "entries_after": 47,
+      "entries_before": 1,
+      "exit": 0,
+      "kind": "start",
+      "sha256": "cbb2546670db1d0f5af7de3e213f8cbf8fe1c6453300745e4ba6d89370070423",
+      "time": "2026-11-18T15:24:51Z"
+    }
+  ],
+  "record": {
+    "end": "ended",
+    "seal": "652d93f282ba2501e01fad395bdb317c7cfba26f8e76f915a652784a00278956"
+  },
+  "relied_on": {
+    "ids": [
+      "none"
+    ],
+    "problem": null
+  },
+  "request": {
+    "commit": "c137e150075396c2f35447000072f22170b05511",
+    "id": "stop-ahead",
+    "sha256": "4352602b0d7414b26d0d59023e19cfa89b166d24b38fc87a399fce994c061081"
+  },
+  "result": "fail",
+  "run": "stop-ahead-record-1",
+  "seed": 3,
+  "setup": "record",
+  "source": {
+    "application": "body-lab",
+    "seal": "3f8a038dbc79b8c826eafbe6239d5ccfcb7783ad6de014fe7fb77f6e0dabbaa3",
+    "session": "body-2"
+  },
+  "tools": {
+    "end_session": "14fa376eb1692d4d0aa54161ea1dbe5c37c74b4d21a9eb9f4c15c89b532a4128",
+    "record_verdict": "a3740e0a47ff606439908b29e0442d9de505f81e3bade5893eeea9c63bc9ad06",
+    "register_hypothesis": "ce422d958a5923a319fd879c8bd0a1e773a967f0c0a22572436450553f28cbdb",
+    "run_experiment": "c1d68623515a108864b8ec05c08ae8445f629d013b757f0e011bd0cbaf904400"
+  }
+}

@@ -1,0 +1,18 @@
+### H1: Gated c3 stroke with c1 at -1 gives bounded forward travel
+
+WHEN c1 is held at -1 and c3 is a sine at 2 Hz for the first 1.5 s then zero, with c1 also released to zero after 1.5 s, THE system SHALL end the trial between 0.1 and 0.8 m ahead with heading within 12 degrees.
+
+```prediction
+# relies on: H10, H11
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.8]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 1.5
+rel = 1
+```

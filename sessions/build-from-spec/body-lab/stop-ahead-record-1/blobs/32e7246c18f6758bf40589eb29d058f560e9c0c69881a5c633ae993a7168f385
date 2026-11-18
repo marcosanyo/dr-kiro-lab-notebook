@@ -1,0 +1,18 @@
+### H1: Each of c2, c3, c4 held at 1 alone moves the body
+
+WHEN exactly one of the constant levels a2, a3, a4 is 1 and all other levels are 0 for the whole trial, THE system SHALL change x by at least 0.05 m in magnitude for at least one of them.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 0.0
+a3 = 1.0
+a4 = 0.0
+```

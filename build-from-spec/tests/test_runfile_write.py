@@ -127,7 +127,22 @@ def run_file_path(root: Path, run_id: str) -> Path:
 
 
 def write(root: Path, run_id: str = "probe-none-1") -> Path:
-    return write_run_file(run_id, APPS_FOR_TESTS, STOP_LIST, root, root / "sessions" / "build-from-spec")
+    return write_run_file(
+        run_id,
+        APPS_FOR_TESTS,
+        STOP_LIST,
+        root,
+        root / "sessions" / "build-from-spec",
+    )
+
+
+def tree_bytes(folder: Path) -> dict[str, bytes]:
+    """Every file under `folder`, by its path relative to it, with its bytes."""
+    return {
+        path.relative_to(folder).as_posix(): path.read_bytes()
+        for path in sorted(folder.rglob("*"))
+        if path.is_file()
+    }
 
 
 def test_writes_the_run_file_and_its_sidecar_and_nothing_else(repo):
@@ -156,6 +171,17 @@ def test_an_existing_run_file_is_refused_by_name_and_kept(repo):
     with pytest.raises(RunFileError, match=r"probe-none-1\.run\.json: already exists"):
         write(repo)
     assert path.read_bytes() == before
+
+
+def test_an_existing_run_file_is_refused_and_nothing_moves(repo):
+    make_run_record(repo, "probe-none-1")
+    write_run_data_for(repo, "probe-none-1")
+    path = write(repo)
+    before = tree_bytes(path.parent)
+
+    with pytest.raises(RunFileError, match="already exists"):
+        write(repo)
+    assert tree_bytes(path.parent) == before
 
 
 def test_a_record_that_is_not_sealed_is_refused(repo):

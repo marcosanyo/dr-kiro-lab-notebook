@@ -1,0 +1,7 @@
+# Design
+
+## Notes
+
+- c1 held at -1 with a 2 Hz unit sine on c3 moves the body ahead about 0.061 m per 0.5 s cycle.
+- c1 must be released to 0 when the stroke ends. If c1 stays at -1 the body keeps turning (-27.6 deg in E1 T2).
+- Stroke of 3.75 s, then c1 and c3 at zero: x=0.4535 m, heading -0.92 deg (E3 T7). This is the answer.

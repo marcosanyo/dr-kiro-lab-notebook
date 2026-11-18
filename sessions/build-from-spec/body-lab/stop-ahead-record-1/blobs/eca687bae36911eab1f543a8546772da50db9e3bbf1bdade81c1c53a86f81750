@@ -1,0 +1,29 @@
+### H3: c1 at -1 drives the body forward and c0 adjusts heading
+
+WHEN c1 is held at -1 and the other channels are 0 for the whole trial, THE system SHALL move the body forward by 0.1 to 0.4 m and turn it clockwise by 20 to 60 degrees.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-60.0, -20.0]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = -1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+```

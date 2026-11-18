@@ -1,0 +1,17 @@
+### H3: Stroke lasting 3.75 s ends within 0.43 to 0.47 m
+
+WHEN c1 is -1 and c3 is a 2 Hz unit sine for the first 3.75 s, with c1 and c3 zero afterwards, THE system SHALL end 0.43 to 0.47 m ahead with heading within 12 degrees.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.43, 0.47]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 3.75
+rel = 1
+```

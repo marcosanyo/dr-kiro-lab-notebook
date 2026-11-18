@@ -1,0 +1,35 @@
+# H4: Higher frequency on c2 gives more forward travel
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "freq", "ch"]
+TRIALS = [
+    [1.0, 8.0, 2],
+    [1.0, 4.0, 2],
+    [1.0, 1.0, 2],
+]
+
+
+def wave(t, amp, freq):
+    return amp * math.sin(2 * math.pi * freq * t)
+
+
+def c0(t, amp, freq, ch):
+    return 0
+
+
+def c1(t, amp, freq, ch):
+    return 0
+
+
+def c2(t, amp, freq, ch):
+    return wave(t, amp, freq)
+
+
+def c3(t, amp, freq, ch):
+    return 0
+
+
+def c4(t, amp, freq, ch):
+    return 0

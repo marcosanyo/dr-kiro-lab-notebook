@@ -1,0 +1,35 @@
+# H2: Stroke lasting 3.7 s ends near 0.45 m
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f", "T", "rel"]
+TRIALS = [
+    [-1, 1, 2, 3.7, 1],
+    [-1, 1, 2, 3.5, 1],
+    [-1, 1, 2, 3.9, 1],
+]
+
+
+def c0(t, a1, s3, f, T, rel):
+    return 0
+
+
+def c1(t, a1, s3, f, T, rel):
+    if rel == 1 and t >= T:
+        return 0
+    return a1
+
+
+def c2(t, a1, s3, f, T, rel):
+    return 0
+
+
+def c3(t, a1, s3, f, T, rel):
+    if t >= T:
+        return 0
+    return s3 * math.sin(2 * math.pi * f * t)
+
+
+def c4(t, a1, s3, f, T, rel):
+    return 0

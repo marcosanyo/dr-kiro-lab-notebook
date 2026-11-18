@@ -50,16 +50,23 @@ def with_line(frozen: str, line: str) -> str:
     return frozen.replace(PREDICTION_OPEN, PREDICTION_OPEN + line + "\n", 1)
 
 
-def sealed_record(folder: Path, design: str, *, ended: bool = True) -> Path:
-    """A sealed record whose end snapshot holds `design` as its design.md. Without `ended`, no snapshot."""
+def sealed_record(
+    folder: Path,
+    design: str,
+    *,
+    ended: bool = True,
+    requirements: str = "# Requirements\n",
+    tasks: str = "# Tasks\n",
+) -> Path:
+    """A sealed record whose end snapshot holds the three given spec files. Without `ended`, no snapshot."""
     store = Store.create(folder)
     if ended:
         files = {
             key: store.put_blob(text.encode("utf-8"), "dr-kiro", "text/markdown")
             for key, text in (
-                ("requirements", "# Requirements\n"),
+                ("requirements", requirements),
                 ("design", design),
-                ("tasks", "# Tasks\n"),
+                ("tasks", tasks),
             )
         }
         store.append("snapshot", {"for": "end", "files": files})
@@ -72,8 +79,11 @@ def sealed_record(folder: Path, design: str, *, ended: bool = True) -> Path:
     return folder
 
 
-def test_spec_setup_allows_the_rows_of_the_final_spec_and_none() -> None:
-    assert allowed_ids("spec", BODY2) == frozenset({"none", *(f"R{n}" for n in range(1, 15))})
+def test_spec_setup_allows_none_and_the_rule_rows_of_the_final_spec() -> None:
+    allowed = allowed_ids("spec", BODY2)
+    assert {f"R{n}" for n in range(1, 15)} <= allowed
+    assert "none" in allowed
+    assert all(identifier == "none" or identifier[0] in "RHE" for identifier in allowed)
 
 
 def test_record_setup_allows_the_registered_hypotheses_and_the_experiments_and_none() -> None:
@@ -90,21 +100,38 @@ def test_unknown_setup_fails_by_name(tmp_path: Path) -> None:
         allowed_ids("both", sealed_record(tmp_path / "source", DESIGN_WITH_TABLE))
 
 
-def test_spec_source_whose_table_does_not_parse_fails(tmp_path: Path) -> None:
-    source = sealed_record(tmp_path / "source", "# Design\n\nno table here\n")
-    with pytest.raises(ReliedError, match="no readable spec table"):
-        allowed_ids("spec", source)
-
-
 def test_spec_source_without_end_snapshot_fails(tmp_path: Path) -> None:
     source = sealed_record(tmp_path / "source", DESIGN_WITH_TABLE, ended=False)
     with pytest.raises(ReliedError, match="no end snapshot"):
         allowed_ids("spec", source)
 
 
-def test_spec_source_with_a_table_allows_its_rows(tmp_path: Path) -> None:
-    source = sealed_record(tmp_path / "source", DESIGN_WITH_TABLE)
-    assert allowed_ids("spec", source) == frozenset({"none", "R1", "R2"})
+def test_spec_source_allows_the_ids_that_appear_in_the_three_given_files(tmp_path: Path) -> None:
+    source = sealed_record(
+        tmp_path / "source",
+        DESIGN_WITH_TABLE,  # R1, R2 and E1, E2 in the table
+        requirements="The rule R3 and the hypothesis H2 hold.\n",
+        tasks="Check E9 and R10, and R10 again.\n",
+    )
+    assert allowed_ids("spec", source) == frozenset({"none", "R1", "R2", "R3", "R10", "H2", "E1", "E2", "E9"})
+
+
+def test_spec_source_matches_ids_only_as_whole_words(tmp_path: Path) -> None:
+    source = sealed_record(
+        tmp_path / "source",
+        "# Design\n\nXR5 and ER1 and R0 and E01 are not ids. R7x and R7.2 are: R7 and H12.\n",
+    )
+    assert allowed_ids("spec", source) == frozenset({"none", "R7", "H12"})
+
+
+def test_spec_id_in_the_given_files_is_accepted_and_an_absent_one_is_refused(tmp_path: Path) -> None:
+    source = sealed_record(tmp_path / "source", DESIGN_WITH_TABLE, tasks="see E9\n")
+    allowed = allowed_ids("spec", source)
+    entries = sample_entries()
+    frozen = with_line(h1_frozen(entries, BODY2), "# relies on: E9, R99")
+    assert relied_on(entries, frozen, allowed) == Relied(("E9", "R99"), "unknown-id")
+    frozen_ok = with_line(h1_frozen(entries, BODY2), "# relies on: E9, R2")
+    assert relied_on(entries, frozen_ok, allowed) == Relied(("E9", "R2"), None)
 
 
 def test_first_line_that_is_not_the_relied_on_line_means_no_line() -> None:

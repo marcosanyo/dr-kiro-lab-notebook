@@ -1,0 +1,26 @@
+### H2: Extending the stroke time to 3.75 s brings x closer to 0.45 m
+
+WHEN c1 = -1 and c3 is a unit 2 Hz sine until T = 3.75 s and all inputs are 0 afterwards, THE system SHALL end at x between 0.43 and 0.47 m with heading within 12 degrees of the start.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.43, 0.47]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+f = 2
+T = 3.75
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-12, 12]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+f = 2
+T = 3.75
+```

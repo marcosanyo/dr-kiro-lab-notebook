@@ -1126,7 +1126,7 @@ this design (B1-B7).
   written for the default, which would be an invented value (rules.md 4).
 - **K30. Run file field `limits` (picture limit).** A picture blob of a `record` setup could not be opened with Kiro
   CLI's read tool. The user decided that the run file records this as a limit. Each run file has a field `limits`,
-  a list of texts. For setup `record` it is exactly `["生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル"]`.
+  a list of texts. For setup `record` it is exactly `["The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only."]`.
   For `spec` and `none` it is `[]`. `write_run_file` sets it from the setup (`limits_for` in `runfile.py`). The check
   (`check_run`) recomputes it from the setup and refuses a different value, naming the run file and the field
   `limits`. The same text is shown in `build-from-spec/README.md` under "Limits of this version", and wherever a
@@ -1181,6 +1181,20 @@ this design (B1-B7).
   Req 1.1 forbids. (3) A fallback that starts the server with another interpreter, which rules.md 2 forbids.
   Effect on the rehearsal: the rehearsal must run again from step (c) of `RUN.md` after this change. No
   rehearsal or counted run was made in writing K33.
+- **K34. Judgement fixes after the six runs.** The six runs were judged after they ran, and two
+  bugs in the judgement were found afterwards. (1) For setup `spec`, `allowed_ids` accepted only the `R` rows of the
+  final design table. `reader.md` tells the reader that the ids it may name are rule rows, hypotheses and
+  experiments as they appear in `given/`. So a correct id was judged `unknown-id`; stop-ahead-spec-2 relies on E9,
+  which appears in the given design.md table. (2) The picture limit text of K30 was in Japanese, and the user asked
+  for English. Decision: the rule follows the text the reader was given. For setup `spec`, the allowed ids are
+  `none` and every whole-word match of `R[1-9][0-9]*`, `H[1-9][0-9]*` and `E[1-9][0-9]*` in requirements.md,
+  design.md and tasks.md of the end snapshot (`allowed_ids` in `relied.py`). A design table is no longer required
+  for this. For setup `record` the rule is unchanged, and `none` stays `none`. The limit text is the English text
+  of K30. The run records are not changed: they are sealed and hashed. A run file is never rewritten by `bfs-run-file`, which refuses an
+  existing run file; a judgement fix needs a new decision and a new run id. The run files of the six runs were
+  re-judged by a one-time rewrite done by hand, from the old files in `bench-run/build-from-spec/superseded/before-judge-fix/`
+  (not in git, not counted). The judgements before and after are reported in `build-from-spec/README.md`. Not chosen: a command that rewrites run files, because run files stay write-once; editing the old run files in place, which would remove the first
+  judgement from the record; and judging the rows by hand, which would make the judgement not mechanical.
 
 ## Open items
 

@@ -1,0 +1,47 @@
+# H2: Channel c3 or c4 drives the body forward
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["level", "dur", "ch"]
+TRIALS = [
+    [1.0, 1.0, 3],
+    [1.0, 1.0, 4],
+    [1.0, 1.0, 0],
+]
+
+
+def pulse(t, level, dur):
+    if t < dur:
+        return level
+    return 0
+
+
+def c0(t, level, dur, ch):
+    if ch == 0:
+        return pulse(t, level, dur)
+    return 0
+
+
+def c1(t, level, dur, ch):
+    if ch == 1:
+        return pulse(t, level, dur)
+    return 0
+
+
+def c2(t, level, dur, ch):
+    if ch == 2:
+        return pulse(t, level, dur)
+    return 0
+
+
+def c3(t, level, dur, ch):
+    if ch == 3:
+        return pulse(t, level, dur)
+    return 0
+
+
+def c4(t, level, dur, ch):
+    if ch == 4:
+        return pulse(t, level, dur)
+    return 0
