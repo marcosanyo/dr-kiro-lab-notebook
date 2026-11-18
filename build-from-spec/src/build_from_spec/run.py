@@ -77,9 +77,9 @@ from build_from_spec.runs import (
     RUN_FILE_SUFFIX,
     RUN_ID,
     RunsError,
+    counted_runs_of_request,
     differences,
     records_folder,
-    runs_of_request,
 )
 from build_from_spec.turns import Prompt, TurnsEnd, kiro_command, run_turns
 from build_from_spec.wrap import ReaderAdapter, WrapError, build
@@ -326,7 +326,7 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
         }
         earlier = []
         lines: list[str] = []
-        for path in runs_of_request(records, app.name, request.id).values():
+        for path in counted_runs_of_request(root, app.name, request.id).values():
             data = read_run_file(path)
             earlier.append((path.name, data))
             # The hashes of the working folder are compared in phase B, after the folder is written

@@ -1135,6 +1135,18 @@ this design (B1-B7).
   (section 3.9, step D). The experiment does not show that this clears the rehearsal failure; the rehearsal must be
   run again after this change. Not chosen: keeping the entry, which the experiment shows is not needed, and
   renaming the variable, which no evidence supports.
+- **K32. The earlier-run comparison reads counted runs only.** The run script compares a new run with the earlier runs
+  of the same request before it writes the working folder (Requirement 7.4), and `bfs-check-runs` does the same for
+  the sealed runs (14.6). Rehearsal run 1 (`rehearsal-fake-record-1`) was made before K31, so its recorded
+  `reader.json` differs from the current one. Rehearsal run 2 was refused against it (`RUN.md`, result 2). A
+  rehearsal run does not count, so it must not be compared with counted runs, and counted runs must not be compared
+  with it. Decision: the run script takes its earlier runs only from the production records folder
+  `sessions/build-from-spec/`, through `counted_runs_of_request` in `runs.py`, which `check` in `run.py` calls. The
+  records folder of the run being started still decides where its run file is written. The production rule does not
+  change: a counted run is compared with every earlier counted run of its request, and a different `reader.json`
+  there is refused. Rehearsal runs are compared with neither each other nor counted runs. Not chosen: deleting or
+  regenerating rehearsal run 1, which the user did not ask for, and comparing only within the rehearsal folder, which
+  would still refuse run 2 against run 1 after K31.
 
 ## Open items
 

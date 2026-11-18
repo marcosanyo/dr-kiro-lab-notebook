@@ -6,6 +6,7 @@ no model runs. Each test uses a temporary repository with its own rehearsal fold
 """
 
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -30,11 +31,13 @@ from run_support import (
     git,
     make_source,
     reader_ends,
+    save,
     use_test_table,
 )
 
 REQUEST_ID = "probe"
 SOURCE = "fake-src"
+READER = ".kiro/agents/reader.json"
 RECORDS = f"{REHEARSAL_ROOT}/sessions/build-from-spec"
 REHEARSAL_SOURCE = f"{REHEARSAL_ROOT}/sessions/{FAKE}/{SOURCE}"
 
@@ -156,3 +159,21 @@ def test_the_wrapping_adapter_reads_the_rehearsal_request_only_for_the_rehearsal
     )
     with pytest.raises(WrapError, match="no request file"):
         wrap.build("reader/fake/only-production/12", TEST_REHEARSAL_APPS, repo)
+
+
+def test_a_rehearsal_run_with_a_different_reader_file_from_an_earlier_rehearsal_run_is_accepted(
+    repo: Path,
+) -> None:
+    # The first rehearsal run is recorded with a reader file that the current one no longer matches (K31).
+    run_script(rehearsal_arguments(), repo, TEST_REHEARSAL_APPS, FakeKiro(reader_ends))
+    first = repo / RECORDS / FAKE / "probe-none-1.run.json"
+    data = read_run_file(first)
+    data["files"][READER] = "0" * 64
+    save(first, data)
+
+    kiro = FakeKiro(reader_ends)
+    run_file = run_script(replace(rehearsal_arguments(), run=2), repo, TEST_REHEARSAL_APPS, kiro)
+
+    assert run_file == repo / RECORDS / FAKE / "probe-none-2.run.json"
+    assert read_run_file(run_file)["files"][READER] != "0" * 64
+    assert len(kiro.commands) == 1

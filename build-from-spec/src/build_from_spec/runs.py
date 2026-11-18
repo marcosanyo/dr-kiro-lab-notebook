@@ -4,6 +4,9 @@ A run id is `<request>-<setup>-<n>`. The run records and run files of one applic
 `<records>/<application>/`, where `<records>` is the records folder of the run: `sessions/build-from-spec`
 for production runs (`RECORDS`), and a folder under `apps.REHEARSAL_ROOT` for a rehearsal.
 
+The earlier runs that the run script compares a new run with are only the counted ones, read from `RECORDS`
+(`counted_runs_of_request`, K32). Rehearsal records are never read as earlier runs.
+
 A run record is the sealed folder named by its run id. Its run file is `<run id>.run.json`, and the author
 sidecar of that run file is `<run id>.run.json.authors.json`.
 
@@ -128,6 +131,13 @@ def runs_of_request(records: Path, application: str, request_id: str) -> dict[st
         for run_id, path in paired_runs(records, application).items()
         if run_id_parts(run_id).request == request_id
     }
+
+
+def counted_runs_of_request(root: Path, application: str, request_id: str) -> dict[str, Path]:
+    """The paired run files of one request that count: those under the production records folder `RECORDS`,
+    whatever the records folder of the run being started (K32). A rehearsal run is compared with neither a
+    rehearsal run nor a counted run, so this is the only source of earlier runs for the run script."""
+    return runs_of_request(Path(root) / RECORDS, application, request_id)
 
 
 def _flat(run: Mapping[str, Any]) -> dict[str, object]:
