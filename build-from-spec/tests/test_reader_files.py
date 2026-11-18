@@ -77,7 +77,16 @@ def test_readme_holds_the_start_and_continue_lines_and_the_install_command():
     text = (REPO_ROOT / "build-from-spec" / "README.md").read_text(encoding="utf-8")
     assert "Begin the session." in text
     assert "Continue the session." in text
-    assert "uv tool install --editable './bench[frontend]'" in text
-    assert "--with-editable ./build-from-spec --reinstall" in text
+    install_lines = [line for line in text.splitlines() if line.startswith("uv tool install")]
+    assert len(install_lines) == 1, install_lines
+    for part in (
+        "--editable './bench[frontend]'",
+        "--with-editable ./body-lab/adapter",
+        "--with-editable ./build-from-spec",
+        "--with-editable ./wind-tunnel/adapter",
+        "--with-executables-from build-from-spec",
+        "--reinstall",
+    ):
+        assert part in install_lines[0], part
     assert "## Checks at implementation" in text
     assert "## Runs" in text

@@ -46,6 +46,17 @@ TRIAL = re.compile(r"T[0-9]+")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 RUN_DATA_SUFFIX = ".run-data.json"
+# What the reader could not use from the setup (Kiro decision K30). Set from the setup, checked against it.
+RECORD_LIMIT = (
+    "生の記録の絵は Kiro CLI の読み取りでは開けなかった。"
+    "record の reader が使えたのは、記録の文字と実験のファイル"
+)
+
+
+def limits_for(setup: str) -> list[str]:
+    """The limits of a run with this setup: the picture limit for `record`, none for the others (K30)."""
+    return [RECORD_LIMIT] if setup == "record" else []
+
 
 REQUEST_FIELDS = ("id", "commit", "sha256")
 SOURCE_FIELDS = ("application", "session", "seal")
@@ -86,6 +97,7 @@ RUN_FILE_FIELDS = (
     "last_trial",
     "prompts",
     "continue_lines",
+    "limits",
 )
 
 
@@ -270,6 +282,9 @@ def check_run_file(data: object, where: str = "run file") -> dict[str, Any]:
         raise RunFileError(
             f"{where}.continue_lines: {checked['continue_lines']} but {continues} continue turns"
         )
+    limits = checked["limits"]
+    if not isinstance(limits, list) or any(not isinstance(item, str) for item in limits):
+        raise RunFileError(f"{where}.limits: expected a list of texts")
     return checked
 
 
@@ -456,6 +471,7 @@ def write_run_file(run_id: str, apps: Mapping[str, App], stop_list: Path, root: 
         else {"trial": judged.last_trial, "phase": judged.last_phase},
         "prompts": prompts,
         "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
+        "limits": limits_for(data["setup"]),
     }
     text, sidecar = run_file_texts(run_file_data)
     scanner = Scanner.from_config([root / app.scan_sources for app in apps.values()], stop_list)

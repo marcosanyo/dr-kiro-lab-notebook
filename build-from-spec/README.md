@@ -157,6 +157,16 @@ Folder: `bench-run/build-from-spec/plain-picture-2026-11-18/`.
 - The reader's file tool opening `given/record/blobs/` (18.3).
 - Resume and the picture check with the reader agent, bench and hooks (18.2 item 2 and 18.3 at reader level).
 
+## Limits of this version
+
+The limit text is written in every run file of setup `record` (field `limits`, Kiro decision K30):
+
+> 生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル
+
+In plain terms: the reader could not use the pictures of a record. It used the record's text and the experiment
+files. The reader's own file tool was not tested with pictures. Wherever a `record` result is shown, this limit is
+shown with it.
+
 ## Runs
 
 _To be filled in when the runs are made. One line per run id, with its run file in `sessions/build-from-spec/`._

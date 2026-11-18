@@ -28,7 +28,14 @@ from build_from_spec.judge import JudgeError, Judgement, judge_record
 from build_from_spec.reduced import ReducedError, plan
 from build_from_spec.relied import ReliedError, allowed_ids
 from build_from_spec.request import Request, RequestError, parse_request
-from build_from_spec.runfile import REQUESTS, RunFileError, committed_request, read_run_file, run_file_texts
+from build_from_spec.runfile import (
+    REQUESTS,
+    RunFileError,
+    committed_request,
+    limits_for,
+    read_run_file,
+    run_file_texts,
+)
 from build_from_spec.runs import (
     RunsError,
     application_folders,
@@ -211,6 +218,7 @@ def check_run(run_file: Path, root: Path, apps: Mapping[str, App]) -> Checked:
         )
 
     _check_turns(label, run, len(entries))
+    _same(label, "limits", limits_for(setup), run["limits"])
 
     # The run file holds exactly the text that its fields give, and its sidecar the authors of that text.
     text, sidecar = run_file_texts(run)

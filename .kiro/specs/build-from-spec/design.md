@@ -755,9 +755,14 @@ plus what is derived after sealing. Placeholders are in angle brackets (`rules.m
   "last_trial": {"trial": "T<n>", "phase": "<phase>"},
   "prompts": [{"kind": "start", "sha256": "<sha256>", "time": "<UTC time>", "exit": "<exit code>",
                "entries_before": "<count>", "entries_after": "<count>"}],
-  "continue_lines": "<count>"
+  "continue_lines": "<count>",
+  "limits": ["<picture limit text of K30, setup record only>"]
 }
 ```
+
+- `limits` is a list of texts. For setup `record` it is exactly `["<the picture limit text of K30>"]`; for `spec` and
+  `none` it is `[]`. `write_run_file` sets it from the setup (`limits_for`), and `bfs-check-runs` recomputes it from
+  the setup and refuses a different value, naming the run file and the field (K30).
 
 - `relied_on.ids` is `null` when there is no H1, no line, or a line of bad syntax: the marker distinct from
   `["none"]` (Req 14.2). `problem` is `null` or one of `PROBLEMS`.
@@ -1111,6 +1116,13 @@ this design (B1-B7).
   own default, and the Kiro CLI version recorded in the run data (B5) is the record of which one. Any other value is
   passed as `--effort <value>`. `--model` stays required, and an empty effort is still refused. Not chosen: a number
   written for the default, which would be an invented value (rules.md 4).
+- **K30. Run file field `limits` (picture limit).** A picture blob of a `record` setup could not be opened with Kiro
+  CLI's read tool. The user decided that the run file records this as a limit. Each run file has a field `limits`,
+  a list of texts. For setup `record` it is exactly `["生の記録の絵は Kiro CLI の読み取りでは開けなかった。record の reader が使えたのは、記録の文字と実験のファイル"]`.
+  For `spec` and `none` it is `[]`. `write_run_file` sets it from the setup (`limits_for` in `runfile.py`). The check
+  (`check_run`) recomputes it from the setup and refuses a different value, naming the run file and the field
+  `limits`. The same text is shown in `build-from-spec/README.md` under "Limits of this version", and wherever a
+  `record` result is shown. Not chosen: a free text per run, which would let the value drift from the setup.
 
 ## Open items
 

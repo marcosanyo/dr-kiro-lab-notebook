@@ -13,8 +13,10 @@ import pytest
 from bench.scan.levels import sidecar_pieces
 
 from build_from_spec.runfile import (
+    RECORD_LIMIT,
     RunFileError,
     check_run_file,
+    limits_for,
     read_run_data,
     read_run_file,
     run_file_texts,
@@ -63,6 +65,7 @@ def run_file(ids: list[str] | None, problem: str | None) -> dict[str, Any]:
         "last_trial": None,
         "prompts": prompts(),
         "continue_lines": 1,
+        "limits": [],
     }
 
 
@@ -204,3 +207,31 @@ def test_run_data_paths_must_stay_inside_the_working_folder(tmp_path):
     data["files"] = {"../outside.md": digest("x")}
     with pytest.raises(RunFileError, match="not a path inside the working folder"):
         write_run_data(tmp_path / "run-data.json", data)
+
+
+def test_the_limit_of_setup_record_is_the_picture_limit_text_and_the_others_have_none():
+    assert RECORD_LIMIT == (
+        "生の記録の絵は Kiro CLI の読み取りでは開けなかった。"
+        "record の reader が使えたのは、記録の文字と実験のファイル"
+    )
+    assert limits_for("record") == [RECORD_LIMIT]
+    assert limits_for("spec") == []
+    assert limits_for("none") == []
+
+
+def test_a_run_file_with_the_record_limit_round_trips_through_its_file(tmp_path):
+    data = run_file(["none"], None)
+    data["setup"] = "record"
+    data["run"] = "probe-record-1"
+    data["given"] = {"record": {"removed": []}}
+    data["limits"] = limits_for("record")
+    path, text = write_pair(tmp_path, data)
+    assert '"limits": [\n    "生の記録の絵は' in text
+    assert read_run_file(path) == data
+
+
+def test_limits_must_be_a_list_of_texts():
+    data = run_file(["none"], None)
+    data["limits"] = "not a list"
+    with pytest.raises(RunFileError, match="run.json.limits: expected a list of texts"):
+        check_run_file(data, "run.json")
