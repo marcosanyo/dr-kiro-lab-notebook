@@ -15,9 +15,24 @@ reads the committed request.
 
 ```
 bench-run/build-from-spec/rehearsal/
-  sessions/fake/rehearsal-src/           (a) the sealed source record of the fake application
-  sessions/build-from-spec/fake/         (c) the rehearsal run record and run file
-  state/, lab/                           the bench state and lab of the source session (builder side)
+  sessions/fake/rehearsal-src/                       (a) the sealed source record of the fake application
+  sessions/build-from-spec/fake/<run-id>/            (c) the run record
+  sessions/build-from-spec/fake/<run-id>.run.json    (c) the run file
+  state/rehearsal-src/, lab/rehearsal-src/           the source session's bench state and lab (builder side)
+```
+
+The run files of the rehearsal are in the `--sessions` folder above (`sessions/build-from-spec` of the rehearsal).
+The working folder, the state folder and the other files of a run are not under `rehearsal/`. Relative to the
+repository root, `run.py` writes them directly in `bench-run/build-from-spec/` (`RUN_DATA`):
+```
+bench-run/build-from-spec/
+  <run-id>.session.toml                  session config, named by BENCH_SESSION_CONFIG
+  <run-id>.run-data.json                 run data file (before the run file exists)
+  <run-id>.hook-log.jsonl                hook log, named by BENCH_HOOK_LOG
+  <run-id>.turn-<k>.log                  Kiro CLI output of turn k
+  <run-id>.mcp-startup.log               bench-mcp startup failures (only if a start failed)
+  <run-id>/                              working folder of the run (the reader's folder)
+  state/<run-id>/                        bench state of the run
 ```
 
 `--sessions` names the records folder, as it does in production (`sessions/build-from-spec`). The source record
@@ -66,6 +81,24 @@ uv run --project build-from-spec bfs-run \
 `--setup record` gives the reader the reduced copy of the source record, with the picture limit, so the
 rehearsal also exercises the limit field of the run file. The run id is `rehearsal-fake-record-1`.
 
+### (c2) Second rehearsal run
+
+The same command as (c), with `--run 2` (run id `rehearsal-fake-record-2`). The source, the setup, the seed, the
+model, the effort and `--sessions` are the same. A run of the same request must match the earlier run on all of
+them, so `bfs-run` refuses a different value.
+```
+uv run --project build-from-spec bfs-run \
+  --request build-from-spec/rehearsal/requests/rehearsal-fake.toml \
+  --setup record \
+  --source bench-run/build-from-spec/rehearsal/sessions/fake/rehearsal-src \
+  --seed 3 \
+  --run 2 \
+  --model claude-sonnet-5.5 \
+  --effort default \
+  --sessions bench-run/build-from-spec/rehearsal/sessions/build-from-spec
+```
+Steps (d) and (e) apply to this run id as well, with `rehearsal-fake-record-2` in place of `rehearsal-fake-record-1`.
+
 ### (d) Write the run file, only if (c) did not
 
 ```
@@ -104,7 +137,12 @@ The rehearsal stopped at its first reader turn. No trial ran, so there is no jud
 - Not observed: the bench's own stderr. The background run printed nothing, and no bench-mcp process was checked
   while the turn ran. The cause of the connection closing is therefore not yet known.
 - Steps (d) and (e) were not run, because the run did not complete.
-- The session files were written under `bench-run/build-from-spec/` rather than inside `rehearsal/`, as this file
-  lists them. The real runs should not rely on the `rehearsal/state/` path shown above until this is checked.
+- The session files are under `bench-run/build-from-spec/` itself, as the Folders section above lists; the run
+  folder is `bench-run/build-from-spec/rehearsal-fake-record-1/` and the state folder is
+  `bench-run/build-from-spec/state/rehearsal-fake-record-1/`. An earlier version of this section gave a location
+  under `rehearsal/`, which was wrong.
 
 The first real run must not start until the cause of the bench-mcp startup failure is found.
+After K31 (the reader's bench entry has no `env` entry), the rehearsal must be run again, from step (c), to see
+whether the failure is gone. If bench-mcp fails to start, `<run-id>.mcp-startup.log` next to the session config
+gives the builder-side reason.
