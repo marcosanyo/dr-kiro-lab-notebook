@@ -1098,6 +1098,19 @@ this design (B1-B7).
   committed text would be one more thing for the scan to flag.
 - **B26. Stop reasons** are fixed bench wording: "the reader's Kiro CLI exited with code <n>" and "the reader called
   no bench tool in two turns in a row".
+- **K28. Request generator without a filter (test code only).** Property 1 and Property 2 drew the two bounds of each
+  pass range independently and dropped the draw with `assume(low < high)`. A request has up to three pass ranges, so
+  the test threw away about half of the draws per range, and hypothesis failed with `FailedHealthCheck:
+  filter_too_much` (seen with `--hypothesis-seed=9` on Property 1). The generator now draws `low` from [-1e6, 1e6)
+  and `high` from (low, 1e6], so every draw is a valid pass range and nothing is discarded. The domain is the same
+  (finite bounds with `low < high`, within ±1e6), the checked properties and `max_examples=100` are unchanged, and no
+  health check is suppressed.
+- **K29. Effort `default` omits `--effort`.** `kiro-cli` does not show the default effort (`kiro-cli chat --help`
+  gives no default and `kiro-cli settings list` has no effort setting), so no value can be written for it. The
+  reader's effort is `default` for the runs, which makes `kiro_command` leave out `--effort`. Kiro CLI then uses its
+  own default, and the Kiro CLI version recorded in the run data (B5) is the record of which one. Any other value is
+  passed as `--effort <value>`. `--model` stays required, and an empty effort is still refused. Not chosen: a number
+  written for the default, which would be an invented value (rules.md 4).
 
 ## Open items
 
