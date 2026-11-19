@@ -37,6 +37,7 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   - R2 の replaced by の最後の「, R1」は、置き換える行へのリンクを文のあとに別に付けていたのが原因。記録の replaced by は R1 だけで、リストにあるのは記録の置き換えだけ。リンクは規則の文そのものにした。
   - main（#37、`build` が除外リストに入った）を取り込み、`stop-list.txt` と `test_scan.py` の衝突は `ahead`、`spacing`、`build` が全部残る形で直した。
   - 変えたテスト: `test_photo_real.py`（body-lab は拡大した 1 つの figure、全体のシートは名指しだけ、ラボのカードは最初の 1 コマ）、`test_photo_plots.py`（`"still"` から `"first"` と `data-whole-src`）。ゆるめたものはない。
+- **済み（2026-11-20、絵の見出し）:** 表紙の拡大した絵の見出しから「the cells in reading order」を外し、「magnified around the body, one recorded frame at a time」にした。「whole picture」に替えると「the whole picture, one recorded frame at a time」に替わり、戻ると元に戻る。スクリプトがないときは最初の見出し。
 - **次の一手:** ユーザーが画面を見て、直しを返す。そのあと PR を作る。
   （前の回の次の一手:）ユーザーがスマホで画面の画像を見て、直しを返す。そのあと PR を作る。PR の説明には、ゆるめたテストの 2 か所と、その理由を書く。
 - **未解決:** main の風洞のテストが 2 件落ちている。ノートとは混ぜず、ノートの PR が終わった後に、別の小さな PR で直す。どの 2 件かは、まだ調べていない。

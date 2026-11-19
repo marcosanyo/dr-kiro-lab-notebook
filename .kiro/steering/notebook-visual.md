@@ -120,7 +120,9 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
   (play, pause, step, whole picture; "whole picture" swaps the picture, in place and at the same cell, to the whole
   picture, which then moves one cell at a time with the same interval; "magnified picture" swaps back). Its pixels are drawn without
   smoothing (`image-rendering: pixelated`), on the canvas too. Its caption holds the controls, and on the cover the
-  trial id and the caption words.
+  trial id and the caption words: two captions, "magnified around the body, one recorded frame at a time" and "the
+  whole picture, one recorded frame at a time" (`data-caption` near/far, the second `hidden`), which the script swaps
+  with the picture. Without the script the first shows.
 - Its alt text is "Magnified view of the picture beside it".
 
 ## Cover layout (Requirements 13.1, 13.4, 13.7, 13.9-13.12; Decision 51)
