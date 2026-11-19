@@ -131,3 +131,4 @@ def test_the_script_reads_the_interval_of_each_picture_from_its_figure() -> None
     assert "--cell-interval" not in css and "--cell-interval" not in script
     assert '"interval"' in script and "prefers-reduced-motion: reduce" in script
     assert '"first"' in script and "data-whole-src" in script
+    assert "data-caption" in script
