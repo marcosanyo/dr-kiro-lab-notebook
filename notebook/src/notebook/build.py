@@ -21,6 +21,7 @@ from bench.scan.scan import Scanner
 from notebook import (
     addresses,
     choices,
+    display,
     layouts,
     readerrequest,
     readerruns,
@@ -61,6 +62,7 @@ class Checked:
     allow_fake: bool
     runs: tuple[readerruns.Run, ...]
     requests: dict[str, readerrequest.Request]
+    retakes: display.Retakes
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,8 @@ def check_inputs(inputs: Inputs, *, allow_fake: bool) -> Checked:
         tables.check_end(record)
     runs = tuple(readerruns.load(inputs.sessions))
     requests = readerrequest.load(inputs.requests, list(runs))
-    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests)
+    retakes = display.load(inputs.display, list(loaded), table)
+    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests, retakes)
 
 
 # Phase 2
@@ -130,6 +133,7 @@ def _shelf(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]
         m.checked.layouts,
         list(m.checked.runs),
         m.checked.requests,
+        m.checked.retakes,
     )
 
 

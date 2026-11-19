@@ -5,6 +5,12 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
+## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
+- ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。古い表紙・ラボ・セッションのページとリプレイ、その専用のテストは削除（`lab-notebook` の要件 8〜14・17 の該当部分を置き換え）。
+- 人が書くもの: `notebook/choices/<app>/<session>.toml`（題、副題、要約、カードの 1 行、model、date、色、`[progress]`、`[[polaroid]]` 2 枚）と `notebook/choices/cover.toml`（ラボごとの札、説明、最初に開くセッション、単位）。
+- **未記入:** 5 つの choices の `model` は `<fill in>`（記録にモデル名がない）。`date` は各記録が git に入った日。直してほしい。body-2 の題は、目隠しスキャンが `Backwards` を拒んだので `The Reversed Wave`（ストップリストは触っていない）。
+- 撮り直した大きな絵の差し込み口: `notebook-build --display <folder>`（`notebook/src/notebook/display.py`、マニフェストの検査つき）。撮り直しの手順案は設計の「Proposal」。アダプターがカメラとサイズを決めさせるかは未確認（聞く必要があるかも）。
+- 見ていないもの: 360px の実機表示は Chrome の iframe で確認、昼の画面は script 抜きで確認。`notebook` のテストは全部通る。
 ## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
 - **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
   - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。

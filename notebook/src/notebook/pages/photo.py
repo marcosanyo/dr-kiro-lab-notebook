@@ -97,6 +97,7 @@ def figures(
     trial_word: bool = True,
     magnified: bool = True,
     captions: tuple[str, str, str] | None = None,
+    retake: PictureFile | None = None,
 ) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
     """The moving picture of one trial, its magnified picture and the picture files: the recorded sheet,
     then the magnified picture when there is one. A body-lab trial with a magnified picture has that one
@@ -118,7 +119,8 @@ def figures(
     body_lab = record.application in MAGNIFIED_APPLICATIONS
     has_magnified = magnified and body_lab
     if has_magnified:
-        enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
+        # A retaken display picture (`display.py`) takes the place of the magnified one; it has no gap.
+        enlarged = retake or magnified_file(record, trial, layout, cells.width, cells.height)
         enlarged_width, enlarged_height = _image_size(enlarged.data)
         enlarged_cell_width = enlarged_width // layout.columns
         enlarged_cell_height = enlarged_height // layout.rows
@@ -219,6 +221,7 @@ def photo(
     trial_word: bool = True,
     magnified: bool = True,
     captions: tuple[str, str, str] | None = None,
+    retake: PictureFile | None = None,
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The instant photo of one trial and the picture files it shows (see `figures` for the arguments).
 
@@ -231,7 +234,14 @@ def photo(
     picture (Requirement 7.9); the returned files are the recorded sheet, then the magnified picture. A
     wind-tunnel photo has no magnified picture."""
     moving, enlarged, pictures = figures(
-        record, trial, layout, size, trial_word=trial_word, magnified=magnified, captions=captions
+        record,
+        trial,
+        layout,
+        size,
+        trial_word=trial_word,
+        magnified=magnified,
+        captions=captions,
+        retake=retake,
     )
     return [*moving, *enlarged], pictures
 

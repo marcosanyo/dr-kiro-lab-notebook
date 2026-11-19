@@ -7,6 +7,7 @@ of the session the cover file names for the first lab.
 
 from notebook import addresses, html, layouts, progress
 from notebook.choices import Choices, Cover, Lab
+from notebook.display import Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Segment, commentary, markup, pencil
 from notebook.pages import book, parts, photo
@@ -106,12 +107,13 @@ def _page(
     table: dict[str, layouts.Layout],
     runs: list[Run],
     requests: dict[str, Request],
+    retakes: Retakes,
 ) -> Page:
     by_key = {(r.application, r.session): r for r in records}
     lab = next(lab for lab in cover.labs if lab.application == record.application)
     chosen = choices[(record.application, record.session)]
     layout = layouts.layout_for(table, record.application, record.name)
-    inside, files = book.body(record, layout, chosen, lab, runs, requests)
+    inside, files = book.body(record, layout, chosen, lab, runs, requests, retakes)
     opened = _el("article", "book", inside, id="book")
     top = [
         *_masthead(lab),
@@ -129,11 +131,12 @@ def pages(
     table: dict[str, layouts.Layout],
     runs: list[Run],
     requests: dict[str, Request],
+    retakes: Retakes,
 ) -> dict[str, Page]:
     """Every notebook page: one per session, and `index.html`, the page of the first lab's open session."""
     out: dict[str, Page] = {}
     for record in records:
-        out[_page_of(record)] = _page(record, records, choices, cover, table, runs, requests)
+        out[_page_of(record)] = _page(record, records, choices, cover, table, runs, requests, retakes)
     first = cover.labs[0]
     opened = next(r for r in records if (r.application, r.session) == (first.application, first.open))
     if addresses.COVER in out:

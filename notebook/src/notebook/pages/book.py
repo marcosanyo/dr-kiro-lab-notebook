@@ -13,6 +13,7 @@ from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables
 from notebook.choices import Choices, Lab, Polaroid
+from notebook.display import Retakes, as_file
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
@@ -44,6 +45,11 @@ class Shown:
     """What the page collects while it is made: the picture files it shows, in order."""
 
     files: list[photo.PictureFile]
+    retakes: Retakes
+
+    def retake(self, record: RecordModel, trial: Trial) -> photo.PictureFile | None:
+        found = self.retakes.get((record.application, record.session, trial.id))
+        return None if found is None else as_file(found)
 
 
 def _new_best() -> list[Segment]:
@@ -150,7 +156,9 @@ def _polaroid(
 ) -> list[Segment]:
     trial = next(t for t in record.trials if t.id == pol.trial)
     source = _src(record, trial.seq)
-    figure, files = photo.photo(record, trial, layout, "large", trial_word=False)
+    figure, files = photo.photo(
+        record, trial, layout, "large", trial_word=False, retake=shown.retake(record, trial)
+    )
     shown.files += files
     point = next(p for p in found.points if p.trial.id == trial.id)
     head = [
@@ -522,7 +530,9 @@ def _trial_card(
     record: RecordModel, layout: Layout, experiment: Experiment, trial: Trial, best: bool, shown: Shown
 ) -> list[Segment]:
     source = _src(record, trial.seq)
-    figure, files = photo.photo(record, trial, layout, "small", trial_word=False)
+    figure, files = photo.photo(
+        record, trial, layout, "small", trial_word=False, retake=shown.retake(record, trial)
+    )
     shown.files += files
     params: list[Segment] = []
     for i, param in enumerate(trial.params):
@@ -605,7 +615,9 @@ def _hypothesis_row(
     pic: list[Segment] = []
     if mine:
         trial = star[-1] if star else mine[0]
-        figure, files = photo.photo(record, trial, layout, "small", trial_word=True)
+        figure, files = photo.photo(
+            record, trial, layout, "small", trial_word=True, retake=shown.retake(record, trial)
+        )
         shown.files += files
         pic = figure
     else:
@@ -736,11 +748,12 @@ def body(
     lab: Lab,
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
+    retakes: Retakes,
 ) -> tuple[list[Segment], list[photo.PictureFile]]:
     """The opened notebook of one session, and the picture files it shows."""
     if chosen.record != record.name:
         raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
-    shown = Shown([])
+    shown = Shown([], retakes)
     table, checked = progress.table_of(record)
     title = f"{chosen.title} — {chosen.subtitle}"
     start = f"{chosen.file} key title"
