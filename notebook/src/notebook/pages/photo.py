@@ -96,7 +96,7 @@ def figures(
     *,
     trial_word: bool = True,
     magnified: bool = True,
-    captions: tuple[str, str] | None = None,
+    captions: tuple[str, str, str] | None = None,
 ) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
     """The moving picture of one trial, its magnified picture and the picture files: the recorded sheet,
     then the magnified picture when there is one. A body-lab trial with a magnified picture has that one
@@ -144,7 +144,13 @@ def figures(
         )
         # The cover's visible commentary is limited (13.6): there the caption holds the trial id and one word.
         if captions is not None:
-            enlarged_caption = [*html.text(pencil(tid, source)), *say_text(captions[1])]
+            # Two captions, one per picture: the script shows the one of the picture on view; without the
+            # script the whole picture's caption stays hidden and the magnified picture's shows.
+            enlarged_caption = [
+                *html.text(pencil(tid, source)),
+                *html.element("span", {"data-caption": "near"}, say_text(captions[1])),
+                *html.element("span", {"data-caption": "far", "hidden": "hidden"}, say_text(captions[2])),
+            ]
         else:
             enlarged_caption = [
                 *(say_text("PHOTO_TRIAL") if trial_word else []),
@@ -212,7 +218,7 @@ def photo(
     *,
     trial_word: bool = True,
     magnified: bool = True,
-    captions: tuple[str, str] | None = None,
+    captions: tuple[str, str, str] | None = None,
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The instant photo of one trial and the picture files it shows (see `figures` for the arguments).
 
