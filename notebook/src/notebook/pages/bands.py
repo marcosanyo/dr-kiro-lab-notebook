@@ -174,7 +174,8 @@ def _group(view: View, group: Group) -> list[Segment]:
 
 
 def draw(view: View, row: Row) -> list[Segment]:
-    """The run bands of one row, for its scope cell (Requirement 8.9). The scope text is never read."""
+    """The run bands of one row, for its scope cell (Requirement 8.9). The scope text is never read. The
+    explanation of the drawing is `intro`, shown once above the table, not on each card."""
     groups = row_bands(view, row)
     if not groups:
         return html.element("p", {"class": "bands"}, say_text("BANDS_NONE"))
@@ -182,8 +183,13 @@ def draw(view: View, row: Row) -> list[Segment]:
     return html.element(
         "figure",
         {"class": "bands"},
-        [
-            *html.element("figcaption", None, say_text("BANDS_INTRO")),
-            *html.element("ul", {"class": "band-groups"}, items),
-        ],
+        html.element("ul", {"class": "band-groups"}, items),
     )
+
+
+def intro(view: View, rows: tuple[Row, ...]) -> list[Segment]:
+    """The explanation of the run bands, once above a table, when at least one of its rows has a band.
+    Each card shows its bands without it."""
+    if not any(row_bands(view, row) for row in rows):
+        return []
+    return html.element("p", {"class": "bands-intro"}, say_text("BANDS_INTRO"))

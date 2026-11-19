@@ -216,9 +216,10 @@ def _went(
     unit: str,
     where: str,
 ) -> list[Segment]:
-    """One line like "expected to go forward 0.2 to 3 m, went back 0.2047 m": the registered range and the measured value
-    as distances along the direction the start record names, the sign of each read as forward or back. Every
-    figure is the cover's usual four significant digits of a recorded number; none is made up."""
+    """One line like "expected to go forward 0.2 to 3 m, went back 0.2047 m": the registered range and the
+    measured value as distances along the direction the start record names, the sign of each read as forward
+    or back. Every figure is the cover's usual four significant digits of a recorded number; none is made
+    up."""
     source = _source(record, hypothesis.seq)
     out_source = _source(record, outcome.seq)
     if outcome.value is None:
@@ -247,8 +248,9 @@ def _happened(
     which side of the range it lies on ("on the other side of zero" when the range lies on one side of zero
     and the value on the other). When the start record's measured-by text says a measurement is taken in the
     direction the body faces at the start, `_went` says "forward" and "back"; otherwise the record declares
-    no direction, so the line says "below" and "above", never "forward" or "back". A miss without a value, or with a value inside its
-    range, is a record the bench cannot produce and the cover cannot explain: the build fails."""
+    no direction, so the line says "below" and "above", never "forward" or "back". A miss without a value,
+    or with a value inside its range, is a record the bench cannot produce and the cover cannot explain:
+    the build fails."""
     source = _source(record, hypothesis.seq)
     unit = _unit(record, prediction.measurement, where)
     low, high = numbers.short(prediction.low, where), numbers.short(prediction.high, where)

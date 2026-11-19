@@ -42,7 +42,7 @@ def _rules(css: str) -> list[tuple[str, str]]:
                 depth -= 1
             j += 1
         body = css[open_at + 1 : j - 1]
-        if head.startswith("@media"):
+        if head.startswith(("@media", "@supports")):
             rules.extend(_rules(body))
         else:
             assert "{" not in body, f"nested block in {head!r}"
@@ -298,9 +298,20 @@ def test_each_spec_row_is_a_block_card_and_its_cells_carry_their_header_word_as_
     assert wide["grid-template-columns"] == "repeat(auto-fill, minmax(21rem, 1fr))"
 
 
-def test_the_strike_through_of_a_rejected_row_leaves_the_status_cell_alone():
-    strike = _declared(".row-rejected td:not(.status)")
+def test_the_strike_through_of_a_rejected_row_is_on_the_rule_sentence_only():
+    strike = _declared('.row-rejected td[data-label="rule"]')
     assert strike["text-decoration"].startswith("line-through")
+
+
+def test_a_card_hides_scope_experiments_and_predictions_until_its_details_is_open():
+    css = CSS.read_text(encoding="utf-8")
+    closed = ".spec-row:not(:has(details.evidence[open]))"
+    for label in ("scope", "experiments", "predictions"):
+        selector = f'{closed} > tr[id] > td[data-label="{label}"]'
+        assert _declared(selector)["display"] == "none"
+    # Only where `:has` is known; elsewhere the whole card stays drawn.
+    assert "@supports selector(:has(a))" in css
+    assert '"id status"' in _declared(f"{closed} > tr[id]")["grid-template-areas"]
 
 
 def test_the_replaced_by_arrow_is_a_drawn_shape_because_no_typeface_has_the_arrow_character():

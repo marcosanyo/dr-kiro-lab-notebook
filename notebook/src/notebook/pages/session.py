@@ -198,7 +198,10 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         {"class": "spec-table", "role": "table"},
         [*html.element("thead", {"role": "rowgroup"}, head), *body],
     )
-    return html.element("section", {"class": "table-box"}, grid)
+    return [
+        *run_bands.intro(view, tuple(rv.row for rv in tv.rows)),
+        *html.element("section", {"class": "table-box"}, grid),
+    ]
 
 
 def _cell_attrs(caption: str, blank: bool, tabbed: bool) -> dict[str, str]:

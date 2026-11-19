@@ -407,9 +407,9 @@ def _struck_selectors() -> set[str]:
     return found
 
 
-def test_the_strike_through_rules_leave_the_status_cell_and_the_cover_status_out():
+def test_the_strike_through_rules_strike_the_rule_sentence_only():
     assert _struck_selectors() == {
-        ".row-rejected td:not(.status)",
+        '.row-rejected td[data-label="rule"]',
         ".cover-rows .row-rejected .cover-rule",
     }
 
@@ -425,8 +425,8 @@ def test_no_stamp_label_sits_inside_a_struck_element(site, loaded):
             for i, above in enumerate(ancestors):
                 parent = ancestors[i - 1] if i else None
                 in_rejected_row = parent is not None and "row-rejected" in parent.classes
-                # `.row-rejected td:not(.status)`
-                assert not (above.tag == "td" and in_rejected_row and "status" not in above.classes)
+                # `.row-rejected td[data-label="rule"]`
+                assert not (above.tag == "td" and in_rejected_row and above.attrs["data-label"] == "rule")
                 # `.cover-rows .row-rejected .cover-rule`: the struck rule text, which holds no stamp label
                 assert "cover-rule" not in above.classes
     # Every label of body-2's table (14 rows) and of the cover's one cited card was looked at.

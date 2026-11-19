@@ -4,6 +4,7 @@ One full build of `sessions/` through the command line into `tmp_path`, once for
 counts asserted (body-2: 14 rows, 8 of them `rejected`; wt-004: 6 rows) are facts of the sealed records.
 """
 
+import html
 from pathlib import Path
 
 import pytest
@@ -144,3 +145,12 @@ def test_every_part_of_the_spec_table_carries_its_aria_role_because_the_cards_ar
     assert [c.attrs["role"] for c in table.elements()[0].elements()[0].elements()] == ["columnheader"] * 7
     for card in table.find_all("tbody"):
         assert [tr.attrs["role"] for tr in card.elements()] == ["row"] * len(card.elements())
+
+
+def test_the_run_band_explanation_is_on_the_page_once_above_the_cards(site):
+    page = (site / "body-lab-body-2.html").read_text(encoding="utf-8")
+    assert page.count(html.escape(text.BANDS_INTRO)) == 1
+    assert page.index(html.escape(text.BANDS_INTRO)) < page.index('<table class="spec-table"')
+    _, cards = _cards(site, "body-lab-body-2.html")
+    assert len(cards) == 14
+    assert all(text.BANDS_INTRO not in c.text() for c in cards)

@@ -430,9 +430,9 @@ h3 {
   overflow-wrap: anywhere;
 }
 
-/* The row's own text only: the status cell, whose stamp label is never struck, is left out. The captions
-   are atomic inline boxes, so the line does not run through them either. */
-.row-rejected td:not(.status) {
+/* The rule sentence of a rejected row only: its scope, run bands, ids, stamp label and "replaced by" line stay
+   readable. */
+.row-rejected td[data-label="rule"] {
   text-decoration: line-through 2px var(--graphite);
 }
 
@@ -631,6 +631,30 @@ h3 {
 .evidence-list {
   margin: var(--space-2) 0;
   padding-left: var(--space-4);
+}
+
+/* A card shows its rule sentence, its stamp and its "replaced by" line; its evidence (scope with the run
+   bands, experiments, predictions, and the opened row) is closed until the <details> of the card is opened.
+   The cells stay in the table; the browser draws them only while the card's details is open. Where `:has` is
+   not known the whole card is drawn, as before. */
+@supports selector(:has(a)) {
+  .spec-row:not(:has(details.evidence[open])) > tr[id] > td[data-label="scope"],
+  .spec-row:not(:has(details.evidence[open])) > tr[id] > td[data-label="experiments"],
+  .spec-row:not(:has(details.evidence[open])) > tr[id] > td[data-label="predictions"] {
+    display: none;
+  }
+
+  .spec-row:not(:has(details.evidence[open])) > tr[id] {
+    grid-template-areas:
+      "id status"
+      "rule rule"
+      "replaced replaced";
+  }
+}
+
+.bands-intro {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9em;
 }
 
 @media (max-width: 479px) {
@@ -1510,13 +1534,6 @@ h3 {
   color: var(--ink-pencil);
   font-family: var(--font-mono);
   font-size: 0.85em;
-}
-
-.bands > figcaption {
-  margin-bottom: var(--space-1);
-  font-family: var(--font-sans);
-  font-size: 0.95em;
-  color: var(--ink-commentary);
 }
 
 .band-groups,
