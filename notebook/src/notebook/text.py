@@ -246,17 +246,17 @@ LEGEND_INKS = "The three inks"
 INK_DRKIRO_NAME = "Dr. Kiro's ink"
 INK_DRKIRO_ABOUT = (
     "Text whose recorded author is Dr. Kiro, shown exactly as written. "
-    "Serif type, dark blue; a block of it has a rule on its left side and the label written by Dr. Kiro."
+    "Green ink; a block of it has the label written by Dr. Kiro."
 )
 INK_PENCIL_NAME = "Pencil"
 INK_PENCIL_ABOUT = (
     "Text the bench recorded, and numbers the notebook computes from it: measurements, outcomes, "
-    "condition classes, reasons and counts. Monospace type, dark grey."
+    "condition classes, reasons and counts. Monospace type, grey."
 )
 INK_COMMENTARY_NAME = "Commentary ink"
 INK_COMMENTARY_ABOUT = (
-    "The notebook's own text, written by the builder of the lab: headings, labels and explanations. "
-    "Sans-serif type, dark brown."
+    "Our own text, written by the builder of the lab: the titles and summaries, headings, labels and "
+    "explanations. Ordinary type, with a small mark saying our notes."
 )
 MISS_RED_NAME = "Miss red"
 MISS_RED_ABOUT = (
@@ -463,7 +463,6 @@ SHELF_TITLE = "Dr. Kiro's Lab Notebook"
 KICKER = "laboratory notebook · discover the spec"
 MASTHEAD_TITLE = "Dr. Kiro's Lab Notebook"
 KEY_GREEN = "green ink: Dr. Kiro's own words"
-KEY_ORANGE = "orange label: our notes"
 KEY_PENCIL = "pencil: values the bench measured"
 MODE_DAY = "Switch to day"
 MODE_NIGHT = "Switch to night"
@@ -528,3 +527,22 @@ PREDICTION_IN = " in "
 NOTE_MISSED = " missed: "
 NOTE_EXPECTED = " was expected in "
 NOTE_TRIALS_USED = " used, of the whole budget"
+FRONT_LINK = "both labs"
+KEY_NOTES_BLUE = "blue pen: our notes"
+KEY_NOTES_ORANGE = "orange label: our notes"
+FRONT_KICKER = "a laboratory · two cases"
+FRONT_TAGLINE = "The experiment gets the final edit."
+FRONT_LEAD = (
+    "Dr. Kiro, a Kiro agent, studies a system it has no description of and writes down the spec it finds. "
+    "Two applications stand on one skeleton. Choose a door."
+)
+DOOR_DAY = "opens by day"
+DOOR_NIGHT = "opens at night"
+SKELETON_HEADING = "The skeleton under both"
+SKELETON_NOTEBOOK = (
+    "The notebook: one page maker for both. It reads the sealed records and tells each session as a story."
+)
+SKELETON_BENCH = (
+    "The bench: one method for both. A hypothesis before every experiment, a fixed budget, and a record "
+    "that is sealed and cannot be edited."
+)

@@ -38,10 +38,12 @@
 }
 :root {
   color-scheme: dark;
-  --paper: #150f1f;
-  --grid-line: rgba(176, 140, 235, 0.11);
-  --page: #1d1629;
-  --page-edge: #3b2e52;
+  --paper: #06040b;
+  --grid-line: rgba(150, 110, 220, 0.1);
+  --lamp: rgba(122, 78, 200, 0.34);
+  --vignette: rgba(0, 0, 0, 0.72);
+  --page: rgba(15, 10, 24, 0.92);
+  --page-edge: #33264a;
   --hole: #0e0916;
   --ink-drkiro: #82e6a4;
   --ink-pencil: #d3cbe0;
@@ -50,16 +52,16 @@
   --text: #e9e2f2;
   --muted: #a99bc0;
   --frame-green: #4fd37f;
-  --chip: #281e38;
-  --chip-edge: #4a3b66;
-  --card: #231a33;
-  --card-edge: #44365e;
+  --chip: #1d1429;
+  --chip-edge: #3f2f5c;
+  --card: #170f24;
+  --card-edge: #3b2c57;
   --miss-red: #ff8f86;
   --stamp-validated: #7fe0a4;
   --stamp-partly: #f4c75d;
   --stamp-observed: #a9c1dd;
   --stamp-rejected: #d9a6f2;
-  --rule-bg: #261d37;
+  --rule-bg: #1a1228;
   --rewrite-bg: #33223f;
   --deco: #b9a4e0;
   --moon: #f6efc7;
@@ -76,6 +78,8 @@
 }
 html[data-mode="day"] {
   color-scheme: light;
+  --lamp: transparent;
+  --vignette: transparent;
   --paper: #fbf7ec;
   --grid-line: #dfe6ef;
   --page: #fffdf6;
@@ -117,6 +121,8 @@ body {
   background-color: var(--paper);
   /* Graph paper: a line along the bottom and one along the right edge of each 1.5rem tile. */
   background-image:
+    radial-gradient(ellipse 70% 55% at 50% 30%, var(--lamp), transparent 72%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%),
     conic-gradient(
       at 0 calc(100% - 1px),
       transparent 0deg 90deg,
@@ -129,7 +135,8 @@ body {
       var(--grid-line) 90deg 180deg,
       transparent 180deg 360deg
     );
-  background-size: 1.5rem 1.5rem;
+  background-size: 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-attachment: fixed, fixed, scroll, scroll;
   font-family: var(--font-sans);
   line-height: var(--line);
   overflow-x: hidden;
@@ -349,7 +356,7 @@ h3.cap {
   background: var(--ink-commentary);
 }
 .case-tab.is-on .ink-c {
-  color: #1d1629;
+  color: var(--paper);
 }
 /* The cover cards of the open lab. */
 .shelf {
@@ -1274,10 +1281,10 @@ section[data-sync] .photo-controls button[data-action="step"] {
   opacity: 0.55;
 }
 .deco-moon {
-  top: 1.2rem;
-  right: 10rem;
+  top: 0.8rem;
+  right: 9rem;
   color: var(--moon);
-  filter: drop-shadow(0 0 18px rgba(246, 239, 199, 0.55));
+  filter: drop-shadow(0 0 28px rgba(246, 239, 199, 0.6));
 }
 .moon-disc {
   fill: var(--moon);
@@ -1330,27 +1337,13 @@ html[data-mode="day"] .deco-sun {
   top: 3rem;
   right: 29rem;
 }
-.deco-pumpkin {
-  position: fixed;
-  z-index: 0;
-  bottom: 0.4rem;
-  left: 0.5rem;
-  opacity: 0.9;
+.deco-bat-three {
+  top: 9rem;
+  right: 3rem;
 }
-.pk-side,
-.pk-mid {
-  fill: var(--pk);
-  stroke: var(--pk-dark);
-  stroke-width: 2;
-}
-.pk-mid {
-  fill: #f79a36;
-}
-.pk-stem {
-  fill: #4d8a3a;
-}
-.pk-face {
-  fill: var(--pk-face);
+.deco-bat-four {
+  top: 1.2rem;
+  right: 36rem;
 }
 @media (prefers-reduced-motion: no-preference) {
   .deco-spider {
@@ -1361,6 +1354,12 @@ html[data-mode="day"] .deco-sun {
   }
   .deco-bat-two {
     animation: flutter 9s ease-in-out -3s infinite;
+  }
+  .deco-bat-three {
+    animation: flutter 8s ease-in-out -5s infinite;
+  }
+  .deco-bat-four {
+    animation: flutter 11s ease-in-out -2s infinite;
   }
 }
 @keyframes sway {
@@ -1384,8 +1383,7 @@ html[data-mode="day"] .deco-sun {
 /* Narrow screens. */
 @media (max-width: 1100px) {
   .deco-spider,
-  .deco-bat,
-  .deco-pumpkin {
+  .deco-bat {
     display: none;
   }
   .masthead {
@@ -1534,4 +1532,182 @@ html[data-mode="day"] .deco-sun {
   .hyp:has(details[open]) {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The wind tunnel opens by day: a bright graph paper, a blue pen, a plain research notebook. Its night is a
+   dark blue desk with the same pen. It has no decoration in its pages. */
+html[data-app="wind-tunnel"] {
+  --paper: #0c1420;
+  --grid-line: rgba(120, 160, 230, 0.1);
+  --lamp: transparent;
+  --vignette: transparent;
+  --page: #121c2c;
+  --page-edge: #2a3b57;
+  --chip: #182438;
+  --chip-edge: #34496b;
+  --card: #152033;
+  --card-edge: #2f4466;
+  --rule-bg: #16233a;
+  --rewrite-bg: #2b2540;
+  --ink-commentary: #8fb4ff;
+  --title: #eaf1ff;
+  --text: #e4ecfa;
+  --muted: #9db1d0;
+  --frame-green: #4fd37f;
+}
+html[data-app="wind-tunnel"][data-mode="day"] {
+  --paper: #f7faff;
+  --grid-line: #cfe0f3;
+  --page: #ffffff;
+  --page-edge: #c3d3e8;
+  --hole: #dbe6f4;
+  --chip: #eef4fc;
+  --chip-edge: #c3d3e8;
+  --card: #ffffff;
+  --card-edge: #c3d3e8;
+  --rule-bg: #f3f8ff;
+  --rewrite-bg: #e9efff;
+  --ink-commentary: #1f4fa3;
+  --title: #13233f;
+  --text: #1c2638;
+  --muted: #5a6b86;
+  --shadow: rgba(30, 50, 90, 0.2);
+}
+/* The front page: two doors on one skeleton. */
+html[data-app="front"] {
+  --paper: #0d0b14;
+  --lamp: rgba(122, 78, 200, 0.14);
+  --text: #ece6f5;
+  --muted: #a99bc0;
+  --title: #f6eed8;
+  --ink-commentary: #e9e2f2;
+}
+.front-head {
+  max-width: 46rem;
+  padding: 1rem 0 1.4rem;
+}
+.front-tagline {
+  font-family: var(--font-script);
+  font-size: 1.9rem;
+  color: var(--title);
+}
+.front-lead {
+  max-width: 40rem;
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+.front-lead .ink-c {
+  color: var(--muted);
+}
+.doors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6rem;
+  margin-top: 1rem;
+}
+.door {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 21rem;
+  padding: 6rem 2.4rem 1.8rem;
+  border: 3px solid var(--edge);
+  border-radius: 12rem 12rem 0.6rem 0.6rem;
+  background: var(--face);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 26px var(--shadow);
+}
+.door::after {
+  content: "";
+  position: absolute;
+  top: 55%;
+  right: 1.6rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--knob);
+}
+.door-day {
+  --edge: #8fb0dc;
+  --face: #f7faff;
+  --ink: #13233f;
+  --knob: #1f4fa3;
+  --accent: #1f4fa3;
+  --shadow: rgba(30, 50, 90, 0.35);
+}
+.door-night {
+  --edge: #4a3470;
+  --face: #0b0713;
+  --ink: #f3ead2;
+  --knob: #ffa24d;
+  --accent: #ffa24d;
+  --shadow: rgba(0, 0, 0, 0.7);
+  background: radial-gradient(ellipse 70% 50% at 50% 24%, rgba(122, 78, 200, 0.4), transparent 70%), var(--face);
+}
+.door .ink-c {
+  color: inherit;
+}
+.door-case {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.door-case .ink-c {
+  color: var(--accent);
+}
+.door-title {
+  font-family: var(--font-script);
+  font-size: 2.8rem;
+  line-height: 1;
+}
+.door-line {
+  max-width: 18rem;
+  font-size: 0.95rem;
+}
+.door-open {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+.door-open .ink-c {
+  color: var(--accent);
+}
+.skeleton {
+  margin-top: 1.6rem;
+}
+.skeleton-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.layer {
+  padding: 0.8rem 1.1rem;
+  border: 2px dashed var(--chip-edge);
+  border-radius: 6px;
+  background: var(--chip);
+  font-size: 0.95rem;
+}
+.layer-bench {
+  border-style: solid;
+}
+@media (max-width: 700px) {
+  .doors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .door {
+    min-height: 16rem;
+  }
+}
+.book-title .ours .ink-c,
+.big-title .ours .ink-c {
+  color: var(--ink-commentary);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+.book-summary .ours .ink-c {
+  font-size: 0.85rem;
 }

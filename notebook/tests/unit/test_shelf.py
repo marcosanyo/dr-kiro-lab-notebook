@@ -5,7 +5,7 @@ import re
 
 import pytest
 
-from fixtures.choices import CHOICE, COVER
+from fixtures.choices import APP, CHOICE, write_app
 from fixtures.session import accepted_session
 from notebook import choices, progress, records
 from notebook.errors import NotebookError
@@ -63,16 +63,49 @@ def test_the_file_needs_two_photos_and_a_progress_table(tmp_path, record):
         choices.load_file(_write(tmp_path, no_progress), record)
 
 
-def test_the_cover_file_names_one_lab_per_application(tmp_path, record):
-    (tmp_path / "cover.toml").write_text(COVER)
-    cover = choices.load_cover(tmp_path, [record])
-    assert [(lab.application, lab.open, lab.unit) for lab in cover.labs] == [("fake", "s1", "runs")]
-    (tmp_path / "cover.toml").write_text(COVER.replace('open = "s1"', 'open = "s9"'))
+def test_an_application_folder_gives_its_settings_and_choices(tmp_path, record):
+    apps = choices.load_apps([write_app(tmp_path / "fake-app")], [record])
+    (app,) = apps.apps
+    assert (app.application, app.open, app.unit, app.theme, app.pen, app.decoration) == (
+        "fake",
+        "s1",
+        "runs",
+        "day",
+        "blue",
+        "none",
+    )
+    assert app.display is None and set(apps.choices) == {("fake", "s1")}
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "problem"),
+    [
+        ('open = "s1"', 'open = "s9"', "names no record"),
+        ('theme = "day"', 'theme = "dusk"', "must be one of"),
+        ('pen = "blue"', 'pen = "red"', "must be one of"),
+        ('decoration = "none"', 'decoration = "pumpkins"', "must be one of"),
+        ("order = 1", "order = 0", "whole number from 1"),
+        ('application = "fake"', 'application = "other"', "no session of"),
+        ('unit = "runs"', 'unit = "runs"\nextra = 1', "unknown key"),
+        ('unit = "runs"', 'unit = "runs"\ndisplay = "nowhere"', "is not a folder"),
+    ],
+)
+def test_a_bad_application_file_fails_naming_the_key(tmp_path, record, old, new, problem):
+    folder = write_app(tmp_path / "fake-app")
+    assert old in APP
+    (folder / "app.toml").write_text(APP.replace(old, new))
+    with pytest.raises(NotebookError, match=problem) as caught:
+        choices.load_apps([folder], [record])
+    assert str(folder) in caught.value.where
+
+
+def test_every_application_of_the_records_needs_a_folder_and_every_session_a_choice_file(tmp_path, record):
+    with pytest.raises(NotebookError, match="no notebook folder is given for the application fake"):
+        choices.load_apps([], [record])
+    folder = write_app(tmp_path / "fake-app")
+    (folder / "choices" / "s1.toml").rename(folder / "choices" / "s2.toml")
     with pytest.raises(NotebookError, match="names no record"):
-        choices.load_cover(tmp_path, [record])
-    (tmp_path / "cover.toml").write_text("lab = []\n")
-    with pytest.raises(NotebookError, match=r"no \[\[lab\]\] for the application fake"):
-        choices.load_cover(tmp_path, [record])
+        choices.load_apps([folder], [record])
 
 
 def test_the_best_so_far_never_gets_worse_and_names_the_trial_that_set_it(tmp_path, record):

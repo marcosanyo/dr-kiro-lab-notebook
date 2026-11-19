@@ -2,7 +2,7 @@
 
 1. **Check inputs** (`check_inputs`): the output folder and the staging folder, the scanner, the records, the
    site ids, the layouts and every picture sheet, the word list over every commentary string of `text.py`,
-   the choice files and the cover file, and the bench's table check on every `end` snapshot.
+   each application's settings and choice files, and the bench's table check on every `end` snapshot.
 2. **Model** (`model`): one `View` per record, the whole record.
 3. **Render** (`render`): every file of the site as segments, in memory; the word check over every
    commentary segment; both blind scan passes.
@@ -32,12 +32,12 @@ from notebook import (
     views,
     words,
 )
-from notebook.choices import Choices, Cover
+from notebook.choices import Apps
 from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
 from notebook.inputs import Inputs
 from notebook.layouts import Layout
-from notebook.pages import how, legend, parts, shelf
+from notebook.pages import front, how, legend, parts, shelf
 from notebook.pages.photo import PictureFile
 from notebook.records import RecordModel
 from notebook.site import Site, check_target, write
@@ -56,8 +56,7 @@ class Checked:
     records: tuple[RecordModel, ...]
     layouts: dict[str, Layout]
     words: words.WordList
-    choices: dict[tuple[str, str], Choices]
-    cover: Cover
+    apps: Apps
     scanner: Scanner
     allow_fake: bool
     runs: tuple[readerruns.Run, ...]
@@ -102,14 +101,16 @@ def check_inputs(inputs: Inputs, *, allow_fake: bool) -> Checked:
     word_list = words.load(inputs.words)
     for source, value in commentary_strings():
         word_list.check(value, source)
-    chosen = choices.load(inputs.choices, list(loaded))
-    cover_file = choices.load_cover(inputs.choices, list(loaded))
+    apps = choices.load_apps(list(inputs.apps), list(loaded))
     for record in loaded:
         tables.check_end(record)
     runs = tuple(readerruns.load(inputs.sessions))
     requests = readerrequest.load(inputs.requests, list(runs))
-    retakes = display.load(inputs.display, list(loaded), table)
-    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests, retakes)
+    retakes: display.Retakes = {}
+    for app in apps.apps:
+        mine = [r for r in loaded if r.application == app.application]
+        retakes.update(display.load(app.display, mine, table))
+    return Checked(loaded, table, word_list, apps, scanner, allow_fake, runs, requests, retakes)
 
 
 # Phase 2
@@ -125,31 +126,37 @@ def model(checked: Checked) -> Model:
 Pages = Callable[[Model], dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]]
 
 
-def _shelf(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return shelf.pages(
-        list(m.checked.records),
-        m.checked.choices,
-        m.checked.cover,
-        m.checked.layouts,
-        list(m.checked.runs),
-        m.checked.requests,
-        m.checked.retakes,
-    )
+def _front(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
+    return {addresses.COVER: (front.page(m.checked.apps.apps), ())}
 
 
-def _legend(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {addresses.LEGEND: (legend.legend(), ())}
-
-
-def _how(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {addresses.HOW: (how.page(list(m.checked.records)), ())}
+def _applications(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
+    """Every page of every application, in its folder: the notebooks, the ink legend and how the lab works."""
+    out: dict[str, tuple[list[Segment], tuple[PictureFile, ...]]] = {}
+    checked = m.checked
+    for app in checked.apps.apps:
+        mine = [r for r in checked.records if r.application == app.application]
+        out.update(
+            shelf.pages(
+                app,
+                checked.apps.apps,
+                mine,
+                checked.apps.choices,
+                checked.layouts,
+                list(checked.runs),
+                checked.requests,
+                checked.retakes,
+            )
+        )
+        out[f"{app.slug}/{addresses.LEGEND}"] = (legend.legend(app), ())
+        out[f"{app.slug}/{addresses.HOW}"] = (how.page(mine, app), ())
+    return out
 
 
 # Every page kind of the site, in this order.
 PAGES: tuple[tuple[str, Pages], ...] = (
-    ("the shelf and the notebooks", _shelf),
-    ("the ink legend", _legend),
-    ("how the lab works", _how),
+    ("the front page", _front),
+    ("the applications", _applications),
 )
 
 
@@ -159,38 +166,53 @@ def _check_words(word_list: words.WordList, path: str, segments: list[Segment]) 
             word_list.check(segment.text, f"{segment.source} (on {path})")
 
 
+def _scope(path: str) -> str:
+    """The folder a site path is in, with its slash: "" at the root, "body-lab/" for an application's file."""
+    return path.rsplit("/", 1)[0] + "/" if "/" in path else ""
+
+
 def render(m: Model) -> dict[str, bytes]:
     """Every file of the site, checked and scanned, as bytes by path (sidecars included)."""
     site = Site()
     pictures: dict[str, tuple[PictureFile, str]] = {}
+    scopes: set[str] = set()
     for kind, pages in PAGES:
         for path, (segments, shown) in pages(m).items():
             owner = f"{kind}: {path}"
+            scope = _scope(path)
+            scopes.add(scope)
             if m.checked.allow_fake:
                 segments = parts.with_fixture_banner(segments, owner)
             _check_words(m.checked.words, path, segments)
             site.add_text(path, segments, owner)
             for picture in shown:
-                known = pictures.get(picture.path)
+                full = scope + picture.path
+                known = pictures.get(full)
                 if known is None:
-                    pictures[picture.path] = (picture, owner)
+                    pictures[full] = (picture, owner)
                 elif known[0].data != picture.data:
-                    raise NotebookError(owner, f"two different pictures are named {picture.path}")
+                    raise NotebookError(owner, f"two different pictures are named {full}")
     for path, (picture, owner) in sorted(pictures.items()):
         site.add_bytes(path, picture.data, owner)
-    for path, name in ASSET_FILES.items():
-        source = f"{ASSET_SOURCE}/{name}"
-        site.add_text(path, [markup((ASSETS / name).read_text(encoding="utf-8"), source)], source)
     fonts = ASSETS / "fonts"
-    for name in addresses.FONT_FILES:
+    for scope in sorted(scopes):
+        for path, name in ASSET_FILES.items():
+            source = f"{ASSET_SOURCE}/{name}"
+            site.add_text(scope + path, [markup((ASSETS / name).read_text(encoding="utf-8"), source)], source)
+        for name in addresses.FONT_FILES:
+            site.add_bytes(
+                f"{scope}{addresses.ASSET_DIR}/{name}",
+                (fonts / name).read_bytes(),
+                f"{ASSET_SOURCE}/fonts/{name}",
+            )
         site.add_bytes(
-            f"{addresses.ASSET_DIR}/{name}", (fonts / name).read_bytes(), f"{ASSET_SOURCE}/fonts/{name}"
+            scope + addresses.FONT_LICENSE,
+            (fonts / "LICENSE.txt").read_bytes(),
+            f"{ASSET_SOURCE}/fonts/LICENSE.txt",
         )
-    site.add_bytes(
-        addresses.FONT_LICENSE, (fonts / "LICENSE.txt").read_bytes(), f"{ASSET_SOURCE}/fonts/LICENSE.txt"
-    )
+    chosen = m.checked.apps.choices
     extra = [
-        *scan.choice_segments((m.checked.choices[k] for k in sorted(m.checked.choices)), m.checked.cover),
+        *scan.choice_segments((chosen[k] for k in sorted(chosen)), m.checked.apps.apps),
         *scan.drkiro_word_segments(m.checked.records),
     ]
     joined = scan.check(m.checked.scanner, site.texts(), extra)

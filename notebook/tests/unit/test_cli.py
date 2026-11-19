@@ -11,7 +11,7 @@ from notebook.inputs import check_out
 OPTIONS = {
     "--sessions": "no-such/sessions",
     "--requests": "no-such/requests",
-    "--choices": "no-such/choices",
+    "--app": "no-such/notebook",
     "--layouts": "no-such/layouts.toml",
     "--words": "no-such/words.txt",
     "--scan-config": "no-such/scan_sources.toml",

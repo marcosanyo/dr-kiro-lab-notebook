@@ -4,11 +4,16 @@ Every part returns a list of segments. Commentary comes only from `text.py` (`sa
 of its recorded author. Every `href` comes from `addresses.py`, which checks the ids it puts in an address.
 """
 
+from typing import TYPE_CHECKING
+
 from bench.specfiles.discovered import STATUSES
 
 from notebook import addresses, html, text
 from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, commentary, markup
+
+if TYPE_CHECKING:
+    from notebook.choices import App
 
 
 def say(name: str) -> Segment:
@@ -105,8 +110,13 @@ def web(cls: str) -> list[Segment]:
     return _svg(f"deco-web {cls}".strip(), "0 0 64 64", 120, 120, lines)
 
 
-def decoration() -> list[Segment]:
-    """The Halloween pieces: moon and cobweb (night), a sun (day), a hanging spider, bats and a pumpkin."""
+def decoration(kind: str) -> list[Segment]:
+    """The pieces of an application's decoration. `none` has none (the page holds no drawing at all);
+    `halloween` is the moon, cobweb, hanging spider and bats of the night lab."""
+    if kind == "none":
+        return []
+    if kind != "halloween":
+        raise ValueError(f"unknown decoration {kind!r}")
     moon = [
         *html.shape("circle", {"class": "moon-disc", "cx": "44", "cy": "44", "r": "34"}),
         *html.shape("circle", {"class": "moon-pit", "cx": "32", "cy": "36", "r": "6"}),
@@ -141,26 +151,15 @@ def decoration() -> list[Segment]:
         *html.shape("circle", {"class": "spider-head", "cx": "24", "cy": "84", "r": "6"}),
     ]
     bats = [s for d in _BAT for s in html.element("path", {"d": d, "fill": "currentColor"}, [])]
-    pumpkin = [
-        *html.shape("ellipse", {"class": "pk-side", "cx": "24", "cy": "52", "rx": "20", "ry": "26"}),
-        *html.shape("ellipse", {"class": "pk-side", "cx": "62", "cy": "52", "rx": "20", "ry": "26"}),
-        *html.shape("ellipse", {"class": "pk-mid", "cx": "43", "cy": "52", "rx": "20", "ry": "28"}),
-        *html.element("path", {"class": "pk-stem", "d": "M40 26 Q40 12 50 8 L54 14 Q46 17 47 26 Z"}, []),
-        *html.element("path", {"class": "pk-face", "d": "M24 44 L36 44 L30 33 Z M50 44 L62 44 L56 33 Z"}, []),
-        *html.element(
-            "path",
-            {"class": "pk-face", "d": "M22 58 L30 64 L36 58 L43 66 L50 58 L56 64 L64 58 Q43 80 22 58 Z"},
-            [],
-        ),
-    ]
     return [
         *web(""),
-        *_svg("deco-moon", "0 0 88 88", 96, 96, moon),
+        *_svg("deco-moon", "0 0 88 88", 140, 140, moon),
         *_svg("deco-sun", "0 0 60 60", 84, 84, sun),
         *_svg("deco-spider", "0 0 48 112", 44, 100, spider),
-        *_svg("deco-bat deco-bat-one", "0 88 64 24", 54, 20, bats),
-        *_svg("deco-bat deco-bat-two", "0 88 64 24", 38, 14, bats),
-        *_svg("deco-pumpkin", "0 0 86 82", 104, 100, pumpkin),
+        *_svg("deco-bat deco-bat-one", "0 88 64 24", 62, 24, bats),
+        *_svg("deco-bat deco-bat-two", "0 88 64 24", 42, 16, bats),
+        *_svg("deco-bat deco-bat-three", "0 88 64 24", 52, 20, bats),
+        *_svg("deco-bat deco-bat-four", "0 88 64 24", 34, 13, bats),
     ]
 
 
@@ -180,10 +179,11 @@ def mode_button() -> list[Segment]:
     )
 
 
-def footer() -> list[Segment]:
-    """The page footer: the link to the ink legend (Requirement 4.5) and, next to it, the link to how the lab
-    works, `how.html` (user, 2026-11-17). Every page is at the site root, so both links are relative without
-    `..` (design N28)."""
+def footer(*, links: bool = True) -> list[Segment]:
+    """The page footer: the links to the ink legend (Requirement 4.5) and to how the lab works, relative
+    inside the application's folder, and a link to the front page. The front page has no footer links."""
+    if not links:
+        return html.element("footer", {"class": "footer"}, [])
     return html.element(
         "footer",
         {"class": "footer"},
@@ -191,15 +191,17 @@ def footer() -> list[Segment]:
             *link(addresses.LEGEND, say_text("LEGEND_LINK")),
             *say_text("LIST_SEPARATOR"),
             *link(addresses.HOW, say_text("HOW_LINK")),
+            *say_text("LIST_SEPARATOR"),
+            *link(addresses.apps_link("", "footer"), say_text("FRONT_LINK")),
         ],
     )
 
 
-def page(title: str, children: list[Segment]) -> list[Segment]:
-    """A whole page at the site root: the head with the stylesheet, the decoration, `children` in the content
-    column, the footer with its links to the ink legend and to how the lab works, and the page script. `title`
-    is the name of a string in `text.py`. The `<title>` holds plain text, so its segment is not wrapped in an
-    ink element."""
+def page(title: str, children: list[Segment], *, app: "App | None" = None) -> list[Segment]:
+    """A whole page: the head with the stylesheet, the decoration of its application, `children` in the
+    content column, the footer, and the page script. `app` is None for the front page. The `<html>` element
+    carries the application and the theme the page opens in (`data-app`, `data-mode`), so the page has its
+    look before the script runs. `title` is the name of a string in `text.py`; the `<title>` is plain text."""
     head = html.element(
         "head",
         None,
@@ -214,14 +216,17 @@ def page(title: str, children: list[Segment]) -> list[Segment]:
         "body",
         None,
         [
-            *decoration(),
-            *mode_button(),
+            *(decoration(app.decoration) if app is not None else []),
+            *(mode_button() if app is not None else []),
             *html.element("main", {"class": "page"}, children),
-            *footer(),
+            *footer(links=app is not None),
             *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),
         ],
     )
-    return [markup("<!doctype html>\n"), *html.element("html", {"lang": "en"}, [*head, *body]), markup("\n")]
+    attrs = {"lang": "en", "data-app": "front", "data-mode": "night"}
+    if app is not None:
+        attrs = {"lang": "en", "data-app": app.slug, "data-mode": app.theme, "data-pen": app.pen}
+    return [markup("<!doctype html>\n"), *html.element("html", attrs, [*head, *body]), markup("\n")]
 
 
 def with_fixture_banner(segments: list[Segment], where: str) -> list[Segment]:

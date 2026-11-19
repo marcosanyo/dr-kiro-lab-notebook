@@ -1,10 +1,10 @@
 """Site: every file of the site by its path, with the author ranges of each text file; the sidecars; and
 the one write, into a staging folder renamed onto the output folder (design 12, N4, N28).
 
-The site is flat (design N28): every page is at the root, pictures are in `p/` and the stylesheet and the
-script in `a/`. A path is added once; a second file with the same path, or with a path that differs only by
-case, is refused, naming both owners. A text file reserves its sidecar path `<file>.authors.json`.
-
+The site is flat inside each folder (design N28): the front page is at the root and each application is a
+folder of it; pictures are in `p/` and the stylesheet and the script in `a/` of the root and of each folder.
+A path is added once; a second file with the same path, or with a path that differs only by case,
+is refused, naming both owners. A text file reserves its sidecar path `<file>.authors.json`.
 Writing never deletes a file. It creates `<parent>/.<out-name>.staging` (refused if it exists), writes every
 file in sorted path order, and renames the staging folder onto the output folder with one `os.replace`. A
 write that fails stops the build, naming the staging folder, which is left in place; the next build refuses
@@ -39,18 +39,24 @@ class _Entry:
 
 
 def _check_path(path: str, owner: str) -> None:
+    """A page, or a file of `a/` or `p/`, at the site root or in one folder below it (an application)."""
     parts = path.split("/")
+    scoped = len(parts) > 1 and parts[0] not in FOLDERS
+    rest = parts[1:] if scoped else parts
     bad = (
         not path
         or path.startswith("/")
         or "\\" in path
         or any(p in ("", ".", "..") for p in parts)
-        or len(parts) > 2
-        or (len(parts) == 2 and parts[0] not in FOLDERS)
+        or (scoped and addresses.SITE_ID.fullmatch(parts[0]) is None)
+        or len(rest) > 2
+        or (len(rest) == 2 and rest[0] not in FOLDERS)
     )
     if bad:
         raise NotebookError(
-            owner, f"{path!r} is not a site path: a page is at the site root, other files only in p/ or a/"
+            owner,
+            f"{path!r} is not a site path: a page is at the site root or in an application's folder, "
+            "other files only in p/ or a/ of the root or of an application's folder",
         )
 
 
@@ -149,7 +155,7 @@ def write(files: dict[str, bytes], out: Path) -> None:
         staging.mkdir()
         for path in sorted(files):
             target = staging / path
-            target.parent.mkdir(exist_ok=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
             with open(target, "xb") as handle:
                 handle.write(files[path])
         os.replace(staging, out)

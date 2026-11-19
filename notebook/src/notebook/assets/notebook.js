@@ -12,7 +12,8 @@
    magnified one (a lab card, data-start "first") waits on its first cell until play is pressed.
    When the browser asks for reduced motion, a moving picture starts paused on its first cell.
 
-   The night lab and the day lab: a button switches `data-mode` on the root element.
+   The night lab and the day lab: each application opens in its own theme (`data-mode` of the page) and a
+   button switches it.
    Addresses: the <details> named by the address, and every <details> around it, are opened.
 
    Without this script a body-lab picture shows its first cell and a wind-tunnel picture its whole sheet;
@@ -341,17 +342,14 @@
       { once: true }
     );
   });
-  // The night lab and the day lab. The page opens in the night lab; the button switches it and the choice is
-  // kept for the other pages when the browser allows it (it is the only thing the script stores).
-  var KEY = "notebook-mode";
+  // The night lab and the day lab. Each application opens in its own theme (the `data-mode` of the page); the
+  // button switches it, and the choice is kept for that application's other pages when the browser allows it
+  // (it is the only thing the script stores).
   var root = document.documentElement;
+  var KEY = "notebook-mode-" + root.getAttribute("data-app");
   var toggle = document.querySelector("button.mode-toggle");
   function applyMode(mode) {
-    if (mode === "day") {
-      root.setAttribute("data-mode", "day");
-    } else {
-      root.removeAttribute("data-mode");
-    }
+    root.setAttribute("data-mode", mode);
     if (toggle !== null) {
       var label = toggle.querySelector("span") || toggle;
       label.textContent = toggle.getAttribute(mode === "day" ? "data-to-night" : "data-to-day");
@@ -362,9 +360,9 @@
     try {
       saved = localStorage.getItem(KEY);
     } catch (error) {
-      saved = null; // storage is blocked: the page simply opens in the night lab
+      saved = null; // storage is blocked: the page simply opens in its own theme
     }
-    applyMode(saved === "day" ? "day" : "night");
+    applyMode(saved === "day" || saved === "night" ? saved : root.getAttribute("data-mode"));
     toggle.hidden = false;
     toggle.addEventListener("click", function () {
       var next = root.getAttribute("data-mode") === "day" ? "night" : "day";

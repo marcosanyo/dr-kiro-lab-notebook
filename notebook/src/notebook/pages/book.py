@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables, text
-from notebook.choices import Choices, Lab, Note, Polaroid
+from notebook.choices import App, Choices, Note, Polaroid
 from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
@@ -115,7 +115,7 @@ def _icon(status: str) -> list[Segment]:
     )
 
 
-def _chips(record: RecordModel, chosen: Choices, lab: Lab, table: Table | None) -> list[Segment]:
+def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) -> list[Segment]:
     source = f"{record.name}: chips"
     counts = progress.predictions(record)
     chips: list[list[Segment]] = [
@@ -198,7 +198,7 @@ def _note(
     record: RecordModel,
     found: progress.Series,
     table: Table | None,
-    lab: Lab,
+    lab: App,
     note: Note,
     outcomes: dict[str, Outcome],
 ) -> tuple[list[Segment], list[Segment]]:
@@ -250,7 +250,7 @@ def _notes(
     found: progress.Series,
     table: Table | None,
     chosen: Choices,
-    lab: Lab,
+    lab: App,
 ) -> list[Segment]:
     outcomes = {o.prediction: o for o in record.outcomes}
     styles = ("note-yellow tilt-one", "note-pink tilt-two", "note-blue tilt-three")
@@ -385,7 +385,7 @@ def _highlight(
     layout: Layout,
     chosen: Choices,
     table: Table | None,
-    lab: Lab,
+    lab: App,
     shown: Shown,
 ) -> list[Segment]:
     head = _el("h3", "cap", say_text("HIGHLIGHT_HEADING"))
@@ -852,7 +852,7 @@ def body(
     record: RecordModel,
     layout: Layout,
     chosen: Choices,
-    lab: Lab,
+    lab: App,
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
     retakes: Retakes,
@@ -865,7 +865,7 @@ def body(
     title = f"{chosen.title} — {chosen.subtitle}"
     start = f"{chosen.file} key title"
     out = [
-        *parts.web("book-web"),
+        *(parts.web("book-web") if lab.decoration != "none" else []),
         *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
         *_el("h2", "book-title", [*_human(title, start), *_ours()]),
         *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
