@@ -465,17 +465,27 @@ session = "body-2"
 prediction = "H4.P1"          # or "none"
 
 [[card]]
-application = "body-lab"
-session = "body-2"
-trial = "T31"
-
-[[card]]
 application = "wind-tunnel"
 session = "wt-004"
 trial = "T1"
+kicker = "LAB I · BY DAYLIGHT"
+title = "The Wind Tunnel"
+engine = "OpenFOAM"
+unit = "runs"
+
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+kicker = "LAB II · KEPT SECRET"
+title = "The Stitched Body"
+engine = "MuJoCo"
+unit = "trials"
 ```
 
-Exactly one card per application present in `sessions/`, shown in application code-point order. The `[miss]`
+Exactly one card per application present in `sessions/`, shown as one tab each in the order of the file (one to four
+tabs). The four words of a card are the person's words for its tab; they are commentary. The tab of the lab of the
+`[miss]` session is the checked one. The `[miss]`
 session must be an ended session; its prediction must have the outcome miss; "none" is accepted only when that
 session has no miss.
 
@@ -741,7 +751,7 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
 - Scan: a term from the scan sources planted in a `text.py` string fails the build; the same term in a Dr. Kiro text
   of a fixture record does not (20.5). A planted term in a choice reason fails (12.8).
 - Commentary: every string in `text.py` passes the word list; a planted listed word fails (5.5). Cover commentary
-  outside `<details>` is at most 60 tokens (13.6).
+  outside `<details>` is at most 240 tokens (13.6).
 - Site: every page is at the root and no link contains `..`; ids that could make two addresses equal fail the
   build (N28); no file contains `xmlns`, `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
   picture buttons, or `<iframe` (3.1-3.3); text is in the HTML without script (3.4); every picture's name is the
@@ -759,21 +769,24 @@ screen at milestone 1 (22.4), recorded in `docs/status.md`.
 
 Written as the steering file `.kiro/steering/notebook-visual.md` in the first task, before any page (6.1). The
 proposal below is what that file will hold; the user's review at milestone 1 may change it, and any change goes
-into the steering file first (6.6). Only system font stacks are used; no font file is fetched or shipped.
+into the steering file first (6.6). The stylesheet bundles Lora, IBM Plex Mono and Caveat as woff2 files of the
+site, with their licence, and lists them first in the stacks below; the system stacks stay as fallbacks. Nothing is
+fetched from another host (3.2). The steering file holds the stacks and the cover layout as built (Decision 51).
 
 | Element | Proposal |
 |---|---|
-| Paper | background `#fbf7ec`; faint horizontal rule lines `#dfe6ef` every line height (CSS gradient); content column max 72rem |
+| Paper | background `#fbf7ec`; faint graph-paper lines `#dfe6ef`, one along the bottom and one along the right edge of each 1.5rem tile (CSS gradient); content column max 72rem |
 | Dr. Kiro's ink | colour `#1f3a8a`; serif `ui-serif, Georgia, "Times New Roman", serif`; upright; blocks have a 2px solid left rule in the same colour and the label "written by Dr. Kiro"; Dr. Kiro's code blocks use `ui-monospace` with the same left rule |
 | Pencil | colour `#3d3d3d`; `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`; no rule |
 | Commentary ink | colour `#2b2118`; `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`; 0.95em |
-| Miss red | `#b3261e`, only on missed predictions and their measured values, always with the word "miss" (6.4) |
-| Bench stamp | uppercase sans, bold, letter-spaced, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c`, rejected `#5b2a6e` (never red); the label ("checked by the bench") below in small commentary type |
+| Miss red | `#b3261e`, only on missed predictions and their measured values, always with the word "miss" (the cover's stamp says "missed") (6.4) |
+| Rewrite red | `#a3302a` on `#fbe8e4`, for rejected rows and cards (band, strike on cover cards, dotted replaced-by line); never on a miss (Decision 51) |
+| Bench stamp | uppercase monospace, semibold, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c`, rejected `#5b2a6e` (never red); the label ("checked by the bench") below in small commentary type |
 | Instant photo | white frame (8px sides, 28px bottom), soft shadow, rotated within +-1.5deg by a fixed rule from the trial number, a brass pin `#b08d3c` at the top; caption below |
 | Sticky note | background `#fff1a8`, commentary ink, rotated 1deg, shadow; the refused-end note uses the stamp border on a sticky note |
-| Strike-through | `line-through` 2px graphite; text stays at full contrast; the "replaced by" tab sits at the row's right edge as a paper tab |
+| Strike-through | `line-through` 2px graphite in a table row, rewrite red on a cover card; text stays at full contrast; the "replaced by" line is the dotted last line of the card |
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
-| Narrow screen | at 360px one column; margin photos move below the table; wide tables scroll inside their own box |
+| Narrow screen | at 360px one column; margin photos move below the table; the spec table is cards, so it has no sideways scroll |
 | Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
 | Motion | 500 ms per cell; reduced motion starts paused (3.6) |
 
