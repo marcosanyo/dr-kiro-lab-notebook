@@ -11,7 +11,7 @@ from notebook.display import Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Segment, commentary, pencil
 from notebook.pages import book, parts, photo
-from notebook.pages.parts import say_text
+from notebook.pages.parts import link, say_text
 from notebook.readerrequest import Request
 from notebook.readerruns import Run
 from notebook.records import RecordModel
@@ -46,19 +46,23 @@ def _masthead(app: App) -> list[Segment]:
     )
 
 
-def _tabs(current: App, apps: tuple[App, ...]) -> list[Segment]:
-    tabs: list[Segment] = []
+def _lab_links(current: App, apps: tuple[App, ...]) -> list[Segment]:
+    """Two small links at the top of the page: the front page, and the other application (or each of them)."""
+    links = [*link(addresses.apps_link("", current.source), say_text("FRONT_LINK"))]
     for app in apps:
-        here = app is current
-        href = addresses.COVER if here else addresses.apps_link(app.slug, app.source)
-        attrs = {"href": href, "class": "case-tab is-on" if here else "case-tab"}
-        if here:
-            attrs["aria-current"] = "page"
-        tabs += html.element("a", attrs, html.text(commentary(app.case, app.source)))
-    return _el("nav", "cases", tabs, **{"aria-label": "labs"})
+        if app is current:
+            continue
+        links += [
+            *say_text("LIST_SEPARATOR"),
+            *say_text("OTHER_LAB"),
+            *link(addresses.apps_link(app.slug, app.source), html.text(commentary(app.door, app.source))),
+        ]
+    return _el("nav", "lab-links", links, **{"aria-label": "labs"})
 
 
-def _card(record: RecordModel, chosen: Choices, app: App, is_open: bool) -> list[Segment]:
+def _card(
+    record: RecordModel, chosen: Choices, app: App, is_open: bool, compact: bool = False
+) -> list[Segment]:
     source = f"{record.name}: cover card"
     small: list[Segment] = []
     if chosen.progress is not None:
@@ -77,7 +81,12 @@ def _card(record: RecordModel, chosen: Choices, app: App, is_open: bool) -> list
         *html.text(pencil(str(counts.total), source)),
         *say_text("CARD_HITS"),
     ]
-    attrs = {"href": _page_of(record), "class": f"card card-{chosen.color}" + (" is-open" if is_open else "")}
+    attrs = {
+        "href": _page_of(record),
+        "class": f"card card-{chosen.color}"
+        + (" is-open" if is_open else "")
+        + (" card-stopped" if compact else ""),
+    }
     if is_open:
         attrs["aria-current"] = "page"
     return html.element(
@@ -94,8 +103,26 @@ def _card(record: RecordModel, chosen: Choices, app: App, is_open: bool) -> list
 def _shelf(
     app: App, current: RecordModel, records: list[RecordModel], choices: dict[tuple[str, str], Choices]
 ) -> list[Segment]:
-    cards = [s for r in records for s in _card(r, choices[(r.application, r.session)], app, r is current)]
-    return _el("section", "shelf", cards)
+    """The cards of the application: sessions that ended, large; sessions that stopped, small and below."""
+
+    def cards(wanted: list[RecordModel], small: bool) -> list[Segment]:
+        return [
+            s for r in wanted for s in _card(r, choices[(r.application, r.session)], app, r is current, small)
+        ]
+
+    ended = [r for r in records if r.seal.end == "ended"]
+    stopped = [r for r in records if r.seal.end != "ended"]
+    out = _el("section", "shelf", cards(ended, False))
+    if stopped:
+        out += _el(
+            "section",
+            "shelf-stopped",
+            [
+                *_el("p", "cap", say_text("STOPPED_HEADING")),
+                *_el("section", "shelf-small", cards(stopped, True)),
+            ],
+        )
+    return out
 
 
 def _page(
@@ -113,8 +140,8 @@ def _page(
     layout = layouts.layout_for(table, record.application, record.name)
     inside, files = book.body(record, layout, chosen, app, runs, requests, retakes)
     top = [
+        *_lab_links(app, apps),
         *_masthead(app),
-        *_tabs(app, apps),
         *_shelf(app, record, records, choices),
         *_el("article", "book", inside, id="book"),
     ]

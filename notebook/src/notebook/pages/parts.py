@@ -74,10 +74,6 @@ _SPIDER_LIMBS = (
     "M20 22 Q10 12 4 18 M20 24 Q8 22 2 30 M20 26 Q10 32 6 42 M20 28 Q14 36 12 46 "
     "M28 22 Q38 12 44 18 M28 24 Q40 22 46 30 M28 26 Q38 32 42 42 M28 28 Q34 36 36 46"
 )
-_RAYS = (
-    "M30 4 L30 14 M30 46 L30 56 M4 30 L14 30 M46 30 L56 30 "
-    "M12 12 L19 19 M41 41 L48 48 M48 12 L41 19 M19 41 L12 48"
-)
 
 
 def _svg(cls: str, box: str, width: int, height: int, children: list[Segment]) -> list[Segment]:
@@ -123,14 +119,6 @@ def decoration(kind: str) -> list[Segment]:
         *html.shape("circle", {"class": "moon-pit", "cx": "54", "cy": "52", "r": "8"}),
         *html.shape("circle", {"class": "moon-pit", "cx": "50", "cy": "28", "r": "4"}),
     ]
-    sun = [
-        *html.shape("circle", {"class": "sun-disc", "cx": "30", "cy": "30", "r": "13"}),
-        *html.element(
-            "path",
-            {"d": _RAYS, "stroke": "currentColor", "stroke-width": "3", "stroke-linecap": "round"},
-            [],
-        ),
-    ]
     spider = [
         *html.element(
             "path", {"class": "thread", "d": "M24 0 L24 64", "stroke": "currentColor", "fill": "none"}, []
@@ -154,29 +142,12 @@ def decoration(kind: str) -> list[Segment]:
     return [
         *web(""),
         *_svg("deco-moon", "0 0 88 88", 140, 140, moon),
-        *_svg("deco-sun", "0 0 60 60", 84, 84, sun),
         *_svg("deco-spider", "0 0 48 112", 44, 100, spider),
         *_svg("deco-bat deco-bat-one", "0 88 64 24", 62, 24, bats),
         *_svg("deco-bat deco-bat-two", "0 88 64 24", 42, 16, bats),
         *_svg("deco-bat deco-bat-three", "0 88 64 24", 52, 20, bats),
         *_svg("deco-bat deco-bat-four", "0 88 64 24", 34, 13, bats),
     ]
-
-
-def mode_button() -> list[Segment]:
-    """The switch between the night lab and the day lab. It is hidden until the page script runs; without
-    the script the notebook stays in the night lab."""
-    return html.element(
-        "button",
-        {
-            "type": "button",
-            "class": "mode-toggle",
-            "hidden": "hidden",
-            "data-to-day": text.MODE_DAY,
-            "data-to-night": text.MODE_NIGHT,
-        },
-        say_text("MODE_DAY"),
-    )
 
 
 def footer(*, links: bool = True) -> list[Segment]:
@@ -217,7 +188,6 @@ def page(title: str, children: list[Segment], *, app: "App | None" = None) -> li
         None,
         [
             *(decoration(app.decoration) if app is not None else []),
-            *(mode_button() if app is not None else []),
             *html.element("main", {"class": "page"}, children),
             *footer(links=app is not None),
             *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),

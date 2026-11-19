@@ -84,20 +84,30 @@ def test_each_application_opens_in_its_own_theme_and_only_the_robot_has_decorati
     assert "<svg" not in re.sub(
         r'<svg class="icon".*?</svg>|<svg class="chart".*?</svg>', "", day, flags=re.S
     )
-    assert night_found.classes["deco"] >= 6 and night_found.classes["deco-bat"] >= 3
+    assert night_found.classes["deco"] >= 6 and night_found.classes["deco-bat"] >= 4
     assert "deco-pumpkin" not in night and day_found.classes["deco"] == 0
 
 
-def test_the_cases_and_the_cards_of_the_open_application(site):
-    page, found = _page(site, "body-lab/body-2.html")
-    assert found.classes["case-tab"] == 2 and found.classes["is-on"] >= 1
-    assert page.index("CASE 1") < page.index("CASE 2") and "THE WIND TUNNEL" in page
-    assert found.classes["card"] == 2 and found.classes["is-open"] == 1
-    assert "/wind-tunnel/" in found.links and "body-1.html" in found.links and "/" in found.links
-    assert found.classes["mode-toggle"] == 1
-    _, tunnel = _page(site, "wind-tunnel/wt-004.html")
-    assert tunnel.classes["card"] == 3 and tunnel.classes["is-open"] == 1
-    assert "/body-lab/" in tunnel.links
+def test_an_application_page_has_no_switch_and_no_tabs_only_two_small_links(site):
+    for name, other in (("body-lab/body-2.html", "/wind-tunnel/"), ("wind-tunnel/wt-004.html", "/body-lab/")):
+        page, found = _page(site, name)
+        assert found.classes["mode-toggle"] == 0 and found.classes["case-tab"] == 0
+        assert "notebook-mode" not in (site / name.split("/")[0] / "a" / "notebook.js").read_text()
+        assert found.classes["lab-links"] == 1 and "/" in found.links and other in found.links
+        assert page.count('href="/"') >= 1
+    page, found = _page(site, "wind-tunnel/wt-004.html")
+    assert 'data-mode="day"' in page and "CASE 2" not in page
+
+
+def test_the_cards_of_an_application_and_its_stopped_sessions_below_them_small(site):
+    page, found = _page(site, "wind-tunnel/wt-004.html")
+    assert found.classes["card"] == 3 and found.classes["card-stopped"] == 2 and found.classes["is-open"] == 1
+    assert found.classes["shelf-stopped"] == 1
+    assert page.index('class="shelf"') < page.index('class="shelf-stopped"') < page.index('id="book"')
+    assert "wt-002.html" in found.links and "wt-003.html" in found.links
+    body, body_found = _page(site, "body-lab/body-2.html")
+    assert body_found.classes["card"] == 2 and body_found.classes["card-stopped"] == 0
+    assert "body-1.html" in body_found.links
 
 
 def test_every_id_of_a_page_is_unique(site):

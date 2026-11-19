@@ -1,7 +1,7 @@
 title = "The Quiet Body"
 subtitle = "rounded corners and a long splitter stopped the shedding at cd 0.993"
 summary = """Dr. Kiro started from the square body, which sheds vortices with a drag of 1.55. It predicted that a longer body would lower the drag, and that rounded corners with a long splitter would stop the shedding. Both held, and 16 of 17 predictions hit. The one miss was the sign of the lift with a small angle: it was expected to be above 0.1 and came out at -0.197. The quietest, lowest-drag point is cd 0.993."""
-line = "16 of 17 predictions hit; the steady body has cd 0.993."
+line = "16 of 17 predictions came true; the steady body has cd 0.993."
 model = "claude-sonnet-5.5"
 date = "2026-11-16"
 color = "teal"

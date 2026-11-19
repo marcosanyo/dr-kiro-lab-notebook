@@ -11,8 +11,8 @@ The build keeps its four phases. Phase 1 reads the records, the choice files (`c
 ## Pages
 
 - The root holds the front page (`index.html`) and `a/`. Each application is a folder, `<application>/`, with one page per session (`<session>.html`), `index.html` (the same bytes as the page of the session `app.toml` names), `legend.html`, `how.html`, `p/` and `a/`. Every folder has its own copy of the stylesheet, the script and the typefaces, so a folder is a notebook on its own. The write step creates the folders; a path is the application, then `a/`, `p/` or a page.
-- Every page of an application holds the masthead, the tabs (one per application, the others being links `/<application>/`), the cards of the application (links), and the opened notebook (`article.book`). A page of an application has a footer link to the front page, `/`.
-- The `<html>` element of a page carries `data-app` (the application, or `front`), `data-mode` (the theme the page opens in) and `data-pen`. The script keeps the visitor's choice under `notebook-mode-<application>`.
+- Every page of an application holds the two small links at the top (`/` and `/<other application>/`), the masthead, the cards of the application (links; sessions that stopped are small cards in a row of their own), and the opened notebook (`article.book`). A page of an application has a footer link to the front page, `/`.
+- The `<html>` element of a page carries `data-app` (the application, or `front`), `data-mode` (the theme the page opens in) and `data-pen`. There is no theme switch and the script stores nothing: an application's theme is fixed by `app.toml`.
 - The `/` and `/<application>/` links are the only links that are not relative. The blind scan reads them as it reads every link: they name no folder outside the site.
 - Ids on a page: `row-<id>` on a rule card, `H<n>` on a hypothesis row, `E<n>` on an experiment, `E<n>-T<n>` on a trial card, `H<n>.P<n>` on a prediction. A link to an id inside a closed note opens it (`notebook.js`).
 
@@ -27,6 +27,14 @@ The build keeps its four phases. Phase 1 reads the records, the choice files (`c
 ## The opened note of a hypothesis
 
 Dr. Kiro's hypothesis text is shown as it reads: its `###` line as a heading and its sentence as a paragraph; the fenced prediction block is left out and each prediction is one line from the record, "cd in [0.5, 1.25] when aspect = 3 → hit". The lines under a moving photo share one place of a fixed height, so the card does not change height as the words change. On a narrow screen the cards are one column.
+
+## What happened here
+
+`_story` builds three sentences from the record. Step 1: the number of predictions registered (all hypotheses), each written before its experiment ran. Step 2: the misses, and the rows with the status `rejected` when a table exists (a stopped session says how many of the checked predictions came true instead). Step 3: the reader's tally of the setups `spec` and `none` when runs of this session exist; else the counts of `validated` and of `partly` plus `observed` in the table with the sentence that no second Kiro has been run; else the sentence for a record with no spec. A record with no prediction gets one sentence.
+
+## The chart line
+
+The step line is a path through its exact corners with short pieces between them offset by a deterministic wobble (a hash of the record name and the piece number, at most 1.2 units), so every build draws the same line. The names of the largest steps are joined to their dots by a short curved stroke. A choice file may name a second measurement and a value (`mark`, `mark_equals`, `mark_words`); the first trial where it takes the value gets a dashed line and the words a person wrote (the wind tunnel: the first run without shedding). The vertical axis spans the line with a quarter of its range on each side.
 
 ## Predictions hit
 
