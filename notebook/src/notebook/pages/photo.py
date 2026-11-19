@@ -90,9 +90,11 @@ def figures(
     magnified: bool = True,
     captions: tuple[str, str] | None = None,
 ) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
-    """The moving picture of one trial, its magnified picture (nothing for a trial that has none) and the
-    picture files they show: the recorded sheet, then the magnified picture. `photo` puts the two in one row;
-    the cover places them apart. Arguments and checks are those of `photo`."""
+    """The whole picture of one trial, its magnified picture (nothing for a trial that has none) and the
+    picture files they show: the recorded sheet, then the magnified picture. The magnified picture moves
+    cell by cell; the whole picture of a trial that has one moves only when its control is pressed.
+    `photo` puts the two in one row; the cover places them apart.
+    Arguments and checks are those of `photo`."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -105,16 +107,13 @@ def figures(
     classes = f"photo tilt-{ids.parse_trial_id(tid) % TILTS}"
     if size:
         classes += f" photo-{size}"
-    attrs = {
-        "class": classes,
-        "data-columns": str(layout.columns),
-        "data-rows": str(layout.rows),
-        "data-gap": str(layout.gap),
-        # "tile", not "cell": the two-word form with "cell" is a forbidden term of the blind scan, and these
-        # attributes and the script that reads them are builder-level text of the site.
-        "data-tile-width": str(cells.width),
-        "data-tile-height": str(cells.height),
-    }
+    has_magnified = magnified and record.application in MAGNIFIED_APPLICATIONS
+    motion = _motion_attrs(layout, cells.width, cells.height)
+    attrs = {"class": classes, **motion}
+    if record.application in MAGNIFIED_APPLICATIONS:
+        # The body is a few pixels in the whole picture: it moves only when asked to, wherever it is
+        # shown. Its magnified picture, where there is one, is the one that moves.
+        attrs["data-start"] = "still"
     img = html.void(
         "img",
         {
@@ -124,24 +123,21 @@ def figures(
             "alt": text.PHOTO_ALT,
         },
     )
-    buttons: list[Segment] = []
-    for action, label in _CONTROLS:
-        buttons += html.element(
-            "button", {"type": "button", "data-action": action, "hidden": "hidden"}, say_text(label)
-        )
     caption = [
         *(say_text("PHOTO_TRIAL") if trial_word and captions is None else []),
         *html.text(pencil(tid, source)),
         *(say_text(captions[0]) if captions is not None else []),
-        *html.element("span", {"class": "photo-controls"}, buttons),
+        *_controls(),
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
-    if not magnified or record.application not in MAGNIFIED_APPLICATIONS:
+    if not has_magnified:
         return figure, [], [picture]
-    # The magnified picture beside the moving picture, in one row that wraps on a narrow screen (visual
-    # steering, "Magnified picture"). It is a static picture: the whole magnified sheet, no script.
+    # The magnified picture beside the whole picture, in one row that wraps on a narrow screen (visual
+    # steering, "Magnified picture"). The script shows it one cell at a time, as the sheet it is made from.
     enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
     enlarged_width, enlarged_height = _image_size(enlarged.data)
+    enlarged_cell_width = enlarged_width // layout.columns
+    enlarged_cell_height = enlarged_height // layout.rows
     enlarged_img = html.void(
         "img",
         {
@@ -151,14 +147,47 @@ def figures(
             "alt": text.PHOTO_MAGNIFIED_ALT,
         },
     )
-    # No caption: the alt text says what the picture is, and the cover's visible commentary is limited (13.6).
-    enlarged_parts = list(enlarged_img)
-    if captions is not None:
-        enlarged_parts += html.element(
-            "figcaption", None, [*html.text(pencil(tid, source)), *say_text(captions[1])]
-        )
-    enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_parts)
+    # The alt text says what the picture is; the caption holds the trial only on the cover, whose visible
+    # commentary is limited (13.6), and always the controls.
+    enlarged_caption = [
+        *([*html.text(pencil(tid, source)), *say_text(captions[1])] if captions is not None else []),
+        *_controls(),
+    ]
+    enlarged_attrs = {
+        "class": "photo photo-magnified",
+        **_motion_attrs(layout, enlarged_cell_width, enlarged_cell_height, gap=0),
+    }
+    enlarged_figure = html.element(
+        "figure",
+        enlarged_attrs,
+        [*enlarged_img, *html.element("figcaption", None, enlarged_caption)],
+    )
     return figure, enlarged_figure, [picture, enlarged]
+
+
+def _motion_attrs(
+    layout: Layout, tile_width: int, tile_height: int, gap: int | None = None
+) -> dict[str, str]:
+    """The layout of a sheet for the script: it draws one cell at a time, each for `data-interval` ms."""
+    return {
+        "data-columns": str(layout.columns),
+        "data-rows": str(layout.rows),
+        "data-gap": str(layout.gap if gap is None else gap),
+        # "tile", not "cell": the two-word form with "cell" is a forbidden term of the blind scan, and these
+        # attributes and the script that reads them are builder-level text of the site.
+        "data-tile-width": str(tile_width),
+        "data-tile-height": str(tile_height),
+        "data-interval": str(layout.interval),
+    }
+
+
+def _controls() -> list[Segment]:
+    buttons: list[Segment] = []
+    for action, label in _CONTROLS:
+        buttons += html.element(
+            "button", {"type": "button", "data-action": action, "hidden": "hidden"}, say_text(label)
+        )
+    return html.element("span", {"class": "photo-controls"}, buttons)
 
 
 def photo(

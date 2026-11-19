@@ -19,7 +19,10 @@ COVER = (
     '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
     'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
 )
-LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 8 x 8 picture"\n'
+LAYOUTS = (
+    "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
+    'source = "test fixture: one 8 x 8 picture"\n'
+)
 WORDS = "# test fixture word list\nlimp\n"
 
 

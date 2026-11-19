@@ -50,7 +50,7 @@ from notebook.records import Blob, RecordModel
 INK_OF = {"dr-kiro": Ink.DRKIRO, "bench": Ink.PENCIL}
 READER = "(the bench's table reader)"
 # The synthetic pictures are one cell each (`fixtures.synth._picture`).
-LAYOUT = Layout("fake", frames=1, rows=1, columns=1, gap=0, source="test fixture")
+LAYOUT = Layout("fake", frames=1, rows=1, columns=1, gap=0, interval=200, source="test fixture")
 
 
 def _load(synth: SynthRecord) -> RecordModel:

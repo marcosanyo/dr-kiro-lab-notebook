@@ -125,8 +125,9 @@ def test_the_script_makes_no_request_and_loads_no_code() -> None:
         assert banned not in script, banned
 
 
-def test_the_script_reads_the_cell_interval_from_the_stylesheet() -> None:
+def test_the_script_reads_the_interval_of_each_picture_from_its_figure() -> None:
     script = (ASSETS / "notebook.js").read_text(encoding="utf-8")
     css = (ASSETS / "notebook.css").read_text(encoding="utf-8")
-    assert "--cell-interval: 500ms;" in css
-    assert '"--cell-interval"' in script and "prefers-reduced-motion: reduce" in script
+    assert "--cell-interval" not in css and "--cell-interval" not in script
+    assert '"interval"' in script and "prefers-reduced-motion: reduce" in script
+    assert '"still"' in script

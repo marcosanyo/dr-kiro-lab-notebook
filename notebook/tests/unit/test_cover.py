@@ -16,7 +16,7 @@ from notebook.errors import NotebookError
 from notebook.layouts import Layout
 from notebook.pages import cover
 
-LAYOUTS = {"fake": Layout("fake", frames=1, rows=1, columns=1, gap=0, source="test fixture")}
+LAYOUTS = {"fake": Layout("fake", frames=1, rows=1, columns=1, gap=0, interval=200, source="test fixture")}
 CITED_MISS = "| R2 | the best point stays below 2.5 | amp 1, gain 3 | E2 | H2.P1 | rejected | R3 |"
 UNCITED_MISS = "| R2 | the best point stays below 2.5 | amp 1, gain 3 | E2 | | rejected | R3 |"
 
@@ -229,7 +229,9 @@ def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(
     assert '<section class="cover-claim"><section class="claim-card">' in page
 
 
-OTHER_LAYOUT = {"other": Layout("other", frames=1, rows=1, columns=1, gap=0, source="test fixture")}
+OTHER_LAYOUT = {
+    "other": Layout("other", frames=1, rows=1, columns=1, gap=0, interval=200, source="test fixture")
+}
 
 
 def _two_labs(record: records.RecordModel, prediction: str | None) -> tuple[list[records.RecordModel], Cover]:

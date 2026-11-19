@@ -54,12 +54,27 @@ class _Figure(HTMLParser):
         (
             "body-2",
             "T12",
-            {"columns": "5", "rows": "2", "gap": "0", "tile-width": "320", "tile-height": "180"},
+            {
+                "columns": "5",
+                "rows": "2",
+                "gap": "0",
+                "tile-width": "320",
+                "tile-height": "180",
+                "interval": "220",
+                "start": "still",
+            },
         ),
         (
             "wt-004",
             "T1",
-            {"columns": "3", "rows": "2", "gap": "4", "tile-width": "400", "tile-height": "200"},
+            {
+                "columns": "3",
+                "rows": "2",
+                "gap": "4",
+                "tile-width": "400",
+                "tile-height": "200",
+                "interval": "150",
+            },
         ),
     ],
 )
@@ -74,7 +89,8 @@ def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expe
     assert parser.figure["class"] == f"photo tilt-{int(tid[1:]) % 5}"
     # The site is flat: the picture is linked from the site root, without `..` (design N28).
     assert parser.img["src"] == picture.path == f"p/{trial.picture.digest}.png"
-    assert parser.actions == ["play", "pause", "step", "sheet"]
+    # Each moving figure has the four controls; a body-lab trial has two figures (whole and magnified).
+    assert parser.actions == ["play", "pause", "step", "sheet"] * (2 if session_id == "body-2" else 1)
 
 
 def test_photo_is_the_moving_and_the_magnified_figure_in_one_row(loaded, table) -> None:
@@ -139,3 +155,19 @@ def test_script_and_parts_pass_the_builder_level_scan(loaded, table) -> None:
     for segment in segments:
         if segment.ink is not ink.Ink.DRKIRO:
             assert scanner.scan_text(segment.text, level, segment.source) == [], segment
+
+
+def test_the_magnified_figure_moves_and_the_whole_picture_waits_to_be_asked(loaded, table) -> None:
+    record = loaded["body-2"]
+    layout = table[record.application]
+    whole, enlarged, _ = photo.figures(record, _trial(record, "T12"), layout, "large")
+    whole_html, enlarged_html = ink.join(whole)[0], ink.join(enlarged)[0]
+    assert 'data-start="still"' in whole_html and "data-start" not in enlarged_html
+    # The magnified sheet has the layout's grid, no gap, and the layout's interval.
+    assert 'data-columns="5" data-rows="2" data-gap="0"' in enlarged_html
+    assert 'data-interval="220"' in enlarged_html
+    assert enlarged_html.count("<button") == 4
+    # A wind-tunnel picture is the only picture of its trial: it moves on its own, every 150 ms.
+    tunnel = loaded["wt-004"]
+    moving, none, _ = photo.figures(tunnel, _trial(tunnel, "T1"), table[tunnel.application])
+    assert none == [] and "data-start" not in ink.join(moving)[0]

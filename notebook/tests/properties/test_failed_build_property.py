@@ -42,7 +42,10 @@ COVER = (
 )
 # The fake application's picture is 8 x 8 pixels; this layout shows it as one cell.
 SIDE = 8
-LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 8 x 8 picture"\n'
+LAYOUTS = (
+    "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
+    'source = "test fixture: one 8 x 8 picture"\n'
+)
 WORDS = "# test fixture word list\nlimp\n"
 RECORD = Path("sessions") / "fake" / "s1"
 CHOICE_FILE = Path("choices") / "fake" / "s1.toml"
@@ -149,6 +152,7 @@ def bad_layout(rows: int, columns: int, gap: int) -> Corruption:
     def apply(root: Path, term: str) -> str:
         (root / "layouts.toml").write_text(
             f"[fake]\nframes = {rows * columns}\nrows = {rows}\ncolumns = {columns}\ngap = {gap}\n"
+            "interval = 200\n"
             'source = "test fixture: a layout the picture does not divide into"\n'
         )
         return RECORD.as_posix()

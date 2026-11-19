@@ -111,7 +111,7 @@ PHOTO_TRIAL = "trial "
 PHOTO_PLAY = "play"
 PHOTO_PAUSE = "pause"
 PHOTO_STEP = "step one cell"
-PHOTO_SHEET = "whole sheet"
+PHOTO_SHEET = "whole picture"
 # The magnified picture beside a moving picture (Requirement 7.9, design N32). The alt text is the sentence
 # the requirement gives; the picture has no visible caption, because the cover's visible commentary is limited
 # to 60 words (Requirement 13.6).

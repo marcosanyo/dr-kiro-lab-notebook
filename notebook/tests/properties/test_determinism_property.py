@@ -35,7 +35,10 @@ from notebook.inputs import Inputs
 from notebook.pages import cover
 from notebook.records import RecordModel
 
-LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 2 x 2 picture"\n'
+LAYOUTS = (
+    "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
+    'source = "test fixture: one 2 x 2 picture"\n'
+)
 WORDS = "# test fixture word list\nlimp\n"
 REASON = "test fixture: nothing chosen"
 

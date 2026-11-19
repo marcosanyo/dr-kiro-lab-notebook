@@ -1,25 +1,19 @@
 /* The notebook's one script (lab-notebook design 10 and 9). It makes no request and loads no other code.
 
    Moving pictures: every figure.photo with layout data gets a canvas that shows one cell of the picture sheet
-   at a time, in reading order (left to right, then top to bottom), one cell per --cell-interval, looping.
+   at a time, in reading order (left to right, then top to bottom), one cell per data-interval ms (set per lab
+   in layouts.toml), looping. Only the cells of the sheet are shown: nothing between two cells is made.
    The sheet is never re-encoded: each cell is drawn from the loaded image with a source rectangle that
-   skips the gap between cells. Controls: play, pause, step one cell, whole sheet. When the browser asks for
-   reduced motion, a picture starts paused on its first cell.
+   skips the gap between cells. Controls: play, pause, step one cell, whole picture (the sheet as it is).
+   The magnified picture of a body-lab trial moves on its own; the whole picture beside it (data-start
+   "still") shows the sheet and moves only when play is pressed. When the browser asks for reduced motion,
+   a moving picture starts paused on its first cell.
 
    Addresses: the <details> named by the address, and every <details> around it, are opened.
 
    Without this script the page shows every whole sheet and every text; nothing needs it to be read. */
 (function () {
   "use strict";
-
-  function interval() {
-    var value = getComputedStyle(document.documentElement).getPropertyValue("--cell-interval").trim();
-    var match = /^([0-9]+)ms$/.exec(value);
-    if (match === null) {
-      throw new Error("notebook.css must set --cell-interval in ms, got '" + value + "'");
-    }
-    return Number(match[1]);
-  }
 
   function whole(figure, name) {
     var value = figure.getAttribute("data-" + name);
@@ -36,13 +30,15 @@
     element.style.display = on ? "" : "none";
   }
 
-  function setUp(figure, rate, reduced) {
+  function setUp(figure, reduced) {
     var img = figure.querySelector("img");
     var columns = whole(figure, "columns");
     var rows = whole(figure, "rows");
     var gap = whole(figure, "gap");
     var tileWidth = whole(figure, "tile-width");
     var tileHeight = whole(figure, "tile-height");
+    var rate = whole(figure, "interval");
+    var still = figure.getAttribute("data-start") === "still";
     var cells = columns * rows;
     var canvas = document.createElement("canvas");
     canvas.width = tileWidth;
@@ -104,7 +100,7 @@
       draw();
       show(false);
     });
-    buttons.sheet.addEventListener("click", function () {
+    function sheet() {
       stop();
       shown(canvas, false);
       shown(img, true);
@@ -112,10 +108,14 @@
       shown(buttons.pause, false);
       shown(buttons.step, true);
       shown(buttons.sheet, false);
-    });
+    }
+
+    buttons.sheet.addEventListener("click", sheet);
 
     function start() {
-      if (reduced) {
+      if (still) {
+        sheet();
+      } else if (reduced) {
         pause();
       } else {
         play();
@@ -147,9 +147,8 @@
   }
 
   var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var rate = interval();
   document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
-    setUp(figure, rate, reduced);
+    setUp(figure, reduced);
   });
   openAddress();
   addEventListener("hashchange", openAddress);
