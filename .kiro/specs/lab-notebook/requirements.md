@@ -252,7 +252,10 @@ record of work.
 1. THE builder SHALL write the visual system as a steering file, `.kiro/steering/notebook-visual.md`, before the
    pages are built: paper, the three inks, the miss red, the status stamp, pinned instant photos, sticky notes, the
    strike-through of a rejected row, type, spacing, and the narrow-screen layout.
-2. THE site SHALL have one theme and no theme switch.
+2. THE site SHALL have one look in two palettes, the day paper and the night lab, chosen only by the visitor's
+   system colour scheme (`prefers-color-scheme`), with no theme switch, no script and no stored choice. Every text
+   pair SHALL reach the ratio of Requirement 4.6 in both palettes, and the recorded pictures SHALL be shown as
+   recorded in both (Decision 52).
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown
    as sticky notes.
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with
@@ -1008,6 +1011,15 @@ exception to a rule.
     Caveat as files of the site, with their licence; this fetches nothing from another host (3.2). The word
     "spacing", a setting of the wind tunnel like "ahead", is on the stop list, and small headings are letter-spaced.
     The steering file `notebook-visual.md` holds the details.
+52. **Night lab** (user, 2026-11-19). The notebook has a dark palette, the night lab: the same paper notebook on a
+    dark desk under a lamp, not an inversion. It follows `prefers-color-scheme: dark` in CSS only; there is no switch
+    and no script, and without a stated preference the page is the day paper (6.2). Only colours change: every
+    custom property of the night lab overrides one of the day, and the layout, the wording and the motion
+    (including `prefers-reduced-motion`) are the same. The recorded pictures are never filtered or inverted; the
+    photo frame is a dark neutral with a thin edge. The SVG tracks follow the ink in `currentColor`. The miss red,
+    the rewrite red and the stamps are lightened and keep their roles (6.4, Decision 51). Every pair of the
+    contrast list reaches 4.5:1 with the night values too (4.6). The steering file `notebook-visual.md` holds the
+    values (section "Night lab").
 
 ## Open questions
 
