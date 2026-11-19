@@ -5,13 +5,15 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
-## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
-- ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
-- 人が書くもの: `notebook/choices/<app>/<session>.toml` と `notebook/choices/cover.toml`。`model` は body-2 と wt-004 が `claude-sonnet-5.5`。body-1、wt-002、wt-003 は `<fill in>` のまま（聞いていない）。`date` は各記録が git に入った日。body-2 の題は目隠しスキャンが `Backwards` を拒んだので `The Reversed Wave`。
-- **ロボットの絵の撮り直し（済み）:** `uv run notebook-retake --sessions sessions --out notebook/display --session body-1 --session body-2`。記録の入力から全 79 試行を走らせ直し、x、y、heading、track 3 本が記録と厳密に一致した。体を追う上からのカメラで 0.2 秒ごと 25 コマ、1 コマ 320px（床 50cm 幅）。シートは `notebook/display/`（20MB、色の下位 3 ビットを落としてある）、`manifest.toml` にハッシュと元の記録の絵のハッシュ。`notebook-build --display notebook/display` で表示。`scripts/view-notebook.sh` は付けてある。アダプターは変えていない（自由カメラで足りた）。
-- **風洞の絵:** 走らせ直していない。大きい絵にはソルバーのサンプリングを変える必要があり、`wind-tunnel` の spec の変更になるため。代わりに記録のコマから体と渦のまわりを切り抜いて出す（`zoom.py`）。走らせ直すなら相談したい。
-- 見た目: 数字は短く（`+3.9 cm`、`0.75 m`、`cd 0.993`）、見どころは写真 2 枚（一緒に再生、つまみ、「t = 3.0 s forward 38 cm」）、付箋 3 枚、枠つきのグラフで 1 画面、全部の実験は 2 列のカード、計画は 1 行で押すと全文、発見した spec は条件と根拠を閉じた。
-- 見ていないもの: 実機の 360px の全体、昼の画面の細部（script 抜きと iframe で確認）。`notebook` のテストと ruff は通る。
+## ノートの棚（ブランチ `feat/notebook-shelf`、PR #40、2026-11-20、ローカル）
+- **2 つのアプリに分けた。** サイトの入口 `/` は扉 2 つの短いページ（CASE 1 風洞 = 昼の扉、CASE 2 ロボット = 夜の扉。その下に「骨格 = ノートと実験装置」）。`/wind-tunnel/` は昼で、`/body-lab/` は夜で開く。各フォルダーは `index.html`、セッションのページ、`legend.html`、`how.html`、`a/`、`p/` を持つ（フォントも各フォルダーに 1 組ずつ）。アプリからほかへのリンクだけ `/` と `/<application>/` の絶対形（それ以外は相対、`..` なし）。サイトはルートで配信する前提。
+- **アプリごとの設定は各アプリのフォルダーへ移した:** `wind-tunnel/notebook/` と `body-lab/notebook/`（`app.toml`、`choices/`、ロボットは `display/`）。`notebook-build` は `--app <application>/notebook` をアプリごとに 1 つ受け取る（`--choices` と `--display` は無くなった）。ノートを作るコードは `notebook/` の 1 つのまま。
+- **昼と夜:** 風洞 = 明るい方眼紙、青いペン、飾りなし（ページに絵が 1 つもない）。ロボット = ほぼ真っ黒、真ん中だけランプの明かり、大きな月、クモの巣、クモ、コウモリ 4 匹。カボチャは削除。テーマは右上のボタンで切り替えられ、選択はアプリごとに保存。
+- **風洞の見どころ:** 1 枚目を T1（四角い体、渦が出る）、2 枚目を T12（静かな体）にした。揚力の向きの外れは付箋のまま。見どころの絵は最初から動く（動きを減らす設定のときだけ止まる）。
+- **経過のグラフ:** 「ここまでの一番」の線 1 本だけ。点は描かない。縦軸は線の範囲に合わせる。
+- **ロボットの絵（前回までに済み）:** `notebook-retake` で body-1、body-2 の全 79 試行を走らせ直して一致を確認し、`body-lab/notebook/display/` に置いた。風洞は走らせ直さず、記録のコマの切り抜き。
+- **ビルドの確認:** `sh scripts/view-notebook.sh` を止めて、もう一度実行するとビルドし直して配信する。
+- 見ていないもの: 実機の 360px の全体（iframe で幅 360 の横はみ出しなしを確認）、昼のロボット（トグル後）の細部。`notebook` のテストと ruff は通る。
 ## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
 - **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
   - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。

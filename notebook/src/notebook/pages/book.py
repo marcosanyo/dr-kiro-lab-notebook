@@ -271,12 +271,12 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     source = f"{record.name}: progress"
     width, height, left, right, top, bottom = 520.0, 250.0, 62.0, 16.0, 40.0, 30.0
     points = found.points
-    raws = [p.raw for p in points if p.raw is not None]
     bests = [p.best for p in points if p.best is not None]
     if not bests:
         return _el("p", "chart-none", say_text("PROGRESS_NONE"))
-    low, high = min(raws), max(raws)
-    pad = (high - low) * 0.1 or 1.0
+    # The axis fits the line, so the line never lies on the bottom of the frame.
+    low, high = min(bests), max(bests)
+    pad = (high - low) * 0.25 or abs(high) * 0.05 or 1.0
     low, high = low - pad, high + pad
     n = len(points)
     unit = found.unit
@@ -288,7 +288,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         return top + (height - top - bottom) * (1 - (v - low) / (high - low))
 
     marks: list[Segment] = []
-    for v in (min(raws), max(raws)):
+    for v in sorted({min(bests), max(bests)}):
         marks += html.shape(
             "line",
             {
@@ -310,12 +310,6 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
             continue
         d += f"M{x(i):.1f} {y(p.best):.1f}" if not d else f"H{x(i):.1f}V{y(p.best):.1f}"
     marks += html.element("path", {"class": "ch-line", "d": d + f"H{x(n - 1):.1f}", "fill": "none"}, [])
-    for i, p in enumerate(points):
-        if p.raw is not None:
-            cls = "ch-dot" if p.value is not None else "ch-dot ch-dot-off"
-            marks += html.shape(
-                "circle", {"class": cls, "cx": f"{x(i):.1f}", "cy": f"{y(p.raw):.1f}", "r": "2"}
-            )
     span = max(bests) - min(bests)
     steps = [
         (i, p)
@@ -329,7 +323,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         text = f"{p.hypothesis}: {numbers.brief(p.delta, unit, source, signed=True)}"
         size = LABEL_CHAR * len(text)
         end = x(i) > width * 0.6
-        box_left, box_right = (x(i) - size, x(i)) if end else (x(i) + 6, x(i) + 6 + size)
+        box_left, box_right = (x(i) - 10 - size, x(i) - 10) if end else (x(i) + 8, x(i) + 8 + size)
         for dy in (-12, -32, 22):
             at = y(p.best) + dy
             if box_left < 0 or box_right > width or at < 12 or at > height - bottom:
@@ -347,7 +341,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         cls = "ch-note ch-note-end" if end else "ch-note"
         marks += html.element(
             "text",
-            {"class": cls, "x": f"{x(i) - (2 if end else -6):.1f}", "y": f"{at:.1f}"},
+            {"class": cls, "x": f"{x(i) - (10 if end else -8):.1f}", "y": f"{at:.1f}"},
             [pencil(label, source)],
         )
     for i in {0, n - 1}:

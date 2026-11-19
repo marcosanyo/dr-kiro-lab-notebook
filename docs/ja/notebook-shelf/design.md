@@ -1,16 +1,18 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/design.md`](../../../.kiro/specs/notebook-shelf/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `fcfb57b2f3c581390ba094d365cb8264d9a1f2c5323a996a1256ec7f1b37d156`
+> 原文 SHA-256: `6ee1971a9d376c9741e5ba3c3cca68f7de0ef986ed3cacd8575e58e546713ae5`
 # Design: notebook-shelf
 この設計は `notebook-shelf` の要件 1〜7 を対象とします。`lab-notebook` のページの層を変え、その下はそのまま残します。
 どの Kiro か: すべて **ビルダー** が作って動かし、**訪問者** が読みます。
 ## Overview
 ビルドの 4 つの段階は変えません。段階 1 は記録、choices のファイル（`choices.py`）、cover のファイル、`--display` が与えられたときは表示用のマニフェスト（`display.py`）を読みます。段階 3 は 3 種類のページを作ります: 棚のページ（`pages/shelf.py` と `pages/book.py`）、インクの凡例（`pages/legend.py`）、「ラボのしくみ」（`pages/how.py`）。なくしたもの: 表紙、ラボ、セッション、リプレイ、バンドのページと、`chart.py`、`bands.py`、`plots.py`。
 ## Pages
-- セッションごとに 1 ページ `<application>-<session>.html` と、`cover.toml` が最初のラボについて指すセッションのページである `index.html`。この 2 つは同じバイト列です。
-- どのページも、見出し、ラボの札（各ラボが開くセッションへのリンク）、開いているラボのカード（リンク）、開いたノート（`article.book`）を持ちます。
-- ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開きます（`notebook.js`）。
-## Choice files（要件 2.3）
-`choices/<application>/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も要りません。`choices/cover.toml`: アプリケーションごとに `[[lab]]` を 1 つ、`application`、`case`、`about`、`open`、`unit`。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`<fill in>` のモデルは書かれたまま出ます。
+- ルートには表のページ（`index.html`）と `a/` がある。各アプリはフォルダー `<application>/` で、セッションごとに 1 ページ（`<session>.html`）、`index.html`（`app.toml` が指すセッションのページと同じバイト列）、`legend.html`、`how.html`、`p/`、`a/` を持つ。どのフォルダーも、スタイルシート、スクリプト、フォントを自分用に持つので、フォルダー 1 つがそれだけで 1 冊のノートになる。書き込みの段階でフォルダーを作る。パスは、アプリ、そのあと `a/`、`p/` またはページ。
+- アプリのどのページも、見出し、札（アプリごとに 1 つ。自分以外は `/<application>/` へのリンク）、アプリのカード（リンク）、開いたノート（`article.book`）を持つ。アプリのページのフッターには表のページ `/` へのリンクがある。
+- ページの `<html>` 要素は `data-app`（アプリ、または `front`）、`data-mode`（開くテーマ）、`data-pen` を持つ。スクリプトは訪問者の選択を `notebook-mode-<application>` に残す。
+- `/` と `/<application>/` のリンクだけが相対でない。目隠しのスキャンは、ほかのすべてのリンクと同じように読み、サイトの外のフォルダーを指さないことを確かめる。
+- ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開く（`notebook.js`）。
+## 設定と choice のファイル（要件 2.3）
+`<application>/notebook/app.toml`: `application`、`order`、`case`、`door`、`door_line`、`about`、`open`、`unit`、`theme`（`day` か `night`）、`pen`（`blue` か `orange`）、`decoration`（`none` か `halloween`）、撮り直した絵があるアプリでは `display`（フォルダーの名前）。`<application>/notebook/choices/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も付箋も要りません。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`notebook-build` はアプリごとに `--app <application>/notebook` を 1 つ受け取り、記録にあるのに指定のないアプリ、記録のない指定はビルドの失敗です。
 ## 「ここまでの一番」（要件 3.3）
 `progress.series` は試行を順に見ます。測定が数で、`require` があれば 2 つ目の測定が `equals` に等しいとき、その試行は数えられます。数えられた値がそれまでの一番より良ければ一番が動きます。最初に数えられた試行が線を始め、「new best」にはなりません。段は、変化が一番低い値と高い値の幅の 4% 以上のときに名前がつきます。グラフはインライン SVG で、文字は鉛筆のセグメントと手書き風のラベルです。記録にない数字はありません。
 ## 仮説の開いたメモ

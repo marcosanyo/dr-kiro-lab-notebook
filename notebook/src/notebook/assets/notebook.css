@@ -745,13 +745,6 @@ section[data-sync] .photo-controls button[data-action="step"] {
   stroke-width: 3;
   stroke-linejoin: round;
 }
-.ch-dot {
-  fill: var(--ink-pencil);
-}
-.ch-dot-off {
-  fill: none;
-  stroke: var(--muted);
-}
 .ch-best {
   fill: var(--page);
   stroke: var(--ink-commentary);

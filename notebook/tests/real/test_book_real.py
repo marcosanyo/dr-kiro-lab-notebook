@@ -262,3 +262,14 @@ def test_the_wind_tunnel_highlight_shows_a_flow_that_moves_and_the_same_flow_mad
 @pytest.fixture(scope="module")
 def loaded_all() -> dict[str, records.RecordModel]:
     return {r.session: r for r in records.load(ROOT / "sessions")}
+
+
+def test_the_chart_is_one_line_that_fills_its_frame_and_has_no_scattered_dots(site):
+    for name in ("body-lab/body-2.html", "wind-tunnel/wt-004.html", "body-lab/body-1.html"):
+        page, found = _page(site, name)
+        assert found.classes["ch-line"] == 1 and found.classes["ch-dot"] == 0, name
+        path = re.search(r'<path class="ch-line" d="([^"]*)"', page)
+        assert path, name
+        ys = [float(y) for y in re.findall(r"[ V]([0-9.]+)(?=[HV]|$)", path.group(1))]
+        assert ys and min(ys) > 41 and max(ys) < 215, (name, min(ys), max(ys))  # the frame is 40 to 220
+        assert "hollow" not in page
