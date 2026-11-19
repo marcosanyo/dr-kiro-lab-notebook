@@ -389,8 +389,10 @@ step one cell, whole picture (the sheet as it is). With `prefers-reduced-motion:
 Which picture moves: for a body-lab trial the body is a few pixels in the whole sheet, so the magnified picture below is
 the one that moves on its own. The whole picture is not on the page: the magnified figure names its sheet
 (`data-whole-src`, `data-whole-gap`, `data-whole-tile-width`, `data-whole-tile-height`) and "whole picture" swaps it in
-at the same place and cell, moving one cell at a time with the same interval; "magnified picture" swaps back. Without
-the script the magnified picture shows its first cell. A lab card shows the first cell and waits for "play"
+at the same place and cell, moving one cell at a time with the same interval; "magnified picture" swaps back. On the cover the figure holds two captions (`data-caption="near"` and `"far"`, the
+second with `hidden`): "magnified around the body, one recorded frame at a time" and "the whole picture, one recorded
+frame at a time"; the script shows the one of the picture on view. Without the script the magnified picture shows its
+first cell and its caption. A lab card shows the first cell and waits for "play"
 (`data-start="first"`). A wind-tunnel picture is the only picture of its trial and moves on its own.
 
 For each body-lab trial, except on the lab cards, the page shows a magnified picture of the moving body instead of the whole picture (a

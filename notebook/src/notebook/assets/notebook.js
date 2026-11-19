@@ -86,7 +86,14 @@
       context.drawImage(view.image, sx, sy, view.width, view.height, 0, 0, view.width, view.height);
     }
 
+    var captions = {};
+    figure.querySelectorAll("[data-caption]").forEach(function (span) {
+      captions[span.getAttribute("data-caption")] = span;
+    });
+
     function controls(on) {
+      shown(captions.near, views.far === undefined || view === views.near);
+      shown(captions.far, views.far !== undefined && view === views.far);
       moving = on;
       shown(buttons.play, !on);
       shown(buttons.pause, on);

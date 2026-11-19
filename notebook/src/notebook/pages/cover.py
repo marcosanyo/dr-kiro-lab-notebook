@@ -403,7 +403,7 @@ def _miss(
         trial,
         layout_for(layouts, record.application, record.name),
         "large",
-        captions=("COVER_CAPTION_MOVING", "COVER_CAPTION_MAGNIFIED"),
+        captions=("COVER_CAPTION_MOVING", "COVER_CAPTION_MAGNIFIED", "COVER_CAPTION_WHOLE"),
     )
     # The moving picture and the track are siblings in one row; the magnified sheet is in the top row beside
     # the claim (visual steering, "Cover layout"; polish pass, user 2026-11-19).

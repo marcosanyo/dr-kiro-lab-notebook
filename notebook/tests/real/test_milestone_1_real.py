@@ -331,6 +331,14 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
     miss = cover.find(cls="cover-miss")
     magnified = miss.find("figure", "photo-magnified")
     assert "T12" in magnified.find("figcaption").text()
+    # One caption per picture: the magnified picture's shows, the whole picture's waits hidden for the swap,
+    # and neither speaks of reading order any more (the frames play one at a time).
+    near = magnified.find("span", **{"data-caption": "near"})
+    far = magnified.find("span", **{"data-caption": "far"})
+    assert "magnified around the body" in near.text() and "one recorded frame at a time" in near.text()
+    assert "whole picture" in far.text() and "one recorded frame at a time" in far.text()
+    assert "hidden" in far.attrs and "hidden" not in near.attrs
+    assert "reading order" not in magnified.find("figcaption").text()
     # The whole picture is not on the page: the magnified figure names its sheet for the swap.
     assert magnified.attrs["data-whole-src"] == f"p/{t12.picture.digest}.png"
     assert all(i.attrs["src"] != magnified.attrs["data-whole-src"] for i in miss.find_all("img"))

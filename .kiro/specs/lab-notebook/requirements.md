@@ -303,7 +303,7 @@ numbers.
    enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
    "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
    (Decision 50). THE enlarged picture SHALL move as a moving picture does (7.6, 7.8), with the interval of the
-   trial's application; the whole picture of a body-lab trial SHALL NOT be on the page at first, because its cells side by side read as many small bodies; the control "whole picture" of the enlarged picture SHALL swap it in at the same place, and it SHALL then move one cell at a time with the same interval. A body-lab picture without an enlarged one (a lab card) SHALL show its first cell only. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
+   trial's application; the whole picture of a body-lab trial SHALL NOT be on the page at first, because its cells side by side read as many small bodies; the control "whole picture" of the enlarged picture SHALL swap it in at the same place, and it SHALL then move one cell at a time with the same interval. On the cover, the enlarged picture's caption SHALL say what the picture is and that it plays one recorded frame at a time, and SHALL change with the swap to a caption of the whole picture (and back), without the script showing the caption of the first frame. A body-lab picture without an enlarged one (a lab card) SHALL show its first cell only. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
    the flow moves through the whole sheet and no region of it is the moving body (Decision 50).
 
 ### Requirement 8: The discovered spec table
