@@ -518,45 +518,31 @@ h3 {
   border-radius: 50%;
 }
 
-/* The missed prediction. The evidence wrappers are dissolved, so the heading, the magnified sheet, the moving
-   picture, the track, the claim and the rule cards are all cells of one grid: the sheet across the page, then
-   the moving picture, the track and the claim in one row, then the rule cards. One column on a narrow screen. */
+/* The missed prediction: the heading, then a top row (the claim card and the sticky note; to their left the
+   magnified sheet from 1000px), then a row with the moving picture and the track, then the rule cards. One
+   column on a narrow screen, in this order: claim card, sticky note, magnified sheet, moving picture, track,
+   rule cards. */
 .cover-miss {
+  margin: var(--space-3) 0;
+}
+
+.cover-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: var(--space-2) var(--space-4);
-  margin: var(--space-3) 0;
 }
 
-.cover-evidence,
-.cover-evidence .photo-pair {
-  display: contents;
-}
-
-.cover-miss > .cap-heading {
-  order: 0;
-}
-
-.cover-evidence .photo-magnified {
-  order: 1;
-}
-
-.cover-evidence .photo-large {
-  order: 2;
-}
-
-.cover-evidence .track {
-  order: 3;
-}
-
-.cover-claim {
-  order: 4;
+.cover-evidence {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
 }
 
 /* The rules section is one card: its heading, the rule cards and, at the bottom, the details. */
 .cover-rules {
-  order: 5;
+  margin-top: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--card);
   border: 1px solid var(--card-edge);
@@ -572,18 +558,14 @@ h3 {
   margin-bottom: var(--space-2);
 }
 
-.cover-evidence .photo {
+.cover-miss .photo {
   max-width: 100%;
   margin: var(--space-3) var(--space-2) var(--space-2);
   justify-self: start;
 }
 
-.cover-evidence .photo-magnified {
-  background: var(--photo-frame);
-}
-
 /* Photos on the cover are held by a strip of tape, not a pin. */
-.cover-evidence .photo::before {
+.cover-miss .photo::before {
   top: -12px;
   width: 84px;
   height: 22px;
@@ -594,17 +576,17 @@ h3 {
   transform: rotate(-2deg);
 }
 
-.cover-evidence figcaption {
+.cover-miss figcaption {
   margin-top: var(--space-1);
   line-height: 1.25;
 }
 
-.cover-evidence figcaption .ink-c {
+.cover-miss figcaption .ink-c {
   font-family: var(--font-script);
   font-size: 1.2rem;
 }
 
-.cover-evidence figcaption .ink-p {
+.cover-miss figcaption .ink-p {
   font-weight: 600;
 }
 
@@ -645,7 +627,7 @@ h3 {
 
 .cover-claim > .sticky {
   max-width: 17rem;
-  margin: var(--space-2) 0 var(--space-3) var(--space-3);
+  margin: var(--space-3) 0 var(--space-2) var(--space-3);
   transform: rotate(-1.5deg);
 }
 
@@ -1220,43 +1202,6 @@ h3 {
     right: var(--space-3);
     margin: 0;
   }
-
-  .cover-miss {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .cover-miss > .cap-heading,
-  .cover-evidence .photo-magnified,
-  .cover-claim,
-  .cover-rules {
-    grid-column: 1 / -1;
-  }
-
-  .cover-miss > .cap-heading {
-    grid-row: 1;
-  }
-
-  .cover-evidence .photo-magnified {
-    grid-row: 2;
-  }
-
-  .cover-evidence .photo-large {
-    grid-column: 1;
-    grid-row: 3;
-  }
-
-  .cover-evidence .track {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
-  .cover-claim {
-    grid-row: 4;
-  }
-
-  .cover-rules {
-    grid-row: 5;
-  }
 }
 
 @media (min-width: 1000px) {
@@ -1275,25 +1220,43 @@ h3 {
     margin-left: auto;
   }
 
-  .cover-miss {
-    grid-template-columns: auto auto minmax(0, 1fr);
+  /* The magnified sheet in the left column, the claim card and the sticky note side by side to its right;
+     the moving picture and the track in a row below. */
+  .cover-top.with-sheet {
+    grid-template-columns: clamp(16rem, 38%, 30rem) minmax(0, 1fr);
   }
 
-  .cover-evidence .photo-large {
+  .cover-top .photo-magnified {
     grid-column: 1;
+    grid-row: 1;
+    align-self: center;
   }
 
-  .cover-evidence .track {
+  .cover-top .cover-claim {
     grid-column: 2;
+    grid-row: 1;
   }
 
   .cover-claim {
-    grid-column: 3;
-    grid-row: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0 var(--space-4);
   }
 
-  .cover-rules {
-    grid-row: 4;
+  .claim-card {
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+
+  .cover-claim > .sticky {
+    flex: 0 1 14rem;
+    margin-top: var(--space-4);
+  }
+
+  .cover-evidence {
+    flex-direction: row;
+    gap: var(--space-4);
   }
 
   .tab-panel {

@@ -77,6 +77,24 @@ def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expe
     assert parser.actions == ["play", "pause", "step", "sheet"]
 
 
+def test_photo_is_the_moving_and_the_magnified_figure_in_one_row(loaded, table) -> None:
+    record = loaded["body-2"]
+    trial = _trial(record, "T12")
+    layout = table[record.application]
+    row, row_files = photo.photo(record, trial, layout, "large")
+    moving, enlarged, files = photo.figures(record, trial, layout, "large")
+    assert (
+        ink.join(row)[0]
+        == f'<section class="photo-pair">{ink.join(moving)[0]}{ink.join(enlarged)[0]}</section>'
+    )
+    assert files == row_files and len(files) == 2
+    # A wind-tunnel trial has no magnified picture: `photo` gives the moving one alone.
+    tunnel = loaded["wt-004"]
+    moving, enlarged, files = photo.figures(tunnel, _trial(tunnel, "T1"), table[tunnel.application])
+    assert enlarged == [] and len(files) == 1
+    assert photo.photo(tunnel, _trial(tunnel, "T1"), table[tunnel.application]) == (moving, files)
+
+
 def test_every_picture_is_named_by_the_sha256_of_its_bytes(loaded, table) -> None:
     for record in loaded.values():
         for trial in record.trials:

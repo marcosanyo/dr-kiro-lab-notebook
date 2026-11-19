@@ -80,7 +80,7 @@ def magnified_file(
     return PictureFile(addresses.picture(digest, source), data)
 
 
-def photo(
+def figures(
     record: RecordModel,
     trial: Trial,
     layout: Layout,
@@ -89,17 +89,10 @@ def photo(
     trial_word: bool = True,
     magnified: bool = True,
     captions: tuple[str, str] | None = None,
-) -> tuple[list[Segment], list[PictureFile]]:
-    """The instant photo of one trial and the picture files it shows.
-
-    Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
-    `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
-    sheet that does not divide into whole cells fails the build, naming the record and the trial
-    (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
-    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default) a
-    body-lab photo, except on the lab cards, is shown beside its magnified picture in one row (Requirement
-    7.9); the returned files are the recorded sheet, then the magnified picture. A wind-tunnel photo has no
-    magnified picture."""
+) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
+    """The moving picture of one trial, its magnified picture (nothing for a trial that has none) and the
+    picture files they show: the recorded sheet, then the magnified picture. `photo` puts the two in one row;
+    the cover places them apart. Arguments and checks are those of `photo`."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -144,7 +137,7 @@ def photo(
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
     if not magnified or record.application not in MAGNIFIED_APPLICATIONS:
-        return figure, [picture]
+        return figure, [], [picture]
     # The magnified picture beside the moving picture, in one row that wraps on a narrow screen (visual
     # steering, "Magnified picture"). It is a static picture: the whole magnified sheet, no script.
     enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
@@ -165,8 +158,35 @@ def photo(
             "figcaption", None, [*html.text(pencil(tid, source)), *say_text(captions[1])]
         )
     enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_parts)
-    row = html.element("section", {"class": "photo-pair"}, [*figure, *enlarged_figure])
-    return row, [picture, enlarged]
+    return figure, enlarged_figure, [picture, enlarged]
+
+
+def photo(
+    record: RecordModel,
+    trial: Trial,
+    layout: Layout,
+    size: str = "",
+    *,
+    trial_word: bool = True,
+    magnified: bool = True,
+    captions: tuple[str, str] | None = None,
+) -> tuple[list[Segment], list[PictureFile]]:
+    """The instant photo of one trial and the picture files it shows (see `figures` for the arguments).
+
+    Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
+    `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
+    sheet that does not divide into whole cells fails the build, naming the record and the trial
+    (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
+    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default) a
+    body-lab photo, except on the lab cards, is shown beside its magnified picture in one row (Requirement
+    7.9); the returned files are the recorded sheet, then the magnified picture. A wind-tunnel photo has no
+    magnified picture."""
+    moving, enlarged, pictures = figures(
+        record, trial, layout, size, trial_word=trial_word, magnified=magnified, captions=captions
+    )
+    if not enlarged:
+        return moving, pictures
+    return html.element("section", {"class": "photo-pair"}, [*moving, *enlarged]), pictures
 
 
 class Pins:

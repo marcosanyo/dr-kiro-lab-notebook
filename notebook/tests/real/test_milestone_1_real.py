@@ -444,30 +444,41 @@ def _rule_block(css: str, selector: str) -> str:
     return block[: block.index("}")]
 
 
-def test_cover_photo_and_track_are_siblings_in_one_row(site):
-    evidence = _parse(site / "index.html").find(cls="cover-evidence")
-    children = evidence.elements()
-    # The photo pair (the moving picture and its magnified picture, Requirement 7.9) and the track.
-    assert [(c.tag, "photo-pair" in c.classes or "track" in c.classes) for c in children] == [
-        ("section", True),
-        ("figure", True),
-    ]
-    assert "photo-pair" in children[0].classes and "track" in children[1].classes
-    assert children[0].find("figure", "photo-large") is not None
-    # The wrappers are dissolved (`display: contents`), so the heading, the magnified sheet, the moving
-    # picture, the track, the claim and the rule cards are cells of the one grid of `.cover-miss`: the sheet
-    # across the page, then from 560px the moving picture and the track side by side in one row.
+def test_cover_top_row_holds_the_claim_and_the_magnified_sheet_and_the_row_below_the_moving_picture(site):
+    miss = _parse(site / "index.html").find(cls="cover-miss")
+    # Phone order: heading, the top row (claim card, sticky note, magnified sheet), the moving picture with
+    # the track, the rule cards.
+    kinds = [("h2", "cap-heading"), ("section", "cover-top"), ("section", "cover-evidence")]
+    kinds.append(("section", "cover-rules"))
+    children = miss.elements()
+    assert [c.tag for c in children] == [tag for tag, _ in kinds]
+    assert all(name in c.classes for c, (_, name) in zip(children, kinds, strict=True))
+    top, evidence = miss.elements()[1:3]
+    assert "with-sheet" in top.classes
+    claim, sheet = top.elements()
+    assert "cover-claim" in claim.classes and "photo-magnified" in sheet.classes
+    card, note = claim.elements()
+    assert (card.tag, note.tag) == ("section", "aside")
+    assert "claim-card" in card.classes and "sticky" in note.classes
+    # The moving picture and the track are siblings; the magnified sheet is not among them.
+    moving, track = evidence.elements()
+    assert "photo-large" in moving.classes and "track" in track.classes
+    assert evidence.find_all(cls="photo-magnified") == [] and evidence.find_all(cls="photo-pair") == []
+
+    # Below 1000px one column (the order above); from 1000px the sheet is the left column, the claim card
+    # and the sticky note are to its right, and the moving picture and the track are in one row.
     css = CSS.read_text(encoding="utf-8")
-    assert "display: grid;" in _rule_block(css, ".cover-miss")
-    assert "display: contents;" in _rule_block(css, ".cover-evidence,\n.cover-evidence .photo-pair")
-    narrow = css[css.index("@media (min-width: 560px)") :]
-    sheet = _rule_block(narrow, ".cover-evidence .photo-magnified")
-    assert "grid-row: 1;" in sheet or "grid-row: 2;" in sheet
-    moving = _rule_block(narrow, ".cover-evidence .photo-large")
-    track = _rule_block(narrow, ".cover-evidence .track")
-    assert "grid-column: 1;" in moving and "grid-column: 2;" in track
-    row = "grid-row: 3;"
-    assert row in moving and row in track
+    assert "display: grid;" in _rule_block(css, ".cover-top")
+    assert "display: flex;" in _rule_block(css, ".cover-evidence")
+    assert "flex-direction: column;" in _rule_block(css, ".cover-evidence")
+    wide = css[css.index("@media (min-width: 1000px)") :]
+    assert "grid-template-columns: clamp(" in _rule_block(wide, "  .cover-top.with-sheet")
+    sheet_rule = _rule_block(wide, "  .cover-top .photo-magnified")
+    assert "grid-column: 1;" in sheet_rule and "grid-row: 1;" in sheet_rule
+    claim_rule = _rule_block(wide, "  .cover-top .cover-claim")
+    assert "grid-column: 2;" in claim_rule and "grid-row: 1;" in claim_rule
+    assert "display: flex;" in _rule_block(wide, "  .cover-claim")
+    assert "flex-direction: row;" in _rule_block(wide, "  .cover-evidence")
 
 
 def test_each_lab_panel_labels_its_chosen_trial_directly_above_the_photo(site):

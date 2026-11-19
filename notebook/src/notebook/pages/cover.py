@@ -5,12 +5,13 @@ ended session, or "none", and one trial per lab with the person's words for the 
 shows, in this order:
 
 - the head: a one-line kicker, the title, the tagline and one line of the three inks, linked to the legend;
-- the missed prediction: the recorded sheet of the trial magnified around the body as a taped instant photo,
-  the moving picture and the track beside it, and the claim card: the prediction in Dr. Kiro's ink, a
-  vertical list predicted / measured with the unit of the measurement and a "missed" stamp, a
-  sticky note with the measured value, and every row of the `end` snapshot's table that cites the prediction
-  as a rule card (a `rejected` card has one line "replaced by <id> <rule>"; the replacing row is not drawn
-  again) (13.1, 13.2, 13.7); for "none", the sentence that the session has no missed prediction (13.3);
+- the missed prediction: a top row with the claim card (the prediction in Dr. Kiro's ink, a vertical list
+  predicted / measured with the unit of the measurement and a "missed" stamp), the sticky note with the
+  measured value and the recorded sheet of the trial magnified around the body as a taped instant photo; a
+  row below it with the moving picture and the track; and every row of the `end` snapshot's table that cites
+  the prediction as a rule card (a `rejected` card has one line "replaced by <id> <rule>"; the replacing row
+  is not drawn again) (13.1, 13.2, 13.7); for "none", the sentence that the session has no missed
+  prediction (13.3);
 - the reader: what the reader's runs were, the request in words, and how many runs passed per setup;
 - one tab per lab, in the order of the cover file, with the lab's chosen trial and its ended sessions (13.4;
   a stopped session never reaches the cover, 14.4);
@@ -31,7 +32,7 @@ from notebook.ink import stamp as stamp_segment
 from notebook.layouts import Layout, layout_for
 from notebook.pages import parts
 from notebook.pages.parts import chosen, link, say_text
-from notebook.pages.photo import PictureFile, photo
+from notebook.pages.photo import PictureFile, figures, photo
 from notebook.records import Hypothesis, Outcome, Prediction, RecordModel, Snapshot, Trial
 
 # Was 60 (13.6). The cover now holds the reader section, the tab titles and the ink line the user asked for
@@ -354,21 +355,22 @@ def _miss(
     hypothesis, prediction = _prediction(record, miss.prediction, where)
     trial = _trial(record, outcome.trial, where)
     source = _source(record, hypothesis.seq)
-    figure, pictures = photo(
+    moving, magnified, pictures = figures(
         record,
         trial,
         layout_for(layouts, record.application, record.name),
         "large",
         captions=("COVER_CAPTION_MOVING", "COVER_CAPTION_MAGNIFIED"),
     )
-    # The photo pair and the track are siblings in one container (visual steering, "Cover layout").
+    # The moving picture and the track are siblings in one row; the magnified sheet is in the top row beside
+    # the claim (visual steering, "Cover layout"; polish pass, user 2026-11-19).
     track = plots.track(
         record,
         trial,
         "TRACK_CAPTION_COVER",
         label=html.text(pencil(html.check_id("trial", trial.id, source), source)),
     )
-    evidence = html.element("section", {"class": "cover-evidence"}, [*figure, *track])
+    evidence = html.element("section", {"class": "cover-evidence"}, [*moving, *track])
     pid = html.check_id("prediction", prediction.id, source)
     claim: list[Segment] = [
         *chosen(),
@@ -393,22 +395,27 @@ def _miss(
         rules += html.element("h3", {"class": "cap-heading"}, say_text("COVER_RULES_HEAD"))
         rules += _rows(record, end, table, pid)
     rules += _details(record, hypothesis, prediction, outcome, end is not None, where)
-    section = html.element(
+    # The claim card, then the sticky note (so on a phone the card comes first), then the magnified sheet.
+    # From 1000px the stylesheet puts the sheet in the left column, the card and the note to its right.
+    top = html.element(
         "section",
-        {"class": "cover-miss", "id": "miss"},
+        {"class": "cover-top with-sheet" if magnified else "cover-top"},
         [
-            *heading,
-            *evidence,
             *html.element(
                 "section",
                 {"class": "cover-claim"},
                 [
-                    *_sticky(record, prediction, outcome, hypothesis, where),
                     *html.element("section", {"class": "claim-card"}, claim),
+                    *_sticky(record, prediction, outcome, hypothesis, where),
                 ],
             ),
-            *html.element("section", {"class": "cover-rules"}, rules),
+            *magnified,
         ],
+    )
+    section = html.element(
+        "section",
+        {"class": "cover-miss", "id": "miss"},
+        [*heading, *top, *evidence, *html.element("section", {"class": "cover-rules"}, rules)],
     )
     return section, pictures
 

@@ -222,8 +222,11 @@ def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(
         and text.COVER_STICKY_EXPECTED in sticky
         and text.COVER_STICKY_WHEN in sticky
     )
-    # The sticky note comes before the claim card; the rule cards come after the picture row.
-    assert page.index("sticky-number") < page.index('class="claim-card"') < page.index('class="cover-rules"')
+    # The claim card comes before the sticky note (a phone shows them in this order, the stamp with the
+    # card); both are in the top row, which comes before the rule cards.
+    assert page.index('class="cover-top') < page.index('class="claim-card"') < page.index("sticky-number")
+    assert page.index("sticky-number") < page.index('class="cover-rules"')
+    assert '<section class="cover-claim"><section class="claim-card">' in page
 
 
 OTHER_LAYOUT = {"other": Layout("other", frames=1, rows=1, columns=1, gap=0, source="test fixture")}
