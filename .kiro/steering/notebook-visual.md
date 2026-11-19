@@ -131,9 +131,11 @@ the lab tabs (`.cover-labs`); the footer.
   note share one block (`.cover-claim`).
 - From 1000px the top row has two columns: the magnified picture at the left, as wide as 38% of the row but at most
   30rem and at least 16rem, and the claim card at its right with the sticky note beside it (the note wraps below
-  the card when there is no room). The prediction, the
-  measured value and the stamp are in the first screen, with the picture. The row of evidence follows below: the
-  moving picture (`.photo-large`) and the recorded track (`.track`), side by side from 1000px.
+  the card when there is no room). The placement in columns is scoped to `.cover-top.with-sheet`; a top row without
+  a magnified picture (a wind-tunnel miss) keeps its one column, with the claim card and the sticky note side by
+  side in it. The prediction, the measured value and the stamp are in the first screen, with the picture. The row
+  of evidence follows below: the moving picture (`.photo-large`) and the recorded track (`.track`), side by side
+  from 1000px.
 - On a narrow screen the cover is one column in this order: the claim card, the sticky note, the magnified picture,
   the moving picture, the track, the card of rules. The track box is cropped to the drawing (the svg's viewBox is the
   drawing plus an 8 unit margin), so no empty band stands above or below it, and the row adds no gap of its own.
@@ -145,9 +147,9 @@ the lab tabs (`.cover-labs`); the footer.
   (Requirement 8.2).
 - The lab tabs (`.tabs`) are index tabs side by side at every width, switched by radio buttons and the stylesheet
   alone, with no script (at most four). Their order is the order of the cover file. The tab of the lab of the missed
-  prediction is the checked one when the page loads (the first tab when the cover has no missed prediction). A tab
-  holds the lab's kicker, its title in the script, and its engine and the budget of its session with the unit; its
-  panel holds the chosen trial's photo ("chosen by a person") and the lab's ended sessions.
+  prediction is the checked one when the page loads (the first tab when the cover file says "none"; a missed
+  prediction whose lab has no tab fails the build). A tab holds the lab's kicker, its title in the script, and
+  its engine and the budget of its session with the unit; its panel holds the chosen trial's photo ("chosen by a person") and the lab's ended sessions.
 - The cover's visible commentary is at most 240 words (Requirement 13.6).
 
 ## Sticky note (Requirement 6.3)
@@ -186,6 +188,8 @@ the lab tabs (`.cover-labs`); the footer.
   names for a screen reader); each row is drawn as a card in the look of the cover's rule cards. One row is one
   `tbody.spec-row.rule-card.st-<status>`, which holds the row (`tr#row-<id>`), its refused-end note
   (`tr.row-note`) and its opened evidence (`tr.row-evidence`), so the evidence and the tab are inside the card.
+- The table parts are `display: block`, so the HTML carries the explicit ARIA roles `table`, `rowgroup`, `row`,
+  `columnheader` and `cell` on them; some engines drop the table semantics otherwise.
 - The header row is clipped out of sight (not `display: none`). Each cell shows the name of its column from the bench
   (`data-label`) as a small letter-spaced caption; the id, the rule, the stamp and the "replaced by" tab have no
   caption of their own, and an empty cell is hidden.
