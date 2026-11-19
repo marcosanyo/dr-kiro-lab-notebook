@@ -51,13 +51,36 @@ def test_a_track_at_one_place_is_one_point_in_the_centre() -> None:
 def test_track_svg_marks_the_start_with_two_decimals() -> None:
     trial = _trial([("track_x", (0.0, 1.0, 1.0)), ("track_y", (0.0, 0.0, 1.0))])
     page = ink.join(plots.track(RECORD, trial))[0]
-    assert '<svg viewbox="0 0 160.00 160.00"' in page and "xmlns" not in page
+    # A square track fills the box, so the cropped box is the whole box (the origin has 2 decimals).
+    assert '<svg viewbox="0.00 0.00 160.00 160.00"' in page and "xmlns" not in page
     (points,) = re.findall(r'points="([^"]*)"', page)
     assert all(re.fullmatch(r"-?\d+\.\d\d,-?\d+\.\d\d", p) for p in points.split(" "))
     first = points.split(" ")[0].split(",")
     assert f'cx="{first[0]}" cy="{first[1]}"' in page
     assert "</polyline>" in page and "</circle>" in page
     assert text.TRACK_CAPTION in page
+
+
+def test_the_track_box_is_cropped_to_the_drawing_so_a_flat_track_leaves_no_empty_band() -> None:
+    # Fixture values: x spans 4, y spans 1, so the drawing is a quarter as high as it is wide.
+    trial = _trial([("track_x", (0.0, 4.0, 2.0)), ("track_y", (0.0, 0.0, 1.0))])
+    page = ink.join(plots.track(RECORD, trial))[0]
+    (box,) = re.findall(r'<svg viewbox="([^"]*)" width="([^"]*)" height="([^"]*)"', page)
+    left, top, width, height = (float(v) for v in box[0].split())
+    assert (box[1], box[2]) == (f"{width:.2f}", f"{height:.2f}")
+    assert (left, width) == (0.0, plots.BOX)
+    assert height == pytest.approx((plots.BOX - 2 * plots.MARGIN) / 4 + 2 * plots.MARGIN)
+    # Every drawn point lies inside the box, a margin from its edge.
+    (points,) = re.findall(r'points="([^"]*)"', page)
+    xy = [tuple(float(v) for v in p.split(",")) for p in points.split(" ")]
+    assert min(y for _, y in xy) == pytest.approx(top + plots.MARGIN, abs=0.01)
+    assert max(y for _, y in xy) == pytest.approx(top + height - plots.MARGIN, abs=0.01)
+
+
+def test_a_track_at_one_place_keeps_the_whole_box() -> None:
+    trial = _trial([("track_x", (1.0, 1.0)), ("track_y", (2.0, 2.0))])
+    page = ink.join(plots.track(RECORD, trial))[0]
+    assert '<svg viewbox="0.00 0.00 160.00 160.00" width="160.00" height="160.00"' in page
 
 
 def test_a_not_measured_track_is_shown_by_name_and_reason() -> None:

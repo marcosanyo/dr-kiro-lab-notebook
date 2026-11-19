@@ -537,7 +537,6 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-3);
 }
 
 /* The rules section is one card: its heading, the rule cards and, at the bottom, the details. */
@@ -611,13 +610,19 @@ h3 {
   cursor: pointer;
 }
 
+/* The track is drawn in a box cropped to the drawing (`plots.track`), so the svg has no empty band above or
+   below it; it sizes with its viewBox, never with a fixed height. The photo above it already ends with a
+   margin, so on a narrow screen the row has no gap of its own. */
 .cover-evidence .track {
-  margin: var(--space-2) 0;
-  padding: var(--space-2) 0 0;
+  width: min(100%, 20rem);
+  margin: 0 var(--space-2);
+  padding: 0;
 }
 
 .cover-evidence .track svg {
   display: block;
+  width: 100%;
+  height: auto;
 }
 
 .cover-claim {
@@ -1176,10 +1181,6 @@ h3 {
     grid-column: 1 / -1;
     justify-self: end;
     margin-top: var(--space-2);
-  }
-
-  .cover-evidence .track svg {
-    max-height: 7.5rem;
   }
 
   h1 {

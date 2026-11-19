@@ -481,6 +481,28 @@ def test_cover_top_row_holds_the_claim_and_the_magnified_sheet_and_the_row_below
     assert "flex-direction: row;" in _rule_block(wide, "  .cover-evidence")
 
 
+def test_cover_track_box_is_cropped_to_the_drawing_and_sizes_with_its_view_box(site):
+    (svg,) = _parse(site / "index.html").find(cls="cover-evidence").find_all("svg")
+    left, top, width, height = (float(v) for v in svg.attrs["viewbox"].split())
+    assert (float(svg.attrs["width"]), float(svg.attrs["height"])) == (width, height)
+    (polyline,) = svg.find_all("polyline")
+    xy = [tuple(float(v) for v in p.split(",")) for p in polyline.attrs["points"].split()]
+    # The drawing leaves at most the margin of the box (8 units) above, below and to both sides.
+    gaps = (
+        min(x for x, _ in xy) - left,
+        left + width - max(x for x, _ in xy),
+        min(y for _, y in xy) - top,
+        top + height - max(y for _, y in xy),
+    )
+    assert all(0 <= gap <= 8.01 for gap in gaps), gaps
+    # No fixed height anywhere: not on a phone, not at any width.
+    css = CSS.read_text(encoding="utf-8")
+    rule = _rule_block(css, ".cover-evidence .track svg")
+    assert "height: auto;" in rule and "max-height" not in rule
+    assert "max-height" not in _rule_block(css, ".cover-evidence .track")
+    assert ".cover-evidence .track svg {\n    max-height" not in css
+
+
 def test_each_lab_panel_labels_its_chosen_trial_directly_above_the_photo(site):
     panels = _parse(site / "index.html").find_all("section", "tab-panel")
     assert len(panels) == 2
