@@ -33,6 +33,7 @@ class Series:
     spec: Progress
     unit: str
     points: tuple[Point, ...]
+    mark_index: int | None  # the first trial where the marked measurement has the marked value
 
     @property
     def best(self) -> Point | None:
@@ -73,7 +74,13 @@ def series(record: RecordModel, spec: Progress) -> Series:
             delta = None if best is None else value - best
             best = value
         points.append(Point(trial, hypothesis_of[trial.id], raw, value, best, improved, delta))
-    return Series(spec, "" if unit == "1" else unit, tuple(points))
+    mark_index = None
+    if spec.mark is not None:
+        for i, trial in enumerate(record.trials):
+            if _number(trial, spec.mark, where) == spec.mark_equals:
+                mark_index = i
+                break
+    return Series(spec, "" if unit == "1" else unit, tuple(points), mark_index)
 
 
 @dataclass(frozen=True)

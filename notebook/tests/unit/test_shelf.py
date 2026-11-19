@@ -166,3 +166,28 @@ def test_the_file_needs_exactly_three_notes(tmp_path, record):
     two = CHOICE[: CHOICE.rindex("[[note]]")]
     with pytest.raises(NotebookError, match="needs 3"):
         choices.load_file(_write(tmp_path, two), record)
+
+
+def test_a_flag_names_the_first_trial_where_a_measurement_takes_a_value(tmp_path, record):
+    flagged = CHOICE.replace(
+        'better = "higher"',
+        'better = "higher"\nmark = "distance"\nmark_equals = 0.3\nmark_words = "turns up"',
+    )
+    chosen = choices.load_file(_write(tmp_path, flagged), record)
+    found = progress.series(record, chosen.progress)
+    values = [dict(t.measurements)["distance"] for t in record.trials]
+    expected = next((i for i, v in enumerate(values) if v == 0.3), None)
+    assert found.mark_index == expected
+    assert (
+        progress.series(record, choices.load_file(_write(tmp_path, CHOICE), record).progress).mark_index
+        is None
+    )
+
+
+def test_a_flag_needs_its_three_keys_and_a_scalar_measurement(tmp_path, record):
+    base = 'better = "higher"'
+    with pytest.raises(NotebookError, match="given together"):
+        choices.load_file(_write(tmp_path, CHOICE.replace(base, base + '\nmark = "distance"')), record)
+    three = '\nmark = "trace"\nmark_equals = 0\nmark_words = "x"'
+    with pytest.raises(NotebookError, match="not a scalar measurement"):
+        choices.load_file(_write(tmp_path, CHOICE.replace(base, base + three)), record)

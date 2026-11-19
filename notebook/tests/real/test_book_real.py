@@ -128,12 +128,14 @@ def test_body_2_shows_the_readers_three_results(site):
     assert "Move ahead by about 0.45 m" in page
 
 
-def test_the_wind_tunnel_best_counts_only_steady_trials(site):
-    page, _ = _page(site, "wind-tunnel/wt-004.html")
-    assert '<p class="note-big"><span class="ink-p">0.9930 cd</span>' in page or "0.993" in page
-    stopped, found = _page(site, "wind-tunnel/wt-002.html")
-    assert found.classes["polaroid"] == 2
-    assert "No trial counts toward the best yet." in stopped
+def test_the_wind_tunnel_best_is_the_lowest_cd_of_all_runs_of_the_session(site, loaded_all):
+    for session in ("wt-004", "wt-002"):
+        page, found = _page(site, f"wind-tunnel/{session}.html")
+        cds = [dict(t.measurements)["cd"] for t in loaded_all[session].trials]
+        lowest = min(c for c in cds if isinstance(c, float))
+        assert f"{lowest:.3f}" in page, session
+        assert "No trial counts toward the best yet." not in page
+        assert found.classes["polaroid"] == 2
 
 
 def test_a_session_without_a_trial_has_no_photo_and_no_chart(site):
@@ -316,3 +318,27 @@ def test_the_reader_comes_right_after_the_highlight_and_every_section_says_what_
     assert "Each card: what Dr. Kiro predicted before the run, and what happened." in page
     text = re.sub(r"<[^>]*>", "", page)
     assert "predictions, written before the run, came true" in text and "predictions hit" not in text
+
+
+def test_the_wind_tunnel_line_is_the_lowest_cd_of_every_run_with_a_flag_where_the_vortices_stop(
+    site, loaded_all
+):
+    page, found = _page(site, "wind-tunnel/wt-004.html")
+    record = loaded_all["wt-004"]
+    cds = [dict(t.measurements)["cd"] for t in record.trials]
+    lowest = min(c for c in cds if isinstance(c, float))
+    assert f"{lowest:.3f}" in page  # the best note and the axis
+    steady = next(t for t in record.trials if dict(t.measurements)["shedding"] == 0.0)
+    assert found.classes["ch-mark"] == 1 and "vortices stop" in page
+    assert steady.id == "T8"  # the first trial without shedding
+    assert "The dashed line marks the first trial where shedding = 0." in re.sub(r"<[^>]*>", "", page)
+    body, body_found = _page(site, "body-lab/body-2.html")
+    assert body_found.classes["ch-mark"] == 0
+
+
+def test_the_chart_line_wavers_like_a_pencil_line_and_is_the_same_every_build(site):
+    page, _ = _page(site, "body-lab/body-2.html")
+    path = re.search(r'<path class="ch-line" d="([^"]*)"', page).group(1)
+    assert path.count("L") > 40  # many short pieces, not four straight strokes
+    again = re.search(r'<path class="ch-line" d="([^"]*)"', _page(site, "body-lab/body-2.html")[0]).group(1)
+    assert path == again

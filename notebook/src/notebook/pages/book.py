@@ -6,6 +6,8 @@ The title, the summary and the words on the photos are written by a person (choi
 number comes from the record; Dr. Kiro's words keep Dr. Kiro's ink.
 """
 
+import hashlib
+import math
 import re
 from dataclasses import dataclass
 
@@ -353,6 +355,32 @@ def _value_text(value: float, unit: str, where: str) -> str:
     return f"{numbers.short(value, where)} {unit}".strip()
 
 
+def _jitter(seed: str, k: int) -> float:
+    """A number from -1 to 1 that depends only on the seed and k, so the same record always draws the same
+    line."""
+    digest = hashlib.sha256(f"{seed}:{k}".encode()).hexdigest()
+    return int(digest[:8], 16) / 0xFFFFFFFF * 2 - 1
+
+
+def _pencil_line(corners: list[tuple[float, float]], seed: str) -> str:
+    """The step line as a path that wavers a little between its corners, like a line drawn by hand. The
+    corners themselves are exact."""
+    out = f"M{corners[0][0]:.1f} {corners[0][1]:.1f}"
+    k = 0
+    for (x0, y0), (x1, y1) in zip(corners, corners[1:], strict=False):
+        length = math.hypot(x1 - x0, y1 - y0) or 1.0
+        pieces = max(2, int(length / 11))
+        for j in range(1, pieces + 1):
+            px, py = x0 + (x1 - x0) * j / pieces, y0 + (y1 - y0) * j / pieces
+            if j < pieces:
+                k += 1
+                wobble = _jitter(seed, k) * 1.2
+                px += -(y1 - y0) / length * wobble
+                py += (x1 - x0) / length * wobble
+            out += f"L{px:.1f} {py:.1f}"
+    return out
+
+
 def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     """The best so far after every trial, as a step line. Only the largest steps up are named, each with its
     hypothesis and the change ("H10: +9.2 cm"), and no two names overlap."""
@@ -392,12 +420,35 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
             {"class": "ch-tick", "x": f"{left - 6}", "y": f"{y(v) + 4:.1f}"},
             [pencil(numbers.brief(v, unit, source), source)],
         )
-    d = ""
+    corners: list[tuple[float, float]] = []
     for i, p in enumerate(points):
         if p.best is None:
             continue
-        d += f"M{x(i):.1f} {y(p.best):.1f}" if not d else f"H{x(i):.1f}V{y(p.best):.1f}"
-    marks += html.element("path", {"class": "ch-line", "d": d + f"H{x(n - 1):.1f}", "fill": "none"}, [])
+        if corners and abs(corners[-1][1] - y(p.best)) > 0.01:
+            corners += [(x(i), corners[-1][1]), (x(i), y(p.best))]
+        elif not corners:
+            corners.append((x(i), y(p.best)))
+    corners.append((x(n - 1), corners[-1][1]))
+    marks += html.element(
+        "path", {"class": "ch-line", "d": _pencil_line(corners, record.name), "fill": "none"}, []
+    )
+    if found.mark_index is not None:
+        m = found.mark_index
+        marks += html.shape(
+            "line",
+            {
+                "class": "ch-mark",
+                "x1": f"{x(m):.1f}",
+                "x2": f"{x(m):.1f}",
+                "y1": f"{top - 12}",
+                "y2": f"{height - bottom + 6}",
+            },
+        )
+        marks += html.element(
+            "text",
+            {"class": "ch-flag", "x": f"{x(m):.1f}", "y": f"{height - 6}"},
+            [commentary(found.spec.mark_words, f"{found.spec.source} key mark_words")],
+        )
     span = max(bests) - min(bests)
     steps = [
         (i, p)
@@ -406,7 +457,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     ]
     steps.sort(key=lambda item: -abs(item[1].delta))
     named: list[tuple[float, float, float]] = []  # (left, right, y) of each name
-    shown_steps: list[tuple[int, str, float, float]] = []
+    shown_steps: list[tuple[int, str, float, float, float]] = []
     for i, p in steps[:MAX_LABELS]:
         text = f"{p.hypothesis}: {numbers.brief(p.delta, unit, source, signed=True)}"
         size = LABEL_CHAR * len(text)
@@ -418,14 +469,26 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
                 continue
             if all(box_right < a or box_left > b or abs(at - c) > LABEL_HEIGHT for a, b, c in named):
                 named.append((box_left, box_right, at))
-                shown_steps.append((i, text, at, 0.0 if not end else 1.0))
+                shown_steps.append((i, text, at, 0.0 if not end else 1.0, y(p.best)))
                 break
     for i, p in enumerate(points):
         if p.improved and p.best is not None:
             marks += html.shape(
                 "circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{y(p.best):.1f}", "r": "4"}
             )
-    for i, label, at, end in shown_steps:
+    for i, label, at, end, dot in shown_steps:
+        edge = x(i) - 8 if end else x(i) + 6
+        aim = (x(i) - 3, dot - 5) if at < dot else (x(i) - 3, dot + 5)
+        marks += html.element(
+            "path",
+            {
+                "class": "ch-leader",
+                "fill": "none",
+                "d": f"M{edge:.1f} {at + (3 if at < dot else -9):.1f} Q{edge + (3 if end else -3):.1f} "
+                f"{(at + dot) / 2:.1f} {aim[0]:.1f} {aim[1]:.1f}",
+            },
+            [],
+        )
         cls = "ch-note ch-note-end" if end else "ch-note"
         marks += html.element(
             "text",
@@ -453,6 +516,14 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         *html.text(pencil(found.spec.measurement, source)),
         *say_text("PROGRESS_BETTER_HIGHER" if found.spec.better == "higher" else "PROGRESS_BETTER_LOWER"),
     ]
+    if found.spec.mark is not None and found.mark_index is not None:
+        caption += [
+            *say_text("PROGRESS_MARK_A"),
+            *html.text(
+                pencil(f"{found.spec.mark} = {numbers.short(found.spec.mark_equals, source)}", source)
+            ),
+            *say_text("PROGRESS_MARK_B"),
+        ]
     if found.spec.require is not None:
         caption += [
             *say_text("PROGRESS_ONLY_WHEN"),

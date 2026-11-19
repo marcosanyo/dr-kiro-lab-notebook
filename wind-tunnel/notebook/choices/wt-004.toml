@@ -9,8 +9,9 @@ color = "teal"
 [progress]
 measurement = "cd"
 better = "lower"
-require = "shedding"
-equals = 0
+mark = "shedding"
+mark_equals = 0
+mark_words = "vortices stop"
 
 [[polaroid]]
 heading = "Where it started"

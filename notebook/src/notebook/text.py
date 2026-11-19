@@ -573,3 +573,5 @@ SPEC_INTRO = (
 PLAN_INTRO = "The steps Dr. Kiro wrote for itself, in order. A solid circle is a step it finished."
 ALL_INTRO = "Each card: what Dr. Kiro predicted before the run, and what happened."
 READER_INTRO = "The test of the spec: another Kiro, who never saw the experiments, is given one task."
+PROGRESS_MARK_A = " The dashed line marks the first trial where "
+PROGRESS_MARK_B = "."

@@ -34,7 +34,7 @@ BOOK_KEYS = frozenset(
 NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
 NOTE_KEYS = frozenset({"kind", "prediction"})
 NOTES = 3
-PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals"})
+PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals", "mark", "mark_equals", "mark_words"})
 POLAROID_KEYS = frozenset({"heading", "trial", "words", "star"})
 APP_KEYS = frozenset(
     {
@@ -69,6 +69,9 @@ class Progress:
     better: str
     require: str | None
     equals: float | None
+    mark: str | None  # a measurement whose first value `mark_equals` is flagged on the chart
+    mark_equals: float | None
+    mark_words: str | None  # the words a person writes at the flag
     source: str
 
 
@@ -186,7 +189,20 @@ def _progress(file: str, data: Any, record: RecordModel) -> Progress:
         if isinstance(equals, bool) or not isinstance(equals, int | float):
             raise NotebookError(f"{where} equals", "must be a number")
         equals = float(equals)
-    return Progress(measurement, better, require, equals, where)
+    given = [k for k in ("mark", "mark_equals", "mark_words") if k in data]
+    if given and len(given) != 3:
+        raise NotebookError(where, "`mark`, `mark_equals` and `mark_words` are given together or not at all")
+    mark = mark_equals = mark_words = None
+    if given:
+        mark = _string(f"{where} mark", data["mark"], 40)
+        if mark not in scalars:
+            raise NotebookError(f"{where} mark", f"{mark!r} is not a scalar measurement of the lab")
+        value = data["mark_equals"]
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            raise NotebookError(f"{where} mark_equals", "must be a number")
+        mark_equals = float(value)
+        mark_words = _string(f"{where} mark_words", data["mark_words"], 30)
+    return Progress(measurement, better, require, equals, mark, mark_equals, mark_words, where)
 
 
 def _polaroid(file: str, index: int, data: Any, record: RecordModel) -> Polaroid:
