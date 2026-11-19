@@ -383,3 +383,30 @@ def test_the_tab_has_the_persons_words_and_the_budget_from_the_record(record) ->
     label = page[page.index('<label for="tab-fake"') : page.index("</label>")]
     assert ">LAB I<" in label and ">The Fake Lab<" in label and "Sim · " in label and " runs<" in label
     assert f'<span class="ink-p">{record.budget}</span>' in label
+
+
+def _with_measured_by(record: records.RecordModel, said: str) -> records.RecordModel:
+    declaration = record.declaration
+    measured_by = replace(declaration.measured_by, text=said)
+    return replace(record, declaration=replace(declaration, measured_by=measured_by))
+
+
+def _sticky_text(page: str) -> str:
+    sticky = page[page.index('<aside class="sticky">') : page.index("</aside>")]
+    return html.unescape(re.sub(r"<[^>]+>", "", sticky))
+
+
+def test_the_sticky_note_reads_forward_and_back_from_the_start_record_only(record) -> None:
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
+    (prediction,) = [p for h in record.hypotheses for p in h.predictions if p.id == "H2.P1"]
+    measurement = prediction.measurement
+    said = f"{measurement} in the direction the body faces at the start, y to its left."
+    named = _with_measured_by(record, said)
+    line = _sticky_text(_html(cover.page([named], _cover(named, "H2.P1"), LAYOUTS, [], {})[0]))
+    if prediction.low > 0:
+        assert "expected to go forward" in line
+        assert ("went back" if outcome.value < 0 else "went forward") in line
+    # Without the sentence in the record the direction words are not used.
+    silent = _with_measured_by(record, "Computed from the simulator.")
+    line = _sticky_text(_html(cover.page([silent], _cover(silent, "H2.P1"), LAYOUTS, [], {})[0]))
+    assert "forward" not in line and "back" not in line and "between" in line

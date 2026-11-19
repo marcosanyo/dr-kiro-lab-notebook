@@ -22,6 +22,8 @@ The commentary visible before any detail is opened is at most `MAX_VISIBLE_WORDS
 (13.6); `page` checks this and fails the build otherwise.
 """
 
+import re
+
 from bench.specfiles.discovered import STATUSES, Row, Table
 
 from notebook import addresses, html, numbers, plots, readerrequest, readerruns, tables
@@ -195,17 +197,63 @@ def _measure_list(
     )
 
 
+def _faces_forward(record: RecordModel, measurement: str) -> bool:
+    """True when the start record (the declaration's measured-by text) says the measurement is taken in the
+    direction the body faces at the start, so a positive value is forward and a negative one is back. The
+    direction is read from that text only; when it does not say so, the cover keeps its neutral wording."""
+    said = re.search(
+        rf"(?:^|[\s,:;(]){re.escape(measurement)} in the direction the body faces at the start",
+        record.declaration.measured_by.text,
+    )
+    return said is not None
+
+
+def _went(
+    record: RecordModel,
+    prediction: Prediction,
+    outcome: Outcome,
+    hypothesis: Hypothesis,
+    unit: str,
+    where: str,
+) -> list[Segment]:
+    """"expected to go forward 0.2 to 3 m, went back 0.2047 m": the registered range and the measured value
+    as distances along the direction the start record names, the sign of each read as forward or back. Every
+    figure is the cover's usual four significant digits of a recorded number; none is made up."""
+    source = _source(record, hypothesis.seq)
+    out_source = _source(record, outcome.seq)
+    if outcome.value is None:
+        raise NotebookError(out_source, f"the miss of {outcome.prediction} has no measured value")
+    value = outcome.value
+    if prediction.low <= value <= prediction.high:
+        raise NotebookError(out_source, f"the miss of {outcome.prediction} has a value inside its range")
+    ends = sorted((abs(prediction.low), abs(prediction.high)))
+    return [
+        *say_text("COVER_STICKY_EXPECTED"),
+        *say_text("COVER_STICKY_TO_GO"),
+        *say_text("COVER_STICKY_FORWARD" if prediction.low > 0 else "COVER_STICKY_BACK"),
+        *html.text(pencil(numbers.short(ends[0], where), source)),
+        *say_text("COVER_STICKY_TO"),
+        *html.text(pencil(f"{numbers.short(ends[1], where)}{unit}", source)),
+        *say_text("COVER_STICKY_WENT"),
+        *say_text("COVER_STICKY_FORWARD" if value >= 0 else "COVER_STICKY_BACK"),
+        *html.text(pencil(f"{numbers.short(abs(value), where)}{unit}", out_source)),
+    ]
+
+
 def _happened(
     record: RecordModel, prediction: Prediction, outcome: Outcome, hypothesis: Hypothesis, where: str
 ) -> list[Segment]:
     """One line of what happened, from the record alone: the registered range, then the measured value and
     which side of the range it lies on ("on the other side of zero" when the range lies on one side of zero
-    and the value on the other). The record declares no direction for a measurement, so the line says
-    "below" and "above", never "forward" or "back". A miss without a value, or with a value inside its
+    and the value on the other). When the start record's measured-by text says a measurement is taken in the
+    direction the body faces at the start, `_went` says "forward" and "back"; otherwise the record declares
+    no direction, so the line says "below" and "above", never "forward" or "back". A miss without a value, or with a value inside its
     range, is a record the bench cannot produce and the cover cannot explain: the build fails."""
     source = _source(record, hypothesis.seq)
     unit = _unit(record, prediction.measurement, where)
     low, high = numbers.short(prediction.low, where), numbers.short(prediction.high, where)
+    if _faces_forward(record, prediction.measurement) and (prediction.low > 0 or prediction.high < 0):
+        return _went(record, prediction, outcome, hypothesis, unit, where)
     line = [
         *say_text("COVER_STICKY_EXPECTED"),
         *html.text(pencil(prediction.measurement, source)),
