@@ -80,6 +80,10 @@ class _Figure(HTMLParser):
                 "tile-width": "400",
                 "tile-height": "200",
                 "interval": "150",
+                "crop-left": None,
+                "crop-top": None,
+                "crop-width": None,
+                "crop-height": None,
             },
         ),
     ],
@@ -98,6 +102,11 @@ def test_figure_attributes_for_both_layouts(loaded, table, session_id, tid, expe
             assert data[key] == value, key
     # The site is flat: the picture is linked from the site root, without `..` (design N28).
     assert picture.path == f"p/{trial.picture.digest}.png"
+    if "crop-width" in data:
+        # The crop is a window inside one cell, with the cell's shape.
+        left, top, width, height = (int(data[f"crop-{k}"]) for k in ("left", "top", "width", "height"))
+        assert left >= 0 and top >= 0 and left + width <= 400 and top + height <= 200
+        assert abs(width * 200 - height * 400) <= 400
     if session_id == "body-2":
         # The sheet of the whole picture is only named by the figure; the page shows the magnified picture.
         assert data["whole-src"] == picture.path

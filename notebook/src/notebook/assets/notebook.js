@@ -56,6 +56,15 @@
       },
     };
     views.near.cells = views.near.columns * views.near.rows;
+    // A wind-tunnel picture shows the crop round the body and its wake; the whole cell is one press away.
+    if (figure.getAttribute("data-crop-width") !== null) {
+      views.near.crop = {
+        left: whole(figure, "crop-left"),
+        top: whole(figure, "crop-top"),
+        width: whole(figure, "crop-width"),
+        height: whole(figure, "crop-height"),
+      };
+    }
     if (wholeSource !== null) {
       views.far = {
         image: null,
@@ -88,12 +97,16 @@
     function draw() {
       var sx = (cell % view.columns) * (view.width + view.gap);
       var sy = Math.floor(cell / view.columns) * (view.height + view.gap);
-      if (canvas.width !== view.width || canvas.height !== view.height) {
-        canvas.width = view.width;
-        canvas.height = view.height;
+      var crop = view.crop || { left: 0, top: 0, width: view.width, height: view.height };
+      var scale = view.crop ? 2 : 1;
+      var w = crop.width * scale;
+      var h = crop.height * scale;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
       }
-      context.clearRect(0, 0, view.width, view.height);
-      context.drawImage(view.image, sx, sy, view.width, view.height, 0, 0, view.width, view.height);
+      context.clearRect(0, 0, w, h);
+      context.drawImage(view.image, sx + crop.left, sy + crop.top, crop.width, crop.height, 0, 0, w, h);
       // The words under the picture belong to the frame of the retaken picture only.
       clock.forEach(function (span) {
         shown(span, view === views.near && Number(span.getAttribute("data-frame")) === cell);

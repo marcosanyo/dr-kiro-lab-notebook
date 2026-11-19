@@ -91,7 +91,8 @@ def _values(record: RecordModel, trial: Trial, *, full: bool = False) -> str:
         value = values[m.name]
         where = f"{source}: {trial.id} {m.name}"
         if isinstance(value, NotMeasuredValue):
-            out.append(f"{m.name} {value.outcome}")
+            if full:
+                out.append(f"{m.name} {value.outcome}")
         elif full:
             out.append(f"{m.name} {numbers.short(value, where)} {_unit(record, m.name)}".strip())
         else:

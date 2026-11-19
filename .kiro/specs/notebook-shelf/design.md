@@ -36,18 +36,23 @@ The default colours are the night lab. `html[data-mode="day"]` replaces the cust
 
 ## Retaken display pictures (requirement 6)
 
-The folder holds `manifest.toml` and the PNG sheets. Each `[[retake]]` has `application`, `session`, `trial`, `file`, `sha256`, `source_picture` and `measured`. The build refuses the entry unless: the file's SHA-256 is `sha256`; `source_picture` is the trial's recorded picture hash; the sheet divides into the lab's columns and rows with gap 0; `measured` is not empty and every value equals the recorded value of that name at 4 significant digits. The picture is copied as `p/<sha256>.png` and shown in place of the magnified picture.
+The folder holds `manifest.toml` and the PNG sheets. Each `[[retake]]` has `application`, `session`, `trial`, `file`, `sha256`, `source_picture`, `columns`, `rows`, `interval`, `frame_seconds`, `track`, `track_step` and `measured`. The build refuses the entry unless: the file's SHA-256 is `sha256`; `source_picture` is the trial's recorded picture hash; the sheet divides into `columns` and `rows` with gap 0; `measured` is not empty and every value equals the recorded value of that name at 4 significant digits; and `track` is a recorded series in metres of `track_step * columns * rows + 1` samples. The picture is copied as `p/<sha256>.png` and shown in place of the magnified picture. The recorded whole sheet stays one press away ("whole picture").
 
-### Proposal: how to take the pictures again (on the Mac, outside this change)
+### How the pictures are taken (`notebook-retake`, on the Mac)
 
-1. A builder script `body-lab/retake.py` (not in the notebook, and not blind-scanned because it is never in a lab) reads one sealed session read-only.
-2. For each chosen trial it takes the experiment file's source blob from the record, the trial's parameters and seed, and the sampled input series (`trial.inputs`), and runs that one trial again through the body-lab adapter. The same seed and inputs give the same run (`rules.md` 3).
-3. The measured values of the rerun are compared with the recorded ones: x, y and heading at 4 significant digits. If any differs the script stops and says which (`rules.md` 2). Nothing is retried or adjusted.
-4. The rerun draws the same ten frames, but from a camera that follows a box around the body (the box is the body's recorded track from start to end, plus a margin), at a larger size, and writes one sheet in the lab's layout with gap 0.
-5. The script writes the sheet to `notebook/display/<session>-<trial>.png`, computes its SHA-256, and appends the manifest entry with the recorded picture's hash and the measured values.
-6. `notebook-build ... --display notebook/display` shows the new pictures. The folder is committed; the sealed records are untouched. Which trials to retake: the two photos of each choice file first, then every trial of the hypothesis rows if wanted.
+`uv run notebook-retake --sessions sessions --out notebook/display --session body-1 --session body-2`
 
-Open: whether the adapter lets a caller set the camera and size. If it does not, a small change to the adapter is a spec change of `body-lab` and needs the user.
+1. The sealed records are read, never written. The output folder must be new or empty.
+2. For each trial the recorded commands (`trial.inputs`) are run again through the body-lab adapter's own simulator (`sim.run`; the simulation has no random part, and the trial's seed is recorded with it), and the adapter's own measurer computes x, y, heading and the three tracks. They are compared with the record exactly. The first difference stops the command and names the trial and the measurement. On 2026-11-19 all 79 trials of body-1 and body-2 matched.
+3. During the same run, 25 pictures are drawn, one every 0.2 s of simulated time, 320 px square, by the renderer's free camera straight above the centre of mass of the body, so the floor shows 50 cm across with the checks moving behind the body. The adapter, its camera and the pictures the bench returns are not changed.
+4. The 25 pictures are laid out 5 by 5 with no gap. The low 3 bits of each colour are dropped and each row is stored with the smallest PNG filter, so a sheet is about 0.3 MB (all 79: 20 MB). The sheet is a display picture, not a measurement.
+5. The sheet's SHA-256, the recorded picture's hash, the layout and the measured values are written to `manifest.toml`.
+
+The wind tunnel is not run again: a larger picture would need the sampling of the solver changed (`wind-tunnel/model`, a `wind-tunnel` spec change). Its pictures are the recorded ones with a crop (`zoom.py`): the script draws only the window round the body and its wake of every cell (found from the grey of the body in the first cell), and the whole picture is one press away.
+
+## The top of a page
+
+Numbers at the top of a page are short (`numbers.brief`): metres under 10 cm in centimetres (`+3.9 cm`), larger in metres (`0.75 m`), a value with no unit with three decimals (`0.993`), never in exponent form. The recorded values are in the opened notes. The two highlight photos are one group: one play button and one slider move both, and under each photo a line says "t = 3.0 s forward 38 cm" from the recorded track at that cell. The chart is a framed box, names at most four steps (the largest, at least 10% of the climb), and places each name where it does not overlap another. Titles are cream; the text of a person is ordinary text with a small orange mark "our notes". Each discovered spec card shows the id, the stamp, the rule and its rewrite; scope and evidence are in a closed note. Each step of the plan is one line that opens to the whole text. Each hypothesis is a card in a two-column grid that spans both columns when its note is open.
 
 ## Decisions
 

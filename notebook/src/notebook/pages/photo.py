@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from bench.core import ids
 
-from notebook import addresses, html, magnify, text
+from notebook import addresses, html, magnify, text, zoom
 from notebook.errors import NotebookError
 from notebook.ink import Segment, markup, pencil
 from notebook.layouts import Layout, check_sheet
@@ -186,8 +186,19 @@ def figures(
             ],
         )
         return [], enlarged_figure, [picture, enlarged]
+    crop_attrs: dict[str, str] = {}
+    if not body_lab:
+        # The body and the start of its wake, larger; the whole picture is one press away (`zoom.py`).
+        crop = zoom.crop_for(trial.picture.data, cells.width, cells.height, _source(record, trial))
+        crop_attrs = {
+            "data-crop-left": str(crop.left),
+            "data-crop-top": str(crop.top),
+            "data-crop-width": str(crop.width),
+            "data-crop-height": str(crop.height),
+        }
     attrs = {
         "class": classes,
+        **crop_attrs,
         **_motion_attrs(layout.columns, layout.rows, layout.gap, cells.width, cells.height, layout.interval),
     }
     if body_lab:
