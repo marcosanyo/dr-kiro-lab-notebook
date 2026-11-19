@@ -22,8 +22,11 @@ COLORS = ("violet", "green", "amber", "rose", "blue", "teal")
 BETTER = ("higher", "lower")
 POLAROIDS = 2
 BOOK_KEYS = frozenset(
-    {"title", "subtitle", "summary", "line", "model", "date", "color", "progress", "polaroid"}
+    {"title", "subtitle", "summary", "line", "model", "date", "color", "progress", "polaroid", "note"}
 )
+NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
+NOTE_KEYS = frozenset({"kind", "prediction"})
+NOTES = 3
 PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals"})
 POLAROID_KEYS = frozenset({"heading", "trial", "words", "star"})
 LAB_KEYS = frozenset({"application", "case", "about", "open", "unit"})
@@ -58,6 +61,15 @@ class Polaroid:
 
 
 @dataclass(frozen=True)
+class Note:
+    """One of the three sticky notes: which number of the record it shows; `miss` names a prediction."""
+
+    kind: str
+    prediction: str | None
+    source: str
+
+
+@dataclass(frozen=True)
 class Choices:
     record: str  # RecordModel.name
     file: str
@@ -70,6 +82,7 @@ class Choices:
     color: str
     progress: Progress | None  # None only when the record holds no trial
     polaroids: tuple[Polaroid, ...]
+    notes: tuple[Note, ...]  # three when the record holds a trial, else none
 
 
 @dataclass(frozen=True)
@@ -161,11 +174,33 @@ def _polaroid(file: str, index: int, data: Any, record: RecordModel) -> Polaroid
     )
 
 
+def _note(file: str, index: int, data: object, record: RecordModel) -> Note:
+    where = f"{file} key note {index}"
+    if not isinstance(data, dict):
+        raise NotebookError(where, "must be a table ([[note]])")
+    _exact(where, data, NOTE_KEYS, frozenset({"kind"}))
+    kind = _string(f"{where} kind", data["kind"], 12)
+    if kind not in NOTE_KINDS:
+        raise NotebookError(f"{where} kind", f"must be one of {', '.join(NOTE_KINDS)}")
+    if (kind == "miss") != ("prediction" in data):
+        raise NotebookError(where, "a `miss` note names its `prediction`, and no other note does")
+    prediction = None
+    if kind == "miss":
+        prediction = _string(f"{where} prediction", data["prediction"], 20)
+        found = [o for o in record.outcomes if o.prediction == prediction]
+        if not found or found[0].outcome != "miss" or found[0].value is None:
+            raise NotebookError(
+                f"{where} prediction",
+                f"{prediction!r} is not a missed prediction of {record.name} with a value",
+            )
+    return Note(kind, prediction, where)
+
+
 def load_file(path: Path, record: RecordModel) -> Choices:
     """Read and check one choice file against its record."""
     file = str(path)
     data = _read_toml(path)
-    _exact(file, data, BOOK_KEYS, BOOK_KEYS - {"progress", "polaroid"})
+    _exact(file, data, BOOK_KEYS, BOOK_KEYS - {"progress", "polaroid", "note"})
     color = _string(f"{file} key color", data["color"], 10)
     if color not in COLORS:
         raise NotebookError(f"{file} key color", f"must be one of {', '.join(COLORS)}")
@@ -190,6 +225,16 @@ def load_file(path: Path, record: RecordModel) -> Choices:
     if not record.trials and "progress" in data:
         raise NotebookError(f"{file} key progress", f"{record.name} has no trial, so it has no progress")
     progress = _progress(file, data["progress"], record) if "progress" in data else None
+    notes_value = data.get("note", [])
+    wanted_notes = NOTES if record.trials else 0
+    if not isinstance(notes_value, list) or len(notes_value) != wanted_notes:
+        raise NotebookError(
+            f"{file} key note",
+            f"{record.name} needs {wanted_notes} [[note]]; the file has {len(notes_value)}",
+        )
+    notes = tuple(_note(file, i, n, record) for i, n in enumerate(notes_value, start=1))
+    if len({n.kind if n.kind != "miss" else n.prediction for n in notes}) != len(notes):
+        raise NotebookError(f"{file} key note", "the notes must show different things")
     return Choices(
         record=record.name,
         file=file,
@@ -202,6 +247,7 @@ def load_file(path: Path, record: RecordModel) -> Choices:
         color=color,
         progress=progress,
         polaroids=polaroids,
+        notes=notes,
     )
 
 

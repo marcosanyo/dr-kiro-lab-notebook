@@ -23,6 +23,15 @@ heading = "Best"
 trial = "T1"
 words = "Another fixture line."
 star = true
+
+[[note]]
+kind = "best"
+
+[[note]]
+kind = "hits"
+
+[[note]]
+kind = "trials"
 """
 COVER = """[[lab]]
 application = "fake"

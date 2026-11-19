@@ -179,10 +179,10 @@ ol {
   color: var(--text);
 }
 .ours {
-  margin-left: 0.5rem;
+  margin-left: 0.6rem;
   color: var(--ink-commentary);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 1rem;
   font-weight: 600;
   text-transform: uppercase;
   white-space: nowrap;
@@ -588,9 +588,14 @@ h3.cap {
   margin-top: 0.3rem;
   font-size: 0.78rem;
 }
+.reel-lines {
+  display: block;
+  min-height: 2.5em;
+}
 .reel-clock {
   display: block;
   font-size: 0.82rem;
+  line-height: 1.2;
 }
 .reel-clock .ink-c {
   color: #3d3126;
@@ -1064,6 +1069,7 @@ section[data-sync] .photo-controls button[data-action="step"] {
 }
 .newbest {
   color: #e0a800;
+  white-space: nowrap;
   font-family: var(--font-script);
   font-size: 1.2rem;
 }
@@ -1487,4 +1493,45 @@ html[data-mode="day"] .deco-sun {
 }
 .hyp-pic .photo-controls button[data-action="step"] {
   display: none;
+}
+.newbest .ink-c {
+  white-space: nowrap;
+}
+/* Dr. Kiro's hypothesis in an opened note: a heading and a sentence, then one line per prediction. */
+.frozen-title {
+  margin: 0.2rem 0 0.3rem;
+  font-family: var(--font-script);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+.frozen-title .ink-k {
+  white-space: normal;
+}
+.frozen-text {
+  margin: 0 0 0.4rem;
+  font-size: 0.92rem;
+}
+.frozen-text .ink-k {
+  white-space: normal;
+}
+.label-k {
+  margin-left: 0.4rem;
+  font-size: 0.72rem;
+}
+.label-k .ink-c {
+  color: #3d3126;
+}
+.book-summary .ours {
+  font-size: 0.85rem;
+}
+@media (max-width: 900px) {
+  .hyps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .hyp,
+  .hyp:has(details[open]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

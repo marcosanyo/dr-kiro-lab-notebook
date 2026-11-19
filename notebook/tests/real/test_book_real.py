@@ -164,3 +164,42 @@ def test_titles_are_marked_as_our_notes_and_the_other_pages_have_every_retaken_p
 def test_the_plan_steps_and_the_rule_details_are_closed_notes(site):
     page, found = _page(site, "body-lab-body-2.html")
     assert found.classes["plan-step"] == 13 and found.classes["rule-more"] == 14
+
+
+def test_an_opened_note_shows_headings_and_predictions_as_they_read_not_as_they_were_written(site):
+    for name in ("body-lab-body-2.html", "wind-tunnel-wt-004.html", "body-lab-body-1.html"):
+        page, found = _page(site, name)
+        assert "```" not in page and "### " not in page and "[[prediction]]" not in page, name
+        assert found.classes["frozen-title"] >= 1
+    page, _ = _page(site, "wind-tunnel-wt-004.html")
+    # "cd in [0.5, 1.25] when aspect = 3, ... -> hit": the range, the conditions and the outcome of H3.P1.
+    line = re.search(r'<li id="H3.P1">(.*?)</li>', page, re.S)
+    assert line
+    text = re.sub(r"<[^>]*>", "", line.group(1))
+    assert "cd in [0.5, 1.25] when aspect = 3" in text and "→ hit" in text.replace("&rarr;", "→")
+
+
+def test_the_sticky_notes_are_the_ones_the_choice_file_names(site, loaded):
+    page, found = _page(site, "wind-tunnel-wt-004.html")
+    assert found.classes["note"] == 3
+    assert "H5.P3" in page and "missed:" in page and "was expected in" in page
+    assert "rules rejected" not in page
+    body_2, _ = _page(site, "body-lab-body-2.html")
+    assert "rules rejected" in body_2
+    stopped, _ = _page(site, "wind-tunnel-wt-002.html")
+    assert "used, of the whole budget" in stopped
+
+
+def test_the_lines_under_a_moving_photo_share_one_place_so_the_page_does_not_jump(site):
+    page, _ = _page(site, "body-lab-body-2.html")
+    assert page.count('<span class="reel-lines">') >= 41  # the two highlight photos and every trial
+    css = (site / "a" / "notebook.css").read_text(encoding="utf-8")
+    assert re.search(r"\.reel-lines \{[^}]*min-height", css)
+    assert re.search(r"\.newbest \{[^}]*white-space: nowrap", css)
+
+
+def test_a_narrow_screen_has_one_column_of_cards_so_the_page_does_not_scroll_sideways(site):
+    css = (site / "a" / "notebook.css").read_text(encoding="utf-8")
+    assert re.search(
+        r"@media \(max-width: 900px\) \{\s*\.hyps \{\s*grid-template-columns: minmax\(0, 1fr\)", css
+    )

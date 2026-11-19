@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/design.md`](../../../.kiro/specs/notebook-shelf/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `7f04633b527f3c5c73d20e71aad0d1a29a94694ff2b5d2a4dd07a4c60c7f882f`
+> 原文 SHA-256: `fcfb57b2f3c581390ba094d365cb8264d9a1f2c5323a996a1256ec7f1b37d156`
 # Design: notebook-shelf
 この設計は `notebook-shelf` の要件 1〜7 を対象とします。`lab-notebook` のページの層を変え、その下はそのまま残します。
 どの Kiro か: すべて **ビルダー** が作って動かし、**訪問者** が読みます。
@@ -10,9 +10,11 @@
 - どのページも、見出し、ラボの札（各ラボが開くセッションへのリンク）、開いているラボのカード（リンク）、開いたノート（`article.book`）を持ちます。
 - ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開きます（`notebook.js`）。
 ## Choice files（要件 2.3）
-`choices/<application>/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も要りません。`choices/cover.toml`: アプリケーションごとに `[[lab]]` を 1 つ、`application`、`case`、`about`、`open`、`unit`。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`<fill in>` のモデルは書かれたまま出ます。
+`choices/<application>/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も要りません。`choices/cover.toml`: アプリケーションごとに `[[lab]]` を 1 つ、`application`、`case`、`about`、`open`、`unit`。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`<fill in>` のモデルは書かれたまま出ます。
 ## 「ここまでの一番」（要件 3.3）
 `progress.series` は試行を順に見ます。測定が数で、`require` があれば 2 つ目の測定が `equals` に等しいとき、その試行は数えられます。数えられた値がそれまでの一番より良ければ一番が動きます。最初に数えられた試行が線を始め、「new best」にはなりません。段は、変化が一番低い値と高い値の幅の 4% 以上のときに名前がつきます。グラフはインライン SVG で、文字は鉛筆のセグメントと手書き風のラベルです。記録にない数字はありません。
+## 仮説の開いたメモ
+Dr. Kiro の仮説の文は読める形で出す: `###` の行は見出しに、文は段落に。囲まれた prediction のブロックは出さず、各予測は記録から 1 行（「cd in [0.5, 1.25] when aspect = 3 → hit」）にする。動く写真の下の行は高さの決まった 1 か所に重ねるので、言葉が変わってもカードの高さは変わらない。狭い画面ではカードは 1 列。
 ## 予測の当たり
 ベンチが記録したすべての結果（hit、miss、not-checkable）のうちの hit。一度も走らなかった予測には結果がなく、数えません。
 ## 表と計画

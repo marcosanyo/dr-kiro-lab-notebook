@@ -20,3 +20,12 @@ heading = "Best gait"
 trial = "T36"
 words = "A steady offset plus a fast stroke. Far past the first idea."
 star = true
+
+[[note]]
+kind = "best"
+
+[[note]]
+kind = "hits"
+
+[[note]]
+kind = "rejected"

@@ -22,3 +22,13 @@ heading = "Best point"
 trial = "T12"
 words = "Steady flow and the lowest drag of the session."
 star = true
+
+[[note]]
+kind = "best"
+
+[[note]]
+kind = "hits"
+
+[[note]]
+kind = "miss"
+prediction = "H5.P3"

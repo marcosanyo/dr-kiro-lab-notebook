@@ -99,6 +99,7 @@ def test_a_term_planted_in_a_choice_text_fails_naming_the_file_and_key(scanner, 
         color="violet",
         progress=None,
         polaroids=(),
+        notes=(),
     )
     assert [s.text for s in scan.choice_segments([chosen])][:3] == [
         "A title",

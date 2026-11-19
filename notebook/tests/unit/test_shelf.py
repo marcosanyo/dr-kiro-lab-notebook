@@ -103,3 +103,33 @@ def test_prediction_counts_come_from_the_outcomes(record):
     counts = progress.predictions(record)
     assert counts.total == len(record.outcomes)
     assert counts.hit == sum(1 for o in record.outcomes if o.outcome == "hit")
+
+
+def test_three_notes_are_chosen_and_a_miss_note_names_a_missed_prediction(tmp_path, record):
+    chosen = choices.load_file(_write(tmp_path, CHOICE), record)
+    assert [n.kind for n in chosen.notes] == ["best", "hits", "trials"]
+    missed = [o.prediction for o in record.outcomes if o.outcome == "miss"]
+    assert missed
+    swapped = CHOICE.replace('kind = "trials"', f'kind = "miss"\nprediction = "{missed[0]}"')
+    assert choices.load_file(_write(tmp_path, swapped), record).notes[2].prediction == missed[0]
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "problem"),
+    [
+        ('kind = "trials"', 'kind = "luck"', "must be one of"),
+        ('kind = "trials"', 'kind = "hits"', "different things"),
+        ('kind = "trials"', 'kind = "miss"', "names its .prediction."),
+        ('kind = "trials"', 'kind = "miss"\nprediction = "H1.P1"', "not a missed prediction"),
+        ('kind = "trials"', 'kind = "trials"\nprediction = "H2.P1"', "names its .prediction."),
+    ],
+)
+def test_a_bad_note_fails_naming_the_key(tmp_path, record, old, new, problem):
+    with pytest.raises(NotebookError, match=problem):
+        choices.load_file(_write(tmp_path, CHOICE.replace(old, new)), record)
+
+
+def test_the_file_needs_exactly_three_notes(tmp_path, record):
+    two = CHOICE[: CHOICE.rindex("[[note]]")]
+    with pytest.raises(NotebookError, match="needs 3"):
+        choices.load_file(_write(tmp_path, two), record)

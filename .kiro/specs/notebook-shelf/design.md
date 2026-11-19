@@ -16,11 +16,15 @@ The build keeps its four phases. Phase 1 reads the records, the choice files (`c
 
 ## Choice files (requirement 2.3)
 
-`choices/<application>/<session>.toml`: `title`, `subtitle`, `summary`, `line`, `model`, `date` (YYYY-MM-DD), `color` (one of the six band colours), `[progress]` (`measurement`, `better`, optional `require` with `equals`), and `[[polaroid]]` twice (`heading`, `trial`, `words`, optional `star`). A session with one trial needs one photo, with none needs none and no `[progress]`. `choices/cover.toml`: one `[[lab]]` per application with `application`, `case`, `about`, `open`, `unit`. Every text has a length limit. The `model` and `date` are not in the record; a person writes them. A `<fill in>` model is shown as written.
+`choices/<application>/<session>.toml`: `title`, `subtitle`, `summary`, `line`, `model`, `date` (YYYY-MM-DD), `color` (one of the six band colours), `[progress]` (`measurement`, `better`, optional `require` with `equals`), `[[polaroid]]` twice (`heading`, `trial`, `words`, optional `star`) and `[[note]]` three times (`kind` is `best`, `hits`, `rejected`, `trials` or `miss`; a `miss` names its `prediction`, which must be a missed one with a value; the three differ). A session with one trial needs one photo, with none needs none and no `[progress]`. `choices/cover.toml`: one `[[lab]]` per application with `application`, `case`, `about`, `open`, `unit`. Every text has a length limit. The `model` and `date` are not in the record; a person writes them. A `<fill in>` model is shown as written.
 
 ## The best so far (requirement 3.3)
 
 `progress.series` walks the trials in order. A trial counts when its measurement is a number and, with `require`, the second measurement equals `equals`. The best moves when a counting value is better than the best so far; the first counting trial starts the line and is not a "new best". A step is labelled when its change is at least 4% of the range between the lowest and highest best. The chart is an inline SVG whose texts are pencil segments and handwritten labels; nothing is a number the record does not hold.
+
+## The opened note of a hypothesis
+
+Dr. Kiro's hypothesis text is shown as it reads: its `###` line as a heading and its sentence as a paragraph; the fenced prediction block is left out and each prediction is one line from the record, "cd in [0.5, 1.25] when aspect = 3 → hit". The lines under a moving photo share one place of a fixed height, so the card does not change height as the words change. On a narrow screen the cards are one column.
 
 ## Predictions hit
 

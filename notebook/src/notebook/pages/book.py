@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables, text
-from notebook.choices import Choices, Lab, Polaroid
+from notebook.choices import Choices, Lab, Note, Polaroid
 from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
@@ -194,40 +194,70 @@ def _polaroid(
     )
 
 
-def _notes(record: RecordModel, found: progress.Series, table: Table | None) -> list[Segment]:
-    source = f"{record.name}: sticky notes"
+def _note(
+    record: RecordModel,
+    found: progress.Series,
+    table: Table | None,
+    lab: Lab,
+    note: Note,
+    outcomes: dict[str, Outcome],
+) -> tuple[list[Segment], list[Segment]]:
+    """The big number and the few words of one sticky note, from the record (the person chose which)."""
+    source = f"{record.name}: sticky note {note.kind}"
     counts = progress.predictions(record)
-    best = found.best
-    best_text = progress.best_value_text(found)
-    if best is None or best_text is None:
-        first = html.text(pencil("-", source))
-        first_about = say_text("NOTE_NO_BEST")
-    else:
-        first = html.text(pencil(best_text, source))
-        first_about = [
+    if note.kind == "best":
+        best = found.best
+        text_ = progress.best_value_text(found)
+        if best is None or text_ is None:
+            return html.text(pencil("-", source)), say_text("NOTE_NO_BEST")
+        return html.text(pencil(text_, source)), [
             *say_text("NOTE_BEST_BEFORE"),
             *html.text(pencil(found.spec.measurement, source)),
             *say_text("NOTE_BEST_AFTER"),
             *html.text(pencil(f"{best.trial.id} ({best.hypothesis})", source)),
         ]
-    if table is not None:
-        rejected = progress.status_counts(table)["rejected"]
-        third_about = say_text("NOTE_REJECTED_RULES")
-    else:
+    if note.kind == "hits":
+        return html.text(pencil(f"{counts.hit}/{counts.total}", source)), say_text("NOTE_HITS")
+    if note.kind == "rejected":
+        if table is not None:
+            return html.text(pencil(str(progress.status_counts(table)["rejected"]), source)), say_text(
+                "NOTE_REJECTED_RULES"
+            )
         rejected = sum(1 for v in record.verdicts if v.verdict == "rejected")
-        third_about = say_text("NOTE_REJECTED_VERDICTS")
-    notes = [
-        ("note-yellow tilt-one", first, first_about),
-        (
-            "note-pink tilt-two",
-            html.text(pencil(f"{counts.hit}/{counts.total}", source)),
-            say_text("NOTE_HITS"),
-        ),
-        ("note-blue tilt-three", html.text(pencil(str(rejected), source)), third_about),
+        return html.text(pencil(str(rejected), source)), say_text("NOTE_REJECTED_VERDICTS")
+    if note.kind == "trials":
+        return html.text(pencil(f"{len(record.trials)}/{record.budget}", source)), [
+            *_human(lab.unit, lab.source),
+            *say_text("NOTE_TRIALS_USED"),
+        ]
+    outcome = outcomes[note.prediction]
+    prediction = next(p for h in record.hypotheses for p in h.predictions if p.id == note.prediction)
+    unit = _unit(record, prediction.measurement)
+    where = f"{source}: {note.prediction}"
+    low = numbers.brief(prediction.low, unit, where)
+    high = numbers.brief(prediction.high, unit, where)
+    return html.text(pencil(numbers.brief(outcome.value, unit, where), source)), [
+        *html.text(pencil(note.prediction, source)),
+        *say_text("NOTE_MISSED"),
+        *html.text(pencil(prediction.measurement, source)),
+        *say_text("NOTE_EXPECTED"),
+        *html.text(pencil(f"{low} to {high}", source)),
     ]
+
+
+def _notes(
+    record: RecordModel,
+    found: progress.Series,
+    table: Table | None,
+    chosen: Choices,
+    lab: Lab,
+) -> list[Segment]:
+    outcomes = {o.prediction: o for o in record.outcomes}
+    styles = ("note-yellow tilt-one", "note-pink tilt-two", "note-blue tilt-three")
     out: list[Segment] = []
-    for cls, big, about in notes:
-        out += _el("aside", f"note {cls}", [*_el("p", "note-big", big), *_el("p", "note-about", about)])
+    for style, note in zip(styles, chosen.notes, strict=True):
+        big, about = _note(record, found, table, lab, note, outcomes)
+        out += _el("aside", f"note {style}", [*_el("p", "note-big", big), *_el("p", "note-about", about)])
     return _el("section", "notes", out)
 
 
@@ -355,6 +385,7 @@ def _highlight(
     layout: Layout,
     chosen: Choices,
     table: Table | None,
+    lab: Lab,
     shown: Shown,
 ) -> list[Segment]:
     head = _el("h3", "cap", say_text("HIGHLIGHT_HEADING"))
@@ -379,7 +410,7 @@ def _highlight(
             "data-label": text.SYNC_LABEL,
         },
     )
-    side = _el("section", "side", [*_notes(record, found, table), *_chart(record, found)])
+    side = _el("section", "side", [*_notes(record, found, table, chosen, lab), *_chart(record, found)])
     return _el(
         "section", "highlight", [*head, *_el("section", "hl-grid", [*together, *side])], id="highlight"
     )
@@ -539,6 +570,7 @@ def _outcome_line(record: RecordModel, hypothesis: Hypothesis, outcomes: dict[st
 
 
 def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome]) -> list[Segment]:
+    """One registered prediction as a line to read: "x in [0.1, 2] when a0 = 1, f = 1 -> hit"."""
     source = _src(record, next(h.seq for h in record.hypotheses if prediction in h.predictions))
     where = f"{source}: {prediction.id}"
     outcome = outcomes.get(prediction.id)
@@ -546,7 +578,7 @@ def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome]) -
         *html.text(pencil(prediction.id, source)),
         markup(" "),
         *html.text(pencil(prediction.measurement, source)),
-        *say_text("PREDICTION_RANGE"),
+        *say_text("PREDICTION_IN"),
         *html.text(
             pencil(
                 f"[{numbers.short(prediction.low, where)}, {numbers.short(prediction.high, where)}]", source
@@ -562,13 +594,43 @@ def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome]) -
                 *html.text(param.name.segment()),
                 *html.text(pencil(f" = {numbers.short(param.value, where)}", source)),
             ]
+    line += [markup(" &rarr; ")]
+    if outcome is None:
+        line += html.text(pencil("not run", source))
+    else:
+        word = html.text(pencil(outcome.outcome, source))
+        line += _el("span", "miss", word) if outcome.outcome == "miss" else word
+        if outcome.value is not None:
+            shown = numbers.short(outcome.value, f"{_src(record, outcome.seq)}: {prediction.id}")
+            line += html.text(pencil(f" ({prediction.measurement} {shown})", source))
     line += [
-        *say_text("PREDICTION_LABEL"),
-        *html.text(Segment(prediction.label, Ink.DRKIRO, source)),
-        *say_text("PREDICTION_STATE"),
-        *html.text(pencil(outcome.outcome if outcome else "not run", source)),
+        markup(" "),
+        *_el(
+            "span",
+            "label-k",
+            [*say_text("PREDICTION_LABEL"), *html.text(Segment(prediction.label, Ink.DRKIRO, source))],
+        ),
     ]
     return html.element("li", {"id": addresses.never_run(prediction.id, source)}, line)
+
+
+def _frozen(hypothesis: Hypothesis) -> list[Segment]:
+    """Dr. Kiro's hypothesis text as it reads: the heading as a heading, the sentence as a paragraph. The
+    fenced prediction block is left out here; the predictions are listed under it, one line each."""
+    frozen = hypothesis.frozen.text()
+    out: list[Segment] = []
+    fence: str | None = None
+    for number, line in enumerate(frozen.text.splitlines(), start=1):
+        source = f"{frozen.source} line {number}"
+        if line.startswith("```"):
+            fence = None if fence is not None else line[3:].strip()
+            continue
+        if fence is not None or not line.strip():
+            continue
+        heading = re.match(r"^#{1,6}\s+(.*)$", line)
+        piece = Authored(heading.group(1) if heading else line, frozen.author, source).segment()
+        out += _el("h4" if heading else "p", "frozen-title" if heading else "frozen-text", html.text(piece))
+    return out
 
 
 def _trial_card(
@@ -679,7 +741,7 @@ def _hypothesis_row(
         summary += _el("span", "newbest", [markup("&#9733; "), *say_text("NEW_BEST")])
     inside: list[Segment] = [
         *_el("p", "sticky-label", say_text("WRITTEN_BY_DRKIRO")),
-        *html.text(hypothesis.frozen.text().segment(), block=True),
+        *_frozen(hypothesis),
         *_el(
             "ul", "predictions", [s for p in hypothesis.predictions for s in _prediction(record, p, outcomes)]
         ),
@@ -808,7 +870,7 @@ def body(
         *_el("h2", "book-title", [*_human(title, start), *_ours()]),
         *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
         *_chips(record, chosen, lab, table),
-        *_highlight(record, layout, chosen, table, shown),
+        *_highlight(record, layout, chosen, table, lab, shown),
         *_spec(record, table, checked),
         *_plan(record),
         *_experiments(record, layout, chosen, table, shown),

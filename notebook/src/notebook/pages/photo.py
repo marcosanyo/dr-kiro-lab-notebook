@@ -250,7 +250,8 @@ def _clock(retake: "Retake", source: str) -> list[Segment]:
         if k != last:
             attrs["hidden"] = "hidden"
         lines += html.element("span", attrs, pieces)
-    return lines
+    # The lines share one place of a fixed height, so the picture does not move when the words change.
+    return html.element("span", {"class": "reel-lines"}, lines)
 
 
 def _controls(actions: tuple[str, ...]) -> list[Segment]:
