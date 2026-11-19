@@ -2,6 +2,7 @@
 facts of the committed records and of the approved cover and choice files (requirements introduction and
 Decisions 36, 37), not results the notebook claims."""
 
+import html
 import re
 from pathlib import Path
 
@@ -68,6 +69,22 @@ def test_cover_shows_body_2_h4_p1_with_t12_its_track_and_miss(loaded, built) -> 
         text.COVER_MEASURED_HEAD,
     ]
     assert re.search(r'<span class="miss-value"><span class="ink-p">-0\.2047 m</span></span>', page)
+
+
+def test_the_sticky_note_says_in_one_line_what_happened_to_h4_p1(loaded, built) -> None:
+    page = ink.join(built[0])[0]
+    body_2 = _by_session(loaded, "body-2")
+    outcome = next(o for o in body_2.outcomes if o.prediction == "H4.P1")
+    assert outcome.value is not None and outcome.value < 0  # recorded: -0.2047...
+    start = page.index('<aside class="sticky">')
+    sticky = page[start : page.index("</aside>", start)]
+    line = sticky[sticky.index('<span class="sticky-line sticky-happened">') :]
+    line = html.unescape(re.sub(r"<[^>]+>", "", line[: line.index("</span></span>")]))
+    # The registered range [0.2, 3.0] m and the recorded value, rounded to four digits like every cover value.
+    assert (
+        line
+        == "expected x between 0.2 and 3 m, measured -0.2047 m: below the range, on the other side of zero"
+    )
 
 
 def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:

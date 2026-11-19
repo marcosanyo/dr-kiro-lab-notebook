@@ -194,14 +194,57 @@ def _measure_list(
     )
 
 
-def _sticky(
+def _happened(
     record: RecordModel, prediction: Prediction, outcome: Outcome, hypothesis: Hypothesis, where: str
 ) -> list[Segment]:
-    """The one number to read at a glance, on a yellow sticky note: the measured value with its unit, the
-    range that was predicted and the conditions of the prediction. Every figure is from the record."""
+    """One line of what happened, from the record alone: the registered range, then the measured value and
+    which side of the range it lies on ("on the other side of zero" when the range lies on one side of zero
+    and the value on the other). The record declares no direction for a measurement, so the line says
+    "below" and "above", never "forward" or "back". A not-measured outcome gives the recorded word. A miss
+    whose value lies inside its range is a record the cover cannot explain: the build fails."""
     source = _source(record, hypothesis.seq)
     unit = _unit(record, prediction.measurement, where)
     low, high = numbers.short(prediction.low, where), numbers.short(prediction.high, where)
+    line = [
+        *say_text("COVER_STICKY_EXPECTED"),
+        *html.text(pencil(prediction.measurement, source)),
+        *say_text("COVER_STICKY_BETWEEN"),
+        *html.text(pencil(low, source)),
+        *say_text("COVER_STICKY_AND"),
+        *html.text(pencil(f"{high}{unit}", source)),
+    ]
+    out_source = _source(record, outcome.seq)
+    if outcome.value is None:
+        if outcome.not_measured is None:
+            raise NotebookError(
+                out_source, f"the miss of {outcome.prediction} has neither a value nor a not-measured outcome"
+            )
+        return [
+            *line,
+            *say_text("COVER_STICKY_NOT_MEASURED"),
+            *html.text(pencil(outcome.not_measured, out_source)),
+        ]
+    value = outcome.value
+    if prediction.low <= value <= prediction.high:
+        raise NotebookError(out_source, f"the miss of {outcome.prediction} has a value inside its range")
+    line += [
+        *say_text("COVER_STICKY_MEASURED"),
+        *html.text(pencil(f"{numbers.short(value, where)}{unit}", out_source)),
+        *say_text("COVER_STICKY_BELOW" if value < prediction.low else "COVER_STICKY_ABOVE"),
+    ]
+    if (prediction.low > 0 and value < 0) or (prediction.high < 0 and value > 0):
+        line += say_text("COVER_STICKY_OPPOSITE")
+    return line
+
+
+def _sticky(
+    record: RecordModel, prediction: Prediction, outcome: Outcome, hypothesis: Hypothesis, where: str
+) -> list[Segment]:
+    """The number to read at a glance, on a yellow sticky note: the measured value with its unit, one line of
+    what happened (which holds the predicted range) and the conditions of the prediction. Every figure is
+    from the record."""
+    source = _source(record, hypothesis.seq)
+    unit = _unit(record, prediction.measurement, where)
     conditions: list[Segment] = []
     for i, param in enumerate(prediction.when):
         if i:
@@ -223,8 +266,8 @@ def _sticky(
             ),
             *html.element(
                 "span",
-                {"class": "sticky-line"},
-                [*say_text("COVER_STICKY_PREDICTED"), *html.text(pencil(f"[{low}, {high}]{unit}", source))],
+                {"class": "sticky-line sticky-happened"},
+                _happened(record, prediction, outcome, hypothesis, where),
             ),
             *html.element("span", {"class": "sticky-line"}, [*say_text("COVER_STICKY_WHEN"), *conditions]),
         ]

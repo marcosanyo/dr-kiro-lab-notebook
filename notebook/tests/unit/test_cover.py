@@ -219,11 +219,56 @@ def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(
     sticky = page[page.index('<aside class="sticky">') : page.index("</aside>")]
     assert (
         "sticky-number" in sticky
-        and text.COVER_STICKY_PREDICTED in sticky
+        and text.COVER_STICKY_EXPECTED in sticky
         and text.COVER_STICKY_WHEN in sticky
     )
     # The sticky note comes before the claim card; the rule cards come after the picture row.
     assert page.index("sticky-number") < page.index('class="claim-card"') < page.index('class="cover-rules"')
+
+
+def _sticky_line(record, outcome: records.Outcome, prediction: str = "H2.P1") -> str:
+    """The one line of what happened on the sticky note, as plain text, for a miss changed to `outcome`."""
+    base = _cover(record, prediction)
+    cover_file = replace(base, miss=replace(base.miss, outcome=outcome))
+    segments, _ = cover.page([record], cover_file, LAYOUTS, [], {})
+    page = _html(segments)
+    start = page.index('<span class="sticky-line sticky-happened">')
+    line = page[start : page.index("</span></span>", start)]
+    return html.unescape(re.sub(r"<[^>]+>", "", line))
+
+
+def test_the_sticky_line_says_above_the_range_for_the_fixture_miss(record) -> None:
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
+    assert outcome.value is not None and outcome.value > 2.5  # registered range [2.0, 2.5]
+    line = _sticky_line(record, outcome)
+    # The fixture's measurement has the unit "1" (a pure number), which the cover leaves out.
+    assert line == f"expected distance between 2 and 2.5, measured {outcome.value:.4g}: above the range"
+
+
+def test_the_sticky_line_says_below_the_range_and_when_the_value_is_on_the_other_side_of_zero(record) -> None:
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
+    below = _sticky_line(record, replace(outcome, value=1.5))
+    assert below == "expected distance between 2 and 2.5, measured 1.5: below the range"
+    opposite = _sticky_line(record, replace(outcome, value=-0.20472378))
+    assert opposite == (
+        "expected distance between 2 and 2.5, measured -0.2047: below the range, on the other side of zero"
+    )
+    # A value on the same side of zero as the range never says so.
+    assert "zero" not in below
+
+
+def test_the_sticky_line_gives_the_recorded_word_when_nothing_was_measured(record) -> None:
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
+    line = _sticky_line(record, replace(outcome, value=None, not_measured="failed"))
+    assert line == "expected distance between 2 and 2.5, not measured: failed"
+
+
+def test_a_miss_whose_value_lies_inside_its_range_fails_the_build(record) -> None:
+    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
+    with pytest.raises(NotebookError, match="inside its range"):
+        _sticky_line(record, replace(outcome, value=2.2))
+    with pytest.raises(NotebookError, match="neither a value nor"):
+        _sticky_line(record, replace(outcome, value=None, not_measured=None))
 
 
 def test_the_reader_section_shows_the_request_in_words_and_the_chips(record) -> None:
