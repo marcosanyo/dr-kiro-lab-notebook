@@ -140,10 +140,98 @@ def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) 
                     ],
                 )
             )
-    chips.append([*say_text("CHIP_PREDICTIONS"), *html.text(pencil(f"{counts.hit}/{counts.total}", source))])
+    chips.append(
+        [
+            *html.text(pencil(str(counts.hit), source)),
+            *say_text("OF"),
+            *html.text(pencil(str(counts.total), source)),
+            *say_text("CHIP_PREDICTIONS"),
+        ]
+    )
     if record.seal.end == "stopped":
         chips.append([*say_text("CHIP_STOPPED"), *html.text(record.seal.reason.segment())])
     return _el("ul", "chips", [s for chip in chips for s in html.element("li", None, chip)])
+
+
+def _sentence(source: str, *pieces: str) -> list[Segment]:
+    """One sentence of the story: a piece that starts with `@` is a string of `text.py` (our words); any other
+    piece is a number the notebook counted from the record, in pencil."""
+    out: list[Segment] = []
+    for piece in pieces:
+        out += say_text(piece[1:]) if piece.startswith("@") else html.text(pencil(piece, source))
+    return out
+
+
+def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run]) -> list[Segment]:
+    """What happened in this session, in three steps joined by arrows. Every number is counted from the
+    record, the table or the reader's runs; the words are plain English."""
+    source = f"{record.name}: what happened"
+    counts = progress.predictions(record)
+    registered = sum(len(h.predictions) for h in record.hypotheses)
+    head = [
+        *_el("h3", "cap", say_text("STORY_HEADING")),
+    ]
+    if registered == 0:
+        return _el("section", "story", [*head, *_el("p", "story-none", say_text("STORY_NONE"))], id="story")
+    first = _sentence(source, "@STORY_WROTE_BEFORE", str(registered), "@STORY_WROTE_AFTER")
+    stopped = record.seal.end == "stopped"
+    if stopped:
+        second = _sentence(source, str(counts.hit), "@OF", str(counts.total), "@STORY_CHECKED_STOPPED")
+    elif table is None:
+        second = _sentence(source, str(counts.miss), "@STORY_MISSED_NO_TABLE")
+    else:
+        rejected = progress.status_counts(table)["rejected"]
+        second = _sentence(
+            source,
+            str(counts.miss),
+            *(
+                ("@STORY_MISSED", str(rejected), "@STORY_STRUCK")
+                if rejected
+                else ("@STORY_MISSED_NONE_STRUCK",)
+            ),
+        )
+    mine = [
+        r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
+    ]
+    if mine:
+        tally = {
+            setup: (passes, total) for setup, passes, total, _ in readerruns.tally(mine, mine[0].request_id)
+        }
+        spec, none = tally["spec"], tally["none"]
+        third = _sentence(
+            source,
+            "@STORY_READER_A",
+            str(spec[0]),
+            "@OF",
+            str(spec[1]),
+            "@STORY_READER_B",
+            str(none[0]),
+            "@OF",
+            str(none[1]),
+            "@STORY_END",
+        )
+    elif table is not None:
+        by = progress.status_counts(table)
+        third = _sentence(
+            source,
+            str(by["validated"]),
+            "@STORY_TRUST_A",
+            str(by["partly"] + by["observed"]),
+            "@STORY_TRUST_B",
+        )
+    else:
+        third = say_text("STORY_NO_SPEC")
+    steps = [
+        s
+        for n, words in enumerate((first, second, third), start=1)
+        for s in html.element("li", {"class": f"story-step story-{n}"}, words)
+    ]
+    return _el(
+        "section",
+        "story",
+        [*head, *_el("ol", "story-steps", steps)],
+        id="story",
+    )
 
 
 # The highlight
@@ -382,7 +470,7 @@ def _highlight(
     lab: App,
     shown: Shown,
 ) -> list[Segment]:
-    head = _el("h3", "cap", say_text("HIGHLIGHT_HEADING"))
+    head = [*_el("h3", "cap", say_text("HIGHLIGHT_HEADING")), *_el("p", "intro", say_text("HIGHLIGHT_INTRO"))]
     if chosen.progress is None:
         return _el(
             "section", "highlight", [*head, *_el("p", None, say_text("HIGHLIGHT_NONE"))], id="highlight"
@@ -487,7 +575,7 @@ def _rule(
 
 
 def _spec(record: RecordModel, table: Table | None, checked: bool) -> list[Segment]:
-    head = _el("h3", "cap", say_text("SPEC_HEADING"))
+    head = [*_el("h3", "cap", say_text("SPEC_HEADING")), *_el("p", "intro", say_text("SPEC_INTRO"))]
     snapshot = tables.end_snapshot(record) or (record.snapshots[-1] if record.snapshots else None)
     if table is None or snapshot is None:
         return _el("section", "spec", [*head, *_el("p", None, say_text("SPEC_NONE"))], id="spec")
@@ -529,6 +617,7 @@ def _plan(record: RecordModel) -> list[Segment]:
         "plan",
         [
             *_el("h3", "cap", say_text("PLAN_HEADING")),
+            *_el("p", "intro", say_text("PLAN_INTRO")),
             *_el("p", "hint", say_text("PLAN_HINT")),
             *_el("ol", "plan-list", items),
         ],
@@ -785,7 +874,12 @@ def _experiments(
     return _el(
         "section",
         "experiments",
-        [*_el("h3", "cap", heading), *_el("p", "hint", say_text("ALL_HINT")), *_el("ul", "hyps", rows)],
+        [
+            *_el("h3", "cap", heading),
+            *_el("p", "intro", say_text("ALL_INTRO")),
+            *_el("p", "hint", say_text("ALL_HINT")),
+            *_el("ul", "hyps", rows),
+        ],
         id="experiments",
     )
 
@@ -831,6 +925,7 @@ def _reader(
         "reader",
         [
             *_el("h3", "cap", say_text("READER_HEADING")),
+            *_el("p", "intro", say_text("READER_INTRO")),
             *_el("p", None, say_text("READER_ABOUT")),
             *_el("blockquote", "request", html.text(commentary(request.words, request.where))),
             *_el("section", "tiles", tiles),
@@ -863,12 +958,13 @@ def body(
         *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
         *_el("h2", "book-title", [*_human(title, start), *_ours()]),
         *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
+        *_story(record, table, runs),
         *_chips(record, chosen, lab, table),
         *_highlight(record, layout, chosen, table, lab, shown),
+        *_reader(record, runs, requests),
         *_spec(record, table, checked),
         *_plan(record),
         *_experiments(record, layout, chosen, table, shown),
-        *_reader(record, runs, requests),
     ]
     unique: dict[str, photo.PictureFile] = {}
     for picture in shown.files:

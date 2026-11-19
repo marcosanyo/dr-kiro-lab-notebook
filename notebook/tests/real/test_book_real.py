@@ -273,3 +273,46 @@ def test_the_chart_is_one_line_that_fills_its_frame_and_has_no_scattered_dots(si
         ys = [float(y) for y in re.findall(r"[ V]([0-9.]+)(?=[HV]|$)", path.group(1))]
         assert ys and min(ys) > 41 and max(ys) < 215, (name, min(ys), max(ys))  # the frame is 40 to 220
         assert "hollow" not in page
+
+
+def _text_of(page: str, start: str, end: str) -> str:
+    part = page[page.index(start) : page.index(end)]
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", "", part)).strip()
+
+
+def test_the_story_of_body_2_says_what_happened_in_three_steps_from_the_record(site, loaded_all):
+    page, found = _page(site, "body-lab/body-2.html")
+    assert found.classes["story-step"] == 3
+    story = _text_of(page, 'id="story"', 'class="chips"')
+    record = loaded_all["body-2"]
+    registered = sum(len(h.predictions) for h in record.hypotheses)
+    assert f"Dr. Kiro wrote {registered} predictions, each before its experiment ran." in story
+    assert "13 missed. 8 rules were struck out and rewritten." in story
+    assert "Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2." in story
+
+
+def test_the_story_of_the_wind_tunnel_does_not_claim_a_reader_that_was_not_run(site):
+    page, found = _page(site, "wind-tunnel/wt-004.html")
+    story = _text_of(page, 'id="story"', 'class="chips"')
+    assert "Another Kiro" not in story and found.classes["tile"] == 0
+    assert "4 rows are validated and can be trusted; 2 are only partly tested or observed" in story
+    assert "No second Kiro has been run on this spec yet." in story
+    assert "1 missed, and no rule had to be struck out." in story
+
+
+def test_the_stopped_sessions_tell_what_they_can(site):
+    page, _ = _page(site, "wind-tunnel/wt-003.html")
+    assert "No prediction was written" in page
+    page, _ = _page(site, "wind-tunnel/wt-002.html")
+    assert "checked predictions came true before the session stopped." in page
+    assert "nothing yet for a next Kiro to read" in page
+
+
+def test_the_reader_comes_right_after_the_highlight_and_every_section_says_what_it_is(site):
+    page, _ = _page(site, "body-lab/body-2.html")
+    ids = [page.index(f'id="{i}"') for i in ("highlight", "reader", "spec", "plan", "experiments")]
+    assert ids == sorted(ids)
+    assert "A struck line was believed, tested, and proved wrong; the line under it replaced it." in page
+    assert "Each card: what Dr. Kiro predicted before the run, and what happened." in page
+    text = re.sub(r"<[^>]*>", "", page)
+    assert "predictions, written before the run, came true" in text and "predictions hit" not in text

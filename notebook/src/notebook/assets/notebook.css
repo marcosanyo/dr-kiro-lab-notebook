@@ -1704,3 +1704,91 @@ html[data-app="front"] {
 .book-summary .ours .ink-c {
   font-size: 0.85rem;
 }
+/* What happened here: three steps joined by arrows. */
+.story {
+  margin-top: 1.2rem;
+}
+.story .cap {
+  margin: 0 0 0.6rem;
+  border: 0;
+  padding: 0;
+}
+.story-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.8rem;
+}
+.story-step {
+  position: relative;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--chip-edge);
+  border-radius: 8px;
+  background: var(--chip);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.story-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  right: -1.55rem;
+  margin-top: -0.9rem;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 1.6rem;
+}
+.story-step .ink-p {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.story-none {
+  font-size: 0.95rem;
+}
+@media (max-width: 900px) {
+  .story-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .story-step:not(:last-child)::after {
+    content: "↓";
+    top: auto;
+    right: auto;
+    bottom: -1.6rem;
+    left: 1rem;
+    margin-top: 0;
+  }
+}
+.intro {
+  max-width: 52rem;
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.92rem;
+}
+.intro .ink-c {
+  color: var(--muted);
+}
+/* A number such as H4 or R5 is a small label; the sentence beside it is the heading. */
+.hyp-summary {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "num title"
+    "expect expect"
+    "results results"
+    "stamps stamps";
+}
+.hnum {
+  width: auto;
+  height: auto;
+  align-self: start;
+  margin-top: 0.3rem;
+  padding: 0 0.55rem;
+  border-width: 2px;
+  border-radius: 999px;
+}
+.hnum .ink-p {
+  font-size: 0.75rem;
+}
+.rule-head .ink-k {
+  padding: 0 0.5rem;
+  border: 1px solid var(--chip-edge);
+  border-radius: 999px;
+  font-size: 0.72rem;
+}

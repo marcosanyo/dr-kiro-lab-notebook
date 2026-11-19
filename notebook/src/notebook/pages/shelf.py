@@ -72,7 +72,9 @@ def _card(record: RecordModel, chosen: Choices, app: App, is_open: bool) -> list
             ]
     counts = progress.predictions(record)
     small += [
-        *html.text(pencil(f"{counts.hit}/{counts.total}", source)),
+        *html.text(pencil(str(counts.hit), source)),
+        *say_text("OF"),
+        *html.text(pencil(str(counts.total), source)),
         *say_text("CARD_HITS"),
     ]
     attrs = {"href": _page_of(record), "class": f"card card-{chosen.color}" + (" is-open" if is_open else "")}
