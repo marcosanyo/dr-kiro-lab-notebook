@@ -3,7 +3,20 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: Kiro Web、2026-11-19、全体の絵の切り替え・帯の読み方・main の取り込み（ブランチ `feat/notebook-polish`）の後。
+最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
+
+## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
+- **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
+  - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。
+  - 記録の画像（シート、コマ、拡大した画像）にはフィルターも反転もかけない。写真の枠は暗い中間色に 1px の縁（`--photo-edge`、昼は透明）。軌跡の SVG は `currentColor` のまま、インクの色に従う。
+  - 外れの赤、書き直し用の赤、判子（MISSED を含む）は明るくし、役割は同じ。
+  - 変わるのは `notebook.css` の `@media (prefers-color-scheme: dark)` の中の `:root` 1 つだけ（色のカスタムプロパティだけ）。`:root` に `color-scheme: light dark` を足した。動き、`prefers-reduced-motion`、レイアウト、文言は同じ。
+  - spec: 要件 6.2 を「1 つの見た目、2 つの配色」に変え、Decision 52 を足した。設計の表、訳（ハッシュ）、`notebook-visual.md` の「Night lab」の節と夜のコントラストの組。
+  - テスト: `test_visual.py` に夜の組のコントラスト（9 色 × 9 背景、すべて 4.5:1 以上）、夜の値とステアリングの一致、夜のブロックが色だけを変えること、切り替えもスクリプトもないことを足した。`_custom_properties()` は夜のブロックの外の `:root` だけを読むように変えた（昼の確認は今までどおり）。ゆるめたテストはない。
+  - 画面: Playwright で dark と light、1280px と 390px、表紙、セッションページ（body-2）、spec の表（wt-004）。`.kiro/artifacts/screenshots/nm-*.png`。どれも横スクロールなし。
+- **気づいたこと（直していない）:** 規則の文の「≤」（U+2264）が、同梱の Lora に字がなく四角に見える（昼も夜も同じ。前から）。
+- **次の一手:** ユーザーがスマホで画面の画像を見て、直しを返す。そのあと PR を作る。
+- `docs/brief.md` の「One theme, with no switch」はユーザーの文書なので変えていない。
 
 ## ノートの見た目の直し（ブランチ `feat/notebook-polish`、新しいブランチは切らない）
 - **済み（2026-11-19）:** 表紙と spec の表を直した。1 つ直すごとにコミットした。
