@@ -81,10 +81,9 @@ def test_the_sticky_note_says_in_one_line_what_happened_to_h4_p1(loaded, built) 
     line = sticky[sticky.index('<span class="sticky-line sticky-happened">') :]
     line = html.unescape(re.sub(r"<[^>]+>", "", line[: line.index("</span></span>")]))
     # The registered range [0.2, 3.0] m and the recorded value, rounded to four digits like every cover value.
-    assert (
-        line
-        == "expected x between 0.2 and 3 m, measured -0.2047 m: below the range, on the other side of zero"
-    )
+    # The start record says x is taken in the direction the body faces at the start, so the line says
+    # forward and back, with the same recorded numbers.
+    assert line == "expected to go forward 0.2 to 3 m, went back 0.2047 m"
 
 
 def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:
