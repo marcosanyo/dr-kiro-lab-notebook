@@ -23,7 +23,7 @@ def test_file_equals_declaration_text_in_tool_descriptions(tmp_path):
     decl = scan_adapter().declaration()
     assert text == declaration_text(decl) + "\n"
     assert text.endswith("\n") and not text.endswith("\n\n")
-    descs = descriptions(decl)
+    descs = descriptions(decl, "required")
     assert descs["run_experiment"].endswith(text[:-1])
     assert descs["register_hypothesis"].endswith(text[:-1])
 

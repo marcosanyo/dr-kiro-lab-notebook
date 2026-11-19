@@ -278,6 +278,8 @@ def test_repository_stop_list_loads() -> None:
         + ("geometry", "constants", "monitors")
         # notebook polish pass, approved by the user in chat 2026-11-19 (constants.toml)
         + ("ahead", "spacing")
+        # derived from the comments of wind-tunnel/model/constants.toml, approved by the user (PR #37)
+        + ("build",)
     )
 
 

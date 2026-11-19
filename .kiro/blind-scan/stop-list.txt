@@ -93,3 +93,7 @@ ahead
 # line 69: `spacing = 1.0`, in the [picture] section, a setting of the wind tunnel like "ahead". It says nothing about the
 # structure of the body. The notebook stylesheet also uses the CSS property name letter-spacing for its small headings.
 spacing
+# 2026-11-19, PR #37: "build" is a derived term from wind-tunnel/model/constants.toml (its comments say "3e-8 builds" and
+# "a failed build"). It is an ordinary English word, and the bench's own record text uses it ("build-from-spec").
+# Approved by the user.
+build

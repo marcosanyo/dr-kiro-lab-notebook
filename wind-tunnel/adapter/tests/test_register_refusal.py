@@ -66,6 +66,7 @@ def _start(tmp_path: Path) -> tuple[Session, Path]:
         seed=1,
         scan_sources=(ADAPTER / "scan_sources.toml",),
         stop_list=STOP_LIST,
+        discovered_table="required",
     )
     started = Session.start(config)
     assert isinstance(started, Ran), started
