@@ -108,7 +108,7 @@ def test_p13_export_equals_declaration_text(decl: Declaration) -> None:
     assert text == declaration_text(decl) + "\n"
     assert text.endswith("\n") and not text.endswith("\n\n")
     for tool in ("register_hypothesis", "run_experiment"):
-        assert descriptions(decl)[tool].endswith(text[:-1])
+        assert descriptions(decl, "required")[tool].endswith(text[:-1])
     assert "first_export" not in text and "second_export" not in text
     assert not re.search(r"\d+\.\d+\.\d+", text)
     assert not re.search(r"(?:^|\s)(?:/|~/|\.\./)\w", text)
