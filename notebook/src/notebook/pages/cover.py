@@ -216,7 +216,7 @@ def _went(
     unit: str,
     where: str,
 ) -> list[Segment]:
-    """"expected to go forward 0.2 to 3 m, went back 0.2047 m": the registered range and the measured value
+    """One line like "expected to go forward 0.2 to 3 m, went back 0.2047 m": the registered range and the measured value
     as distances along the direction the start record names, the sign of each read as forward or back. Every
     figure is the cover's usual four significant digits of a recorded number; none is made up."""
     source = _source(record, hypothesis.seq)
