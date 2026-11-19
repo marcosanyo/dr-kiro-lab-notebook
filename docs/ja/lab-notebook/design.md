@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `26e3745e1975847f7ce5041b6cb94c702bce0b0581079ab098ed7962e5ebbab2`
+> 原文 SHA-256: `05d529edeaac95401f529b455e3968b494837f24616e4cd42b3c429ff7ceed97`
 
 # Design: lab-notebook
 
@@ -265,9 +265,11 @@ class Segment:
 
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
-HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
+HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、`data-interval` ms（レイアウトの `interval`。ラボごとに違う）に 1 セル、ループする。描くのはシートのセルだけで、セルとセルの間のフレームは作らず、補間もしない。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、全体の画像（シートそのまま）。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
 
-body-lab の各フルサイズの画像（ラボのカードの画像は除く）の隣に、ページは動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
+どの画像が動くか: body-lab の試行では、体はシートの中で数ピクセルしかないので、下の拡大した画像が自分で動く。全体の画像（`data-start="still"`）はシートを見せ、「play」を押したときだけ動く。wind-tunnel の画像は試行の唯一の画像なので、自分で動く。
+
+body-lab の各全体の画像（ラボのカードの画像は除く）の隣に、ページは動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32。全体の画像と同じ操作と `data-` 属性を持つ `<figure class="photo photo-magnified">` で、拡大したシートについて、列と行は同じ、隙間 0、拡大した 1 セルの大きさ、ラボの interval）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
 
 ### 11. Scan (Requirement 20)
 
@@ -296,6 +298,7 @@ frames = 10
 rows = 2
 columns = 5
 gap = 0
+interval = 220
 source = "body-lab design, picture: 10 frames, 2 rows of 5"
 
 [wind-tunnel]
@@ -303,10 +306,11 @@ frames = 6
 rows = 2
 columns = 3
 gap = 4
+interval = 150
 source = "wind-tunnel Requirement 9.4"
 ```
 
-各表は、まさにこの 5 つのキーを持つ。整数は `>= 1`（gap は `>= 0`）。`source` は空でない文字列。テストのフィクスチャは、`fake` のエントリー（1 フレーム、1 行、1 列、gap 0）を持つ自前のレイアウトファイルを使う。
+各表は、まさにこの 6 つのキーを持つ。整数は `>= 1`（gap は `>= 0`、`interval >= 50`）。`interval` は、そのアプリケーションの動く画像が 1 セルを見せる時間（ミリ秒。body-lab 220、wind-tunnel 150、ユーザー）。`source` は空でない文字列。テストのフィクスチャは、`fake` のエントリー（1 フレーム、1 行、1 列、gap 0）を持つ自前のレイアウトファイルを使う。
 
 ### Choice file `notebook/choices/<application>/<session-id>.toml` (Requirement 12)
 
@@ -549,7 +553,7 @@ unit = "trials"
 | Type and spacing | 基準 17px / 1.5。間隔の尺度は 4、8、16、24、40px |
 | Narrow screen | 360px では 1 列。余白の写真は表の下へ移る。発見した spec の表はカードなので、横スクロールはない |
 | Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（ページのマークアップの中のインライン SVG。ファイルなし、`xmlns` 属性なし、テキストなし）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
-| Motion | 1 セルあたり 500 ms。モーション低減は一時停止で始まる（3.6） |
+| Motion | レイアウトの `interval` ごとに 1 セル（body-lab 220 ms、wind-tunnel 150 ms）。モーション低減は一時停止で始まる（3.6） |
 
 上のすべての文字色は、その背景（紙と付箋の黄色）の上で 4.5:1 以上に達します。テストが、CSS から各組を確認します。
 
@@ -597,7 +601,7 @@ unit = "trials"
 - **N5 Segments carry ink and source.** インクがスタイルを与える。スキャンの書き手は、Dr. Kiro のインクなら `dr-kiro`、それ以外のすべては `bench` である。サイドカーの形式がその 2 つの書き手しか知らないためである。
 - **N6 Escaping.** `html.escape(quote=True)` に、キャリッジリターンのための `&#13;` を加える。Dr. Kiro のテキストは `white-space: pre-wrap` の要素の内容にだけ置く。他の C0 制御文字はビルドを失敗させる。
 - **N7 Two scan passes.** ソースでのセグメント（検出はソースのファイルと行を名指しする）。次に、完成した各ファイルをその範囲を通して。後で `bench-scan` がサイトに対して見るのと同じ断片である。
-- **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「シート全体」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
+- **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「全体の画像」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
 - **N9 Addresses.** Components 9 の表のとおり。id はパターンで検査したベンチの id。
 - **N10 Replay as static pages (on hold, requirements Decision 48).** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
 - **N11 Number format.** `.4g` と `repr`。Data Models のとおり。

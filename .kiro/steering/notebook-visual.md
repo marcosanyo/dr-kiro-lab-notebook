@@ -104,7 +104,7 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
   photos are held by a strip of tape (`--tape`, a translucent gold) in its place.
 - Caption below the picture (`figcaption`), in commentary ink or pencil.
 - The cover's large photo adds `.photo-large`; lab cards use `.photo-small`.
-- The picture buttons (play, pause, step, whole sheet) are at least 44px by 44px on a screen narrower than 560px and
+- The picture buttons (play, pause, step, whole picture) are at least 44px by 44px on a screen narrower than 560px and
   on any touch screen (`pointer: coarse`); with a mouse they stay small.
 
 ## Magnified picture (Requirement 7.9, design N32)
@@ -112,9 +112,11 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Beside each moving picture, except the lab cards, one magnified picture of the body, in one row with it (class
   `.photo-pair`, a wrapping flex row). On a narrow screen the magnified picture moves below the moving picture. On
   the cover it is not beside the moving picture: it stands in the top row of the miss (next section).
-- The magnified picture is framed like an instant photo (class `.photo .photo-magnified`) with no tilt class, no
-  caption and no controls. It is the whole magnified sheet, a still picture; its pixels are drawn without smoothing
-  (`image-rendering: pixelated`).
+- The magnified picture is framed like an instant photo (class `.photo .photo-magnified`) with no tilt class. It is
+  the picture that moves: one magnified cell at a time on a canvas, with the same controls as a moving picture
+  (play, pause, step, whole picture; "whole picture" shows the whole magnified sheet). Its pixels are drawn without
+  smoothing (`image-rendering: pixelated`), on the canvas too. Its caption holds the controls, and on the cover the
+  trial id and the caption words.
 - Its alt text is "Magnified view of the picture beside it".
 
 ## Cover layout (Requirements 13.1, 13.4, 13.7, 13.9-13.12; Decision 51)
@@ -157,11 +159,15 @@ the lab tabs (`.cover-labs`); the footer.
 - Class `.sticky`: background `--sticky` `#fff1a8`, commentary ink, rotated 1deg (the cover's note -1.5deg), a shadow.
 - The cover's sticky note has three lines, all from the record: the measurement's name and the measured value with
   its unit in large pencil (`.sticky-number`); one sentence of what happened (`.sticky-happened`); and the
-  conditions of the prediction ("when a = 1, f = 1, ..."). The sentence is "expected <measurement> between <low> and
+  conditions of the prediction ("when a = 1, f = 1, ..."). When the start record's `measured_by` says the measurement
+  is "in the direction the body faces at the start", and the range lies on one side of zero, the sentence says the
+  direction: "expected to go forward 0.2 to 3 m, went back 0.2047 m" (positive is forward, negative is back; each
+  number as its size, four significant digits like every cover value; the unit follows the range and the value).
+  Otherwise the sentence is "expected <measurement> between <low> and
   <high> <unit>, measured <value> <unit>: below the range" (or "above the range"), with ", on the other side of
   zero" when the range lies on one side of zero and the value on the other, for example "expected x between 0.2 and
-  3 m, measured -0.2047 m: below the range, on the other side of zero". It names no direction of travel, because the
-  record declares none. The sentence holds the range, so the note does not repeat it on a line of its own.
+  3 m, measured -0.2047 m: below the range, on the other side of zero". That form names no direction of travel,
+  because the record then declares none. The sentence holds the range, so the note does not repeat it on a line of its own.
 - The sticky note to a missed prediction on a session page names the measurement in its own element, set apart from
   the ids and the range (user, checkpoint 11): "<id> registered range [<low>, <high>], measured <name>: <value>
   miss", with the name in `.measure-name` (pencil, bold). The same wording is used in the list of missed predictions
@@ -171,11 +177,12 @@ the lab tabs (`.cover-labs`); the footer.
 
 ## Strike-through of a rejected row (Requirement 8.3)
 
-- Class `.row-rejected` on the row: `text-decoration: line-through` 2px. In the table the line is in `--graphite`
+- Class `.row-rejected` on the row; only its rule cell (`td[data-label="rule"]`) has `text-decoration: line-through` 2px. In the table the line is in `--graphite`
   `#3d3d3d`; on a card of the cover it is in `--rewrite-red`. The text keeps its full colour and contrast.
-- The line covers the row's own text only (user, checkpoint 11). The stamp's label (`.stamp-label`, "checked by the
-  bench" and the others) is never struck through: in the table the status cell (`td.status`) is left out of the
-  rule, and on the cover only the rule text (`.cover-rule`) is struck.
+- The line covers the rule sentence only (user, checkpoint 11, and again on the spec cards). Scope, run bands, ids,
+  the stamp and its label (`.stamp-label`, "checked by the bench" and the others) and the "replaced by" line are
+  never struck through: in the table only the rule cell is struck, and on the cover only the rule text
+  (`.cover-rule`).
 - The "replaced by" tab (`.tab`) is a `<details>` whose content is the replacing row's rule text and a link to that
   row. It is open when the table is shown (`open="open"`, Requirement 8.13, Decision 49); a visitor may close it. In
   a card (next section) it is the dotted last line of the card, with a drawn arrow in front of its words, not a
@@ -193,8 +200,12 @@ the lab tabs (`.cover-labs`); the footer.
 - The header row is clipped out of sight (not `display: none`). Each cell shows the name of its column from the bench
   (`data-label`) as a small letter-spaced caption; the id, the rule, the stamp and the "replaced by" tab have no
   caption of their own, and an empty cell is hidden.
-- The head of the card has the id at the left and the stamp with its label at the right, then the rule, then scope,
-  experiments and predictions, then the line "replaced by". A `rejected` card has the rewrite red (`--rewrite-bg`,
+- The closed card shows the id at the left and the stamp with its label at the right, then the rule, then the line
+  "replaced by" (so two to four cards stand in the first 1280 x 800 screen). Scope with the run bands, experiments
+  and predictions are drawn only while the card's `<details class="evidence">` is open: the cells stay in the table,
+  and CSS (`.spec-row:not(:has(details.evidence[open]))`, inside `@supports selector(:has(a))`) hides them; a browser
+  without `:has` draws the whole card. The explanation of the run bands ("What the record says was run ...") is
+  one paragraph (`.bands-intro`) above the cards, not on each of them. A `rejected` card has the rewrite red (`--rewrite-bg`,
   `--rewrite-red`); an `observed` card has `--observed-bg`; the left edge of a card has the colour of its
   status.
 - Below 480px the experiments and the predictions stand one under the other. From 1000px the cards stand in columns
@@ -232,7 +243,12 @@ the lab tabs (`.cover-labs`); the footer.
 
 ## Motion (Requirements 3.6, 7.6)
 
-- A moving picture shows one cell every 500 ms (`--cell-interval: 500ms`), in reading order, looping.
+- A moving picture shows one cell every `interval` ms of its lab's entry in `notebook/layouts.toml` (body-lab
+  220 ms, wind-tunnel 150 ms; user), in reading order, looping. The figure carries it as `data-interval`. Only the
+  cells of the recorded sheet are shown: no frame is made between two cells and nothing is interpolated.
+- Of a body-lab trial, the magnified picture moves on its own. The whole picture (`data-start="still"`) shows the
+  sheet and moves only when "play" is pressed, because the body is a few pixels in it, on the lab cards too. A
+  wind-tunnel picture is its trial's only picture and moves on its own.
 - With `prefers-reduced-motion: reduce`, a moving picture starts paused on its first cell, and CSS transitions and
   animations are off.
 

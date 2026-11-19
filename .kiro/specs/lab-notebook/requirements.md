@@ -273,7 +273,8 @@ numbers.
 #### Acceptance criteria
 
 1. THE notebook SHALL keep a frame layout table, `notebook/layouts.toml`, with one entry per application: the
-   number of frames, rows, columns, and the gap in pixels between cells, with the application's spec named as the
+   number of frames, rows, columns, the gap in pixels between cells, and the interval in milliseconds at which a
+   moving picture shows one cell (body-lab 220, wind-tunnel 150), with the application's spec named as the
    source of each entry (`body-lab` design: 10 frames, 2 rows of 5, no gap; `wind-tunnel` Requirement 9.4: 6
    frames, 2 rows of 3, a gap of 4 pixels).
 2. IF an entry's number of frames does not equal its rows times its columns, THEN THE build SHALL fail, naming the
@@ -285,10 +286,11 @@ numbers.
 4. THE notebook SHALL NOT change any file in `bench/`.
 5. IF a record's application has no entry in the frame layout table, THEN THE build SHALL fail, naming it.
 6. THE site SHALL show a moving picture by showing the cells of the sheet in reading order (left to right, then top
-   to bottom), one at a time at a fixed rate set in the visual system, and then starting again.
+   to bottom), one at a time at the rate of the application's entry in the frame layout table (7.1), and then starting again. THE
+   site SHALL show only the cells of the sheet, with no frame made between two of them.
 7. THE site SHALL copy each picture as recorded, byte for byte, under a name made from its blob hash, and SHALL NOT
    re-encode it.
-8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once; on a
+8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole picture at once; on a
    narrow screen and on a touch screen each control SHALL be at least 44 by 44 CSS pixels.
 9. FOR each body-lab trial's moving picture, except the small pictures of the lab cards (Requirement 13.4), THE site
    SHALL show beside it (on the cover, in the top row of the miss: 13.1) an enlarged picture of the moving body: a magnified view, derived by the build from the record's own
@@ -300,7 +302,9 @@ numbers.
    derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the
    enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
    "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
-   (Decision 50). THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
+   (Decision 50). THE enlarged picture SHALL move as a moving picture does (7.6, 7.8), with the interval of the
+   trial's application; the whole picture of a body-lab trial SHALL show its sheet and move only when the visitor
+   presses "play", because the body is a few pixels in it. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
    the flow moves through the whole sheet and no region of it is the moving body (Decision 50).
 
 ### Requirement 8: The discovered spec table
@@ -354,7 +358,10 @@ word and its evidence one press away, so that I see what was found and how sure 
     table and its parts SHALL carry the ARIA roles `table`, `rowgroup`, `row`, `columnheader` and `cell`, so that a
     screen reader still reads a table where the browser drops the table semantics of the card layout. THE card of a
     `rejected` row SHALL be in the rewrite red (Decision 51). WHERE the column beside the margin has room for two
-    cards, THE cards SHALL stand side by side.
+    cards, THE cards SHALL stand side by side. A card SHALL show its rule text, its stamp and its "replaced by" line;
+    its scope with the run bands, its experiments, its predictions and its opened row SHALL be closed until the visitor
+    opens the card's `<details>`, without a script. THE explanation of the run bands SHALL be on the page once, above the
+    cards. In a `rejected` card only the rule text SHALL be struck through (8.3).
 
 ### Requirement 9: What was run, beside each row
 
@@ -536,7 +543,11 @@ once that the experiment gets the final edit.
    happened, and the conditions of the prediction, from the record alone: "expected <measurement> between <low> and
    <high> <unit>, measured <value> <unit>: below the range" (or "above the range"), with ", on the other side of
    zero" added WHEN the range lies on one side of zero and the value on the other. THE sentence SHALL NOT name a
-   direction of travel, because the record declares none, and the build SHALL fail IF a missed prediction has no
+   direction of travel unless the declaration's `measured_by` text says the measurement is taken in the direction the
+   body faces at the start ("x in the direction the body faces at the start"); WHEN it does and the range lies on one
+   side of zero, THE sentence SHALL read "expected to go forward <low> to <high> <unit>, went back <value> <unit>"
+   ("forward" for a positive number, "back" for a negative one, each number as its size, from the record alone). The
+   build SHALL fail IF a missed prediction has no
    value or its value lies inside its range, because the bench records neither (a prediction it cannot check is
    `not-checkable`, not a miss).
 9. THE cover SHALL NOT show a row for the outcome of the missed prediction; the stamp "missed" says it.

@@ -382,10 +382,17 @@ The HTML holds a `<figure class="photo">` with an `<img>` of the whole sheet (wo
 the cell size (N28). `notebook.js` replaces the
 visible image with a `<canvas>` of one cell and draws cell k with `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)`,
 where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + gap)`, in reading order, one cell per
-500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
-`prefers-reduced-motion: reduce`, it starts paused on cell 0.
+`data-interval` ms (the layout's `interval`, so each lab has its own), looping. Only the cells of the sheet are
+drawn; there is no frame between two cells and no interpolation. The PNG is never re-encoded. Controls: pause/play,
+step one cell, whole picture (the sheet as it is). With `prefers-reduced-motion: reduce`, it starts paused on cell 0.
 
-Beside each body-lab moving picture, except the lab cards, the page shows a magnified picture of the moving body: the box of the
+Which picture moves: for a body-lab trial the body is a few pixels in the whole sheet, so the magnified picture below is
+the one that moves on its own, and the whole picture (`data-start="still"`) shows its sheet and moves only when
+"play" is pressed. A wind-tunnel picture is the only picture of its trial and moves on its own.
+
+Beside each body-lab whole picture, except the lab cards, the page shows a magnified picture of the moving body (a
+`<figure class="photo photo-magnified">` with the same controls and `data-` attributes as the whole picture, for the
+magnified sheet: same columns and rows, gap 0, the size of one magnified cell, the lab's interval): the box of the
 pixels that change between frames, plus a 4 px margin (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as
 `p/<sha256>.png` (the SHA-256 of its bytes) with the alt text "Magnified view of the picture beside it", and leaves the
 recorded PNG file untouched. A wind-tunnel moving picture has none: the flow moves through the whole sheet, so no
@@ -432,6 +439,7 @@ frames = 10
 rows = 2
 columns = 5
 gap = 0
+interval = 220
 source = "body-lab design, picture: 10 frames, 2 rows of 5"
 
 [wind-tunnel]
@@ -439,10 +447,13 @@ frames = 6
 rows = 2
 columns = 3
 gap = 4
+interval = 150
 source = "wind-tunnel Requirement 9.4"
 ```
 
-Each table has exactly these five keys; integers `>= 1` (gap `>= 0`); `source` a non-empty string. Test fixtures use
+Each table has exactly these six keys; integers `>= 1` (gap `>= 0`, `interval >= 50`); `interval` is the time in
+milliseconds that a moving picture of the application shows one cell (body-lab 220, wind-tunnel 150, user); `source` a
+non-empty string. Test fixtures use
 their own layouts file with a `fake` entry (1 frame, 1 row, 1 column, gap 0).
 
 ### Choice file `notebook/choices/<application>/<session-id>.toml` (Requirement 12)
@@ -788,7 +799,7 @@ fetched from another host (3.2). The steering file holds the stacks and the cove
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
 | Narrow screen | at 360px one column; margin photos move below the table; the spec table is cards, so it has no sideways scroll |
 | Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
-| Motion | 500 ms per cell; reduced motion starts paused (3.6) |
+| Motion | one cell per `interval` of the lab's layout (body-lab 220 ms, wind-tunnel 150 ms); reduced motion starts paused (3.6) |
 
 All text colours above reach at least 4.5:1 on their backgrounds (paper and sticky yellow); the test checks each
 pair from the CSS.
@@ -853,7 +864,7 @@ changes `bench/`.
   content with `white-space: pre-wrap`; other C0 control characters fail the build.
 - **N7 Two scan passes.** Segments at their sources (findings name the source file and line), then each finished
   file through its ranges, the same pieces a later `bench-scan` of the site would see.
-- **N8 Moving pictures by canvas.** The whole sheet is an `<img>` (the no-script and "whole sheet" view); JavaScript
+- **N8 Moving pictures by canvas.** The whole sheet is an `<img>` (the no-script and "whole picture" view); JavaScript
   draws one cell at a time from source rectangles that include the gap. No re-encoding. CSS `background-position`
   was not chosen because two-axis stepping with gaps needs per-cell keyframes generated per layout.
 - **N9 Addresses.** As in the table of Components 9; ids are bench ids checked by pattern.
