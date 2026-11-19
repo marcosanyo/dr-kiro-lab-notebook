@@ -54,7 +54,7 @@ class _Figure(HTMLParser):
         (
             "body-2",
             "T12",
-            # The one figure of a body-lab trial is its magnified picture; the whole picture is named, not shown.
+            # The one figure of a body-lab trial is its magnified picture; the whole sheet is named, not shown.
             {
                 "columns": "5",
                 "rows": "2",
@@ -181,7 +181,7 @@ def test_the_magnified_figure_moves_and_names_the_whole_picture(loaded, table) -
     # The magnified sheet has the layout's grid, no gap, and the layout's interval.
     assert 'data-columns="5" data-rows="2" data-gap="0"' in enlarged_html
     assert 'data-interval="220"' in enlarged_html
-    # The whole sheet is named for the script, with its own cell size and gap, and is not an image of the page.
+    # The whole sheet is named for the script, with its own cell size and gap; it is not an image of the page.
     assert f'data-whole-src="{files[0].path}"' in enlarged_html
     assert enlarged_html.count("<img") == 1 and files[0].path not in enlarged_html.split("data-whole-src")[0]
     assert enlarged_html.count("<button") == 5
