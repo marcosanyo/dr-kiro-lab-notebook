@@ -103,6 +103,16 @@ def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:
     assert '<span class="stamp stamp-observed">' not in page
 
 
+def test_cover_details_sit_inside_the_rules_card(built) -> None:
+    page = ink.join(built[0])[0]
+    start = page.index('<section class="cover-rules">')
+    card = page[start : page.index("</section>", start) + len("</section>")]
+    assert page.count('<details class="cover-details">') == 1
+    assert card.count('<details class="cover-details">') == 1
+    assert card.index('<ul class="cover-rows">') < card.index('<details class="cover-details">')
+    assert card.endswith("</details></section>")
+
+
 def test_cover_cards_and_labels(loaded, built) -> None:
     segments, pictures = built
     page = ink.join(segments)[0]

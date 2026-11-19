@@ -226,6 +226,32 @@ def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(
     assert page.index("sticky-number") < page.index('class="claim-card"') < page.index('class="cover-rules"')
 
 
+def _rules_card(page: str) -> str:
+    """The text of the rules section, which holds no other section."""
+    start = page.index('<section class="cover-rules">')
+    return page[start : page.index("</section>", start) + len("</section>")]
+
+
+def test_the_details_are_the_last_thing_inside_the_rules_card(record) -> None:
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
+    page = _html(segments)
+    card = _rules_card(page)
+    assert page.count("<details") == 1 and card.count('<details class="cover-details">') == 1
+    # Heading, the rule cards, then the details at the bottom, then the card closes.
+    assert card.index("<h3") < card.index('<ul class="cover-rows">') < card.index("<details")
+    assert card.endswith("</details></section>")
+
+
+def test_the_details_stay_inside_the_rules_card_when_the_end_table_is_missing(record) -> None:
+    no_end = replace(record, snapshots=tuple(s for s in record.snapshots if s.for_ != "end"))
+    segments, _ = cover.page([no_end], _cover(record, "H2.P1"), LAYOUTS, [], {})
+    page = _html(segments)
+    card = _rules_card(page)
+    assert "<h3" not in card and "cover-rows" not in card
+    assert page.count("<details") == 1 and card.startswith('<section class="cover-rules"><details')
+    assert card.endswith("</details></section>")
+
+
 def _sticky_line(record, outcome: records.Outcome, prediction: str = "H2.P1") -> str:
     """The one line of what happened on the sticky note, as plain text, for a miss changed to `outcome`."""
     base = _cover(record, prediction)
