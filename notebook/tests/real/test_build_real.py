@@ -35,6 +35,7 @@ _HREF = re.compile(r'(?:href|src)="([^"#?]*)(?:[?#][^"]*)?"')
 def _argv(out: Path) -> list[str]:
     return [
         "--sessions", str(ROOT / "sessions"),
+        "--requests", str(ROOT / "build-from-spec" / "requests"),
         "--choices", str(ROOT / "notebook" / "choices"),
         "--layouts", str(ROOT / "notebook" / "layouts.toml"),
         "--words", str(ROOT / "notebook" / "commentary-words.txt"),

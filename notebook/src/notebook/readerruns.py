@@ -53,6 +53,7 @@ class Run:
     application: str
     where: str  # `sessions/build-from-spec/<application>/<run>` for messages
     request_id: str
+    request_sha256: str
     setup: str
     result: str
     seed: int
@@ -132,6 +133,7 @@ def _read(folder: Path, file: Path, where: str) -> Run:
         application=folder.parent.name,
         where=where,
         request_id=_string(request["id"], where, "request.id"),
+        request_sha256=_string(request["sha256"], where, "request.sha256"),
         setup=setup,
         result=result,
         seed=seed,

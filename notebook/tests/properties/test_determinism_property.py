@@ -67,6 +67,7 @@ def _cover(record: RecordModel, prediction: str) -> str:
         f'prediction = "{prediction}"\n\n'
         f'[[card]]\napplication = "{record.application}"\nsession = "{record.session}"\n'
         f'trial = "{record.trials[0].id}"\n'
+        'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
     )
 
 
@@ -80,7 +81,7 @@ def _fitting_cover(record: RecordModel, loaded: list[RecordModel], choices: Path
     for prediction in misses or ["none"]:
         (choices / "cover.toml").write_text(_cover(record, prediction))
         try:
-            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table, [])
+            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table, [], {})
         except NotebookError as error:
             if "words of commentary" not in error.problem:
                 raise
@@ -107,6 +108,7 @@ def _write_inputs(root: Path, synthesized) -> Inputs | None:
         return None
     return Inputs(
         sessions=sessions,
+        requests=root / "requests",
         choices=choices,
         layouts=root / "layouts.toml",
         words=root / "words.txt",
@@ -122,6 +124,7 @@ def _moved(inputs: Inputs, old: Path, new: Path, out: Path) -> Inputs:
 
     return Inputs(
         sessions=move(inputs.sessions),
+        requests=move(inputs.requests),
         choices=move(inputs.choices),
         layouts=move(inputs.layouts),
         words=move(inputs.words),

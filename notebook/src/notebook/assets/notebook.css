@@ -52,7 +52,13 @@
   --accent: #b4540a;
   --accent-tint: #fde6c8;
   --margin-line: #e2a9a2;
-  --tape: rgba(176, 141, 60, 0.38);
+  --tape: rgba(196, 160, 72, 0.55);
+  --rewrite-red: #a3302a;
+  --rewrite-bg: #fbe8e4;
+  --observed-bg: #ecebe6;
+  --observed-edge: #7b8088;
+  --hole: #e4dcc6;
+  --hole-edge: #cdc3a8;
 
   --ink-drkiro: #1f3a8a;
   --ink-pencil: #3d3d3d;
@@ -97,15 +103,22 @@ body {
   margin: 0;
   color: var(--ink-commentary);
   background-color: var(--paper);
-  /* One rule line at the bottom of each 1.5rem tile: the conic gradient's centre sits 1px above the tile's bottom
-     edge at its left side, so the quarter turn from 90deg to 180deg covers exactly the bottom 1px row. */
-  background-image: conic-gradient(
-    at 0 calc(100% - 1px),
-    transparent 0deg 90deg,
-    var(--rule-line) 90deg 180deg,
-    transparent 180deg 360deg
-  );
-  background-size: 100% 1.5rem;
+  /* Graph paper: a line along the bottom and one along the right edge of each 1.5rem tile. The conic gradient's
+     centre sits 1px inside the tile's edge, so the quarter turn covers exactly that one pixel row or column. */
+  background-image:
+    conic-gradient(
+      at 0 calc(100% - 1px),
+      transparent 0deg 90deg,
+      var(--rule-line) 90deg 180deg,
+      transparent 180deg 360deg
+    ),
+    conic-gradient(
+      at calc(100% - 1px) 0,
+      transparent 0deg 90deg,
+      var(--rule-line) 90deg 180deg,
+      transparent 180deg 360deg
+    );
+  background-size: 1.5rem 1.5rem;
   font-family: var(--font-sans);
   line-height: var(--line);
 }
@@ -131,11 +144,20 @@ a {
 
 /* Headings are written in the script face, in the commentary ink's colour. */
 
-h1 .ink-c,
-h2 .ink-c,
-h3 .ink-c {
+h1 .ink-c {
   font-family: var(--font-script);
   font-size: 1em;
+}
+
+/* Every small heading: monospace, small capitals. */
+h2 .ink-c,
+h3 .ink-c,
+.cap-heading .ink-c,
+.kicker .ink-c {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 h1 {
@@ -144,10 +166,11 @@ h1 {
   line-height: 1.1;
 }
 
-h2 {
-  margin: var(--space-4) 0 var(--space-2);
-  font-size: 1.7rem;
-  line-height: 1.2;
+h2,
+h3 {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 /* The three inks. */
@@ -191,11 +214,17 @@ h2 {
   font-size: 0.9em;
 }
 
+.block-label,
+.block-label .ink-c {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .block-label {
   display: block;
   color: var(--ink-commentary);
-  font-family: var(--font-sans);
-  font-size: 0.8em;
 }
 
 /* Miss red: only missed predictions and their measured values, always with the word "miss". */
@@ -437,10 +466,14 @@ h2 {
   margin-bottom: var(--space-3);
 }
 
+.kicker {
+  margin: 0 0 var(--space-1);
+}
+
 .cover-head h1 {
   display: inline-block;
   margin: 0;
-  font-size: 3.2rem;
+  font-size: 3.4rem;
   /* A highlighter stripe under the title. */
   background-image: conic-gradient(
     at 0 100%,
@@ -448,13 +481,13 @@ h2 {
     var(--accent-tint) 90deg 180deg,
     transparent 180deg 360deg
   );
-  background-size: 100% 0.45em;
+  background-size: 100% 0.4em;
   background-repeat: no-repeat;
-  background-position: 0 90%;
+  background-position: 0 88%;
 }
 
 .cover-tagline {
-  margin: var(--space-1) 0 0;
+  margin: 0;
 }
 
 .cover-tagline .ink-c {
@@ -463,40 +496,160 @@ h2 {
   line-height: 1.2;
 }
 
-/* The missed prediction: the evidence (photo, track) and the claim (words, measured value, rule cards). */
+/* The three inks in one line, beside the link to the legend. */
+.ink-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+  margin: var(--space-1) 0 0;
+  font-size: 0.85rem;
+}
+
+.ink-key-item {
+  white-space: nowrap;
+}
+
+.ink-key .swatch {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+}
+
+/* The missed prediction. The evidence wrappers are dissolved, so the heading, the magnified sheet, the moving
+   picture, the track, the claim and the rule cards are all cells of one grid: the sheet across the page, then
+   the moving picture, the track and the claim in one row, then the rule cards. One column on a narrow screen. */
 .cover-miss {
   display: grid;
-  gap: var(--space-3) var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2) var(--space-4);
   margin: var(--space-3) 0;
 }
 
-/* The moving picture, the track beside it, and the magnified sheet below: the pair's own wrapper is dissolved so
-   its two pictures and the track are cells of one grid. One column on a narrow screen. */
-.cover-evidence {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: center;
-  min-width: 0;
-  gap: 0 var(--space-4);
-}
-
+.cover-evidence,
 .cover-evidence .photo-pair {
   display: contents;
 }
 
+.cover-miss > .cap-heading {
+  order: 0;
+}
+
+.cover-evidence .photo-magnified {
+  order: 1;
+}
+
+.cover-evidence .photo-large {
+  order: 2;
+}
+
+.cover-evidence .track {
+  order: 3;
+}
+
+.cover-claim {
+  order: 4;
+}
+
+.cover-rules {
+  order: 5;
+}
+
 .cover-evidence .photo {
   max-width: 100%;
+  margin: var(--space-3) var(--space-2) var(--space-2);
   justify-self: start;
+}
+
+.cover-evidence .photo-magnified {
+  background: var(--photo-frame);
+}
+
+/* Photos on the cover are held by a strip of tape, not a pin. */
+.cover-evidence .photo::before {
+  top: -12px;
+  width: 84px;
+  height: 22px;
+  margin-left: -42px;
+  border-radius: 0;
+  background: var(--tape);
+  box-shadow: none;
+  transform: rotate(-2deg);
+}
+
+.cover-evidence figcaption {
+  margin-top: var(--space-1);
+  line-height: 1.25;
+}
+
+.cover-evidence figcaption .ink-c {
+  font-family: var(--font-script);
+  font-size: 1.2rem;
+}
+
+.cover-evidence figcaption .ink-p {
+  font-weight: 600;
+}
+
+.photo-controls {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.photo-controls button,
+.photo-controls button .ink-c {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+}
+
+.photo-controls button {
+  margin-right: var(--space-1);
+  padding: 0 var(--space-2);
+  background: var(--paper);
+  border: 1px solid var(--card-edge);
+  border-radius: 3px;
+  color: var(--ink-commentary);
+  cursor: pointer;
 }
 
 .cover-evidence .track {
   margin: var(--space-2) 0;
+  padding: var(--space-2) 0 0;
+}
+
+.cover-evidence .track svg {
+  display: block;
 }
 
 .cover-claim {
-  position: relative;
   min-width: 0;
-  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.cover-claim > .sticky {
+  max-width: 17rem;
+  margin: var(--space-2) 0 var(--space-3) var(--space-3);
+  transform: rotate(-1.5deg);
+}
+
+.sticky-number {
+  display: block;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.sticky-number .ink-p {
+  font-weight: 600;
+}
+
+.sticky-line {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.claim-card {
+  position: relative;
   padding: var(--space-3) var(--space-4);
   background: var(--card);
   border: 1px solid var(--card-edge);
@@ -504,15 +657,8 @@ h2 {
   box-shadow: 0 2px 6px var(--shadow);
 }
 
-.cover-claim::before {
-  content: "";
-  position: absolute;
-  top: -10px;
-  left: var(--space-4);
-  width: 76px;
-  height: 20px;
-  background: var(--tape);
-  transform: rotate(-3deg);
+.claim-card > .cap-heading:first-child {
+  margin-top: 0;
 }
 
 .claim-statement {
@@ -521,10 +667,53 @@ h2 {
   line-height: 1.6;
 }
 
-.claim-measure {
-  margin: var(--space-2) 0 var(--space-3);
-  padding-bottom: var(--space-2);
+/* Predicted, measured, outcome: a small heading and its value, one under the other. */
+.measures {
+  position: relative;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-3) 0;
+  padding: var(--space-2) 0;
+  border-top: 1px dashed var(--card-edge);
   border-bottom: 1px dashed var(--card-edge);
+}
+
+.measures dt,
+.measures dd {
+  margin: 0;
+}
+
+.measures dt .ink-c {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.measures dd {
+  overflow-wrap: anywhere;
+}
+
+/* The stamp pressed across the corner of the list: monospace, framed, tilted. */
+.miss-stamp {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 3px solid var(--miss-red);
+  border-radius: 6px;
+  color: var(--miss-red);
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transform: rotate(-9deg);
+}
+
+.miss-stamp .ink-c {
+  font-family: var(--font-mono);
+  font-size: 1em;
 }
 
 .cover-status {
@@ -536,7 +725,8 @@ h2 {
   font-weight: bold;
 }
 
-/* One rule card per cited row. A rejected rule is struck; the line below it names the row that replaces it. */
+/* One rule card per cited row. A rejected rule is struck in red on a pale red card; the line below it
+   names the row that replaces it, in blue pen. */
 .cover-rows {
   list-style: none;
   margin: var(--space-2) 0 var(--space-3);
@@ -546,10 +736,10 @@ h2 {
 .rule-card {
   position: relative;
   margin: 0 0 var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
   background: var(--paper);
   border: 1px solid var(--card-edge);
-  border-left: 5px solid var(--ink-pencil);
+  border-left: 8px solid var(--ink-pencil);
   border-radius: 3px;
 }
 
@@ -562,11 +752,15 @@ h2 {
 }
 
 .rule-card.st-observed {
-  border-left-color: var(--stamp-observed);
+  background: var(--observed-bg);
+  border-left-color: var(--observed-edge);
+  border-left-style: dashed;
 }
 
 .rule-card.st-rejected {
-  border-left-color: var(--stamp-rejected);
+  background: var(--rewrite-bg);
+  border-color: var(--rewrite-red);
+  border-left-color: var(--rewrite-red);
 }
 
 .rule-head {
@@ -589,15 +783,19 @@ h2 {
 }
 
 .cover-rows .row-rejected .cover-rule {
-  text-decoration: line-through 2px var(--graphite);
+  text-decoration: line-through 2px var(--rewrite-red);
 }
 
 .cover-replaced {
   display: block;
   margin-top: var(--space-2);
-  padding-top: var(--space-1);
-  border-top: 1px dashed var(--card-edge);
+  padding-top: var(--space-2);
+  border-top: 1px dotted var(--rewrite-red);
   font-size: 0.9em;
+}
+
+.cover-replaced::before {
+  content: "→ ";
 }
 
 .cover-replaced .rule-small {
@@ -617,9 +815,33 @@ h2 {
   cursor: pointer;
 }
 
-/* The reader line. */
+/* The reader. */
 .cover-reader {
-  margin: var(--space-3) 0;
+  margin: var(--space-4) 0;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+}
+
+.cover-reader > p {
+  margin: var(--space-2) 0;
+}
+
+.request-note {
+  margin: var(--space-2) 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border-left: 3px dashed var(--ink-pencil);
+  font-size: 1.05rem;
+}
+
+.request-note::before {
+  content: "“";
+}
+
+.request-note::after {
+  content: "”";
 }
 
 .cover-reader-line {
@@ -627,11 +849,6 @@ h2 {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  background: var(--card);
-  border: 1px solid var(--card-edge);
-  border-radius: 4px;
 }
 
 .reader-chip {
@@ -658,18 +875,10 @@ h2 {
   border-style: dotted;
 }
 
-/* The lab tabs: a radio and a label per lab; the checked lab's panel shows. No script. */
+/* The lab tabs, like the index tabs of a notebook: a radio and a label per lab; the checked lab's panel shows.
+   No script. */
 .cover-labs {
   margin: var(--space-4) 0;
-}
-
-.tabs-caption {
-  margin: 0 0 var(--space-1);
-}
-
-.tabs-caption .ink-c {
-  font-family: var(--font-script);
-  font-size: 1.6rem;
 }
 
 .tabs {
@@ -684,32 +893,55 @@ h2 {
   pointer-events: none;
 }
 
+/* The tabs stand side by side at every width, like the index tabs of a notebook. */
 .tab-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-2);
   margin: 0;
-  border-bottom: 2px solid var(--card-edge);
 }
 
 .tab-label {
   position: relative;
-  top: 2px;
-  padding: var(--space-1) var(--space-3);
+  display: block;
+  padding: var(--space-2) var(--space-3) var(--space-2);
   background: var(--tab);
   border: 2px solid var(--card-edge);
   border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  border-radius: 10px 10px 0 0;
   cursor: pointer;
+}
+
+.tab-kicker,
+.tab-note {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.tab-kicker .ink-c,
+.tab-note .ink-c {
+  font-family: var(--font-mono);
+  font-size: 1em;
+  text-transform: uppercase;
+}
+
+.tab-title .ink-c {
+  font-family: var(--font-script);
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.tab-note {
+  margin-top: var(--space-1);
 }
 
 .tab-panel {
   display: none;
   padding: var(--space-3);
   background: var(--card);
-  border: 1px solid var(--card-edge);
-  border-top: none;
-  border-radius: 0 0 4px 4px;
+  border: 2px solid var(--card-edge);
   gap: var(--space-3) var(--space-4);
 }
 
@@ -717,9 +949,12 @@ h2 {
 .tab-radio:nth-of-type(2):checked ~ .tab-bar .tab-label:nth-child(2),
 .tab-radio:nth-of-type(3):checked ~ .tab-bar .tab-label:nth-child(3),
 .tab-radio:nth-of-type(4):checked ~ .tab-bar .tab-label:nth-child(4) {
-  background: var(--accent-tint);
+  background: var(--card);
   border-color: var(--accent);
-  font-weight: 600;
+  border-top-width: 5px;
+  padding-bottom: calc(var(--space-2) + 2px);
+  margin-bottom: -2px;
+  z-index: 1;
 }
 
 .tab-radio:nth-of-type(1):checked ~ .tab-panel:nth-of-type(1),
@@ -741,7 +976,7 @@ h2 {
 }
 
 .panel-photo .photo {
-  margin: var(--space-3) 0;
+  margin: var(--space-3) var(--space-2) var(--space-2);
 }
 
 .panel-sessions {
@@ -793,11 +1028,11 @@ h2 {
 }
 
 .count-observed {
-  border-left-color: var(--stamp-observed);
+  border-left-color: var(--observed-edge);
 }
 
 .count-rejected {
-  border-left-color: var(--stamp-rejected);
+  border-left-color: var(--rewrite-red);
 }
 
 .panel-link {
@@ -907,6 +1142,10 @@ h2 {
   background: var(--ink-commentary);
 }
 
+.swatch-red {
+  background: var(--rewrite-red);
+}
+
 /* The inline Halloween decoration (pages/parts.py), drawn in currentColor. */
 
 .deco {
@@ -916,6 +1155,31 @@ h2 {
 }
 
 @media (max-width: 559px) {
+  .tab-label {
+    padding: var(--space-2);
+  }
+
+  .tab-kicker,
+  .tab-note {
+    font-size: 0.62rem;
+  }
+
+  .tab-title .ink-c {
+    font-size: 1.3rem;
+  }
+
+  .miss-stamp {
+    position: static;
+    display: inline-block;
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-top: var(--space-2);
+  }
+
+  .cover-evidence .track svg {
+    max-height: 7.5rem;
+  }
+
   h1 {
     font-size: 2.2rem;
   }
@@ -930,23 +1194,48 @@ h2 {
 }
 
 @media (min-width: 560px) {
-  .cover-evidence {
+  .tab-note {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-3);
+    margin: 0;
+  }
+
+  .cover-miss {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .cover-evidence .photo-large {
-    grid-column: 1;
-    grid-row: 1;
+  .cover-miss > .cap-heading,
+  .cover-evidence .photo-magnified,
+  .cover-claim,
+  .cover-rules {
+    grid-column: 1 / -1;
   }
 
-  .cover-evidence .track {
-    grid-column: 2;
+  .cover-miss > .cap-heading {
     grid-row: 1;
   }
 
   .cover-evidence .photo-magnified {
-    grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .cover-evidence .photo-large {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .cover-evidence .track {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .cover-claim {
+    grid-row: 4;
+  }
+
+  .cover-rules {
+    grid-row: 5;
   }
 }
 
@@ -967,8 +1256,24 @@ h2 {
   }
 
   .cover-miss {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .cover-evidence .photo-large {
+    grid-column: 1;
+  }
+
+  .cover-evidence .track {
+    grid-column: 2;
+  }
+
+  .cover-claim {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .cover-rules {
+    grid-row: 4;
   }
 
   .tab-panel {
@@ -976,7 +1281,7 @@ h2 {
     align-items: start;
   }
 
-  /* The red line of the page's left margin. */
+  /* The red line of the page's left margin, and the binder's holes beside it. */
   body::before {
     content: "";
     position: fixed;
@@ -985,6 +1290,25 @@ h2 {
     left: 88px;
     width: 2px;
     background: var(--margin-line);
+    z-index: -1;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    top: 150px;
+    bottom: 0;
+    left: 0;
+    width: 64px;
+    background-image: radial-gradient(
+      circle at 40px 50%,
+      var(--hole) 0 8px,
+      var(--hole-edge) 8px 10px,
+      transparent 10px
+    );
+    background-size: 64px 7.5rem;
+    background-repeat: repeat-y;
+    pointer-events: none;
     z-index: -1;
   }
 

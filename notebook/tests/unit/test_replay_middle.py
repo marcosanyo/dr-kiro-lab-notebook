@@ -20,6 +20,7 @@ CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
 COVER = (
     '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
     '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
+    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
 )
 LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 8 x 8 picture"\n'
 WORDS = "# test fixture word list\nlimp\n"
@@ -35,6 +36,7 @@ def _record(root, *, middle_steps: bool):
     (root / "words.txt").write_text(WORDS)
     inputs = Inputs(
         sessions=made.sessions,
+        requests=root / "requests",
         choices=choices,
         layouts=root / "layouts.toml",
         words=root / "words.txt",

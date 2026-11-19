@@ -63,6 +63,6 @@ def test_the_committed_cover_file_loads(loaded) -> None:
     )
     assert cover.miss.outcome is not None and cover.miss.outcome.trial == "T12"
     assert [(c.application, c.session, c.trial) for c in cover.cards] == [
-        ("body-lab", "body-2", "T31"),
         ("wind-tunnel", "wt-004", "T1"),
-    ]
+        ("body-lab", "body-2", "T31"),
+    ]  # in the order of the cover file: LAB I, then LAB II

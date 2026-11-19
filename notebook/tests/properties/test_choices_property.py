@@ -163,7 +163,7 @@ def cover_problems(file: str, cover: dict[str, Any] | None, recs: list[SynthReco
     if isinstance(cards, list):
         carded: list[str] = []
         for card in cards:
-            if set(card) != {"application", "session", "trial"}:
+            if set(card) != {"application", "session", "trial", "kicker", "title", "engine", "unit"}:
                 problems.append((file, "card"))
             r = ended_record(card, "card")
             if r is None:
@@ -270,7 +270,17 @@ def covers(draw: st.DrawFn, recs: list[SynthRecord]) -> dict[str, Any] | None:
         cards = []
         for a in apps:
             c = draw(st.sampled_from(holders[a]))
-            cards.append({"application": a, "session": c.session, "trial": draw(st.sampled_from(_trials(c)))})
+            cards.append(
+                {
+                    "application": a,
+                    "session": c.session,
+                    "trial": draw(st.sampled_from(_trials(c))),
+                    "kicker": "LAB",
+                    "title": "The Fake",
+                    "engine": "Sim",
+                    "unit": "runs",
+                }
+            )
         prediction = draw(st.sampled_from(misses)) if misses else NONE
         return {
             "miss": {"application": r.application, "session": r.session, "prediction": prediction},
@@ -301,7 +311,15 @@ def covers(draw: st.DrawFn, recs: list[SynthRecord]) -> dict[str, Any] | None:
             trial = (
                 draw(st.sampled_from(_trials(c))) if _trials(c) and draw(st.integers(0, 6)) else BOGUS_TRIAL
             )
-            card: dict[str, Any] = {"application": app, "session": c.session, "trial": trial}
+            card: dict[str, Any] = {
+                "application": app,
+                "session": c.session,
+                "trial": trial,
+                "kicker": "LAB",
+                "title": "The Fake",
+                "engine": "Sim",
+                "unit": "runs",
+            }
             if not draw(st.integers(0, 20)):
                 card["extra"] = "x"
             cards.append(card)
@@ -410,13 +428,29 @@ def test_cover_none_is_accepted_for_an_ended_session_with_no_miss(
     """The case task 6.1 left untested: the cover's prediction "none" for an ended session without a miss."""
     assert _ended(quiet) and not _misses(quiet)
     cards = [
-        {"application": "fake-two", "session": "s1", "trial": data.draw(st.sampled_from(_trials(other)))}
+        {
+            "application": "fake-two",
+            "session": "s1",
+            "trial": data.draw(st.sampled_from(_trials(other))),
+            "kicker": "LAB",
+            "title": "The Fake",
+            "engine": "Sim",
+            "unit": "runs",
+        }
     ]
     cover = {"miss": {"application": "fake", "session": "s1", "prediction": NONE}, "card": cards}
     # The quiet record has no trial, so its own card cannot name one; a second session of "fake" holds it.
     third = data.draw(records(application="fake", session="s2", endings=("table",)))
     cards.append(
-        {"application": "fake", "session": "s2", "trial": data.draw(st.sampled_from(_trials(third)))}
+        {
+            "application": "fake",
+            "session": "s2",
+            "trial": data.draw(st.sampled_from(_trials(third))),
+            "kicker": "LAB",
+            "title": "The Fake",
+            "engine": "Sim",
+            "unit": "runs",
+        }
     )
     recs = [quiet, other, third]
     with tempfile.TemporaryDirectory() as tmp:
@@ -428,4 +462,4 @@ def test_cover_none_is_accepted_for_an_ended_session_with_no_miss(
         result = choices.load_cover(folder, loaded)
     assert result.miss.prediction is None and result.miss.outcome is None
     assert (result.miss.application, result.miss.session) == ("fake", "s1")
-    assert [c.application for c in result.cards] == ["fake", "fake-two"]
+    assert [c.application for c in result.cards] == ["fake-two", "fake"]  # the cover file's order

@@ -11,6 +11,7 @@ class Inputs:
     """The build's inputs, exactly as given on the command line. No field has a default."""
 
     sessions: Path
+    requests: Path
     choices: Path
     layouts: Path
     words: Path

@@ -17,6 +17,7 @@ CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
 COVER = (
     '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
     '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
+    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
 )
 LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 8 x 8 picture"\n'
 WORDS = "# test fixture word list\nlimp\n"
@@ -35,6 +36,7 @@ def fixture_site(tmp_path_factory) -> tuple[Path, Path]:
     out = root / "site"
     inputs = Inputs(
         sessions=made.sessions,
+        requests=root / "requests",
         choices=choices,
         layouts=root / "layouts.toml",
         words=root / "words.txt",
@@ -111,7 +113,8 @@ def test_a_planted_forbidden_item_is_found_naming_the_file(fixture_site, tmp_pat
 
 
 def test_the_site_s_own_text_is_plain_english_characters():
-    # Requirement 3.7: the builder's strings are in English; this checks they hold only ASCII characters.
+    # Requirement 3.7: the builder's strings are in English; this checks they hold only ASCII characters, but
+    # for the middle dot, the one separator the user chose for the cover's kicker (polish pass, 2026-11-19).
     for name, value in vars(text).items():
         if name.isupper() and isinstance(value, str):
-            assert value.isascii(), name
+            assert value.replace("\u00b7", "-").isascii(), name

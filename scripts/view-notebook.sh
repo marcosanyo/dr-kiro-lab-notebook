@@ -31,6 +31,7 @@ esac
 out=$(mktemp -d "${TMPDIR:-/tmp}/lab-notebook.XXXXXX") || exit 2
 uv run --project notebook notebook-build \
     --sessions sessions \
+    --requests build-from-spec/requests \
     --choices notebook/choices \
     --layouts notebook/layouts.toml \
     --words notebook/commentary-words.txt \

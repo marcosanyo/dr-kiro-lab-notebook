@@ -28,7 +28,7 @@ REASON_MAX = 300
 COVER_NAME = "cover.toml"
 COVER_KEYS = frozenset({"miss", "card"})
 MISS_KEYS = frozenset({"application", "session", "prediction"})
-CARD_KEYS = frozenset({"application", "session", "trial"})
+CARD_KEYS = frozenset({"application", "session", "trial", "kicker", "title", "engine", "unit"})
 
 
 @dataclass(frozen=True)
@@ -60,9 +60,17 @@ class CoverMiss:
 
 @dataclass(frozen=True)
 class Card:
+    """One lab's tab of the cover: the chosen trial and the person's words for the tab (the line above the
+    title, the name of the simulator or solver and the word for one budgeted step, "runs" or "trials"),
+    written in the cover file."""
+
     application: str
     session: str
     trial: str
+    kicker: str
+    title: str
+    engine: str
+    unit: str
     source: str
 
 
@@ -70,7 +78,7 @@ class Card:
 class Cover:
     file: str
     miss: CoverMiss
-    cards: tuple[Card, ...]  # in application code-point order
+    cards: tuple[Card, ...]  # in the order of the cover file
 
 
 # Reading
@@ -273,8 +281,18 @@ def load_cover(folder: Path, records: list[RecordModel]) -> Cover:
         if card_record.application in cards:
             raise NotebookError(card_where, f"a second card for {card_record.application}")
         trial = _trial(f"{card_where} trial", card_record, table["trial"])
-        cards[card_record.application] = Card(card_record.application, card_record.session, trial, card_where)
+        words = {k: _string(f"{card_where} {k}", table[k]) for k in ("kicker", "title", "engine", "unit")}
+        cards[card_record.application] = Card(
+            card_record.application,
+            card_record.session,
+            trial,
+            words["kicker"],
+            words["title"],
+            words["engine"],
+            words["unit"],
+            card_where,
+        )
     for application in sorted({r.application for r in records}):
         if application not in cards:
             raise NotebookError(f"{file} key card", f"no card for the application {application}")
-    return Cover(file, miss, tuple(cards[a] for a in sorted(cards)))
+    return Cover(file, miss, tuple(cards.values()))

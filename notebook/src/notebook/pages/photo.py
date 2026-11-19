@@ -88,6 +88,7 @@ def photo(
     *,
     trial_word: bool = True,
     magnified: bool = True,
+    captions: tuple[str, str] | None = None,
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The instant photo of one trial and the picture files it shows.
 
@@ -136,8 +137,9 @@ def photo(
             "button", {"type": "button", "data-action": action, "hidden": "hidden"}, say_text(label)
         )
     caption = [
-        *(say_text("PHOTO_TRIAL") if trial_word else []),
+        *(say_text("PHOTO_TRIAL") if trial_word and captions is None else []),
         *html.text(pencil(tid, source)),
+        *(say_text(captions[0]) if captions is not None else []),
         *html.element("span", {"class": "photo-controls"}, buttons),
     ]
     figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
@@ -157,7 +159,12 @@ def photo(
         },
     )
     # No caption: the alt text says what the picture is, and the cover's visible commentary is limited (13.6).
-    enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_img)
+    enlarged_parts = list(enlarged_img)
+    if captions is not None:
+        enlarged_parts += html.element(
+            "figcaption", None, [*html.text(pencil(tid, source)), *say_text(captions[1])]
+        )
+    enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_parts)
     row = html.element("section", {"class": "photo-pair"}, [*figure, *enlarged_figure])
     return row, [picture, enlarged]
 

@@ -2,13 +2,15 @@
 prediction no row cites (13.2). The fixture is the fake session of `tests/fixtures/session.py`; its records
 are labelled fake and its numbers are not results."""
 
+import html
+import re
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from fixtures.session import APPLICATION, SESSION_ID, accepted_session
-from notebook import ink, readerruns, records
+from notebook import ink, readerrequest, readerruns, records, text
 from notebook.choices import Card, Cover, CoverMiss
 from notebook.errors import NotebookError
 from notebook.layouts import Layout
@@ -30,7 +32,16 @@ def _cover(record: records.RecordModel, prediction: str | None) -> Cover:
     if prediction is not None:
         (outcome,) = [o for o in record.outcomes if o.prediction == prediction]
     miss = CoverMiss(APPLICATION, SESSION_ID, prediction, outcome, "fixture cover key miss")
-    card = Card(APPLICATION, SESSION_ID, record.trials[0].id, "fixture cover key card 1")
+    card = Card(
+        APPLICATION,
+        SESSION_ID,
+        record.trials[0].id,
+        "LAB I",
+        "The Fake Lab",
+        "Sim",
+        "runs",
+        "fixture cover key card 1",
+    )
     return Cover("fixture cover", miss, (card,))
 
 
@@ -49,7 +60,7 @@ def _html(segments: list[ink.Segment]) -> str:
 
 
 def test_a_cited_miss_shows_its_row_and_the_replacing_row(record) -> None:
-    segments, pictures = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [])
+    segments, pictures = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
     page = _html(segments)
     assert len(cover.visible_words(segments)) <= cover.MAX_VISIBLE_WORDS
     assert 'class="photo tilt-' in page and "photo-large" in page and "photo-small" in page
@@ -65,13 +76,13 @@ def test_a_cited_miss_shows_its_row_and_the_replacing_row(record) -> None:
     replaced = page[page.index('<span class="cover-replaced">') :]
     replaced = replaced[: replaced.index("</span></li>")]
     assert "stamp" not in replaced
-    assert '<span class="ink-p miss">miss</span>' in page
+    assert '<span class="miss"><span class="ink-p">miss</span></span>' in page
     assert 'href="fake.html"' in page
     assert len({p.path for p in pictures}) == len(pictures)
 
 
 def test_a_miss_that_no_row_cites_says_so(record) -> None:
-    segments, _ = cover.page([_uncited(record)], _cover(record, "H2.P1"), LAYOUTS, [])
+    segments, _ = cover.page([_uncited(record)], _cover(record, "H2.P1"), LAYOUTS, [], {})
     page = _html(segments)
     assert "No row cites it." in page
     assert "cover-rows" not in page
@@ -79,7 +90,7 @@ def test_a_miss_that_no_row_cites_says_so(record) -> None:
 
 
 def test_none_shows_the_sentence_in_place_of_the_photo(record) -> None:
-    segments, pictures = cover.page([record], _cover(record, None), LAYOUTS, [])
+    segments, pictures = cover.page([record], _cover(record, None), LAYOUTS, [], {})
     page = _html(segments)
     assert "This session has no missed prediction." in page
     assert "photo-large" not in page and "miss-value" not in page and "<details" not in page
@@ -109,6 +120,15 @@ def test_visible_words_skip_details_but_count_the_summary() -> None:
     assert cover.visible_words(segments) == ["one", "two", "three"]
 
 
+REQUEST = readerrequest.Request(
+    "fake-request",
+    APPLICATION,
+    "Do the fake thing once.",
+    (readerrequest.Pass("x", 0.0, 1.0),),
+    "fake/request.toml",
+)
+
+
 def _run(name: str, setup: str, result: str) -> readerruns.Run:
     """A fake run for the cover's reader line; the numbers it gives are test inputs, not results."""
     return readerruns.Run(
@@ -116,6 +136,7 @@ def _run(name: str, setup: str, result: str) -> readerruns.Run:
         application=APPLICATION,
         where=f"fake/{name}",
         request_id="fake-request",
+        request_sha256="0" * 64,
         setup=setup,
         result=result,
         seed=1,
@@ -139,7 +160,7 @@ def test_the_reader_line_counts_passes_per_setup_and_names_other_results(record)
         _run("r-record-1", "record", "pass"),
         _run("r-none-1", "none", "no-trial"),
     ]
-    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, runs)
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, runs, {"fake-request": REQUEST})
     page = _html(segments)
     assert '<span class="reader-chip reader-spec"><span class="ink-p">spec 1/2</span></span>' in page
     assert '<span class="reader-chip reader-record"><span class="ink-p">record 1/1</span></span>' in page
@@ -150,20 +171,77 @@ def test_the_reader_line_counts_passes_per_setup_and_names_other_results(record)
 
 
 def test_there_is_no_reader_line_without_runs(record) -> None:
-    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [])
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
     assert "cover-reader" not in _html(segments)
 
 
 def test_two_requests_fail_the_cover(record) -> None:
     other = replace(_run("r-spec-1", "spec", "pass"), request_id="another")
     with pytest.raises(NotebookError, match="one request"):
-        cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [_run("r-spec-2", "spec", "pass"), other])
+        cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [_run("r-spec-2", "spec", "pass"), other], {})
 
 
 def test_the_lab_tab_is_a_checked_radio_with_its_panel_and_the_ended_sessions(record) -> None:
-    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [])
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
     page = _html(segments)
     assert page.count('<input type="radio" name="lab-tab"') == 1 and 'checked="checked"' in page
     assert '<label for="tab-fake" class="tab-label">' in page
     assert '<section class="tab-panel" id="panel-fake">' in page
     assert '<a href="fake-s1.html"><span class="ink-p">s1</span></a>' in page
+
+
+def test_the_head_has_the_kicker_the_tagline_and_the_ink_line_with_the_legend_link(record) -> None:
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
+    page = _html(segments)
+    head = page[page.index('<header class="cover-head">') : page.index("</header>")]
+    assert text.COVER_KICKER in head and text.TAGLINE in head
+    for name in ("COVER_INK_BLUE", "COVER_INK_RED", "COVER_INK_PENCIL"):
+        assert html.escape(getattr(text, name)) in head
+    assert 'href="legend.html"' in head
+    assert (
+        head.index(text.COVER_KICKER) < head.index("<h1>") < head.index(text.TAGLINE) < head.index("ink-key")
+    )
+
+
+def test_the_miss_lists_predicted_measured_outcome_with_the_stamp_and_a_sticky_note(record) -> None:
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
+    page = _html(segments)
+    measures = page[page.index('<dl class="measures">') : page.index("</dl>")]
+    assert re.findall(r"<dt><span class=\"ink-c\">([^<]+)</span></dt>", measures) == [
+        text.COVER_PREDICTED,
+        text.COVER_MEASURED_HEAD,
+        text.COVER_OUTCOME_HEAD,
+    ]
+    assert f'<span class="miss-stamp"><span class="ink-c">{text.COVER_MISSED_STAMP}</span></span>' in measures
+    sticky = page[page.index('<aside class="sticky">') : page.index("</aside>")]
+    assert (
+        "sticky-number" in sticky
+        and text.COVER_STICKY_PREDICTED in sticky
+        and text.COVER_STICKY_WHEN in sticky
+    )
+    # The sticky note comes before the claim card; the rule cards come after the picture row.
+    assert page.index("sticky-number") < page.index('class="claim-card"') < page.index('class="cover-rules"')
+
+
+def test_the_reader_section_shows_the_request_in_words_and_the_chips(record) -> None:
+    runs = [_run("r-spec-1", "spec", "pass"), _run("r-none-1", "none", "fail")]
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, runs, {"fake-request": REQUEST})
+    page = _html(segments)
+    section = page[
+        page.index('<section class="cover-reader">') : page.index("</section>", page.index("cover-reader"))
+    ]
+    assert text.COVER_READER_ABOUT in section
+    assert (
+        f'<blockquote class="request-note"><span class="ink-c">{REQUEST.words}</span></blockquote>' in section
+    )
+    assert "spec 1/1" in section and "none 0/1" in section
+    # The request's own words are commentary: the word list check and the scan reach them.
+    assert any(s.ink is ink.Ink.COMMENTARY and s.text == REQUEST.words for s in segments)
+
+
+def test_the_tab_has_the_persons_words_and_the_budget_from_the_record(record) -> None:
+    segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
+    page = _html(segments)
+    label = page[page.index('<label for="tab-fake"') : page.index("</label>")]
+    assert ">LAB I<" in label and ">The Fake Lab<" in label and "Sim · " in label and " runs<" in label
+    assert f'<span class="ink-p">{record.budget}</span>' in label

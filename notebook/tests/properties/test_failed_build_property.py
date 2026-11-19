@@ -38,6 +38,7 @@ CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
 COVER = (
     '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
     '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
+    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
 )
 # The fake application's picture is 8 x 8 pixels; this layout shows it as one cell.
 SIDE = 8
@@ -56,6 +57,7 @@ class Base:
 def _inputs(root: Path, out: Path) -> Inputs:
     return Inputs(
         sessions=root / "sessions",
+        requests=root / "requests",
         choices=root / "choices",
         layouts=root / "layouts.toml",
         words=root / "words.txt",

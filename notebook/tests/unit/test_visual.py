@@ -136,7 +136,7 @@ def test_miss_red_is_used_only_by_the_miss_classes():
     assert users
     for selector, body in users:
         for one in selector.split(","):
-            assert re.search(r"\.miss(-value|-mark)?$", one.strip()), selector
+            assert re.search(r"\.miss(-value|-mark|-stamp)?$", one.strip()), selector
         assert "var(--miss-red)" in body
     root = [body for sel, body in _rules(CSS.read_text(encoding="utf-8")) if sel == ":root"][0]
     assert "var(--miss-red)" not in root

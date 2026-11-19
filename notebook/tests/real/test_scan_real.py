@@ -10,12 +10,13 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 
-from notebook import choices, ink, layouts, plots, readerruns, records, refusals, scan, views
+from notebook import choices, ink, layouts, plots, readerrequest, readerruns, records, refusals, scan, views
 from notebook.pages import cover, how, lab, parts, photo, replay, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
 CHOICES = ROOT / "notebook" / "choices"
+REQUESTS = ROOT / "build-from-spec" / "requests"
 LAYOUTS = ROOT / "notebook" / "layouts.toml"
 
 
@@ -131,8 +132,10 @@ def test_dr_kiros_fixed_words_of_every_record_pass_at_the_builder_level(scanner,
 
 
 def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
+    runs = readerruns.load(SESSIONS)
+    requests = readerrequest.load(REQUESTS, runs)
     segments, _ = cover.page(
-        loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS), readerruns.load(SESSIONS)
+        loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS), runs, requests
     )
     written, _ = scan.check(scanner, {"index.html": segments})["index.html"]
     _links_stay_in_the_site("index.html", written)

@@ -83,3 +83,9 @@ domain
 geometry
 constants
 monitors
+# 2026-11-19, notebook polish pass (approved by the user in chat): "ahead". Its source is wind-tunnel/model/constants.toml,
+# line 27: `ahead = 6.0  # brief, measured from the centre of the body`, the length of flow domain upstream of the body.
+# It is a solver-setup length and says nothing about the structure of the body. The word is also in the id and the
+# words of the committed request build-from-spec/requests/stop-ahead.toml and in the names of its six runs, which the
+# notebook shows. Listing it removes it as a derived term everywhere, as for every word of this list.
+ahead

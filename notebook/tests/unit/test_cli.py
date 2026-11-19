@@ -10,6 +10,7 @@ from notebook.inputs import check_out
 # Paths that do not exist: if the command line read one, the error would name it instead of the option.
 OPTIONS = {
     "--sessions": "no-such/sessions",
+    "--requests": "no-such/requests",
     "--choices": "no-such/choices",
     "--layouts": "no-such/layouts.toml",
     "--words": "no-such/words.txt",

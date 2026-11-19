@@ -121,7 +121,7 @@ PHOTO_MAGNIFIED_ALT = "Magnified view of the picture beside it"
 TRACK_CAPTION = "recorded track seen from above, equal scale on both axes; the circle marks the start"
 TRACK_NOT_MEASURED = "No track is drawn: the recorded series is not measured. "
 # The cover's one-word caption; the cover explains the drawing in full inside its details (Requirement 13.6).
-TRACK_CAPTION_COVER = "track"
+TRACK_CAPTION_COVER = " track seen from above"
 
 # Run bands beside a row's scope (Requirement 9; design 4). Shown inside the scope cell, after Dr. Kiro's
 # scope text, which is never read.
@@ -148,8 +148,6 @@ BANDS_OPEN_HIGH = ")"
 # "trial" and the track has a one-word caption (user, checkpoint 11).
 SITE_TITLE = "Dr. Kiro's Lab Notebook"
 TAGLINE = "The experiment gets the final edit."
-COVER_RANGE = " range "
-COVER_MEASURED = " measured "
 COVER_MISS_NONE = "This session has no missed prediction."
 COVER_NO_ROW = "No row cites it."
 COVER_DETAILS = "details"
@@ -167,17 +165,36 @@ COVER_ROWS = (
 )
 COVER_OUTCOME_LINK = "this prediction's outcome in its experiment entry"
 COVER_TABLE_LINK = "the session's discovered spec table"
-COVER_CARDS = "Beside the sessions of each lab, one of its trials, chosen by a person."
-# The reader line and the lab tabs of the cover (user, polish pass). The reader line sits directly under the
-# missed prediction; the tabs sit under the reader line.
-COVER_READER = "reader runs passed: "
+COVER_CARDS = (
+    "Each tab shows one trial of the lab, chosen by a person, beside the ended sessions of that lab."
+)
+# The cover after the polish pass (user, 2026-11-19). Headings are written in lower case and shown as small
+# capitals by the stylesheet.
+COVER_KICKER = "laboratory notebook · one skeleton, two labs"
+COVER_INK_BLUE = "blue pen: Dr. Kiro's words"
+COVER_INK_RED = "red: a rewritten rule, a missed prediction"
+COVER_INK_PENCIL = "pencil: measured values"
+COVER_MISS_HEADING = "a prediction that missed"
+COVER_PREDICTED = "predicted"
+COVER_MEASURED_HEAD = "measured"
+COVER_OUTCOME_HEAD = "outcome"
+COVER_MISSED_STAMP = "missed"
+COVER_STICKY_WHEN = "when "
+COVER_STICKY_PREDICTED = "predicted "
+COVER_RULES_HEAD = "rules that cite it"
+COVER_CAPTION_MOVING = " the whole picture, moving, one cell at a time"
+COVER_CAPTION_MAGNIFIED = " magnified around the body, the cells in reading order"
+COVER_READER_HEADING = "the reader"
+COVER_READER_ABOUT = (
+    "Another Kiro, which never saw the experiments, was given only the spec, only the raw record, "
+    "or nothing, and was asked to carry out this request. "
+    "A run passes when its last trial measures inside the committed ranges."
+)
+COVER_READER = "runs that passed: "
 COVER_READER_OTHER = " "
-COVER_TABS_LABEL = "labs"
-COVER_SESSION_TRIALS = "trials "
 COVER_SESSION_ROWS = "rows "
 COVER_SESSION_NO_TABLE = "no table"
 COVER_ALL_SESSIONS = "all sessions of this lab"
-
 # The lab pages, `<app>.html` (Requirement 14). Every record shows the same fields (14.1, 14.2).
 LAB_TITLE = "Sessions of a lab"
 LAB_HEADING = "Every session of the lab "

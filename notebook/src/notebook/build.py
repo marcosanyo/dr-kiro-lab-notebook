@@ -18,7 +18,19 @@ from pathlib import Path
 
 from bench.scan.scan import Scanner
 
-from notebook import addresses, choices, layouts, readerruns, records, scan, tables, text, views, words
+from notebook import (
+    addresses,
+    choices,
+    layouts,
+    readerrequest,
+    readerruns,
+    records,
+    scan,
+    tables,
+    text,
+    views,
+    words,
+)
 from notebook.choices import Choices, Cover
 from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
@@ -48,6 +60,7 @@ class Checked:
     scanner: Scanner
     allow_fake: bool
     runs: tuple[readerruns.Run, ...]
+    requests: dict[str, readerrequest.Request]
 
 
 @dataclass(frozen=True)
@@ -92,7 +105,8 @@ def check_inputs(inputs: Inputs, *, allow_fake: bool) -> Checked:
     for record in loaded:
         tables.check_end(record)
     runs = tuple(readerruns.load(inputs.sessions))
-    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs)
+    requests = readerrequest.load(inputs.requests, list(runs))
+    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests)
 
 
 # Phase 2
@@ -111,7 +125,11 @@ Pages = Callable[[Model], dict[str, tuple[list[Segment], tuple[PictureFile, ...]
 def _cover(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
     return {
         addresses.COVER: cover.page(
-            list(m.checked.records), m.checked.cover, m.checked.layouts, list(m.checked.runs)
+            list(m.checked.records),
+            m.checked.cover,
+            m.checked.layouts,
+            list(m.checked.runs),
+            m.checked.requests,
         )
     }
 

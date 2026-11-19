@@ -95,6 +95,7 @@ def _parse(path: Path) -> Node:
 def _argv(out: Path) -> list[str]:
     return [
         "--sessions", str(SESSIONS),
+        "--requests", str(ROOT / "build-from-spec" / "requests"),
         "--choices", str(ROOT / "notebook" / "choices"),
         "--layouts", str(ROOT / "notebook" / "layouts.toml"),
         "--words", str(ROOT / "notebook" / "commentary-words.txt"),
@@ -328,6 +329,8 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
     t12 = _trial(loaded["body-2"], "T12")
     miss = cover.find(cls="cover-miss")
     large = miss.find("figure", "photo-large")
+    magnified = miss.find("figure", "photo-magnified")
+    assert "T12" in magnified.find("figcaption").text()
     assert large.find("img").attrs["src"] == f"p/{t12.picture.digest}.png"
     assert (site / f"p/{t12.picture.digest}.png").read_bytes() == t12.picture.data
     assert "T12" in large.find("figcaption").text()
@@ -341,7 +344,9 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
     claim = miss.find(cls="cover-claim")
     assert "H4.P1" in [s.text() for s in claim.find_all("span", "ink-p")]
     assert claim.find("span", "miss").text() == "miss"
-    assert claim.find("span", "miss-value").text() == "-0.2047"
+    # The measured value carries the recorded unit of x, in the list and on the sticky note.
+    assert claim.find("span", "miss-value").text() == "-0.2047 m"
+    assert claim.find("span", "sticky-number").text() == "x -0.2047 m"
 
 
 def test_cover_shows_rows_r4_and_its_replacement_r5(site):
@@ -447,15 +452,20 @@ def test_cover_photo_and_track_are_siblings_in_one_row(site):
     ]
     assert "photo-pair" in children[0].classes and "track" in children[1].classes
     assert children[0].find("figure", "photo-large") is not None
-    # The pair's wrapper is dissolved, so the moving picture, the track and the magnified sheet are cells of
-    # one grid; from 560px the track is in the second column of the moving picture's row.
+    # The wrappers are dissolved (`display: contents`), so the heading, the magnified sheet, the moving
+    # picture, the track, the claim and the rule cards are cells of the one grid of `.cover-miss`: the sheet
+    # across the page, then from 560px the moving picture and the track side by side in one row.
     css = CSS.read_text(encoding="utf-8")
-    assert "display: grid;" in _rule_block(css, ".cover-evidence")
-    assert "display: contents;" in _rule_block(css, ".cover-evidence .photo-pair")
+    assert "display: grid;" in _rule_block(css, ".cover-miss")
+    assert "display: contents;" in _rule_block(css, ".cover-evidence,\n.cover-evidence .photo-pair")
     narrow = css[css.index("@media (min-width: 560px)") :]
+    sheet = _rule_block(narrow, ".cover-evidence .photo-magnified")
+    assert "grid-row: 1;" in sheet or "grid-row: 2;" in sheet
+    moving = _rule_block(narrow, ".cover-evidence .photo-large")
     track = _rule_block(narrow, ".cover-evidence .track")
-    assert "grid-column: 2;" in track and "grid-row: 1;" in track
-    assert "grid-row: 1;" in _rule_block(narrow, ".cover-evidence .photo-large")
+    assert "grid-column: 1;" in moving and "grid-column: 2;" in track
+    row = "grid-row: 3;"
+    assert row in moving and row in track
 
 
 def test_each_lab_panel_labels_its_chosen_trial_directly_above_the_photo(site):

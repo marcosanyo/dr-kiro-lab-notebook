@@ -7,12 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from notebook import choices, ink, layouts, readerruns, records, text, views, words
+from notebook import choices, ink, layouts, readerrequest, readerruns, records, text, views, words
 from notebook.ink import Ink
 from notebook.pages import cover, photo, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
+REQUESTS = ROOT / "build-from-spec" / "requests"
 CHOICES = ROOT / "notebook" / "choices"
 LAYOUTS = ROOT / "notebook" / "layouts.toml"
 WORDS = ROOT / "notebook" / "commentary-words.txt"
@@ -30,7 +31,10 @@ def table() -> dict[str, layouts.Layout]:
 
 @pytest.fixture(scope="module")
 def built(loaded, table):
-    return cover.page(loaded, choices.load_cover(CHOICES, loaded), table, readerruns.load(SESSIONS))
+    runs = readerruns.load(SESSIONS)
+    return cover.page(
+        loaded, choices.load_cover(CHOICES, loaded), table, runs, readerrequest.load(REQUESTS, runs)
+    )
 
 
 def _by_session(loaded, session_id: str) -> records.RecordModel:
@@ -55,8 +59,8 @@ def test_cover_shows_body_2_h4_p1_with_t12_its_track_and_miss(loaded, built) -> 
     assert '<span class="ink-p">H4.P1</span>' in page
     statement = next(h for h in body_2.hypotheses if h.id == "H4").statement.text
     assert f'<span class="ink-k">{statement}</span>' in page
-    assert '<span class="ink-p miss">miss</span>' in page
-    assert re.search(r'<span class="ink-p miss-value">-0\.2047</span>', page)
+    assert '<span class="miss"><span class="ink-p">miss</span></span>' in page
+    assert re.search(r'<span class="miss-value"><span class="ink-p">-0\.2047 m</span></span>', page)
 
 
 def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:
@@ -81,7 +85,7 @@ def test_cover_cards_and_labels(loaded, built) -> None:
     t31 = _trial(_by_session(loaded, "body-2"), "T31")
     wt_t1 = _trial(_by_session(loaded, "wt-004"), "T1")
     # The miss shows its recorded sheet and its magnified picture first (Requirement 7.9), then the cards.
-    assert [p.path for p in pictures[2:]] == [f"p/{t31.picture.digest}.png", f"p/{wt_t1.picture.digest}.png"]
+    assert [p.path for p in pictures[2:]] == [f"p/{wt_t1.picture.digest}.png", f"p/{t31.picture.digest}.png"]
     assert page.count("photo-small") == 2
     assert 'href="body-lab.html"' in page and 'href="wind-tunnel.html"' in page
     assert page.count("chosen by a person") >= 2
@@ -131,4 +135,4 @@ def test_cover_tabs_list_the_ended_sessions_of_each_lab(built) -> None:
     page = ink.join(built[0])[0]
     assert page.count('<input type="radio" name="lab-tab"') == 2
     sessions = re.findall(r'<li class="session-line"><span class="session-id"><a href="([^"]+)"', page)
-    assert sessions == ["body-lab-body-1.html", "body-lab-body-2.html", "wind-tunnel-wt-004.html"]
+    assert sessions == ["wind-tunnel-wt-004.html", "body-lab-body-1.html", "body-lab-body-2.html"]
