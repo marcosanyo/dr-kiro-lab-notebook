@@ -32,7 +32,8 @@ def wt_004() -> records.RecordModel:
 
 def _body(site: Path, record: records.RecordModel) -> list[Node]:
     page = _parse(site / f"{record.application}-{record.session}.html")
-    return [n for n in page.find("tbody").elements() if n.tag == "tr"]
+    # One `tbody.spec-row` per row (a card); the rows of all of them, in table order.
+    return [tr for tbody in page.find_all("tbody") for tr in tbody.elements() if tr.tag == "tr"]
 
 
 def _opened(site: Path, record: records.RecordModel) -> dict[str, Node]:

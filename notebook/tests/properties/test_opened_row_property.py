@@ -199,10 +199,10 @@ def _expected_untried(synth: SynthRecord, cited: tuple[str, ...]) -> list[str]:
 
 def _opened(page: Node) -> list[Node]:
     """The `<details class="evidence">` of each `tr.row-evidence`, in table order, one per drawn row."""
-    (tbody,) = page.all("tbody")
     drawn = 0
     out: list[Node] = []
-    for tr in tbody.elements():
+    # One `tbody.spec-row` per row (a card); their rows in table order.
+    for tr in (tr for tbody in page.all("tbody") for tr in tbody.elements()):
         if tr.attrs.get("id", "").startswith("row-"):
             drawn += 1
         elif "row-evidence" in tr.classes:

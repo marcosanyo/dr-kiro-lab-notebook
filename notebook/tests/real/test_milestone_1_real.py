@@ -203,8 +203,9 @@ def test_body_2_replacing_rows_show_their_reverse_links(site, loaded):
 
 def test_body_2_r13_carries_the_refused_end_note_with_both_messages_in_their_inks(site, loaded):
     record = loaded["body-2"]
-    body = _session_page(site, record).find("tbody")
-    trs = [n for n in body.elements() if n.tag == "tr"]
+    # One `tbody.spec-row` per row (a card); the rows of all of them, in table order.
+    bodies = _session_page(site, record).find_all("tbody")
+    trs = [n for body in bodies for n in body.elements() if n.tag == "tr"]
     notes = [i for i, tr in enumerate(trs) if "row-note" in tr.classes]
     assert len(notes) == 1
     (at,) = notes

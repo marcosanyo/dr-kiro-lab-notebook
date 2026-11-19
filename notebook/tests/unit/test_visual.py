@@ -226,3 +226,44 @@ def test_picture_buttons_are_44px_targets_on_a_phone_or_a_touch_screen():
     block = css[start : css.index("\n}\n", start)]
     assert ".photo-controls button {" in block
     assert "min-width: 44px;" in block and "min-height: 44px;" in block
+
+
+def _declared(selector: str) -> dict[str, str]:
+    """The declarations of every rule that lists `selector` among its comma-separated selectors."""
+    css = CSS.read_text(encoding="utf-8")
+    out: dict[str, str] = {}
+    for sel, body in _rules(css):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector}"
+    return out
+
+
+def test_the_spec_table_header_row_is_clipped_out_of_sight_and_not_removed():
+    head = _declared(".spec-table thead")
+    assert "display" not in head, "display: none would hide the column names from a screen reader"
+    assert head["position"] == "absolute" and head["width"] == "1px" and head["height"] == "1px"
+    assert head["clip-path"] == "inset(50%)" and head["overflow"] == "hidden"
+
+
+def test_each_spec_row_is_a_block_card_and_its_cells_carry_their_header_word_as_a_caption():
+    for tag in (".spec-table tbody", ".spec-table tr", ".spec-table td"):
+        assert _declared(tag)["display"] == "block", tag
+    caption = _declared(".spec-row > tr[id] > td::before")
+    assert caption["content"] == "attr(data-label)"
+    # Two columns of cards only where the margin column leaves room: from 1000px, and by width, not by count.
+    assert _declared(".spec-table")["display"] in {"block", "grid"}
+    assert "repeat(auto-fill," in CSS.read_text(encoding="utf-8")
+
+
+def test_the_strike_through_of_a_rejected_row_leaves_the_status_cell_alone():
+    strike = _declared(".row-rejected td:not(.status)")
+    assert strike["text-decoration"].startswith("line-through")
+
+
+def test_the_replaced_by_arrow_is_a_drawn_shape_because_no_typeface_has_the_arrow_character():
+    css = CSS.read_text(encoding="utf-8")
+    assert "\u2192" not in css and "\\2192" not in css
+    for selector in (".cover-replaced::before", ".spec-row .tab > summary::before"):
+        shape = _declared(selector)
+        assert shape["content"] == '""' and shape["clip-path"].startswith("polygon(")

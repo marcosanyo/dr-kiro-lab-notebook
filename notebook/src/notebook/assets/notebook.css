@@ -387,7 +387,11 @@ h3 {
   text-transform: uppercase;
 }
 
-/* The discovered spec table. */
+/* The discovered spec table. The table stays a table in the HTML (the bench reader's rows, the column names for
+   a screen reader); each row is drawn as a card in the look of the cover's rule cards. One `tbody.spec-row`
+   holds the row, its refused-end note and its opened row, so one card is one tbody. The header row is clipped
+   out of sight, not removed; each cell shows the header word of its column as a small caption
+   (`data-label`). */
 
 .table-box {
   max-width: 100%;
@@ -395,21 +399,136 @@ h3 {
 }
 
 .spec-table {
-  border-collapse: collapse;
+  display: block;
+  position: relative;
   width: 100%;
 }
 
-.spec-table th,
-.spec-table td {
-  padding: var(--space-2);
-  border-bottom: 1px solid var(--rule-line);
-  text-align: left;
-  vertical-align: top;
+.spec-table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-/* The row's own text only: the status cell, whose stamp label is never struck, is left out. */
+.spec-table tbody,
+.spec-table tr,
+.spec-table td {
+  display: block;
+}
+
+.spec-table .spec-row td {
+  padding: 0;
+  border: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+/* The row's own text only: the status cell, whose stamp label is never struck, is left out. The captions
+   are atomic inline boxes, so the line does not run through them either. */
 .row-rejected td:not(.status) {
   text-decoration: line-through 2px var(--graphite);
+}
+
+/* The head line of the card: the row id at the left, the stamp with its label below it at the right; then
+   the rule; then scope, experiments and predictions with small captions; then the line "replaced by". */
+.spec-row > tr[id] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "id status"
+    "rule rule"
+    "scope scope"
+    "experiments predictions"
+    "replaced replaced";
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  align-items: start;
+}
+
+.spec-row td[data-label="id"] {
+  grid-area: id;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+
+.spec-row td[data-label="rule"] {
+  grid-area: rule;
+  line-height: 1.5;
+}
+
+.spec-row td[data-label="scope"] {
+  grid-area: scope;
+}
+
+.spec-row td[data-label="experiments"] {
+  grid-area: experiments;
+}
+
+.spec-row td[data-label="predictions"] {
+  grid-area: predictions;
+}
+
+.spec-row td[data-label="status"] {
+  grid-area: status;
+  justify-self: end;
+  text-align: right;
+}
+
+.spec-row td[data-label="replaced by"] {
+  grid-area: replaced;
+}
+
+.spec-row td.cell-empty {
+  display: none;
+}
+
+.spec-row > tr[id] > td::before {
+  content: attr(data-label);
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 2px;
+  color: var(--ink-commentary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* The id, the rule and the stamp have no caption; the cell with the tab names itself in the tab. */
+.spec-row > tr[id] > td[data-label="id"]::before,
+.spec-row > tr[id] > td[data-label="rule"]::before,
+.spec-row > tr[id] > td[data-label="status"]::before,
+.spec-row > tr[id] > td.has-tab::before {
+  display: none;
+}
+
+.spec-row td[data-label="status"] .stamp {
+  margin-top: 2px;
+}
+
+.spec-row .stamp-label {
+  margin-top: var(--space-1);
+}
+
+/* The line at the bottom of the card, dotted like the cover's. */
+.spec-row td[data-label="replaced by"] {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px dotted var(--card-edge);
+  font-size: 0.9em;
+}
+
+.spec-row.st-rejected td[data-label="replaced by"] {
+  border-top-color: var(--rewrite-red);
 }
 
 .tab {
@@ -421,8 +540,50 @@ h3 {
   text-decoration: none;
 }
 
+/* In a card the tab is the dotted line itself: no tab colour, a drawn arrow in front of its words, and it is
+   an inline box that is as wide as the card, so the strike-through of the row does not run through it. */
+.spec-row .tab {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+
+.spec-row .tab > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.spec-row .tab > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The plain value of that cell is the id the tab names; it stays in the HTML and is read out, and is not drawn
+   twice. */
+.spec-row td.has-tab {
+  position: relative;
+}
+
+.spec-row td.has-tab > .ink-k:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .tab .rule-small {
   font-size: 0.8em;
+}
+
+.spec-row .tab .rule-small {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 1em;
 }
 
 .replaces {
@@ -430,10 +591,29 @@ h3 {
   font-size: 0.85em;
 }
 
-/* The opened row: its own table row below the row, one cell across all columns. Below the row on a
-   narrow screen; from 1000px the opened evidence stands as a panel at the right of the table. */
-.row-evidence > td {
-  padding-top: 0;
+/* The arrow in front of "replaced by", drawn as a shape: none of the bundled typefaces has the arrow
+   character. */
+.cover-replaced::before,
+.spec-row .tab > summary::before {
+  content: "";
+  display: inline-block;
+  width: 1.1em;
+  height: 0.75em;
+  margin-right: 0.45em;
+  vertical-align: -0.05em;
+  background: currentcolor;
+  clip-path: polygon(0 40%, 66% 40%, 66% 10%, 100% 50%, 66% 90%, 66% 60%, 0 60%);
+}
+
+/* The note and the opened row are parts of the card, below its row. */
+.spec-row > .row-note {
+  margin-top: var(--space-2);
+}
+
+.spec-row > .row-evidence {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--card-edge);
 }
 
 .evidence > summary {
@@ -451,6 +631,18 @@ h3 {
 .evidence-list {
   margin: var(--space-2) 0;
   padding-left: var(--space-4);
+}
+
+@media (max-width: 479px) {
+  .spec-row > tr[id] {
+    grid-template-areas:
+      "id status"
+      "rule rule"
+      "scope scope"
+      "experiments experiments"
+      "predictions predictions"
+      "replaced replaced";
+  }
 }
 
 /* Layout: one column; table with margin and side panel from 1000px. */
@@ -796,10 +988,6 @@ h3 {
   padding-top: var(--space-2);
   border-top: 1px dotted var(--rewrite-red);
   font-size: 0.9em;
-}
-
-.cover-replaced::before {
-  content: "→ ";
 }
 
 .cover-replaced .rule-small {
@@ -1219,6 +1407,14 @@ h3 {
   .evidence-body {
     max-width: 40rem;
     margin-left: auto;
+  }
+
+  /* Cards side by side while the column beside the margin leaves room for two of them. */
+  .spec-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+    gap: 0 var(--space-3);
+    align-items: start;
   }
 
   /* The magnified sheet in the left column, the claim card and the sticky note side by side to its right;
