@@ -154,3 +154,18 @@ def test_the_run_band_explanation_is_on_the_page_once_above_the_cards(site):
     _, cards = _cards(site, "body-lab-body-2.html")
     assert len(cards) == 14
     assert all(text.BANDS_INTRO not in c.text() for c in cards)
+
+
+def test_the_band_explanation_is_one_closed_details_and_the_tab_has_no_second_id(site):
+    root, cards = _cards(site, "body-lab-body-2.html")
+    (intro,) = root.find_all("details", "bands-intro")
+    assert "open" not in intro.attrs
+    assert intro.find("summary").text() == text.BANDS_INTRO_SUMMARY
+    assert intro.find("p").text() == text.BANDS_INTRO
+    # R2 is replaced by R1: its tab says so once, in the summary; the rule text is the link to R1 and nothing
+    # (no ", R1") follows it.
+    tab = cards[1].find("details", "tab")
+    assert tab.find("summary").text() == f"{text.REPLACED_BY}R1"
+    (link,) = tab.find_all("a")
+    assert link.attrs["href"] == "#row-R1"
+    assert tab.text() == f"{text.REPLACED_BY}R1{link.text()}"
