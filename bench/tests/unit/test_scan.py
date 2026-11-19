@@ -276,8 +276,8 @@ def test_repository_stop_list_loads() -> None:
         + ("empty", "columns", "rows", "default", "domain")
         # stems of builder-chosen file names that are ordinary words (wind-tunnel Decision 46)
         + ("geometry", "constants", "monitors")
-        # notebook polish pass, approved by the user in chat 2026-11-19 (`ahead = 6.0` of constants.toml)
-        + ("ahead",)
+        # notebook polish pass, approved by the user in chat 2026-11-19 (constants.toml)
+        + ("ahead", "spacing")
     )
 
 

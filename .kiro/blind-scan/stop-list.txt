@@ -89,3 +89,7 @@ monitors
 # words of the committed request build-from-spec/requests/stop-ahead.toml and in the names of its six runs, which the
 # notebook shows. Listing it removes it as a derived term everywhere, as for every word of this list.
 ahead
+# 2026-11-19, notebook polish pass (approved by the user in chat): "spacing". Its source is wind-tunnel/model/constants.toml,
+# line 69: `spacing = 1.0`, in the [picture] section, a setting of the wind tunnel like "ahead". It says nothing about the
+# structure of the body. The notebook stylesheet also uses the CSS property name letter-spacing for its small headings.
+spacing

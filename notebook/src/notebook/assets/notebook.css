@@ -149,7 +149,7 @@ h1 .ink-c {
   font-size: 1em;
 }
 
-/* Every small heading: monospace, small capitals. */
+/* Every small heading: monospace, small capitals, a little letter-spacing. */
 h2 .ink-c,
 h3 .ink-c,
 .cap-heading .ink-c,
@@ -157,6 +157,7 @@ h3 .ink-c,
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -219,6 +220,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -688,6 +690,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -924,6 +927,7 @@ h3 {
 .tab-note .ink-c {
   font-family: var(--font-mono);
   font-size: 1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
