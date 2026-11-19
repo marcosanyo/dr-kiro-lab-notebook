@@ -21,6 +21,7 @@ from bench.scan.scan import Scanner
 from notebook import (
     addresses,
     choices,
+    display,
     layouts,
     readerrequest,
     readerruns,
@@ -36,8 +37,8 @@ from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, markup
 from notebook.inputs import Inputs
 from notebook.layouts import Layout
-from notebook.pages import cover, how, lab, parts, session
-from notebook.pages.photo import PictureFile, Pins
+from notebook.pages import how, legend, parts, shelf
+from notebook.pages.photo import PictureFile
 from notebook.records import RecordModel
 from notebook.site import Site, check_target, write
 from notebook.views import View
@@ -61,6 +62,7 @@ class Checked:
     allow_fake: bool
     runs: tuple[readerruns.Run, ...]
     requests: dict[str, readerrequest.Request]
+    retakes: display.Retakes
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,8 @@ def check_inputs(inputs: Inputs, *, allow_fake: bool) -> Checked:
         tables.check_end(record)
     runs = tuple(readerruns.load(inputs.sessions))
     requests = readerrequest.load(inputs.requests, list(runs))
-    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests)
+    retakes = display.load(inputs.display, list(loaded), table)
+    return Checked(loaded, table, word_list, chosen, cover_file, scanner, allow_fake, runs, requests, retakes)
 
 
 # Phase 2
@@ -122,48 +125,31 @@ def model(checked: Checked) -> Model:
 Pages = Callable[[Model], dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]]
 
 
-def _cover(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {
-        addresses.COVER: cover.page(
-            list(m.checked.records),
-            m.checked.cover,
-            m.checked.layouts,
-            list(m.checked.runs),
-            m.checked.requests,
-        )
-    }
-
-
-def _labs(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {path: (segments, ()) for path, segments in lab.pages(list(m.checked.records)).items()}
+def _shelf(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
+    return shelf.pages(
+        list(m.checked.records),
+        m.checked.choices,
+        m.checked.cover,
+        m.checked.layouts,
+        list(m.checked.runs),
+        m.checked.requests,
+        m.checked.retakes,
+    )
 
 
 def _legend(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {addresses.LEGEND: (lab.legend(), ())}
+    return {addresses.LEGEND: (legend.legend(), ())}
 
 
 def _how(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
     return {addresses.HOW: (how.page(list(m.checked.records)), ())}
 
 
-def _sessions(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    out = {}
-    for record in m.checked.records:
-        layout = layouts.layout_for(m.checked.layouts, record.application, record.name)
-        chosen = m.checked.choices[(record.application, record.session)]
-        path = addresses.session(record.application, record.session, f"{record.name}/log.jsonl line 1")
-        out[path] = session.page(m.views[record.name], chosen, Pins(record, layout))
-    return out
-
-
-# Every page kind of the site, in this order. A later task adds its page kind here (built.html).
-# The replay steps are not in this version (Decision 48): `pages/replay.py` stays in the repository, unbuilt.
+# Every page kind of the site, in this order.
 PAGES: tuple[tuple[str, Pages], ...] = (
-    ("the cover", _cover),
-    ("the lab pages", _labs),
+    ("the shelf and the notebooks", _shelf),
     ("the ink legend", _legend),
     ("how the lab works", _how),
-    ("the session pages", _sessions),
 )
 
 
@@ -204,7 +190,7 @@ def render(m: Model) -> dict[str, bytes]:
         addresses.FONT_LICENSE, (fonts / "LICENSE.txt").read_bytes(), f"{ASSET_SOURCE}/fonts/LICENSE.txt"
     )
     extra = [
-        *scan.choice_segments(m.checked.choices[k] for k in sorted(m.checked.choices)),
+        *scan.choice_segments((m.checked.choices[k] for k in sorted(m.checked.choices)), m.checked.cover),
         *scan.drkiro_word_segments(m.checked.records),
     ]
     joined = scan.check(m.checked.scanner, site.texts(), extra)

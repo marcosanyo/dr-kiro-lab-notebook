@@ -2,6 +2,7 @@
 inclusion: fileMatch
 fileMatchPattern: "notebook/**"
 ---
+> **Superseded in part (2026-11-19):** the page layouts of the cover, the lab page and the session page are replaced by `.kiro/specs/notebook-shelf/`. The inks, the stamps, the photo and the night colours still apply where the new spec does not say otherwise.
 
 # Notebook visual system
 

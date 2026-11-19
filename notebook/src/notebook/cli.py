@@ -40,6 +40,9 @@ def _parser() -> argparse.ArgumentParser:
         help="an application's scan_sources.toml; give one per application",
     )
     parser.add_argument("--stop-list", required=True, type=Path, help="the reviewed stop list")
+    parser.add_argument(
+        "--display", type=Path, default=None, help="a folder of retaken display pictures with a manifest.toml"
+    )
     parser.add_argument("--out", required=True, type=Path, help="the output folder: absent or empty")
     return parser
 
@@ -56,6 +59,7 @@ def parse(argv: list[str]) -> Inputs:
         scan_configs=tuple(args.scan_configs),
         stop_list=args.stop_list,
         out=args.out,
+        display=args.display,
     )
 
 

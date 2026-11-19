@@ -38,6 +38,7 @@ uv run --project notebook notebook-build \
     --scan-config body-lab/adapter/scan_sources.toml \
     --scan-config wind-tunnel/adapter/scan_sources.toml \
     --stop-list .kiro/blind-scan/stop-list.txt \
+    --display notebook/display \
     --out "$out" || exit 1
 echo "view-notebook: built into $out"
 echo "view-notebook: open http://127.0.0.1:$port/  (Ctrl-C stops)"

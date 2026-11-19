@@ -69,6 +69,12 @@ def void(tag: str, attrs: dict[str, str] | None = None) -> list[Segment]:
     return [markup(f"<{tag}{_attributes(attrs or {})}>")]
 
 
+def shape(tag: str, attrs: dict[str, str] | None = None) -> list[Segment]:
+    """An SVG element without content, such as `<circle>`: it has an end tag, because in HTML an open SVG
+    element would hold the elements after it."""
+    return element(tag, attrs, [])
+
+
 def text(segment: Segment, block: bool = False) -> list[Segment]:
     """A text segment in its ink: `<span class="ink-<k>">` inline, `<p class="ink-<k> block-<k>">` for a
     block (`.block-k` in the visual steering). `.ink-k` keeps line breaks (`white-space: pre-wrap`), so Dr.

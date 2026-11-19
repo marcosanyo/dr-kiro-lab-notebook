@@ -78,3 +78,22 @@ def not_measured(value: Any, where: str) -> NotMeasured:
     if not isinstance(reason["text"], str) or not reason["text"]:
         raise NotebookError(where, "the not-measured reason text is not a non-empty string")
     return NotMeasured(outcome=outcome, reason=reason["text"], reason_author=reason["author"])
+
+
+def brief(value: Any, unit: str, where: str, *, signed: bool = False) -> str:
+    """A value for the top of a page: short, never in exponent form, with its unit. Metres under 10 cm are
+    shown in centimetres (3.9 cm), larger ones in metres (0.75 m); degrees are whole numbers from 10 up and
+    have one decimal below; a value with no unit has three decimals (0.993). `signed` puts a + on a gain.
+    The recorded value is shown in full in the opened note (`full`)."""
+    number = float(_number(value, where))
+    if unit == "m":
+        text = f"{number * 100:.1f} cm" if abs(number) < 0.1 else f"{number:.2f} m"
+    elif unit == "deg":
+        text = f"{number:.0f} deg" if abs(number) >= 10 else f"{number:.1f} deg"
+    elif unit == "":
+        text = f"{number:.3f}"
+    else:
+        text = f"{number:.3g} {unit}"
+    if text.startswith("-0.0") and float(text.split()[0]) == 0:
+        text = text[1:]  # a small negative that rounds to zero is not a minus zero
+    return f"+{text}" if signed and number > 0 else text

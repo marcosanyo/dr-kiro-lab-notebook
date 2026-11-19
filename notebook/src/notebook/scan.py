@@ -25,7 +25,7 @@ from bench.scan.levels import AUTHOR_LEVEL, Piece
 from bench.scan.scan import Finding, Scanner
 from bench.scan.terms import ScanError
 
-from notebook.choices import CHOICE_KEYS, Choices
+from notebook.choices import Choices, Cover
 from notebook.errors import NotebookError
 from notebook.ink import SCAN_AUTHOR, Segment, commentary, join, pencil
 from notebook.records import RecordModel
@@ -97,15 +97,22 @@ def file_findings(
     return findings
 
 
-def choice_segments(chosen: Iterable[Choices]) -> list[Segment]:
-    """Every "none" reason of the choice files as a builder-level segment, so each reason is scanned
-    whether or not a page shows it (Requirement 12.8)."""
+def choice_segments(chosen: Iterable[Choices], cover: Cover | None = None) -> list[Segment]:
+    """Every text a person wrote in the choice files and the cover file as a builder-level segment, so each
+    one is scanned whether or not a page shows it (Requirement 12.8)."""
     out: list[Segment] = []
     for choices in chosen:
-        for key in CHOICE_KEYS:
-            choice = getattr(choices, key)
-            if choice.reason is not None:
-                out.append(commentary(choice.reason, choice.source))
+        file = choices.file
+        for key in ("title", "subtitle", "summary", "line", "model", "date"):
+            out.append(commentary(getattr(choices, key), f"{file} key {key}"))
+        for polaroid in choices.polaroids:
+            out.append(commentary(polaroid.heading, f"{polaroid.source} heading"))
+            out.append(commentary(polaroid.words, f"{polaroid.source} words"))
+    if cover is not None:
+        for lab in cover.labs:
+            out.append(commentary(lab.case, f"{lab.source} case"))
+            out.append(commentary(lab.about, f"{lab.source} about"))
+            out.append(commentary(lab.unit, f"{lab.source} unit"))
     return out
 
 

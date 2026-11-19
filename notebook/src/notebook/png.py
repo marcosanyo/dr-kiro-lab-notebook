@@ -128,7 +128,7 @@ def decode(data: bytes, where: str) -> Image:
     return Image(width, height, colour, _unfilter(raw, height, stride, channels, where))
 
 
-def _chunk(kind: bytes, body: bytes) -> bytes:
+def chunk(kind: bytes, body: bytes) -> bytes:
     return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
 
 
@@ -139,4 +139,4 @@ def encode(image: Image) -> bytes:
         raise ValueError(f"{len(image.pixels)} pixel bytes do not fill {image.width} x {image.height}")
     raw = b"".join(b"\x00" + image.pixels[y * stride : (y + 1) * stride] for y in range(image.height))
     header = struct.pack(">IIBBBBB", image.width, image.height, 8, image.colour_type, 0, 0, 0)
-    return SIGNATURE + _chunk(b"IHDR", header) + _chunk(b"IDAT", zlib.compress(raw, 9)) + _chunk(b"IEND", b"")
+    return SIGNATURE + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")

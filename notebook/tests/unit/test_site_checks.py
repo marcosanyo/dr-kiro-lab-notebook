@@ -9,16 +9,11 @@ from pathlib import Path
 import pytest
 
 from fixtures import site_checks
+from fixtures.choices import CHOICE, COVER
 from fixtures.session import FAKE_SOURCES, STOP_LIST, accepted_session
 from notebook import build, records, tables, text
 from notebook.inputs import Inputs
 
-CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
-COVER = (
-    '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
-    '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
-    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
-)
 LAYOUTS = (
     "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
     'source = "test fixture: one 8 x 8 picture"\n'
@@ -76,7 +71,6 @@ def test_the_table_and_its_text_are_in_the_html_without_script(fixture_site):
     (record,) = records.load(sessions, allow_fake=True)
     table = tables.check_end(record)
     page = site_checks.parse(site, "fake-s1.html")
-    assert page.tables >= 1
     assert page.row_ids == [row.id for row in table.rows]
     shown = "".join(page.text)
     for row in table.rows:

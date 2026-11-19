@@ -20,8 +20,6 @@ PAGES = {
     "index.html",
     "legend.html",
     "how.html",
-    "body-lab.html",
-    "wind-tunnel.html",
     "body-lab-body-1.html",
     "body-lab-body-2.html",
     "wind-tunnel-wt-002.html",

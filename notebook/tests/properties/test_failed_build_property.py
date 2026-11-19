@@ -26,6 +26,7 @@ import pytest
 from hypothesis import HealthCheck, event, given, settings
 from hypothesis import strategies as st
 
+from fixtures.choices import CHOICE, COVER
 from fixtures.session import FAKE_SOURCES, STOP_LIST, accepted_session
 from notebook import build, scan, text
 from notebook.errors import NotebookError
@@ -34,12 +35,6 @@ from notebook.site import staging_folder
 
 SETTINGS = settings(max_examples=120, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 
-CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
-COVER = (
-    '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
-    '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
-    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
-)
 # The fake application's picture is 8 x 8 pixels; this layout shows it as one cell.
 SIDE = 8
 LAYOUTS = (
@@ -161,10 +156,10 @@ def bad_layout(rows: int, columns: int, gap: int) -> Corruption:
 
 
 def wrong_choice_id(key: str, bogus: str) -> Corruption:
+    """A polaroid trial or the progress measurement that the record does not hold."""
     values = {
-        "contrast": f'contrast = ["T1", "{bogus}"]\nbest = "T7"\nmissed = "H2.P1"\n',
-        "best": f'contrast = ["T1", "T2"]\nbest = "{bogus}"\nmissed = "H2.P1"\n',
-        "missed": f'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "{bogus}"\n',
+        "polaroid": CHOICE.replace('trial = "T7"', f'trial = "{bogus}"'),
+        "progress": CHOICE.replace('measurement = "distance"', f'measurement = "{bogus}"'),
     }
 
     def apply(root: Path, term: str) -> str:
@@ -176,16 +171,10 @@ def wrong_choice_id(key: str, bogus: str) -> Corruption:
 
 def term_in_reason(key: str) -> Corruption:
     def apply(root: Path, term: str) -> str:
-        lines = {
-            "contrast": 'contrast = ["T1", "T2"]\n',
-            "best": 'best = "T7"\n',
-            "missed": 'missed = "H2.P1"\n',
-        }
-        lines[key] = f'{key} = "none"\n{key}_reason = "test fixture: no {term} was chosen"\n'
-        (root / CHOICE_FILE).write_text("".join(lines.values()))
+        (root / CHOICE_FILE).write_text(CHOICE.replace(f'{key} = "', f'{key} = "test fixture: {term} ', 1))
         return str(root / CHOICE_FILE)
 
-    return Corruption(f"scan term in the {key} reason", apply)
+    return Corruption(f"scan term in the {key}", apply)
 
 
 def term_in_text() -> Corruption:
@@ -206,9 +195,9 @@ corruptions = st.one_of(
     st.tuples(st.integers(1, 4), st.integers(1, 6), st.integers(0, 6))
     .filter(lambda t: not (_divides(SIDE, t[0], t[2]) and _divides(SIDE, t[1], t[2])))
     .map(lambda t: bad_layout(*t)),
-    st.builds(wrong_choice_id, st.sampled_from(["contrast", "best", "missed"]), st.just("T99")),
-    st.builds(wrong_choice_id, st.just("missed"), st.sampled_from(["H9.P9", "H1.P1"])),
-    st.builds(term_in_reason, st.sampled_from(["contrast", "best", "missed"])),
+    st.builds(wrong_choice_id, st.just("polaroid"), st.just("T99")),
+    st.builds(wrong_choice_id, st.just("progress"), st.just("nothing")),
+    st.builds(term_in_reason, st.sampled_from(["title", "subtitle", "summary", "line"])),
     st.just(term_in_text()),
 )
 

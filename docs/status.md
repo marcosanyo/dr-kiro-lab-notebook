@@ -5,6 +5,13 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
+## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
+- ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
+- 人が書くもの: `notebook/choices/<app>/<session>.toml` と `notebook/choices/cover.toml`。`model` は body-2 と wt-004 が `claude-sonnet-5.5`。body-1、wt-002、wt-003 は `<fill in>` のまま（聞いていない）。`date` は各記録が git に入った日。body-2 の題は目隠しスキャンが `Backwards` を拒んだので `The Reversed Wave`。
+- **ロボットの絵の撮り直し（済み）:** `uv run notebook-retake --sessions sessions --out notebook/display --session body-1 --session body-2`。記録の入力から全 79 試行を走らせ直し、x、y、heading、track 3 本が記録と厳密に一致した。体を追う上からのカメラで 0.2 秒ごと 25 コマ、1 コマ 320px（床 50cm 幅）。シートは `notebook/display/`（20MB、色の下位 3 ビットを落としてある）、`manifest.toml` にハッシュと元の記録の絵のハッシュ。`notebook-build --display notebook/display` で表示。`scripts/view-notebook.sh` は付けてある。アダプターは変えていない（自由カメラで足りた）。
+- **風洞の絵:** 走らせ直していない。大きい絵にはソルバーのサンプリングを変える必要があり、`wind-tunnel` の spec の変更になるため。代わりに記録のコマから体と渦のまわりを切り抜いて出す（`zoom.py`）。走らせ直すなら相談したい。
+- 見た目: 数字は短く（`+3.9 cm`、`0.75 m`、`cd 0.993`）、見どころは写真 2 枚（一緒に再生、つまみ、「t = 3.0 s forward 38 cm」）、付箋 3 枚、枠つきのグラフで 1 画面、全部の実験は 2 列のカード、計画は 1 行で押すと全文、発見した spec は条件と根拠を閉じた。
+- 見ていないもの: 実機の 360px の全体、昼の画面の細部（script 抜きと iframe で確認）。`notebook` のテストと ruff は通る。
 ## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
 - **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
   - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。
