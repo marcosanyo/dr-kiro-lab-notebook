@@ -117,3 +117,30 @@ def test_pages_without_a_table_have_no_card(site):
     for page in ("body-lab-body-1.html", "wind-tunnel-wt-002.html", "wind-tunnel-wt-003.html"):
         root = _parse(site / page)
         assert root.find_all("tbody") == [] and root.find_all("table") == []
+
+
+TABLE_ROLES = {
+    "table": "table",
+    "thead": "rowgroup",
+    "tbody": "rowgroup",
+    "tr": "row",
+    "th": "columnheader",
+    "td": "cell",
+}
+
+
+@pytest.mark.parametrize("page", ["body-lab-body-2.html", "wind-tunnel-wt-004.html"])
+def test_every_part_of_the_spec_table_carries_its_aria_role_because_the_cards_are_display_block(site, page):
+    # The stylesheet makes the table parts `display: block`, which drops the table semantics in some
+    # engines; the explicit roles give them back (Requirement 8.14).
+    (table,) = _parse(site / page).find_all("table")
+    seen = {tag: 0 for tag in TABLE_ROLES}
+    for node in table.walk():
+        if node.tag in TABLE_ROLES:
+            assert node.attrs.get("role") == TABLE_ROLES[node.tag], (page, node.tag, node.attrs)
+            seen[node.tag] += 1
+    assert all(count for count in seen.values()), seen
+    # The header row and each card's rows have the roles of a table's, in the nesting a table has.
+    assert [c.attrs["role"] for c in table.elements()[0].elements()[0].elements()] == ["columnheader"] * 7
+    for card in table.find_all("tbody"):
+        assert [tr.attrs["role"] for tr in card.elements()] == ["row"] * len(card.elements())

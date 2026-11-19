@@ -239,6 +239,45 @@ def _declared(selector: str) -> dict[str, str]:
     return out
 
 
+def _wide_block(css: str) -> re.Match[str]:
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    found = list(re.finditer(r"@media \(min-width: 1000px\) \{(.*?)\n\}", css, flags=re.S))
+    assert len(found) == 1
+    return found[0]
+
+
+def _declared_wide(selector: str) -> dict[str, str]:
+    """The declarations of the rules for `selector` inside the `@media (min-width: 1000px)` block only."""
+    out: dict[str, str] = {}
+    for sel, body in _rules(_wide_block(CSS.read_text(encoding="utf-8")).group(1)):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector} from 1000px"
+    return out
+
+
+def _declared_below_wide(selector: str) -> dict[str, str]:
+    """The declarations of the rules for `selector` outside the `@media (min-width: 1000px)` block."""
+    css = re.sub(r"/\*.*?\*/", "", CSS.read_text(encoding="utf-8"), flags=re.S)
+    css = css.replace(_wide_block(css).group(0), "")
+    out: dict[str, str] = {}
+    for sel, body in _rules(css):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector} below 1000px"
+    return out
+
+
+def test_the_cover_top_row_places_its_parts_in_grid_columns_only_when_it_has_a_magnified_sheet():
+    css = CSS.read_text(encoding="utf-8")
+    rules = _rules(_wide_block(css).group(1))
+    placed = [sel for sel, body in rules if re.search(r"grid-(column|row)\s*:", body)]
+    assert sorted(placed) == [".cover-top.with-sheet .cover-claim", ".cover-top.with-sheet .photo-magnified"]
+    assert _declared_wide(".cover-top.with-sheet")["grid-template-columns"].startswith("clamp(")
+    # Nothing places a part of the top row for a top row without a sheet: it keeps its one column.
+    assert not [sel for sel, _ in rules if ".cover-top" in sel and "with-sheet" not in sel]
+
+
 def test_the_spec_table_header_row_is_clipped_out_of_sight_and_not_removed():
     head = _declared(".spec-table thead")
     assert "display" not in head, "display: none would hide the column names from a screen reader"
@@ -251,9 +290,12 @@ def test_each_spec_row_is_a_block_card_and_its_cells_carry_their_header_word_as_
         assert _declared(tag)["display"] == "block", tag
     caption = _declared(".spec-row > tr[id] > td::before")
     assert caption["content"] == "attr(data-label)"
-    # Two columns of cards only where the margin column leaves room: from 1000px, and by width, not by count.
-    assert _declared(".spec-table")["display"] in {"block", "grid"}
-    assert "repeat(auto-fill," in CSS.read_text(encoding="utf-8")
+    # One column of cards below 1000px; two or more only where the margin column leaves room (from 1000px),
+    # and by width, not by count: as many columns as are at least 21rem wide.
+    assert _declared_below_wide(".spec-table")["display"] == "block"
+    wide = _declared_wide(".spec-table")
+    assert wide["display"] == "grid"
+    assert wide["grid-template-columns"] == "repeat(auto-fill, minmax(21rem, 1fr))"
 
 
 def test_the_strike_through_of_a_rejected_row_leaves_the_status_cell_alone():

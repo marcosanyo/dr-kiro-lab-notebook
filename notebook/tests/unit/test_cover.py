@@ -262,16 +262,19 @@ def test_the_tab_of_the_lab_of_the_miss_is_checked_and_the_order_is_the_cover_fi
     assert _radios(page) == [("tab-other", True), ("tab-fake", False)]
 
 
-def test_the_first_tab_is_checked_when_there_is_no_miss_or_no_tab_for_its_lab(record) -> None:
+def test_the_first_tab_is_checked_when_the_cover_file_says_there_is_no_miss(record) -> None:
     labs = LAYOUTS | OTHER_LAYOUT
     both, cover_file = _two_labs(record, None)
     page = _html(cover.page(both, cover_file, labs, [], {})[0])
     assert _radios(page) == [("tab-other", True), ("tab-fake", False)]
-    # A miss whose lab has no tab: the same, the first tab.
+
+
+def test_a_miss_whose_lab_has_no_tab_fails_the_build_and_does_not_fall_back_to_the_first_tab(record) -> None:
+    labs = LAYOUTS | OTHER_LAYOUT
     both, cover_file = _two_labs(record, "H2.P1")
-    elsewhere = replace(cover_file, cards=(cover_file.cards[0],))
-    page = _html(cover.page(both, elsewhere, labs, [], {})[0])
-    assert _radios(page) == [("tab-other", True)]
+    elsewhere = replace(cover_file, cards=(cover_file.cards[0],))  # only the tab of `other`
+    with pytest.raises(NotebookError, match=r"choices/cover\.toml.*H2\.P1.*fake.*no card on the cover"):
+        cover.page(both, elsewhere, labs, [], {})
 
 
 def test_a_cover_with_one_lab_checks_it(record) -> None:
@@ -283,6 +286,16 @@ def _rules_card(page: str) -> str:
     """The text of the rules section, which holds no other section."""
     start = page.index('<section class="cover-rules">')
     return page[start : page.index("</section>", start) + len("</section>")]
+
+
+def test_a_miss_of_a_lab_without_magnified_pictures_has_a_top_row_of_the_claim_only(record) -> None:
+    # The fixture's lab is not a body lab, so the top row has no sheet and does not carry `with-sheet`, which
+    # the stylesheet scopes its two-column grid to.
+    page = _html(cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})[0])
+    top = page[page.index('<section class="cover-top') :]
+    top = top[: top.index(">")]
+    assert top == '<section class="cover-top"'
+    assert "photo-magnified" not in page and "with-sheet" not in page
 
 
 def test_the_details_are_the_last_thing_inside_the_rules_card(record) -> None:
@@ -336,16 +349,14 @@ def test_the_sticky_line_says_below_the_range_and_when_the_value_is_on_the_other
     assert "zero" not in below
 
 
-def test_the_sticky_line_gives_the_recorded_word_when_nothing_was_measured(record) -> None:
-    (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
-    line = _sticky_line(record, replace(outcome, value=None, not_measured="failed"))
-    assert line == "expected distance between 2 and 2.5, not measured: failed"
-
-
-def test_a_miss_whose_value_lies_inside_its_range_fails_the_build(record) -> None:
+def test_a_miss_whose_value_lies_inside_its_range_or_that_has_no_value_fails_the_build(record) -> None:
     (outcome,) = [o for o in record.outcomes if o.prediction == "H2.P1"]
     with pytest.raises(NotebookError, match="inside its range"):
         _sticky_line(record, replace(outcome, value=2.2))
+    # The bench never records a miss without a value (it records not-checkable), so neither a recorded
+    # not-measured reason nor its absence lets the sticky note say anything.
+    with pytest.raises(NotebookError, match="has no measured value"):
+        _sticky_line(record, replace(outcome, value=None, not_measured="failed"))
     with pytest.raises(NotebookError, match="neither a value nor"):
         _sticky_line(record, replace(outcome, value=None, not_measured=None))
 

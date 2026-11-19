@@ -201,8 +201,8 @@ def _happened(
     """One line of what happened, from the record alone: the registered range, then the measured value and
     which side of the range it lies on ("on the other side of zero" when the range lies on one side of zero
     and the value on the other). The record declares no direction for a measurement, so the line says
-    "below" and "above", never "forward" or "back". A not-measured outcome gives the recorded word. A miss
-    whose value lies inside its range is a record the cover cannot explain: the build fails."""
+    "below" and "above", never "forward" or "back". A miss without a value, or with a value inside its
+    range, is a record the bench cannot produce and the cover cannot explain: the build fails."""
     source = _source(record, hypothesis.seq)
     unit = _unit(record, prediction.measurement, where)
     low, high = numbers.short(prediction.low, where), numbers.short(prediction.high, where)
@@ -216,15 +216,8 @@ def _happened(
     ]
     out_source = _source(record, outcome.seq)
     if outcome.value is None:
-        if outcome.not_measured is None:
-            raise NotebookError(
-                out_source, f"the miss of {outcome.prediction} has neither a value nor a not-measured outcome"
-            )
-        return [
-            *line,
-            *say_text("COVER_STICKY_NOT_MEASURED"),
-            *html.text(pencil(outcome.not_measured, out_source)),
-        ]
+        # The bench records a prediction it cannot check as not-checkable, never as a miss.
+        raise NotebookError(out_source, f"the miss of {outcome.prediction} has no measured value")
     value = outcome.value
     if prediction.low <= value <= prediction.high:
         raise NotebookError(out_source, f"the miss of {outcome.prediction} has a value inside its range")
@@ -565,16 +558,23 @@ def _tabs(
     records: list[RecordModel], cover: Cover, layouts: dict[str, Layout]
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The lab tabs: one radio and one label per lab, one panel per lab. Only the checked tab's panel shows,
-    through the stylesheet alone (no script). The tab of the lab of the missed prediction is checked, the
-    first tab when the cover has no missed prediction or no tab belongs to its lab. The order of the tabs
-    is the order of the cover file."""
+    through the stylesheet alone (no script). The tab of the lab of the missed prediction is checked; the
+    first tab is checked when the cover file says "none". A missed prediction whose lab has no tab fails the
+    build. The order of the tabs is the order of the cover file."""
     if not 1 <= len(cover.cards) <= MAX_TABS:
         raise NotebookError(
             "choices/cover.toml", f"the cover has {len(cover.cards)} labs; it shows 1 to {MAX_TABS} tabs"
         )
     opened = 0
     if cover.miss.prediction is not None:
-        opened = next((i for i, c in enumerate(cover.cards) if c.application == cover.miss.application), 0)
+        labs = [c.application for c in cover.cards]
+        if cover.miss.application not in labs:
+            raise NotebookError(
+                "choices/cover.toml",
+                f"the missed prediction {cover.miss.prediction} is in the lab {cover.miss.application}, "
+                "which has no card on the cover",
+            )
+        opened = labs.index(cover.miss.application)
     radios: list[Segment] = []
     labels: list[Segment] = []
     panels: list[Segment] = []

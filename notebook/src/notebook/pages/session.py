@@ -111,7 +111,9 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
     notes = refusals.refused_end_notes(table, view.refusals)
     label = _label(view)
     head = html.element(
-        "tr", None, [s for name in _COLUMNS for s in html.element("th", None, say_text(name))]
+        "tr",
+        {"role": "row"},
+        [s for name in _COLUMNS for s in html.element("th", {"role": "columnheader"}, say_text(name))],
     )
     body: list[Segment] = []
     for rv in tv.rows:
@@ -156,9 +158,12 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         attrs = {"id": row_anchor}
         if rv.struck:
             attrs["class"] = "row-rejected"
+        attrs["role"] = "row"
         # One card per row (`tbody.spec-row`): the row, its refused-end note and its opened row are the card's
         # parts. The status cell is marked so the strike-through of a rejected row leaves its label alone
-        # (visual steering, strike-through). Each cell carries its column's header word as a caption.
+        # (visual steering, strike-through). Each cell carries its column's header word as a caption. The
+        # explicit ARIA roles keep the table semantics in engines that drop them for `display: block` table
+        # parts (Requirement 8.14).
         card = html.element(
             "tr",
             attrs,
@@ -173,23 +178,25 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
         note = notes.get(rv.index)
         if note is not None:
             card += html.element(
-                "tr", {"class": "row-note"}, html.element("td", {"colspan": "7"}, _refused_end(note))
+                "tr",
+                {"class": "row-note", "role": "row"},
+                html.element("td", {"colspan": "7", "role": "cell"}, _refused_end(note)),
             )
         # The opened row (Requirement 8.8): a `<details>` in its own table row, one cell across all columns,
         # so the HTML stays valid and the row itself is still drawn once (8.11).
         card += html.element(
             "tr",
-            {"class": "row-evidence"},
-            html.element("td", {"colspan": "7"}, _evidence(view, snapshot, row)),
+            {"class": "row-evidence", "role": "row"},
+            html.element("td", {"colspan": "7", "role": "cell"}, _evidence(view, snapshot, row)),
         )
         classes = "spec-row rule-card"
         if row.status in STATUSES:
             classes += f" st-{row.status}"
-        body += html.element("tbody", {"class": classes}, card)
+        body += html.element("tbody", {"class": classes, "role": "rowgroup"}, card)
     grid = html.element(
         "table",
-        {"class": "spec-table"},
-        [*html.element("thead", None, head), *body],
+        {"class": "spec-table", "role": "table"},
+        [*html.element("thead", {"role": "rowgroup"}, head), *body],
     )
     return html.element("section", {"class": "table-box"}, grid)
 
@@ -197,7 +204,7 @@ def _table(view: View, snapshot: Snapshot, table: Table) -> list[Segment]:
 def _cell_attrs(caption: str, blank: bool, tabbed: bool) -> dict[str, str]:
     """The attributes of one cell: its caption, and the classes the card needs. `tabbed` is the replaced-by
     cell of a row that has the "replaced by" tab, which names the replacing row itself."""
-    attrs = {"data-label": caption}
+    attrs = {"role": "cell", "data-label": caption}
     is_status = caption == COLUMNS[_STATUS_COLUMN]
     is_tab = tabbed and caption == COLUMNS[-1]
     classes = [c for c, on in (("status", is_status), ("cell-empty", blank), ("has-tab", is_tab)) if on]

@@ -53,7 +53,7 @@ def test_body_1_shows_no_table_and_its_8_misses(loaded, chosen) -> None:
 
 def test_body_2_end_table_rows_tabs_and_note(loaded, chosen) -> None:
     _, page = _section(loaded, chosen, "body-2")
-    rows = re.findall(r'<tr id="row-(R\d+)"( class="row-rejected")?>', page)
+    rows = re.findall(r'<tr id="row-(R\d+)"( class="row-rejected")? role="row">', page)
     assert [r for r, _ in rows] == [f"R{n}" for n in range(1, 15)]
     struck = [r for r, c in rows if c]
     assert struck == ["R2", "R3", "R4", "R6", "R8", "R10", "R12", "R14"]
@@ -63,7 +63,7 @@ def test_body_2_end_table_rows_tabs_and_note(loaded, chosen) -> None:
     assert page.count('class="sticky sticky-stamp"') == 1
     assert escape(text.REFUSED_END_NO_COPY) in page
     # R13 carries the note in the row right after it; the tabs name the replacing rows.
-    assert re.search(r'<tr id="row-R13">.*?</tr><tr class="row-note">', page, re.S)
+    assert re.search(r'<tr id="row-R13" role="row">.*?</tr><tr class="row-note" role="row">', page, re.S)
     tabs = re.findall(r'<details class="tab" open="open">.*?href="#row-(R\d+)"', page, re.S)
     assert tabs == ["R1", "R11", "R5", "R7", "R9", "R11", "R13", "R13"]
     assert page.count(text.CHOSEN_BY_A_PERSON) == 3
@@ -75,7 +75,9 @@ def test_body_2_every_rejected_rows_replaced_by_tab_is_open(loaded, chosen) -> N
     _, page = _section(loaded, chosen, "body-2")
     rejected = [
         (rid, body)
-        for rid, body in re.findall(r'<tr id="row-(R\d+)" class="row-rejected">(.*?)</tr>', page, re.S)
+        for rid, body in re.findall(
+            r'<tr id="row-(R\d+)" class="row-rejected" role="row">(.*?)</tr>', page, re.S
+        )
     ]
     assert [rid for rid, _ in rejected] == ["R2", "R3", "R4", "R6", "R8", "R10", "R12", "R14"]
     for rid, body in rejected:

@@ -61,6 +61,12 @@ def test_every_shown_row_is_one_card_with_its_parts_inside(synth: SynthRecord) -
     cards = root.find_all("tbody")
     assert len(cards) == len(rows)
     assert [th.text() for th in root.find_all("th")] == list(COLUMNS)
+    # Explicit ARIA roles on every part, for engines that drop the table semantics of `display: block`.
+    (table,) = root.find_all("table")
+    assert table.attrs["role"] == "table"
+    for tag, role in (("thead", "rowgroup"), ("tbody", "rowgroup"), ("tr", "row"), ("th", "columnheader")):
+        assert {n.attrs.get("role") for n in root.find_all(tag)} == {role}, tag
+    assert {n.attrs.get("role") for n in root.find_all("td")} == {"cell"}
     for card, row in zip(cards, rows, strict=True):
         assert "spec-row" in card.classes and "rule-card" in card.classes
         assert ("st-" + row.status in card.classes) == (row.status in STATUSES)

@@ -349,8 +349,10 @@ word and its evidence one press away, so that I see what was found and how sure 
     to that row are readable when the table is shown, without a click. THE tab's content and link SHALL be as in 8.3,
     and a visitor MAY close the tab (Decision 49).
 14. THE site SHALL show each row of the table as a card, one block per row, with its stamp, its rule text and its
-    other cells, each of the other cells with the name of its column as a small caption; the row's refused-end note and its opened
-    row (8.8) SHALL be inside the card. THE header row SHALL stay in the HTML and out of sight. THE card of a
+    other cells, each of the other cells with the name of its column as a small caption; the row's refused-end note
+    and its opened row (8.8) SHALL be inside the card. THE header row SHALL stay in the HTML and out of sight. THE
+    table and its parts SHALL carry the ARIA roles `table`, `rowgroup`, `row`, `columnheader` and `cell`, so that a
+    screen reader still reads a table where the browser drops the table semantics of the card layout. THE card of a
     `rejected` row SHALL be in the rewrite red (Decision 51). WHERE the column beside the margin has room for two
     cards, THE cards SHALL stand side by side.
 
@@ -512,11 +514,12 @@ once that the experiment gets the final edit.
    prediction, THEN THE cover SHALL say so.
 3. IF the cover file says "none" for the prediction, THEN THE cover SHALL say that the session has no missed
    prediction, in place of the photo.
-4. BELOW, THE cover SHALL show one tab per lab, in the order of the cover file. THE panel of a tab SHALL show a small
-   moving picture, the trial of which the cover file names, the lab's ended sessions (each with its trial count and
-   the number of rows of its `end` table per status word, or "no table"), and a link to the lab's list of
+4. BELOW, THE cover SHALL show one tab per lab, in the order of the cover file. THE panel of a tab SHALL show a
+   small moving picture, the trial of which the cover file names, the lab's ended sessions (each with its trial
+   count and the number of rows of its `end` table per status word, or "no table"), and a link to the lab's list of
    sessions. Only the panel of the checked tab SHALL show, with no script. WHEN the page is loaded, THE tab of the
-   lab of the missed prediction SHALL be the checked one; IF the cover file says "none", THEN the first tab.
+   lab of the missed prediction SHALL be the checked one; IF the cover file says "none", THEN the first tab. IF the
+   lab of the missed prediction has no tab, THEN THE build SHALL fail, naming the cover file.
 5. THE cover file, `notebook/choices/cover.toml`, SHALL name the session of 13.1 and either a prediction or
    "none", and the session and trial of each lab tab, with the four words of the tab (kicker, title, engine, unit);
    the cover SHALL label the choices "chosen by a person"; and the
@@ -530,22 +533,24 @@ once that the experiment gets the final edit.
    not-measured outcome (Decision 36). THE track SHALL be drawn in a box cropped to the drawing, so that no empty
    band stands above or below it on a narrow screen (Decision 51).
 8. THE sticky note SHALL show the measured value with the name of the measurement and its unit, one sentence of what
-   happened, and the conditions of the prediction, from the record alone: "expected <measurement> between <low>
-   and <high> <unit>, measured <value> <unit>: below the range" (or "above the range"), with ", on the other
-   side of zero" added WHEN the range lies on one side of zero and the value on the other; for a not-measured outcome,
-   "expected <measurement> between <low> and <high> <unit>, not measured: <the recorded reason>". THE sentence
-   SHALL NOT name a direction of travel, because the record declares none, and the build SHALL fail IF the value of
-   a missed prediction lies inside its range.
+   happened, and the conditions of the prediction, from the record alone: "expected <measurement> between <low> and
+   <high> <unit>, measured <value> <unit>: below the range" (or "above the range"), with ", on the other side of
+   zero" added WHEN the range lies on one side of zero and the value on the other. THE sentence SHALL NOT name a
+   direction of travel, because the record declares none, and the build SHALL fail IF a missed prediction has no
+   value or its value lies inside its range, because the bench records neither (a prediction it cannot check is
+   `not-checkable`, not a miss).
 9. THE cover SHALL NOT show a row for the outcome of the missed prediction; the stamp "missed" says it.
 10. THE `<details>` of the cover SHALL be the last part of the card of rules, inside it.
 11. WHERE the build has build-from-spec runs, THE cover SHALL show, after the missed prediction, a section of the
     reader: what the runs were, the committed request in words, and the number of runs that passed per setup, each
     number from the run files.
-12. WHEN the viewport is 1000 CSS pixels wide or wider, THE top row SHALL have two columns, the magnified picture at
-    the left and, at its right, the claim card and the sticky note side by side, and THE row of evidence SHALL
-    follow below the top row, so that the prediction, the measured value and the stamp stand in the first screen
-    with the picture (Decision 51). On a narrow screen the cover SHALL be one column in this order: the claim
-    card, the sticky note, the magnified picture, the moving picture, the track and the card of rules.
+12. WHEN the viewport is 1000 CSS pixels wide or wider and the top row has a magnified picture (13.1), THE top row
+    SHALL have two columns, the magnified picture at the left and, at its right, the claim card and the sticky note
+    side by side; WHERE the top row has no magnified picture, THE claim card and the sticky note SHALL stand side by
+    side in its one column. THE row of evidence SHALL follow below the top row, so that the prediction, the measured
+    value and the stamp stand in the first screen with the picture (Decision 51). On a narrow screen the cover SHALL
+    be one column in this order: the claim card, the sticky note, the magnified picture, the moving picture, the
+    track and the card of rules.
 
 ### Requirement 14: Lab pages and stopped sessions
 

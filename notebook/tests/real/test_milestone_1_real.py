@@ -474,9 +474,9 @@ def test_cover_top_row_holds_the_claim_and_the_magnified_sheet_and_the_row_below
     assert "flex-direction: column;" in _rule_block(css, ".cover-evidence")
     wide = css[css.index("@media (min-width: 1000px)") :]
     assert "grid-template-columns: clamp(" in _rule_block(wide, "  .cover-top.with-sheet")
-    sheet_rule = _rule_block(wide, "  .cover-top .photo-magnified")
+    sheet_rule = _rule_block(wide, "  .cover-top.with-sheet .photo-magnified")
     assert "grid-column: 1;" in sheet_rule and "grid-row: 1;" in sheet_rule
-    claim_rule = _rule_block(wide, "  .cover-top .cover-claim")
+    claim_rule = _rule_block(wide, "  .cover-top.with-sheet .cover-claim")
     assert "grid-column: 2;" in claim_rule and "grid-row: 1;" in claim_rule
     assert "display: flex;" in _rule_block(wide, "  .cover-claim")
     assert "flex-direction: row;" in _rule_block(wide, "  .cover-evidence")

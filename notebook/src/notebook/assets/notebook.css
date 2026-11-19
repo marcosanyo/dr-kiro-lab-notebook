@@ -1418,18 +1418,19 @@ h3 {
   }
 
   /* The magnified sheet in the left column, the claim card and the sticky note side by side to its right;
-     the moving picture and the track in a row below. */
+     the moving picture and the track in a row below. Without a sheet (a lab with no magnified pictures) the
+     claim card and the sticky note take the one column, side by side. */
   .cover-top.with-sheet {
     grid-template-columns: clamp(16rem, 38%, 30rem) minmax(0, 1fr);
   }
 
-  .cover-top .photo-magnified {
+  .cover-top.with-sheet .photo-magnified {
     grid-column: 1;
     grid-row: 1;
     align-self: center;
   }
 
-  .cover-top .cover-claim {
+  .cover-top.with-sheet .cover-claim {
     grid-column: 2;
     grid-row: 1;
   }
