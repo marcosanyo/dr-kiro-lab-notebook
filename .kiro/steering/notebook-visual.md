@@ -12,8 +12,9 @@ below as a CSS custom property on `:root`; pages use the properties and the clas
 
 Which Kiro: the builder writes the pages; visitors read them. Dr. Kiro and the reader never see the notebook.
 
-The site looks like a scientist's paper notebook, not a dashboard. It has one theme and no theme switch
-(Requirement 6.2). The stylesheet bundles three typefaces as files of the site and names them first in each font
+The site looks like a scientist's paper notebook, not a dashboard. It has two palettes of the same notebook, the
+day paper and the night lab (below), chosen by the visitor's system through `prefers-color-scheme` and by nothing
+else: no switch, no script, no stored choice (Requirement 6.2). The stylesheet bundles three typefaces as files of the site and names them first in each font
 stack: Lora (400 and 600, the serif), IBM Plex Mono (400 and 600, the monospace) and Caveat (700, the script of
 the title, the tagline and the tab titles). They are `woff2` files in `notebook/src/notebook/assets/fonts/`, served
 from `a/` with their licence (`a/fonts-license.txt`), and the stylesheet names them without a folder. The system
@@ -32,7 +33,7 @@ site is flat, design N28).
 
 ## Paper
 
-- Background `--paper` `#fbf7ec`.
+- Background `--paper` `#fbf7ec` (day; the night values are in "Night lab").
 - Graph paper: faint lines `--rule-line` `#dfe6ef`, one along the bottom and one along the right edge of each 1.5rem
   tile, drawn with CSS gradients on the body. Text sits on the lines, so every text colour must also reach 4.5:1 on
   `--rule-line`.
@@ -258,6 +259,56 @@ the lab tabs (`.cover-labs`); the footer.
 - With `prefers-reduced-motion: reduce`, a moving picture starts paused on its first cell, and CSS transitions and
   animations are off.
 
+## Night lab (Requirement 6.2)
+
+Under `@media (prefers-color-scheme: dark)` the page is the same notebook on a dark desk under a lamp: warm
+near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim
+yellow. It is not an inversion. The stylesheet has `color-scheme: light dark` on `:root` (so the buttons and the
+scrollbar follow), and one `prefers-color-scheme: dark` block holding a second `:root` with the custom properties
+below and nothing else: no selector, layout or wording changes with the scheme. Without a stated preference the page
+is the day paper. The reader's choice is never stored.
+
+- Every text colour is light and every background dark, so the ink order holds (Dr. Kiro's ink is a pale blue, the
+  pencil a pale graphite, the commentary a warm white), and each ink keeps its own typeface.
+- The rewrite red is a light salmon on a dark red-brown (`--rewrite-bg`); the miss red a light red. The miss red is
+  still only for misses, always with the word "miss" and the MISSED stamp. The stamps keep their four hues,
+  lightened (never red).
+- The recorded pictures (the sheets, the frames, the moving picture, the magnified picture) are shown as recorded.
+  No filter, no inversion, no blend mode touches them. The instant photo's frame (`--photo-frame`) is a dark
+  neutral with a 1px edge (`--photo-edge`, `transparent` by day) so it stands off the desk.
+- The SVG tracks and charts are drawn in `currentColor` and follow the ink they stand in. The decoration too.
+- Motion is the same: `prefers-reduced-motion` is read as before and nothing here moves.
+
+The night values (the custom properties not listed keep their day value; a test reads this list):
+
+- `--paper` night: `#1d1b18`
+- `--rule-line` night: `#2a2d33`
+- `--sticky` night: `#453d1e`
+- `--photo-frame` night: `#2e2b26`
+- `--tab` night: `#2a2620`
+- `--card` night: `#26231f`
+- `--card-edge` night: `#4a4337`
+- `--accent` night: `#e0873a`
+- `--accent-tint` night: `#5a3a17`
+- `--margin-line` night: `#7a3b36`
+- `--rewrite-red` night: `#ff9d92`
+- `--rewrite-bg` night: `#4a2420`
+- `--observed-bg` night: `#2c2e31`
+- `--observed-edge` night: `#8b9199`
+- `--hole` night: `#11100e`
+- `--hole-edge` night: `#3d382f`
+- `--ink-drkiro` night: `#a9c0ff`
+- `--ink-pencil` night: `#d2cdc2`
+- `--ink-commentary` night: `#f1e7d3`
+- `--miss-red` night: `#ff9188`
+- `--stamp-validated` night: `#7fd6a0`
+- `--stamp-partly` night: `#f0c060`
+- `--stamp-observed` night: `#b4c3d6`
+- `--stamp-rejected` night: `#d9aef0`
+- `--pin-brass` night: `#c9a24a`
+- `--graphite` night: `#d2cdc2`
+- `--photo-edge` night: `#4a4337`
+
 ## Contrast pairs (Requirement 4.6)
 
 Every text colour is used on every background below, and every pair reaches at least 4.5:1 by the WCAG formula. A
@@ -267,4 +318,11 @@ is added here first.
 ```
 foreground: --ink-drkiro --ink-pencil --ink-commentary --miss-red --stamp-validated --stamp-partly --stamp-observed --stamp-rejected --rewrite-red
 background: --paper --rule-line --sticky --photo-frame --tab --card --observed-bg --rewrite-bg --accent-tint
+```
+
+The same pairs are checked with the night values:
+
+```
+foreground-dark: --ink-drkiro --ink-pencil --ink-commentary --miss-red --stamp-validated --stamp-partly --stamp-observed --stamp-rejected --rewrite-red
+background-dark: --paper --rule-line --sticky --photo-frame --tab --card --observed-bg --rewrite-bg --accent-tint
 ```

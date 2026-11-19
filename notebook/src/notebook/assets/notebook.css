@@ -1,4 +1,5 @@
-/* Every colour is a custom property on :root (.kiro/steering/notebook-visual.md). The typefaces are files of the
+/* Every colour is a custom property on :root (.kiro/steering/notebook-visual.md); a second :root inside the one
+   `prefers-color-scheme: dark` block below holds the night lab's values and nothing else. The typefaces are files of the
    site itself (a/*.woff2, licences in a/fonts-license.txt); nothing is fetched from elsewhere. */
 
 @font-face {
@@ -42,6 +43,8 @@
 }
 
 :root {
+  color-scheme: light dark;
+
   --paper: #fbf7ec;
   --rule-line: #dfe6ef;
   --sticky: #fff1a8;
@@ -73,6 +76,7 @@
   --pin-brass: #b08d3c;
   --graphite: #3d3d3d;
   --shadow: rgba(43, 33, 24, 0.22);
+  --photo-edge: transparent;
 
   --font-serif: "Lora", ui-serif, Georgia, "Times New Roman", serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -86,6 +90,46 @@
   --space-5: 40px;
 
   --line: 1.5;
+}
+
+/* The night lab: the same notebook under a lamp, chosen by the visitor's system (no switch, no script). Only
+   custom properties change here; the recorded pictures keep their pixels. */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1d1b18;
+    --rule-line: #2a2d33;
+    --sticky: #453d1e;
+    --photo-frame: #2e2b26;
+    --tab: #2a2620;
+    --card: #26231f;
+    --card-edge: #4a4337;
+    --accent: #e0873a;
+    --accent-tint: #5a3a17;
+    --margin-line: #7a3b36;
+    --tape: rgba(196, 160, 72, 0.45);
+    --rewrite-red: #ff9d92;
+    --rewrite-bg: #4a2420;
+    --observed-bg: #2c2e31;
+    --observed-edge: #8b9199;
+    --hole: #11100e;
+    --hole-edge: #3d382f;
+
+    --ink-drkiro: #a9c0ff;
+    --ink-pencil: #d2cdc2;
+    --ink-commentary: #f1e7d3;
+    --miss-red: #ff9188;
+
+    --stamp-validated: #7fd6a0;
+    --stamp-partly: #f0c060;
+    --stamp-observed: #b4c3d6;
+    --stamp-rejected: #d9aef0;
+
+    --pin-brass: #c9a24a;
+    --graphite: #d2cdc2;
+    --shadow: rgba(0, 0, 0, 0.6);
+    --photo-edge: #4a4337;
+  }
 }
 
 *,
@@ -287,7 +331,9 @@ h3 {
   margin: var(--space-4) var(--space-2);
   padding: 8px 8px 28px;
   background: var(--photo-frame);
-  box-shadow: 0 2px 6px var(--shadow);
+  box-shadow:
+    0 2px 6px var(--shadow),
+    0 0 0 1px var(--photo-edge);
 }
 
 .photo::before {

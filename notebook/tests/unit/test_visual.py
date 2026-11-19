@@ -60,14 +60,36 @@ def _declarations(body: str) -> dict[str, str]:
     return out
 
 
+DARK_QUERY = "@media (prefers-color-scheme: dark) {"
+
+
+def _dark_block(css: str) -> str:
+    """The body of the one `prefers-color-scheme: dark` block (the night lab's custom properties)."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    assert css.count(DARK_QUERY) == 1
+    start = css.index(DARK_QUERY) + len(DARK_QUERY)
+    depth, j = 1, start
+    while depth:
+        depth += {"{": 1, "}": -1}.get(css[j], 0)
+        j += 1
+    return css[start : j - 1]
+
+
 def _custom_properties() -> dict[str, str]:
-    roots = [
-        _declarations(body)
-        for selector, body in _rules(CSS.read_text(encoding="utf-8"))
-        if selector == ":root"
-    ]
+    """The day values: the one `:root` rule outside the dark block."""
+    css = CSS.read_text(encoding="utf-8")
+    css = css.replace(_dark_block(css), "")
+    roots = [_declarations(body) for selector, body in _rules(css) if selector == ":root"]
     assert len(roots) == 1
     return {k: v for k, v in roots[0].items() if k.startswith("--")}
+
+
+def _dark_properties() -> dict[str, str]:
+    """The night values: every custom property of the day palette, overridden where the night lab differs."""
+    rules = _rules(_dark_block(CSS.read_text(encoding="utf-8")))
+    assert [selector for selector, _ in rules] == [":root"], "the dark block holds one :root rule only"
+    night = {k: v for k, v in _declarations(rules[0][1]).items() if k.startswith("--")}
+    return {**_custom_properties(), **night}
 
 
 def _steering_pairs() -> list[tuple[str, str]]:
@@ -75,6 +97,14 @@ def _steering_pairs() -> list[tuple[str, str]]:
     fg = re.findall(r"^foreground:(.*)$", text, flags=re.M)
     bg = re.findall(r"^background:(.*)$", text, flags=re.M)
     assert len(fg) == 1 and len(bg) == 1, "the steering file names one foreground and one background list"
+    return [(f, b) for f in fg[0].split() for b in bg[0].split()]
+
+
+def _steering_dark_pairs() -> list[tuple[str, str]]:
+    text = STEERING.read_text(encoding="utf-8")
+    fg = re.findall(r"^foreground-dark:(.*)$", text, flags=re.M)
+    bg = re.findall(r"^background-dark:(.*)$", text, flags=re.M)
+    assert len(fg) == 1 and len(bg) == 1, "the steering file names one dark foreground and background list"
     return [(f, b) for f in fg[0].split() for b in bg[0].split()]
 
 
@@ -101,6 +131,47 @@ def test_every_named_pair_reaches_4_5(pair):
     fg, bg = pair
     assert fg in properties and bg in properties, f"{fg} or {bg} is not a custom property in notebook.css"
     assert contrast(properties[fg], properties[bg]) >= 4.5
+
+
+@pytest.mark.parametrize("pair", _steering_dark_pairs(), ids=lambda p: f"night {p[0]} on {p[1]}")
+def test_every_named_pair_reaches_4_5_in_the_night_lab(pair):
+    properties = _dark_properties()
+    fg, bg = pair
+    assert fg in properties and bg in properties, f"{fg} or {bg} is not a custom property in notebook.css"
+    assert contrast(properties[fg], properties[bg]) >= 4.5
+
+
+def test_the_night_lab_covers_the_same_text_pairs_as_the_day():
+    assert _steering_dark_pairs() == _steering_pairs()
+
+
+def test_the_night_lab_values_equal_the_steering_values():
+    night = _dark_properties()
+    named = re.findall(r"`(--[a-z0-9-]+)` night: `(#[0-9a-f]{6})`", STEERING.read_text(encoding="utf-8"))
+    assert named
+    for name, value in named:
+        assert night.get(name) == value, name
+    # Every custom property the dark block changes is named in the steering file.
+    block = _declarations(_rules(_dark_block(CSS.read_text(encoding="utf-8")))[0][1])
+    changed = {k for k, v in block.items() if k.startswith("--") and v.startswith("#")}
+    assert changed <= {name for name, _ in named}, changed - {name for name, _ in named}
+
+
+def test_the_night_lab_changes_only_colours_and_defines_each_one_the_day_defines():
+    day, night = _custom_properties(), _dark_properties()
+    block = _declarations(_rules(_dark_block(CSS.read_text(encoding="utf-8")))[0][1])
+    assert all(name in day for name in block), [n for n in block if n not in day]
+    assert all(re.fullmatch(r"#[0-9a-f]{6}|rgba?\([0-9., ]+\)", v) for v in block.values())
+    # The ink colours stay four different words of the lab: no two inks share a colour at night.
+    assert len({night[k] for k in ("--ink-drkiro", "--ink-pencil", "--ink-commentary")}) == 3
+
+
+def test_the_page_follows_the_system_colour_scheme_with_no_switch_and_no_script():
+    css = CSS.read_text(encoding="utf-8")
+    assert "color-scheme: light dark;" in css
+    assert "prefers-color-scheme: light" not in css
+    script = SCRIPT.read_text(encoding="utf-8")
+    assert "prefers-color-scheme" not in script and "localStorage" not in script
 
 
 def test_steering_colours_equal_the_css_values():
