@@ -9,15 +9,19 @@ for byte as `p/<sha256>.png` (Requirement 7.7); `picture_file` gives its path an
 
 import hashlib
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from bench.core import ids
 
 from notebook import addresses, html, magnify, text
 from notebook.errors import NotebookError
-from notebook.ink import Segment, pencil
+from notebook.ink import Segment, markup, pencil
 from notebook.layouts import Layout, check_sheet
 from notebook.pages.parts import say_text
 from notebook.records import RecordModel, Trial
+
+if TYPE_CHECKING:
+    from notebook.display import Retake
 
 # The tilt class of a photo comes from the trial number: `.tilt-<n mod 5>` (visual steering, instant photo).
 TILTS = 5
@@ -97,7 +101,7 @@ def figures(
     trial_word: bool = True,
     magnified: bool = True,
     captions: tuple[str, str, str] | None = None,
-    retake: PictureFile | None = None,
+    retake: "Retake | None" = None,
 ) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
     """The moving picture of one trial, its magnified picture and the picture files: the recorded sheet,
     then the magnified picture when there is one. A body-lab trial with a magnified picture has that one
@@ -120,16 +124,24 @@ def figures(
     has_magnified = magnified and body_lab
     if has_magnified:
         # A retaken display picture (`display.py`) takes the place of the magnified one; it has no gap.
-        enlarged = retake or magnified_file(record, trial, layout, cells.width, cells.height)
+        if retake is not None:
+            enlarged = PictureFile(retake.path, retake.data)
+            near = (retake.columns, retake.rows, retake.interval)
+        else:
+            enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
+            near = (layout.columns, layout.rows, layout.interval)
         enlarged_width, enlarged_height = _image_size(enlarged.data)
-        enlarged_cell_width = enlarged_width // layout.columns
-        enlarged_cell_height = enlarged_height // layout.rows
+        enlarged_cell_width = enlarged_width // near[0]
+        enlarged_cell_height = enlarged_height // near[1]
         # The whole picture is not on the page. Its sheet is named here and the script swaps it in at the
         # place of the magnified picture, when its control is pressed (visual steering, "Magnified picture").
         # Without the script the magnified picture shows its first cell.
         swap_attrs = {
-            **_motion_attrs(layout, enlarged_cell_width, enlarged_cell_height, gap=0),
+            **_motion_attrs(near[0], near[1], 0, enlarged_cell_width, enlarged_cell_height, near[2]),
             "data-whole-src": picture.path,
+            "data-whole-columns": str(layout.columns),
+            "data-whole-rows": str(layout.rows),
+            "data-whole-interval": str(layout.interval),
             "data-whole-gap": str(layout.gap),
             "data-whole-tile-width": str(cells.width),
             "data-whole-tile-height": str(cells.height),
@@ -164,10 +176,20 @@ def figures(
         enlarged_figure = html.element(
             "figure",
             {"class": enlarged_classes, **swap_attrs},
-            [*enlarged_img, *html.element("figcaption", None, [*enlarged_caption, *_controls(_SWAP)])],
+            [
+                *enlarged_img,
+                *html.element(
+                    "figcaption",
+                    None,
+                    [*enlarged_caption, *_controls(_SWAP), *(_clock(retake, source) if retake else [])],
+                ),
+            ],
         )
         return [], enlarged_figure, [picture, enlarged]
-    attrs = {"class": classes, **_motion_attrs(layout, cells.width, cells.height)}
+    attrs = {
+        "class": classes,
+        **_motion_attrs(layout.columns, layout.rows, layout.gap, cells.width, cells.height, layout.interval),
+    }
     if body_lab:
         # A lab card: the first cell, never the sheet side by side; it moves when play is pressed.
         attrs["data-start"] = "first"
@@ -186,19 +208,38 @@ def figures(
 
 
 def _motion_attrs(
-    layout: Layout, tile_width: int, tile_height: int, gap: int | None = None
+    columns: int, rows: int, gap: int, tile_width: int, tile_height: int, interval: int
 ) -> dict[str, str]:
     """The layout of a sheet for the script: it draws one cell at a time, each for `data-interval` ms."""
     return {
-        "data-columns": str(layout.columns),
-        "data-rows": str(layout.rows),
-        "data-gap": str(layout.gap if gap is None else gap),
+        "data-columns": str(columns),
+        "data-rows": str(rows),
+        "data-gap": str(gap),
         # "tile", not "cell": the two-word form with "cell" is a forbidden term of the blind scan, and these
         # attributes and the script that reads them are builder-level text of the site.
         "data-tile-width": str(tile_width),
         "data-tile-height": str(tile_height),
-        "data-interval": str(layout.interval),
+        "data-interval": str(interval),
     }
+
+
+def _clock(retake: "Retake", source: str) -> list[Segment]:
+    """One line per cell of a retaken picture, "t = 3.0 s forward 38 cm", from the recorded track. The script
+    shows the line of the cell on view; without it the last line shows."""
+    last = len(retake.positions) - 1
+    lines: list[Segment] = []
+    for k, position in enumerate(retake.positions):
+        cm = round(position * 100)
+        words = "CLOCK_AT" if cm == 0 else "CLOCK_FORWARD" if cm > 0 else "CLOCK_BACK"
+        pieces = [*html.text(pencil(f"t = {retake.frame_seconds * (k + 1):.1f} s", source)), markup(" ")]
+        pieces += say_text(words)
+        if cm != 0:
+            pieces += html.text(pencil(f"{abs(cm)} cm", source))
+        attrs = {"class": "reel-clock", "data-frame": str(k)}
+        if k != last:
+            attrs["hidden"] = "hidden"
+        lines += html.element("span", attrs, pieces)
+    return lines
 
 
 def _controls(actions: tuple[str, ...]) -> list[Segment]:
@@ -221,7 +262,7 @@ def photo(
     trial_word: bool = True,
     magnified: bool = True,
     captions: tuple[str, str, str] | None = None,
-    retake: PictureFile | None = None,
+    retake: "Retake | None" = None,
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The instant photo of one trial and the picture files it shows (see `figures` for the arguments).
 

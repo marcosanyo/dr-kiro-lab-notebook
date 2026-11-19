@@ -1,0 +1,1184 @@
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T1"
+file = "body-1-T1.png"
+sha256 = "8352b3a3763f6a0896a4e52fb2ffd7722dd8a954240dc3bcff6436451a47c1c6"
+source_picture = "5f87fe2ee5524eb942c7a9d5620c77c716edbb3ba9815540c29682e078f02867"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.00965, x = 4.441e-05, y = -1.611e-05}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T2"
+file = "body-1-T2.png"
+sha256 = "8c820a91f3a6edcea8bbf78de48e1e39b479de12cc6569f71f7c3cfed21f6ece"
+source_picture = "05b1c82d0588d9432bb3075c9921eadf679afd3f220bb45c599e4467e19440db"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 39.18, x = -0.2295, y = 0.0111}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T3"
+file = "body-1-T3.png"
+sha256 = "4c90566d8cae1a63f1190f46df54962b8f5eae48f3eb43eab94b2e07b27e13f8"
+source_picture = "77aa76c12208193953c65fc257e8eb999eb38fb9dc227f98bb1dc23a567f3690"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -0.2196, x = -0.03469, y = 0.000265}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T4"
+file = "body-1-T4.png"
+sha256 = "598a31ca476003c9621646ca64f883fea8edc11577a3b81e72986f7a3e5b1b56"
+source_picture = "f25c9015be0909b4d4d42ef6f27974b7127c5b6c8cec2d7f410e9193f58ee922"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -2.922, x = -0.006048, y = -0.009531}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T5"
+file = "body-1-T5.png"
+sha256 = "5a1368c4180e40f361a4086820bd7ed030d9b04de2b4eff09bd9552e45609232"
+source_picture = "4ac855ea1a579ae459bd1cd514e03600c52893fdc56327f4b0b4be0345426235"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -1.162, x = -0.006891, y = -0.0006312}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T6"
+file = "body-1-T6.png"
+sha256 = "4aa8148750c733dd7a3c05eb59bd372df6e4889c227fe04e7c8b8529d0eae1ce"
+source_picture = "86d9c983f3a6c22d58402a3cf1ca7693b2f387f2040d13b2c7e5330be48d104f"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -34.96, x = 0.1125, y = 0.02671}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T7"
+file = "body-1-T7.png"
+sha256 = "777c47809c4f6baf62a8e35472f4431d0add103bc0b7cb2b1bf7686b8c54280a"
+source_picture = "a105edbc633dc0d26e8e84630634ed45f26e936afe0049e5588f1fae68aeb274"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.01644, x = 6.657e-05, y = -1.509e-05}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T8"
+file = "body-1-T8.png"
+sha256 = "f4bfc84c33a5adcf3bc9005b3a47ae0bef9cb56cc9752b6cae2aa9f9cd5e514d"
+source_picture = "38e8b6505744bac5ca1459f70da6de30e22becdf01d6d3f218f15146e4abcdbc"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.5126, x = 0.01808, y = 0.0004885}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T9"
+file = "body-1-T9.png"
+sha256 = "dee51ca53bcf599d31915e45c248947e0442c0e92991ddd6fe6b8523184d2c84"
+source_picture = "551ab4bd35b8ca8b2e8fd161f1d526207b59dc59d0aae3d6f00cfbcc1bd7f125"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 30.44, x = 0.005509, y = 0.02606}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T10"
+file = "body-1-T10.png"
+sha256 = "42acd208aa12aab34d61f6e91d100ffa50e9b081130cc5a7a4521fd901527914"
+source_picture = "1c9026336c7c02903a574fcec0d32429b6e36ebe7cad9b77a0a70ff44c4ce4db"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -59.55, x = -0.1243, y = -0.02059}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T11"
+file = "body-1-T11.png"
+sha256 = "855223eb82ca24324d792d6e69b3394edc9a6cb0695db0e418311979f25abef5"
+source_picture = "311b4a35ceb94393dc5b9ae888668bef5b141aa72c7f463c8debe6945f690024"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 123.5, x = -0.09633, y = 0.02052}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T12"
+file = "body-1-T12.png"
+sha256 = "48ddc9c0225d8900735c3674de784596a198f186110f78a1fff30af5d2cd485b"
+source_picture = "2dcbe055d193a1577bb91616a1ff1405239a9bec01fba131182003ba4c8e65c2"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 82.37, x = 0.1193, y = 0.1053}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T13"
+file = "body-1-T13.png"
+sha256 = "8d7dae19eb2ddc29748bd475f221abfd62740f50acaa7f462fad676f18bfced0"
+source_picture = "50d74b92248213c80d227b9ac9b5f7dfc5c756803045b456bcc9998ab6be5e36"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -4.242, x = -0.1114, y = 0.003235}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T14"
+file = "body-1-T14.png"
+sha256 = "34ce79c6c7e80636c338c59995f350956ee22bdb45c9624f92e323b57897f97e"
+source_picture = "2a44350cd76cd41e6a2775fb6db738cafc90a988c4a0880aedce35b837a44ee4"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -15.12, x = 0.2101, y = -0.08496}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T15"
+file = "body-1-T15.png"
+sha256 = "2e522f15012716453e219d21b07026c7441b4875b6fa4f91d1b6e3d665d1915c"
+source_picture = "1ffcdba7c052e08ea5568431066de4cf23b9541ceaaebc215e4ea3eaaec32fcd"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -12.83, x = 0.1577, y = -0.02525}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T16"
+file = "body-1-T16.png"
+sha256 = "94b9b48010e810034e42a7dc61edc6f02c6b1a90e7d6edfe40b235f3d6f0bc5c"
+source_picture = "dd9ebc6e7f4b51a4be9b3e0c2ad54a2c30f6a47d5c27f0c0954de3e2e560a480"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -10.26, x = 0.004996, y = -0.001093}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T17"
+file = "body-1-T17.png"
+sha256 = "559c94bc959eff5082915e9fb73ccb3c5edc4cbccaeb7788efa3e0e789a3c222"
+source_picture = "7c8597ccff7bf6fa453bee5da0453f15e0e6c1ef31f95a2ab57a241ee7bb49ca"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -7.513, x = 0.01188, y = -0.002656}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T18"
+file = "body-1-T18.png"
+sha256 = "bcfe1dab0d20a11a63c30d32e5996fc9db63510b89f9da1681020a88509586cc"
+source_picture = "28e2b3fc0112155d9b5a3ee60f8e6f16a578d29125a0d0c1b42f24ea3abd5067"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -23.26, x = -0.0303, y = 0.008081}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T19"
+file = "body-1-T19.png"
+sha256 = "0fcd4dbac032af12df97db5138034b5f9004e378b8f10a679c3e990e529d4594"
+source_picture = "81d072c3c1d5c4a663d3949d757b724b125539f38cc204b20e3d5a4cc8def4fc"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 81.76, x = -0.01623, y = 0.08565}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T20"
+file = "body-1-T20.png"
+sha256 = "ff53cd54025ee5a596a0bdc1bec6f8f547b522d14f6c5e3fd64f116e674832e0"
+source_picture = "b72d1b1391635416e0fb21525cef385a3033751b98be1a70dfc97a6d92b233ea"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -14.97, x = 0.03863, y = 0.06651}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T21"
+file = "body-1-T21.png"
+sha256 = "2a1fca2edb49684aadbad9570341584d892392341478e6e6d7fe714cf4f292bf"
+source_picture = "c5e702a7cbfea2184dd3650a40610ce05fe227664638ab9a58da50ad6c1bc92a"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 66.92, x = 0.278, y = 0.3119}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T22"
+file = "body-1-T22.png"
+sha256 = "689d74b93ae13314d3eda0c8fdafcf2990f47740861fce24fb06d00b3822a734"
+source_picture = "7ae3bd05f8cfeb4a28e730d887c927538794cce6375233ad3e7b436b7a418416"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -1.175, x = 0.2313, y = -0.02397}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T23"
+file = "body-1-T23.png"
+sha256 = "07dbc5023337a151d7cf1c1eb67f6e0a9e8e4c97e88030181068564f1394793a"
+source_picture = "24d0cc884f24440eba3d9608fd693f54847980a36dceac8e7ed2eca614ac281c"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 34.3, x = 0.07609, y = 0.08776}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T24"
+file = "body-1-T24.png"
+sha256 = "c9345b4ea820e0b9807708219dce97db70e54a9489be5513ebff9392a9cd8a7b"
+source_picture = "383921c3e3801324da95b71cdf4d0165661fcb1499553edcf0a34dafbec53260"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 18.15, x = -0.01512, y = 0.104}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T25"
+file = "body-1-T25.png"
+sha256 = "1c59083cab48d93d04a76888d02abd911c6d111b55101f88a9f287a694ea96a5"
+source_picture = "0b0c2f7261c7f11236f95a81e9479dbcfd9af5dee124f8e76b564b2dd4b7d6b3"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 76.88, x = 0.2134, y = 0.2356}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T26"
+file = "body-1-T26.png"
+sha256 = "3f5964e688b6802a455799cccdf0f37a5f176c8bc847bdc703f63d8911d8b290"
+source_picture = "ec1e37f5bb8f8ec44df81f7a85126d96a5fd5405e3e8af0e2eea2ee1b9c346bb"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 6.782, x = 0.3134, y = -0.00963}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T27"
+file = "body-1-T27.png"
+sha256 = "ce92f94f7cd394040b9f88f6ef238237f6490d8f0eb4dc34e05aa6405800991a"
+source_picture = "0eb15c81df6ae6195b36e61756b1cee250a07ca065bb06dd32a8199f53f332c1"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 69.03, x = 0.2237, y = 0.2398}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T28"
+file = "body-1-T28.png"
+sha256 = "fe679857569f5a6b0284834cafca8e6168910bb3f87350bc78044ae146e96b7d"
+source_picture = "f7b2b64aec2044f082278a0f74bd81f160f447867d584cc4ef28756253846b74"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 31.9, x = 0.3332, y = 0.09881}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T29"
+file = "body-1-T29.png"
+sha256 = "88c80af43e3a66a0baa7667ec1789b7e9e9dac07ec8566aec273bb0f8b60bf6d"
+source_picture = "341dfd8e73749d3c1a24d9be8ff2c427137ca6723b437dfd9158d9364034d31b"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -56.36, x = 0.1133, y = -0.1042}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T30"
+file = "body-1-T30.png"
+sha256 = "dacd4c2eaae057eca37375272a5310e098587badc65c0906b27cc9faf73aaaf1"
+source_picture = "93aa966e40598b4670269df30278ef9ef0cec7deac82436459894f5da9259794"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -135.6, x = -0.0444, y = 0.01397}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T31"
+file = "body-1-T31.png"
+sha256 = "9b73fe8a3dd35a2a090b67865fe21ccb37b80a9e6725424b4ba3aec8c3f91df8"
+source_picture = "a8ae1502d0c1ba538909c9a64aa01346a9a9802fdee40621b059890116fda0d7"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -40.81, x = 0.1278, y = -0.1071}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T32"
+file = "body-1-T32.png"
+sha256 = "4fffb8005db5502d630a319a82b806c4499d733cd58c03fbda14618780b904fe"
+source_picture = "f1cc8317f74cdcb71ef0dbe3331fb5f3a269c80e3840604f0e6c6a7f3f6a94eb"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -63.37, x = -0.02188, y = -0.007514}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T33"
+file = "body-1-T33.png"
+sha256 = "e8b9ae44f600f14e57e86f1bca10c16fb330404dc18d1c320d7a0afc765706c4"
+source_picture = "ae526a177a7251b3f06f9a85f4ec28f04b79893344363d8cb35f71f6cda3c8f6"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -113.5, x = -0.05468, y = -0.02269}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T34"
+file = "body-1-T34.png"
+sha256 = "45f39d5da47fef1e4df6c80d2b72628b7bf85d86af607ad7c2896c8fa3cbe33b"
+source_picture = "5442f2fc91189cdc613ec2ea39769da2c844c5ccb44482f121803ef930a3a6ec"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -42.11, x = 0.3591, y = -0.1784}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T35"
+file = "body-1-T35.png"
+sha256 = "d2320cfa1a149ea7499f1a04be558df09cf7963074b0043198e5902b6e5caf62"
+source_picture = "375fb86a82557c00b9426a3f55ec5b9067772dcd64fe9c62cb206673b762da11"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -57.53, x = 0.5345, y = -0.3398}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T36"
+file = "body-1-T36.png"
+sha256 = "dd26e376bd0d228da97175d59c41da20a5b9e0ef9b3d70e32bea3ac65ddd791e"
+source_picture = "f40483c34f9b19b6008e7227d9d6e26d7540e8e80a40ce2c578a9614125848b1"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 3.05, x = 0.3214, y = -0.04048}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T37"
+file = "body-1-T37.png"
+sha256 = "cea97d632b8e5e324f517574919cf16db6e6b2e29cb7d1b38e964af043717a26"
+source_picture = "1a0d707f3c02a8837b24aa321e2848bc5948cd2da3068e2be2f655c0339bc44f"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -33.59, x = 0.6206, y = -0.2513}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T38"
+file = "body-1-T38.png"
+sha256 = "59351665293dcc9455bf353f1f9ddc393a3d6ecc71174d438800d9cec2ad815a"
+source_picture = "26b233f402422a686607372170a22e9c92fbeb9dfe05ffc4384202fedc393922"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -54.84, x = 0.5248, y = -0.3248}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T39"
+file = "body-1-T39.png"
+sha256 = "81e50118a044179422d3425bc58db0d426f1300eeef3912c6d376387be35e020"
+source_picture = "3277be606c7a108bd4fb6adb4e0f62886f1907a1a4f5423345e454d61de0eeee"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -61.37, x = 0.6596, y = -0.4769}
+
+[[retake]]
+application = "body-lab"
+session = "body-1"
+trial = "T40"
+file = "body-1-T40.png"
+sha256 = "a9dd04ff4bcb0fb415e785da0004dc43be46a1d0a465f8cc3528e56cfcb01b6f"
+source_picture = "fc33d4446987aeb8423a049d40c01e4a0e33c166c5fa40065a3e65b1accbce5a"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -84.61, x = 0.5562, y = -0.469}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T1"
+file = "body-2-T1.png"
+sha256 = "51022cd72c893f2607b61a933186b4f76e5a991b6766396385972e1708639082"
+source_picture = "17826ca119af2b31df2daedf1c2d616af55bc57f104d21c50d1a1a83da53509a"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.008765, x = 4.763e-05, y = -2.136e-05}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T2"
+file = "body-2-T2.png"
+sha256 = "8352b3a3763f6a0896a4e52fb2ffd7722dd8a954240dc3bcff6436451a47c1c6"
+source_picture = "5f87fe2ee5524eb942c7a9d5620c77c716edbb3ba9815540c29682e078f02867"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.00965, x = 4.441e-05, y = -1.611e-05}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T3"
+file = "body-2-T3.png"
+sha256 = "8c820a91f3a6edcea8bbf78de48e1e39b479de12cc6569f71f7c3cfed21f6ece"
+source_picture = "05b1c82d0588d9432bb3075c9921eadf679afd3f220bb45c599e4467e19440db"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 39.18, x = -0.2295, y = 0.0111}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T4"
+file = "body-2-T4.png"
+sha256 = "4c90566d8cae1a63f1190f46df54962b8f5eae48f3eb43eab94b2e07b27e13f8"
+source_picture = "77aa76c12208193953c65fc257e8eb999eb38fb9dc227f98bb1dc23a567f3690"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -0.2196, x = -0.03469, y = 0.000265}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T5"
+file = "body-2-T5.png"
+sha256 = "598a31ca476003c9621646ca64f883fea8edc11577a3b81e72986f7a3e5b1b56"
+source_picture = "f25c9015be0909b4d4d42ef6f27974b7127c5b6c8cec2d7f410e9193f58ee922"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -2.922, x = -0.006048, y = -0.009531}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T6"
+file = "body-2-T6.png"
+sha256 = "5a1368c4180e40f361a4086820bd7ed030d9b04de2b4eff09bd9552e45609232"
+source_picture = "4ac855ea1a579ae459bd1cd514e03600c52893fdc56327f4b0b4be0345426235"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -1.162, x = -0.006891, y = -0.0006312}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T7"
+file = "body-2-T7.png"
+sha256 = "777c47809c4f6baf62a8e35472f4431d0add103bc0b7cb2b1bf7686b8c54280a"
+source_picture = "a105edbc633dc0d26e8e84630634ed45f26e936afe0049e5588f1fae68aeb274"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.01644, x = 6.657e-05, y = -1.509e-05}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T8"
+file = "body-2-T8.png"
+sha256 = "f4bfc84c33a5adcf3bc9005b3a47ae0bef9cb56cc9752b6cae2aa9f9cd5e514d"
+source_picture = "38e8b6505744bac5ca1459f70da6de30e22becdf01d6d3f218f15146e4abcdbc"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 0.5126, x = 0.01808, y = 0.0004885}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T9"
+file = "body-2-T9.png"
+sha256 = "dee51ca53bcf599d31915e45c248947e0442c0e92991ddd6fe6b8523184d2c84"
+source_picture = "551ab4bd35b8ca8b2e8fd161f1d526207b59dc59d0aae3d6f00cfbcc1bd7f125"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 30.44, x = 0.005509, y = 0.02606}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T10"
+file = "body-2-T10.png"
+sha256 = "de8477e242ac7f7ef8919867755a921dbc6ce12bc821334186aedda91c7c42c2"
+source_picture = "bd56658f913651181470b6befe80768d9f8fb23d14f516ed77140cb6bbc871ff"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 137.4, x = -0.09729, y = 0.1243}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T11"
+file = "body-2-T11.png"
+sha256 = "1725f6f608a08c88cbfc4b8a221ee88c7acad29b9aee58fb10d2afc69664d674"
+source_picture = "4f291a3666556e3c7b44f9824edc5a59cdf9d3db1a521130711d0260018c0aa6"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -1.218, x = 0.02717, y = -0.02356}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T12"
+file = "body-2-T12.png"
+sha256 = "cbf4edd6166a6ad3be0cef9131ffe71d3f039df6273c73c945eea6b386e22ad5"
+source_picture = "4be9e232769a8b91c2d5b5a5d856d22cddf69bb14d18ff95173cbf784138d43f"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -84.25, x = -0.2047, y = 0.09695}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T13"
+file = "body-2-T13.png"
+sha256 = "c6da03de659e33876246f0111fa41db5161b3ea8269a5947a4851fa66d5a7501"
+source_picture = "0292aec877f2ae5d5c2a2022a987de99b35702ed34670ca59059bc0fea29d65d"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -54.59, x = 0.006649, y = -0.002787}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T14"
+file = "body-2-T14.png"
+sha256 = "a3b976649adf6c3a251d20ea7d2e658e9758837a58fba50cee05fa2580c10bb1"
+source_picture = "14eca66e407f8138cb86cb32288889c00c9b4466e47582306e23aa07e14910f8"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -151.7, x = 0.0278, y = -0.1329}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T15"
+file = "body-2-T15.png"
+sha256 = "8c924cf296670aa7a52423382fb3b016c6c82fed002537746e5de442fb049f46"
+source_picture = "b4801d570589ce0c1237b5baf8ed93e9d1ad31c66a8a498b9b1ae0f1db3b955b"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -6.225, x = 0.05036, y = 0.02785}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T16"
+file = "body-2-T16.png"
+sha256 = "9b2f09ff682b203592f074443cb02396b9bcb2b93cd628c6af2490f3520467e3"
+source_picture = "22b3541fe6c3037e4acb3847bd58807d8552211610d01a8438279809b10b9a36"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 32.04, x = -0.118, y = -0.01366}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T17"
+file = "body-2-T17.png"
+sha256 = "4beee113b7bfb224db9af0478631da50c18784992457b08de49c04cc30fc9a52"
+source_picture = "532ba6bea88746794ddebf7a8cfd67c4a255ab8cc0cb111954b48a041064a665"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 5.893, x = -0.02252, y = -0.004249}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T18"
+file = "body-2-T18.png"
+sha256 = "4646fa16194932463c3f77c6341562a7b603d65f187a12ee7f1fcd32e608ea03"
+source_picture = "649518714746b50e3c506cd1f6680767ccb4faa6ba2788ad5bb50b7a328a4fb9"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 59.89, x = 0.2188, y = 0.09558}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T19"
+file = "body-2-T19.png"
+sha256 = "371738809ecb9f63f2d73e4874bf6fc17abc4977cf5f41dd61eefb31e2eabc01"
+source_picture = "2f6754d02cda4f32ad06c8542658f05551bc4d23398adc17f38e131f10c520ce"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -28.75, x = 0.1293, y = -0.1104}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T20"
+file = "body-2-T20.png"
+sha256 = "743762b8ff7a5a70c025bfad83bc6b1e3a2401b46995d833b702913760aa5ec0"
+source_picture = "833748b876060ae3fa6bffde637bd624b8018c345c78b39b02236eda2c9635bd"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -78.93, x = -0.2017, y = 0.1477}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T21"
+file = "body-2-T21.png"
+sha256 = "7d83746ca5abb09c83acf0da3981632a2013d4488c33e40cba79750d494b3514"
+source_picture = "aa02517230c01e433ff39917574d70c0f2d374beec3811a647cd595bbd9befee"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -43.3, x = -0.1241, y = 0.04394}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T22"
+file = "body-2-T22.png"
+sha256 = "95b3c6da371d1bc8dcf71dec0f31d3fd0d86ec85ce9c2481561cabfad4dd33ad"
+source_picture = "38f495ec98b22d5b27ef60a86378ce07dfd48554f012e1c53489376ce6ba8e29"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -4.784, x = 0.06704, y = -0.04963}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T23"
+file = "body-2-T23.png"
+sha256 = "a9515bb64ee9a550325a385d153b3d7f597e7e4a5d71e13ad391cf1336e3fb94"
+source_picture = "322ce0cb3461c01d18509bd6914bada246d7767f1885eb2dbb6c591660ba8bfb"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 3.478, x = 0.1249, y = -0.08143}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T24"
+file = "body-2-T24.png"
+sha256 = "a7bb21e2719af29e8491ba953558a6089f70f456ef5d0c70242c71e6a5be28df"
+source_picture = "8c9b03782619e7fa5fdbc9db48153e5b62a07a0e7c455b9bfb84faefea73a079"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 9.955, x = 0.07436, y = 0.007435}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T25"
+file = "body-2-T25.png"
+sha256 = "4aa8148750c733dd7a3c05eb59bd372df6e4889c227fe04e7c8b8529d0eae1ce"
+source_picture = "86d9c983f3a6c22d58402a3cf1ca7693b2f387f2040d13b2c7e5330be48d104f"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -34.96, x = 0.1125, y = 0.02671}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T26"
+file = "body-2-T26.png"
+sha256 = "d1a8a42d62fa88f5199f26a6c822217c7d02a657403ac9b531492496b48e7608"
+source_picture = "e249a4291ec80b8917c57cfa5fb09ea1de268154f7326f395f50e1d1939a07af"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 21.77, x = -0.1188, y = 0.02117}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T27"
+file = "body-2-T27.png"
+sha256 = "09baa65696c6c7826c707f4e086aa764f833799629557ee28ef1d70a154d6cd5"
+source_picture = "564a71b6a21664529de9ee6f8edeb574dd7d56b26435fc74b75dd590d894c079"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -18.85, x = 0.06154, y = 0.02151}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T28"
+file = "body-2-T28.png"
+sha256 = "f4cfd55d1952cdbbf7229153c48c590d0e67546de1a44636d18e5812fa5947d9"
+source_picture = "2785a75ee9246140170baf33c8af0f06f7d679afb24c87a486771f6fb4a249cc"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 12.64, x = -0.05023, y = 0.009938}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T29"
+file = "body-2-T29.png"
+sha256 = "6870f0892aa8cd30b5418208c420b4f3ce0a5dc4d525e8aa2ff545423907977e"
+source_picture = "93e6e5d131559dad240117c590f47050d772250c49cbebdb1b1fa075d7886d88"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -26.2, x = 0.08244, y = 0.02502}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T30"
+file = "body-2-T30.png"
+sha256 = "4f671567a849c1a7060c0d242b6b0055a6f1af47b993d86001baa2bbfc3fc5ee"
+source_picture = "38dc49fba76d6f002ad49f66cb79c27eb30666d55a113da41147fe464e63ac61"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -65.81, x = 0.3062, y = -0.1642}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+file = "body-2-T31.png"
+sha256 = "19db0e8ee301c27fc7219ae5eae12a3067023e7f648cbe8e582db9c8a190c80a"
+source_picture = "de72d4aa80235ac3980eeacdbd3a14859e2e076edf3d7cc6b3a0e58ed3fc572b"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -0.06611, x = 0.6205, y = 0.0887}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T32"
+file = "body-2-T32.png"
+sha256 = "432e834924b1bcf3e42b152deceadd70a00c3b3c2e5a9e6239221d0e6141c388"
+source_picture = "fc2e37cc41d807f2384b75ee135e11f4f04b05a74c91965af1b15490ddfc1224"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -29.07, x = 0.469, y = -0.0154}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T33"
+file = "body-2-T33.png"
+sha256 = "eb1b3a70589493674aeea6fda86e0c9ed38bcecd00de3bbfde363a9f48645f37"
+source_picture = "60fdfbc9c503e354c82d4c86430c8b440265a31f54a60dc47b92deedaef7f081"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -0.2877, x = 0.263, y = 0.05172}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T34"
+file = "body-2-T34.png"
+sha256 = "600dd399e9b17c79bcc9deaffe888365907f93f6395bd6d3a4bbcb4983196176"
+source_picture = "b2da68f0891262b7afcf67ac212d600a9e4896cd324239b743b1a95752c0907e"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 1.197, x = 0.7125, y = 0.07631}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T35"
+file = "body-2-T35.png"
+sha256 = "efd26796c42419e05fd69cc6b7f6b84315418b84beef77b9f97c93378f8effea"
+source_picture = "151b48a63c362813021ecc1d5ec2b9bf699ae01d8d385b5d41b469a2439cbf81"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -9.626, x = 0.7138, y = -0.004553}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T36"
+file = "body-2-T36.png"
+sha256 = "8993d44f844c4a7626e4b3a35712db6dcde154feaf93c8741f437534b7cce6ba"
+source_picture = "7ea7420eff834f4fe5f05d0cbc072c854fb5cfcc77b9bdd5b1f76a113a5b4232"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -20.22, x = 0.753, y = -0.1187}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T37"
+file = "body-2-T37.png"
+sha256 = "3616f4a60cbb18c96fa5f71ad985ca549c52708096a4bc581bb6c656ba2f6dfd"
+source_picture = "143413d45efd2fa1c54577620c5fd564e608b5f1f49f5e22e8ebb81e1861ea4c"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = 2.438, x = 0.6135, y = 0.1158}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T38"
+file = "body-2-T38.png"
+sha256 = "84dc4f39043b19035c0daa31c1bbdaa328e1b68ec6baf297c99081c85747830a"
+source_picture = "8f4ab5511a4872744fb205bee8f6b4cadbed7d9af4779195ae3b178559bfb622"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -6.241, x = 0.7008, y = 0.06355}
+
+[[retake]]
+application = "body-lab"
+session = "body-2"
+trial = "T39"
+file = "body-2-T39.png"
+sha256 = "4fe88b0f4b14ae171cdec1de66a72aadfdcc75d6df00b91023627ccf4bf3519e"
+source_picture = "3826b235959d64238ee9635dbeee5feff41ef1df87a786f6b25dfe2a65c13ef0"
+columns = 5
+rows = 5
+interval = 200
+frame_seconds = 0.2
+track = "track_x"
+track_step = 2
+measured = {heading = -5.176, x = 0.6816, y = 0.08581}

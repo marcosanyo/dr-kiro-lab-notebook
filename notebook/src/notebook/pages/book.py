@@ -13,7 +13,7 @@ from bench.specfiles.discovered import Row, Table
 
 from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables
 from notebook.choices import Choices, Lab, Polaroid
-from notebook.display import Retakes, as_file
+from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
 from notebook.ink import stamp as stamp_segment
@@ -47,9 +47,8 @@ class Shown:
     files: list[photo.PictureFile]
     retakes: Retakes
 
-    def retake(self, record: RecordModel, trial: Trial) -> photo.PictureFile | None:
-        found = self.retakes.get((record.application, record.session, trial.id))
-        return None if found is None else as_file(found)
+    def retake(self, record: RecordModel, trial: Trial) -> Retake | None:
+        return self.retakes.get((record.application, record.session, trial.id))
 
 
 def _new_best() -> list[Segment]:

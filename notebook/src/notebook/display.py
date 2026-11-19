@@ -10,6 +10,12 @@ and drawn larger. A display folder holds those pictures and a `manifest.toml` th
     file = "body-2-T12.png"       # a picture sheet with the same columns and rows as the lab's layout, no gap
     sha256 = "<hex>"              # of the file
     source_picture = "<hex>"      # the blob hash of the recorded picture of that trial
+    columns = 5                   # the sheet's cells, no gap
+    rows = 5
+    interval = 200                # ms one cell is shown: real time, as frame_seconds is
+    frame_seconds = 0.2           # the time between two cells of the rerun
+    track = "track_x"             # the recorded series that says how far the body had come
+    track_step = 2                # samples of that series between two cells
     measured = {x = <number>, y = <number>, heading = <number>}   # what the rerun measured
 
 The build takes the folder only when `--display` is given; without it every trial shows its recorded picture.
@@ -25,17 +31,42 @@ from pathlib import Path
 
 from notebook import addresses, layouts, numbers
 from notebook.errors import NotebookError
-from notebook.pages.photo import PictureFile
 from notebook.records import RecordModel
 
 MANIFEST = "manifest.toml"
-KEYS = frozenset({"application", "session", "trial", "file", "sha256", "source_picture", "measured"})
+KEYS = frozenset(
+    {
+        "application",
+        "session",
+        "trial",
+        "file",
+        "sha256",
+        "source_picture",
+        "columns",
+        "rows",
+        "interval",
+        "frame_seconds",
+        "track",
+        "track_step",
+        "measured",
+    }
+)
 
 
 @dataclass(frozen=True)
 class Retake:
     path: str  # the site path, p/<sha256>.png
     data: bytes
+    columns: int
+    rows: int
+    interval: int
+    frame_seconds: float
+    track: str  # the name of the recorded series the positions are read from
+    positions: tuple[float, ...]  # the value of that series at each cell, in the series' unit
+
+    @property
+    def frames(self) -> int:
+        return self.columns * self.rows
 
 
 Retakes = dict[tuple[str, str, str], Retake]
@@ -78,7 +109,20 @@ def load(folder: Path | None, records: list[RecordModel], table: dict[str, layou
         picture = file.read_bytes()
         if hashlib.sha256(picture).hexdigest() != entry["sha256"]:
             raise NotebookError(here, f"the file {entry['file']} does not match its sha256")
-        layout = replace(table[record.application], gap=0)
+        for key_name in ("columns", "rows", "interval", "track_step"):
+            if type(entry[key_name]) is not int or entry[key_name] < 1:
+                raise NotebookError(here, f"{key_name} must be a whole number from 1")
+        if isinstance(entry["frame_seconds"], bool) or not isinstance(entry["frame_seconds"], int | float):
+            raise NotebookError(here, "frame_seconds must be a number")
+        frames = entry["columns"] * entry["rows"]
+        layout = replace(
+            table[record.application],
+            frames=frames,
+            rows=entry["rows"],
+            columns=entry["columns"],
+            gap=0,
+            interval=entry["interval"],
+        )
         layouts.check_sheet(layout, record.name, trial.id, trial.picture.media, picture)
         if not isinstance(entry["measured"], dict) or not entry["measured"]:
             raise NotebookError(here, "measured must name at least one measurement of the rerun")
@@ -86,9 +130,24 @@ def load(folder: Path | None, records: list[RecordModel], table: dict[str, layou
         for name, value in entry["measured"].items():
             if name not in recorded or numbers.short(recorded[name], here) != numbers.short(value, here):
                 raise NotebookError(here, f"the rerun measured {name} = {value!r}; the record says otherwise")
-        found[key] = Retake(addresses.picture(entry["sha256"], here), picture)
+        unit = next((m.unit for m in record.declaration.measurements if m.name == entry["track"]), None)
+        if unit != "m":
+            raise NotebookError(here, f"{entry['track']} is not a recorded series in metres")
+        series = recorded.get(entry["track"])
+        if not isinstance(series, tuple) or len(series) != entry["track_step"] * frames + 1:
+            raise NotebookError(
+                here,
+                f"{entry['track']} is not a recorded series of {entry['track_step'] * frames + 1} samples",
+            )
+        positions = tuple(float(series[entry["track_step"] * (k + 1)]) for k in range(frames))
+        found[key] = Retake(
+            addresses.picture(entry["sha256"], here),
+            picture,
+            entry["columns"],
+            entry["rows"],
+            entry["interval"],
+            float(entry["frame_seconds"]),
+            entry["track"],
+            positions,
+        )
     return found
-
-
-def as_file(retake: Retake) -> PictureFile:
-    return PictureFile(retake.path, retake.data)
