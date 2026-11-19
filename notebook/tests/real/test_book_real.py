@@ -224,3 +224,41 @@ def test_a_narrow_screen_has_one_column_of_cards_so_the_page_does_not_scroll_sid
     assert re.search(
         r"@media \(max-width: 900px\) \{\s*\.hyps \{\s*grid-template-columns: minmax\(0, 1fr\)", css
     )
+
+
+def _moving_pixels(trial, layout_gap=4, columns=3, rows=2):
+    """Pixels that differ between the first two cells of a wind-tunnel picture: how much the flow moves."""
+    from notebook import png
+
+    image = png.decode(trial.picture.data, trial.id)
+    width = (image.width - (columns - 1) * layout_gap) // columns
+    height = (image.height - (rows - 1) * layout_gap) // rows
+    stride = image.width * image.channels
+    differing = 0
+    for y in range(height):
+        first = image.pixels[y * stride : y * stride + width * image.channels]
+        start = (width + layout_gap) * image.channels
+        second = image.pixels[y * stride + start : y * stride + start + width * image.channels]
+        differing += sum(1 for a, b in zip(first, second, strict=True) if abs(a - b) > 8)
+    return differing
+
+
+def test_the_wind_tunnel_highlight_shows_a_flow_that_moves_and_the_same_flow_made_quiet(site, loaded_all):
+    page, found = _page(site, "wind-tunnel/wt-004.html")
+    assert found.classes["polaroid"] == 2
+    assert "WHERE IT STARTED" in page.upper() and "THE QUIET BODY" in page.upper()
+    record = loaded_all["wt-004"]
+    trials = {t.id: t for t in record.trials}
+    shedding = _moving_pixels(trials["T1"])
+    steady = _moving_pixels(trials["T12"])
+    assert shedding > 5 * max(steady, 1), (shedding, steady)
+    assert dict(trials["T1"].measurements)["shedding"] == 1.0
+    assert dict(trials["T12"].measurements)["shedding"] == 0.0
+    # The two highlight photos are those trials, one after the other.
+    first = re.search(r'class="polaroid[^"]*">.*?<span class="ink-p">(T\d+)</span>', page, re.S)
+    assert first and first.group(1) == "T1"
+
+
+@pytest.fixture(scope="module")
+def loaded_all() -> dict[str, records.RecordModel]:
+    return {r.session: r for r in records.load(ROOT / "sessions")}

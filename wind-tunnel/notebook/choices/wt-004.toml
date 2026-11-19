@@ -13,14 +13,14 @@ require = "shedding"
 equals = 0
 
 [[polaroid]]
-heading = "The miss"
-trial = "T15"
-words = "A small angle was expected to add lift. The lift came out negative."
+heading = "Where it started"
+trial = "T1"
+words = "The square body sheds vortices: the wake swings from side to side."
 
 [[polaroid]]
-heading = "Best point"
+heading = "The quiet body"
 trial = "T12"
-words = "Steady flow and the lowest drag of the session."
+words = "The same flow, now steady: no vortices and the lowest drag."
 star = true
 
 [[note]]
