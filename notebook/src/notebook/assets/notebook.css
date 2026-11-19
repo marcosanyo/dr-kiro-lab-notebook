@@ -664,6 +664,14 @@ h3 {
   font-size: 0.9em;
 }
 
+.bands-intro summary {
+  cursor: pointer;
+}
+
+.bands-intro p {
+  margin: var(--space-2) 0 0;
+}
+
 @media (max-width: 479px) {
   .spec-row > tr[id] {
     grid-template-areas:

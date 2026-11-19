@@ -126,6 +126,7 @@ TRACK_CAPTION_COVER = " track seen from above"
 
 # Run bands beside a row's scope (Requirement 9; design 4). Shown inside the scope cell, after Dr. Kiro's
 # scope text, which is never read.
+BANDS_INTRO_SUMMARY = "How to read the bands"
 BANDS_INTRO = (
     "What the record says was run, per parameter group of this row's cited trials: one tick per value a "
     "trial of the session ran in that group; taller ticks are this row's cited trials, the tallest its "

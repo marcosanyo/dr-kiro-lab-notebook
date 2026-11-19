@@ -188,8 +188,15 @@ def draw(view: View, row: Row) -> list[Segment]:
 
 
 def intro(view: View, rows: tuple[Row, ...]) -> list[Segment]:
-    """The explanation of the run bands, once above a table, when at least one of its rows has a band.
-    Each card shows its bands without it."""
+    """The explanation of the run bands, once above a table, in a closed `<details>`, when at least one of its
+    rows has a band. Each card shows its bands without it."""
     if not any(row_bands(view, row) for row in rows):
         return []
-    return html.element("p", {"class": "bands-intro"}, say_text("BANDS_INTRO"))
+    return html.element(
+        "details",
+        {"class": "bands-intro"},
+        [
+            *html.element("summary", None, say_text("BANDS_INTRO_SUMMARY")),
+            *html.element("p", None, say_text("BANDS_INTRO")),
+        ],
+    )
