@@ -83,3 +83,7 @@ domain
 geometry
 constants
 monitors
+# 2026-11-19, PR #37: "build" is a derived term from wind-tunnel/model/constants.toml (its comments say "3e-8 builds" and
+# "a failed build"). It is an ordinary English word, and the bench's own record text uses it ("build-from-spec").
+# Approved by the user.
+build
