@@ -1427,6 +1427,15 @@ h3 {
   font-size: 0.85em;
 }
 
+/* The picture buttons are small on a mouse screen; on a phone or any touch screen each is a 44px target. */
+@media (max-width: 559px), (pointer: coarse) {
+  .photo-controls button {
+    min-width: 44px;
+    min-height: 44px;
+    margin-bottom: var(--space-1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

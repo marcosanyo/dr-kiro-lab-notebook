@@ -218,3 +218,11 @@ def test_decoration_shows_only_from_1000px_in_a_reserved_gutter():
     assert deco["position"] == "fixed" and deco["width"] == "64px"
     # Left 16px plus 64px wide stays inside the 96px gutter.
     assert deco["left"] == "var(--space-3)" and _custom_properties()["--space-3"] == "16px"
+
+
+def test_picture_buttons_are_44px_targets_on_a_phone_or_a_touch_screen():
+    css = CSS.read_text(encoding="utf-8")
+    start = css.index("@media (max-width: 559px), (pointer: coarse) {")
+    block = css[start : css.index("\n}\n", start)]
+    assert ".photo-controls button {" in block
+    assert "min-width: 44px;" in block and "min-height: 44px;" in block
