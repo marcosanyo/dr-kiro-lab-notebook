@@ -54,7 +54,7 @@ class _Figure(HTMLParser):
         (
             "body-2",
             "T12",
-            # The one figure of a body-lab trial is its magnified picture; the whole sheet is named, not shown.
+            # The one figure of a body-lab trial is its magnified picture; the whole sheet is only named.
             {
                 "columns": "5",
                 "rows": "2",

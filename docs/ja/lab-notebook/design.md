@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `05d529edeaac95401f529b455e3968b494837f24616e4cd42b3c429ff7ceed97`
+> 原文 SHA-256: `ce52010dbe9104b4206860054e6299f4c406470418c4f22618f9c250c16d2c3a`
 
 # Design: lab-notebook
 

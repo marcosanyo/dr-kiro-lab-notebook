@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `e5ebfac9823f1b0ce65fb865cf4d6ac53cf9c99a9c01f99bd9372013efb51d71`
+> 原文 SHA-256: `b2d4923fce640ffc77295fee7ae3dc5c78d05982ad5b95613bea4c6ec4341ed4`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
