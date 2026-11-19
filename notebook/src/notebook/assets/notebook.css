@@ -308,6 +308,13 @@ h3 {
   display: block;
 }
 
+/* A body-lab picture without the script shows its first cell, never the sheet of cells side by side. */
+.photo img.first-cell {
+  max-width: 100%;
+  object-fit: none;
+  object-position: 0 0;
+}
+
 .photo figcaption {
   margin-top: var(--space-2);
   font-size: 0.85em;

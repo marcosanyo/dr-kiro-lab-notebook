@@ -1,17 +1,21 @@
-/* The notebook's one script (lab-notebook design 10 and 9). It makes no request and loads no other code.
+/* The notebook's one script (lab-notebook design 10 and 9). It makes no request and loads no other code
+   except the pictures the page names.
 
    Moving pictures: every figure.photo with layout data gets a canvas that shows one cell of the picture sheet
    at a time, in reading order (left to right, then top to bottom), one cell per data-interval ms (set per lab
    in layouts.toml), looping. Only the cells of the sheet are shown: nothing between two cells is made.
    The sheet is never re-encoded: each cell is drawn from the loaded image with a source rectangle that
-   skips the gap between cells. Controls: play, pause, step one cell, whole picture (the sheet as it is).
-   The magnified picture of a body-lab trial moves on its own; the whole picture beside it (data-start
-   "still") shows the sheet and moves only when play is pressed. When the browser asks for reduced motion,
-   a moving picture starts paused on its first cell.
+   skips the gap between cells. Controls: play, pause, step one cell, whole picture.
+   The magnified picture of a body-lab trial moves on its own. Its whole picture is not on the page: the
+   "whole picture" control swaps it in at the same place and cell, loading the sheet named by data-whole-src,
+   and it moves the same way; a second control swaps the magnified picture back. A body-lab picture without a
+   magnified one (a lab card, data-start "first") waits on its first cell until play is pressed.
+   When the browser asks for reduced motion, a moving picture starts paused on its first cell.
 
    Addresses: the <details> named by the address, and every <details> around it, are opened.
 
-   Without this script the page shows every whole sheet and every text; nothing needs it to be read. */
+   Without this script a body-lab picture shows its first cell and a wind-tunnel picture its whole sheet;
+   nothing needs it to be read. */
 (function () {
   "use strict";
 
@@ -26,6 +30,9 @@
   // The stylesheet gives `.photo img` and `.photo canvas` a display value, which would win over the hidden
   // attribute alone, so the inline style is set too.
   function shown(element, on) {
+    if (element === undefined) {
+      return;
+    }
     element.hidden = !on;
     element.style.display = on ? "" : "none";
   }
@@ -34,15 +41,29 @@
     var img = figure.querySelector("img");
     var columns = whole(figure, "columns");
     var rows = whole(figure, "rows");
-    var gap = whole(figure, "gap");
-    var tileWidth = whole(figure, "tile-width");
-    var tileHeight = whole(figure, "tile-height");
     var rate = whole(figure, "interval");
-    var still = figure.getAttribute("data-start") === "still";
+    var first = figure.getAttribute("data-start") === "first";
+    var wholeSource = figure.getAttribute("data-whole-src");
     var cells = columns * rows;
+    // The two pictures a figure can show, each a sheet with its own cell size and gap.
+    var views = {
+      near: {
+        image: img,
+        gap: whole(figure, "gap"),
+        width: whole(figure, "tile-width"),
+        height: whole(figure, "tile-height"),
+      },
+    };
+    if (wholeSource !== null) {
+      views.far = {
+        image: null,
+        gap: whole(figure, "whole-gap"),
+        width: whole(figure, "whole-tile-width"),
+        height: whole(figure, "whole-tile-height"),
+      };
+    }
+    var view = views.near;
     var canvas = document.createElement("canvas");
-    canvas.width = tileWidth;
-    canvas.height = tileHeight;
     shown(canvas, false);
     img.parentNode.insertBefore(canvas, img);
     var context = canvas.getContext("2d");
@@ -52,21 +73,32 @@
     });
     var cell = 0;
     var timer = null;
+    var moving = false;
 
     function draw() {
-      var sx = (cell % columns) * (tileWidth + gap);
-      var sy = Math.floor(cell / columns) * (tileHeight + gap);
-      context.clearRect(0, 0, tileWidth, tileHeight);
-      context.drawImage(img, sx, sy, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+      var sx = (cell % columns) * (view.width + view.gap);
+      var sy = Math.floor(cell / columns) * (view.height + view.gap);
+      if (canvas.width !== view.width || canvas.height !== view.height) {
+        canvas.width = view.width;
+        canvas.height = view.height;
+      }
+      context.clearRect(0, 0, view.width, view.height);
+      context.drawImage(view.image, sx, sy, view.width, view.height, 0, 0, view.width, view.height);
     }
 
-    function show(moving) {
+    function controls(on) {
+      moving = on;
+      shown(buttons.play, !on);
+      shown(buttons.pause, on);
+      shown(buttons.step, true);
+      shown(buttons.sheet, views.far === undefined || view === views.near);
+      shown(buttons.back, views.far !== undefined && view === views.far);
+    }
+
+    function show(on) {
       shown(canvas, true);
       shown(img, false);
-      shown(buttons.play, !moving);
-      shown(buttons.pause, moving);
-      shown(buttons.step, true);
-      shown(buttons.sheet, true);
+      controls(on);
     }
 
     function stop() {
@@ -100,6 +132,34 @@
       draw();
       show(false);
     });
+
+    // Swap to the other picture of the figure, at the same cell and, once it is loaded, in the same state.
+    function swap(next) {
+      var keep = moving;
+      stop();
+      if (next.image === null) {
+        var loaded = new Image();
+        next.image = loaded;
+        loaded.addEventListener("load", function () {
+          view = next;
+          resume(keep);
+        });
+        loaded.setAttribute("src", wholeSource);
+        return;
+      }
+      view = next;
+      resume(keep);
+    }
+
+    function resume(keep) {
+      if (keep) {
+        play();
+      } else {
+        pause();
+      }
+    }
+
+    // A wind-tunnel picture only: the sheet itself, every cell side by side.
     function sheet() {
       stop();
       shown(canvas, false);
@@ -110,12 +170,15 @@
       shown(buttons.sheet, false);
     }
 
-    buttons.sheet.addEventListener("click", sheet);
+    if (buttons.sheet !== undefined) {
+      buttons.sheet.addEventListener("click", views.far !== undefined ? function () { swap(views.far); } : sheet);
+    }
+    if (buttons.back !== undefined) {
+      buttons.back.addEventListener("click", function () { swap(views.near); });
+    }
 
     function start() {
-      if (still) {
-        sheet();
-      } else if (reduced) {
+      if (first || reduced) {
         pause();
       } else {
         play();

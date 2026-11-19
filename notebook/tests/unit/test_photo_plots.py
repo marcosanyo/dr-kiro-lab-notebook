@@ -130,4 +130,4 @@ def test_the_script_reads_the_interval_of_each_picture_from_its_figure() -> None
     css = (ASSETS / "notebook.css").read_text(encoding="utf-8")
     assert "--cell-interval" not in css and "--cell-interval" not in script
     assert '"interval"' in script and "prefers-reduced-motion: reduce" in script
-    assert '"still"' in script
+    assert '"first"' in script and "data-whole-src" in script

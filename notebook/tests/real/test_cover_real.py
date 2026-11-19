@@ -54,8 +54,10 @@ def test_cover_shows_body_2_h4_p1_with_t12_its_track_and_miss(loaded, built) -> 
     body_2 = _by_session(loaded, "body-2")
     t12 = _trial(body_2, "T12")
     assert pictures[0].path == f"p/{t12.picture.digest}.png"
-    large = re.search(r'<figure class="photo tilt-\d photo-large"[^>]*><img src="([^"]+)"', page)
+    # The page shows the magnified picture only; the recorded sheet is named for the "whole picture" swap.
+    large = re.search(r'<figure class="photo photo-magnified photo-large"[^>]*data-whole-src="([^"]+)"', page)
     assert large is not None and large.group(1) == pictures[0].path
+    assert f'<img src="{pictures[0].path}"' not in page
     assert page.count("<polyline") == 1  # the track of T12, beside the photo
     assert '<span class="ink-p">H4.P1</span>' in page
     statement = next(h for h in body_2.hypotheses if h.id == "H4").statement.text
@@ -160,12 +162,12 @@ def test_session_margin_pins_the_chosen_trials_as_photos(loaded, table) -> None:
     page = ink.join(session.table_section(views.full(record), chosen, pins))[0]
     margin = page[page.index('<aside class="margin">') :]
     pinned = re.findall(
-        r'<figure class="pinned" data-trial="(T\d+)"><section class="photo-pair">'
-        r'<figure class="photo tilt-\d photo-small"',
+        r'<figure class="pinned" data-trial="(T\d+)"><figure class="photo photo-magnified photo-small"',
         margin,
     )
     assert pinned == ["T25", "T30", "T36"]
-    # Each pin keeps its recorded sheet, then its magnified picture (Requirement 7.9).
+    # Each pin keeps its recorded sheet (named for the swap, not shown), then its magnified picture (7.9).
+    assert "photo-pair" not in margin
     recorded = [p.path for p in pins.files[::2]]
     assert recorded == [f"p/{_trial(record, tid).picture.digest}.png" for tid in ("T25", "T30", "T36")]
     assert len(pins.files) == 6

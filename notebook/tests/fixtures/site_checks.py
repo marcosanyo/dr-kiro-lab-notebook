@@ -43,7 +43,7 @@ FORBIDDEN_SCRIPT = (
     "import ",
 )
 # The only buttons: the moving picture controls (design 10).
-BUTTON_ACTIONS = {"play", "pause", "step", "sheet"}
+BUTTON_ACTIONS = {"play", "pause", "step", "sheet", "back"}
 # The assets of `a/`: the stylesheet, the script, the typefaces and their licence (all served by the site).
 ASSETS = {
     addresses.STYLESHEET,

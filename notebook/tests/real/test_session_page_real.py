@@ -104,10 +104,12 @@ def test_every_experiment_trial_and_outcome_has_its_address(site, loaded):
                 assert f"{experiment.id}-{tid}" in inner
         for outcome in record.outcomes:
             assert f"{outcome.experiment}-{outcome.prediction}" in ids
-        # One moving picture per trial; a magnified picture is not one (Requirement 7.9).
+        # One picture per trial: a body-lab trial shows its magnified picture and a wind-tunnel trial its
+        # moving picture; the whole picture of a body-lab trial is not on the page (Requirement 7.9).
         figures = page.find("section", "entries", id="experiments").find_all("figure", "photo")
-        moving = [f for f in figures if "photo-magnified" not in f.attrs["class"]]
-        assert len(moving) == len(record.trials), record.name
+        assert len(figures) == len(record.trials), record.name
+        if record.application == "body-lab":
+            assert all("photo-magnified" in f.attrs["class"] for f in figures), record.name
 
 
 def test_wt_002_predictions_never_run_have_their_own_addresses(site, loaded):

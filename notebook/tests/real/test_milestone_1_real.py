@@ -329,12 +329,12 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
     cover = _parse(site / "index.html")
     t12 = _trial(loaded["body-2"], "T12")
     miss = cover.find(cls="cover-miss")
-    large = miss.find("figure", "photo-large")
     magnified = miss.find("figure", "photo-magnified")
     assert "T12" in magnified.find("figcaption").text()
-    assert large.find("img").attrs["src"] == f"p/{t12.picture.digest}.png"
+    # The whole picture is not on the page: the magnified figure names its sheet for the swap.
+    assert magnified.attrs["data-whole-src"] == f"p/{t12.picture.digest}.png"
+    assert all(i.attrs["src"] != magnified.attrs["data-whole-src"] for i in miss.find_all("img"))
     assert (site / f"p/{t12.picture.digest}.png").read_bytes() == t12.picture.data
-    assert "T12" in large.find("figcaption").text()
 
     measured = dict(t12.measurements)
     xs = measured["track_x"]
@@ -461,10 +461,10 @@ def test_cover_top_row_holds_the_claim_and_the_magnified_sheet_and_the_row_below
     card, note = claim.elements()
     assert (card.tag, note.tag) == ("section", "aside")
     assert "claim-card" in card.classes and "sticky" in note.classes
-    # The moving picture and the track are siblings; the magnified sheet is not among them.
-    moving, track = evidence.elements()
-    assert "photo-large" in moving.classes and "track" in track.classes
-    assert evidence.find_all(cls="photo-magnified") == [] and evidence.find_all(cls="photo-pair") == []
+    # The row below holds the track alone: no whole picture and no strip of cells is on the cover.
+    (track,) = evidence.elements()
+    assert "track" in track.classes
+    assert evidence.find_all(cls="photo") == [] and evidence.find_all(cls="photo-pair") == []
 
     # Below 1000px one column (the order above); from 1000px the sheet is the left column, the claim card
     # and the sticky note are to its right, and the moving picture and the track are in one row.
