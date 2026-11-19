@@ -113,6 +113,20 @@ def test_cover_details_sit_inside_the_rules_card(built) -> None:
     assert card.endswith("</details></section>")
 
 
+def test_cover_opens_on_the_lab_of_the_miss_and_keeps_the_cover_file_order(built) -> None:
+    page = ink.join(built[0])[0]
+    radios = re.findall(
+        r'<input type="radio" name="lab-tab" id="(tab-[a-z0-9-]+)" class="tab-radio"( checked="checked")?>',
+        page,
+    )
+    # LAB I (wind tunnel) stays on the left; LAB II (body lab, where H4.P1 missed) is the one that is open.
+    assert [(name, bool(checked)) for name, checked in radios] == [
+        ("tab-wind-tunnel", False),
+        ("tab-body-lab", True),
+    ]
+    assert page.index('for="tab-wind-tunnel"') < page.index('for="tab-body-lab"')
+
+
 def test_cover_cards_and_labels(loaded, built) -> None:
     segments, pictures = built
     page = ink.join(segments)[0]

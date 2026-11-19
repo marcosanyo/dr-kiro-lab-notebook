@@ -558,11 +558,16 @@ def _tabs(
     records: list[RecordModel], cover: Cover, layouts: dict[str, Layout]
 ) -> tuple[list[Segment], list[PictureFile]]:
     """The lab tabs: one radio and one label per lab, one panel per lab. Only the checked tab's panel shows,
-    through the stylesheet alone (no script)."""
+    through the stylesheet alone (no script). The tab of the lab of the missed prediction is checked, the
+    first tab when the cover has no missed prediction or no tab belongs to its lab. The order of the tabs
+    is the order of the cover file."""
     if not 1 <= len(cover.cards) <= MAX_TABS:
         raise NotebookError(
             "choices/cover.toml", f"the cover has {len(cover.cards)} labs; it shows 1 to {MAX_TABS} tabs"
         )
+    opened = 0
+    if cover.miss.prediction is not None:
+        opened = next((i for i, c in enumerate(cover.cards) if c.application == cover.miss.application), 0)
     radios: list[Segment] = []
     labels: list[Segment] = []
     panels: list[Segment] = []
@@ -571,7 +576,7 @@ def _tabs(
         source = f"{card.source} application"
         app = addresses.site_id("application", card.application, source)
         attrs = {"type": "radio", "name": "lab-tab", "id": f"tab-{app}", "class": "tab-radio"}
-        if i == 0:
+        if i == opened:
             attrs["checked"] = "checked"
         radios += html.void("input", attrs)
         record = _record(records, card.application, card.session, card.source)

@@ -226,6 +226,56 @@ def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(
     assert page.index("sticky-number") < page.index('class="claim-card"') < page.index('class="cover-rules"')
 
 
+OTHER_LAYOUT = {"other": Layout("other", frames=1, rows=1, columns=1, gap=0, source="test fixture")}
+
+
+def _two_labs(record: records.RecordModel, prediction: str | None) -> tuple[list[records.RecordModel], Cover]:
+    """Two labs, `other` first and `fake` second, in cover file order. The miss is in `fake`."""
+    other = replace(record, application="other", name="sessions/other/s1")
+    base = _cover(record, prediction)
+    first = replace(base.cards[0], application="other")
+    return [other, record], replace(base, cards=(first, base.cards[0]))
+
+
+def _radios(page: str) -> list[tuple[str, bool]]:
+    found = re.findall(
+        r'<input type="radio" name="lab-tab" id="(tab-[a-z0-9-]+)" class="tab-radio"( checked="checked")?>',
+        page,
+    )
+    return [(name, bool(checked)) for name, checked in found]
+
+
+def test_the_tab_of_the_lab_of_the_miss_is_checked_and_the_order_is_the_cover_file_order(record) -> None:
+    labs = LAYOUTS | OTHER_LAYOUT
+    both, cover_file = _two_labs(record, "H2.P1")
+    page = _html(cover.page(both, cover_file, labs, [], {})[0])
+    assert _radios(page) == [("tab-other", False), ("tab-fake", True)]
+    # The labels follow the radios in the same order.
+    assert page.index('for="tab-other"') < page.index('for="tab-fake"')
+    # The miss in the first lab: the first tab is checked, as before.
+    first = replace(cover_file, miss=replace(cover_file.miss, application="other"))
+    first_record = replace(record, application="other", name="sessions/other/s1")
+    page = _html(cover.page([first_record, record], first, labs, [], {})[0])
+    assert _radios(page) == [("tab-other", True), ("tab-fake", False)]
+
+
+def test_the_first_tab_is_checked_when_there_is_no_miss_or_no_tab_for_its_lab(record) -> None:
+    labs = LAYOUTS | OTHER_LAYOUT
+    both, cover_file = _two_labs(record, None)
+    page = _html(cover.page(both, cover_file, labs, [], {})[0])
+    assert _radios(page) == [("tab-other", True), ("tab-fake", False)]
+    # A miss whose lab has no tab: the same, the first tab.
+    both, cover_file = _two_labs(record, "H2.P1")
+    elsewhere = replace(cover_file, cards=(cover_file.cards[0],))
+    page = _html(cover.page(both, elsewhere, labs, [], {})[0])
+    assert _radios(page) == [("tab-other", True)]
+
+
+def test_a_cover_with_one_lab_checks_it(record) -> None:
+    page = _html(cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})[0])
+    assert _radios(page) == [("tab-fake", True)]
+
+
 def _rules_card(page: str) -> str:
     """The text of the rules section, which holds no other section."""
     start = page.index('<section class="cover-rules">')
