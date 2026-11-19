@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `9d911cffe2cd42b5c29e4fe5262bbdba397f930cd59a39d05e3171e618fc6804`
+> 原文 SHA-256: `e5a968a9305849912f448e1979243cbc54f0251fbc6c0b05923e381e38c7f7d3`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -107,7 +107,7 @@ Spec: `lab-notebook`。
 **User Story:** 訪問者として、ダッシュボードではなく科学者の紙のノートがほしい。ページが作業の記録のように読めるようにするためである。
 #### Acceptance criteria
 1. THE builder SHALL write the visual system as a steering file, `.kiro/steering/notebook-visual.md`, before the pages are built: paper, the three inks, the miss red, the status stamp, pinned instant photos, sticky notes, the strike-through of a rejected row, type, spacing, and the narrow-screen layout。
-2. THE site SHALL have one theme and no theme switch。
+2. THE site SHALL have one look in two palettes, the day paper and the night lab, chosen only by the visitor's system colour scheme (`prefers-color-scheme`), with no theme switch, no script and no stored choice. Every text pair SHALL reach the ratio of Requirement 4.6 in both palettes, and the recorded pictures SHALL be shown as recorded in both (Decision 52)。
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown as sticky notes。
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with the word "miss"; on the cover the stamp "missed" says it (13.9)。
 5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the page markup, not a separate file, and SHALL carry no namespace URL (Decision 46)。
@@ -362,5 +362,6 @@ Spec: `lab-notebook`。
 49. **Rejected-row tab open by default**（user、2026-11-17）。`rejected` の行の "replaced by" タブは、表を見せるときに開いており、置き換える規則がクリックなしで読める。中身とリンクは Decision 32 のとおり（要件 8.13、design N31）。
 50. **Enlarged picture of the body, body-lab only**（user、2026-11-17）。body-lab の各試行の動く画像の隣に、動く体を拡大した画像を見せ、セルの中の体が読めるようにする。wind-tunnel の画像には付けない。流れがシート全体を動くので、動く体にあたる領域がないためである。領域は、フレーム間で変わるピクセルの箱に 4 px の余白を足し、そのセルで切ったもの。フレーム以上の大きさになる最小の整数倍で拡大する（何も動かなければセル全体）。記録には軌跡の座標から画像のピクセルへの対応がないので、軌跡は使わない。記録された画像シートからビルド時に導出する。記録された PNG ファイルは変えない。代替テキストは、隣の画像の拡大表示であることを述べ、コメンタリーの語のリストの語を使わない（要件 7.9、design N32）。
 51. **Notebook polish pass**（user、2026-11-19）。カバーは最初の画面で予測と外れを見せる。上の段に主張のカード、付箋、拡大した画像を置き、その下の段に動く画像と軌跡を置く（要件 13.1、13.12）。付箋は何が起きたかを、記録の数値だけから 1 文で言う（13.8）。外れた予測の結果の行は消す。判子が言っているためである（13.9）。details は規則のカードの中に入れる（13.10）。カバーは外れた予測のラボのタブを開いた状態にし、タブの並びはカバーのファイルの順のままにする（13.4）。カバーの上限は 240 語（13.6）。スマホ幅では軌跡の箱を絵に合わせて切り詰め（13.7）、画像のボタンは 44 px の大きさにする（7.8）。発見した spec の表はカードで見せる（8.14）。`rejected` の行とカードには書き直し用の赤（`--rewrite-bg` の上の `--rewrite-red`）を使う。これは外れの赤ではなく（6.4）、外れの赤は外れにだけ使う。スタイルシートは書体 Lora、IBM Plex Mono、Caveat を、サイト自身のファイルとして、ライセンスとともに同梱する。他のホストからは何も取得しない（3.2）。"spacing" は "ahead" と同じく風洞の設定値なので、除外リストに入れる。小見出しは字の間を少し空ける。詳細はステアリングファイル `notebook-visual.md` にある。
+52. **Night lab**（user、2026-11-19）。ノートに暗い配色「夜の実験室」を加える。反転ではなく、ランプに照らされた暗い机の上の同じ紙のノートである。CSS の `prefers-color-scheme: dark` だけに従い、切り替えもスクリプトもない。設定がなければ昼の紙のまま（6.2）。変わるのは色だけで、夜の実験室のカスタムプロパティはどれも昼のものを上書きする。レイアウト、文言、動き（`prefers-reduced-motion` を含む）は同じ。記録された画像には、フィルターも反転もかけない。写真の枠は暗い中間色に細い縁を付ける。SVG の軌跡は `currentColor` でインクに従う。外れの赤、書き直し用の赤、判子は明るくし、役割は変えない（6.4、Decision 51）。コントラストの組はどれも、夜の値でも 4.5:1 以上（4.6）。値はステアリングファイル `notebook-visual.md` の「Night lab」の節にある。
 ## Open questions
 なし。
