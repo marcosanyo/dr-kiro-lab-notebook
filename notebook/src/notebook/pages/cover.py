@@ -7,7 +7,7 @@ shows, in this order:
 - the head: a one-line kicker, the title, the tagline and one line of the three inks, linked to the legend;
 - the missed prediction: the recorded sheet of the trial magnified around the body as a taped instant photo,
   the moving picture and the track beside it, and the claim card: the prediction in Dr. Kiro's ink, a
-  vertical list predicted / measured / outcome with the unit of the measurement and a "missed" stamp, a
+  vertical list predicted / measured with the unit of the measurement and a "missed" stamp, a
   sticky note with the measured value, and every row of the `end` snapshot's table that cites the prediction
   as a rule card (a `rejected` card has one line "replaced by <id> <rule>"; the replacing row is not drawn
   again) (13.1, 13.2, 13.7); for "none", the sentence that the session has no missed prediction (13.3);
@@ -171,21 +171,16 @@ def _measured(record: RecordModel, outcome: Outcome, unit: str, where: str) -> l
 def _measure_list(
     record: RecordModel, prediction: Prediction, outcome: Outcome, hypothesis: Hypothesis, where: str
 ) -> list[Segment]:
-    """Predicted, measured and outcome, one under the other, each with a small heading; the missed stamp lies
-    across the corner of the list."""
+    """Predicted and measured, one under the other, each with a small heading; the missed stamp lies across
+    the corner of the list and says the outcome (the list has no outcome row)."""
     source = _source(record, hypothesis.seq)
     unit = _unit(record, prediction.measurement, where)
     low, high = numbers.short(prediction.low, where), numbers.short(prediction.high, where)
-    out_source = _source(record, outcome.seq)
     items = [
         ("COVER_PREDICTED", html.text(pencil(f"{prediction.measurement} in [{low}, {high}]{unit}", source))),
         (
             "COVER_MEASURED_HEAD",
             html.element("span", {"class": "miss-value"}, _measured(record, outcome, unit, where)),
-        ),
-        (
-            "COVER_OUTCOME_HEAD",
-            html.element("span", {"class": "miss"}, html.text(pencil(outcome.outcome, out_source))),
         ),
     ]
     rows: list[Segment] = []

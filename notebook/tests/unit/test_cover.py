@@ -76,7 +76,9 @@ def test_a_cited_miss_shows_its_row_and_the_replacing_row(record) -> None:
     replaced = page[page.index('<span class="cover-replaced">') :]
     replaced = replaced[: replaced.index("</span></li>")]
     assert "stamp" not in replaced
-    assert '<span class="miss"><span class="ink-p">miss</span></span>' in page
+    # The stamp says "missed"; the cover has no outcome row.
+    assert f'<span class="miss-stamp"><span class="ink-c">{text.COVER_MISSED_STAMP}</span></span>' in page
+    assert '<span class="miss"><span class="ink-p">miss</span></span>' not in page
     assert 'href="fake.html"' in page
     assert len({p.path for p in pictures}) == len(pictures)
 
@@ -203,15 +205,16 @@ def test_the_head_has_the_kicker_the_tagline_and_the_ink_line_with_the_legend_li
     )
 
 
-def test_the_miss_lists_predicted_measured_outcome_with_the_stamp_and_a_sticky_note(record) -> None:
+def test_the_miss_lists_predicted_and_measured_with_the_stamp_and_a_sticky_note(record) -> None:
     segments, _ = cover.page([record], _cover(record, "H2.P1"), LAYOUTS, [], {})
     page = _html(segments)
     measures = page[page.index('<dl class="measures">') : page.index("</dl>")]
     assert re.findall(r"<dt><span class=\"ink-c\">([^<]+)</span></dt>", measures) == [
         text.COVER_PREDICTED,
         text.COVER_MEASURED_HEAD,
-        text.COVER_OUTCOME_HEAD,
     ]
+    assert "outcome" not in measures
+    assert page.count('<span class="miss-value">') == 1
     assert f'<span class="miss-stamp"><span class="ink-c">{text.COVER_MISSED_STAMP}</span></span>' in measures
     sticky = page[page.index('<aside class="sticky">') : page.index("</aside>")]
     assert (

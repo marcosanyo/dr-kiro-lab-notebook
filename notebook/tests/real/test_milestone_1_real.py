@@ -343,7 +343,9 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
 
     claim = miss.find(cls="cover-claim")
     assert "H4.P1" in [s.text() for s in claim.find_all("span", "ink-p")]
-    assert claim.find("span", "miss").text() == "miss"
+    # The cover has no outcome row; the MISSED stamp says it (polish pass).
+    assert claim.find_all("span", "miss") == []
+    assert claim.find("span", "miss-stamp").text() == text.COVER_MISSED_STAMP
     # The measured value carries the recorded unit of x, in the list and on the sticky note.
     assert claim.find("span", "miss-value").text() == "-0.2047 m"
     assert claim.find("span", "sticky-number").text() == "x -0.2047 m"

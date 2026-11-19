@@ -59,7 +59,14 @@ def test_cover_shows_body_2_h4_p1_with_t12_its_track_and_miss(loaded, built) -> 
     assert '<span class="ink-p">H4.P1</span>' in page
     statement = next(h for h in body_2.hypotheses if h.id == "H4").statement.text
     assert f'<span class="ink-k">{statement}</span>' in page
-    assert '<span class="miss"><span class="ink-p">miss</span></span>' in page
+    assert f'<span class="miss-stamp"><span class="ink-c">{text.COVER_MISSED_STAMP}</span></span>' in page
+    assert '<span class="miss"><span class="ink-p">miss</span></span>' not in page
+    # The list holds predicted and measured only: no outcome heading (the stamp says it).
+    measures = page[page.index('<dl class="measures">') : page.index("</dl>")]
+    assert re.findall(r'<dt><span class="ink-c">([^<]+)</span></dt>', measures) == [
+        text.COVER_PREDICTED,
+        text.COVER_MEASURED_HEAD,
+    ]
     assert re.search(r'<span class="miss-value"><span class="ink-p">-0\.2047 m</span></span>', page)
 
 
