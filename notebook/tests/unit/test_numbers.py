@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from notebook import numbers
 from notebook.errors import NotebookError
 from notebook.numbers import NotMeasured, full, is_not_measured, not_measured, short
 
@@ -116,3 +117,20 @@ def test_not_measured_objects_of_the_real_records():
             if entry.get("kind") == "trial":
                 walk(entry, f"{log.parent.name} line {n}")
     assert any(where.startswith("wt-004") for where in found)
+
+
+@pytest.mark.parametrize(
+    ("value", "unit", "signed", "expected"),
+    [
+        (0.753, "m", False, "0.75 m"),
+        (0.0389, "m", True, "+3.9 cm"),
+        (-0.2047, "m", False, "-0.20 m"),
+        (4.7e-05, "m", False, "0.0 cm"),
+        (0.993, "", False, "0.993"),
+        (5.4e-05, "", False, "0.000"),
+        (-20.22, "deg", False, "-20 deg"),
+        (3.26, "deg", False, "3.3 deg"),
+    ],
+)
+def test_brief_numbers_are_short_and_never_in_exponent_form(value, unit, signed, expected):
+    assert numbers.brief(value, unit, "test", signed=signed) == expected

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from bench.specfiles.discovered import Row, Table
 
-from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables
+from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables, text
 from notebook.choices import Choices, Lab, Polaroid
 from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
@@ -36,7 +36,10 @@ STATUS_ICONS = {
     "observed": "M2 9 Q9 2 16 9 Q9 16 2 9 Z M9 7 A2 2 0 1 0 9.01 7",
     "rejected": "M4 4 L14 14 M14 4 L4 14",
 }
-LABEL_SHARE = 0.04
+LABEL_SHARE = 0.1
+MAX_LABELS = 4
+LABEL_CHAR = 8.5  # pixels of the chart's own scale taken by one character of a name
+LABEL_HEIGHT = 20.0
 _TASK = re.compile(r"^\s*- \[([ xX])\] (.+?)\s*$")
 
 
@@ -49,6 +52,11 @@ class Shown:
 
     def retake(self, record: RecordModel, trial: Trial) -> Retake | None:
         return self.retakes.get((record.application, record.session, trial.id))
+
+
+def _ours() -> list[Segment]:
+    """The small orange mark beside a text a person wrote."""
+    return [markup(" "), *_el("span", "ours", say_text("OURS"))]
 
 
 def _new_best() -> list[Segment]:
@@ -73,19 +81,21 @@ def _unit(record: RecordModel, name: str) -> str:
     return "" if unit == "1" else unit
 
 
-def _values(record: RecordModel, trial: Trial) -> str:
-    """The scalar measurements of a trial, shortened, as one line of pencil."""
+def _values(record: RecordModel, trial: Trial, *, full: bool = False) -> str:
+    """The scalar measurements of a trial as one line of pencil: short at the top of a page ("x 0.75 m"), and
+    with four significant digits in an opened note (`full`)."""
     source = _src(record, trial.seq)
-    scalars = [m for m in record.declaration.measurements if m.kind == "scalar"]
     values = dict(trial.measurements)
     out = []
-    for m in scalars:
+    for m in (m for m in record.declaration.measurements if m.kind == "scalar"):
         value = values[m.name]
+        where = f"{source}: {trial.id} {m.name}"
         if isinstance(value, NotMeasuredValue):
             out.append(f"{m.name} {value.outcome}")
+        elif full:
+            out.append(f"{m.name} {numbers.short(value, where)} {_unit(record, m.name)}".strip())
         else:
-            shown = numbers.short(value, f"{source}: {trial.id} {m.name}")
-            out.append(f"{m.name} {shown} {_unit(record, m.name)}".strip())
+            out.append(f"{m.name} {numbers.brief(value, _unit(record, m.name), where)}")
     return " · ".join(out)
 
 
@@ -167,7 +177,6 @@ def _polaroid(
     ]
     if pol.star:
         head += _el("span", "star", [markup("&#9733;")], title="best")
-    note = [*_human(pol.words, pol.source)]
     values = [*html.text(pencil(f"{trial.id} · {_values(record, trial)}", source))]
     if point.improved and point.delta is not None:
         values += [markup(" "), *_new_best()]
@@ -178,7 +187,7 @@ def _polaroid(
         [
             *_el("p", "cap", head),
             *figure,
-            *_el("p", "pol-words", note),
+            *_el("p", "pol-words", _human(pol.words, pol.source)),
             *_el("p", "pol-values", values),
         ],
     )
@@ -190,8 +199,8 @@ def _notes(record: RecordModel, found: progress.Series, table: Table | None) -> 
     best = found.best
     best_text = progress.best_value_text(found)
     if best is None or best_text is None:
-        first = [*html.text(pencil("-", source))]
-        first_about = [*say_text("NOTE_NO_BEST")]
+        first = html.text(pencil("-", source))
+        first_about = say_text("NOTE_NO_BEST")
     else:
         first = html.text(pencil(best_text, source))
         first_about = [
@@ -226,18 +235,20 @@ def _value_text(value: float, unit: str, where: str) -> str:
 
 
 def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
-    """The best so far after every trial, as a step line with the hypothesis behind each step up."""
+    """The best so far after every trial, as a step line. Only the largest steps up are named, each with its
+    hypothesis and the change ("H10: +9.2 cm"), and no two names overlap."""
     source = f"{record.name}: progress"
-    width, height, left, right, top, bottom = 720.0, 310.0, 58.0, 24.0, 70.0, 40.0
+    width, height, left, right, top, bottom = 520.0, 250.0, 62.0, 16.0, 40.0, 30.0
     points = found.points
     raws = [p.raw for p in points if p.raw is not None]
     bests = [p.best for p in points if p.best is not None]
     if not bests:
         return _el("p", "chart-none", say_text("PROGRESS_NONE"))
     low, high = min(raws), max(raws)
-    pad = (high - low) * 0.12 or 1.0
+    pad = (high - low) * 0.1 or 1.0
     low, high = low - pad, high + pad
     n = len(points)
+    unit = found.unit
 
     def x(i: int) -> float:
         return left + (width - left - right) * (i / (n - 1) if n > 1 else 0.5)
@@ -246,8 +257,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         return top + (height - top - bottom) * (1 - (v - low) / (high - low))
 
     marks: list[Segment] = []
-    grid = [low + pad, high - pad]
-    for v in grid:
+    for v in (min(raws), max(raws)):
         marks += html.shape(
             "line",
             {
@@ -261,47 +271,58 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         marks += html.element(
             "text",
             {"class": "ch-tick", "x": f"{left - 6}", "y": f"{y(v) + 4:.1f}"},
-            [pencil(numbers.short(v, source), source)],
+            [pencil(numbers.brief(v, unit, source), source)],
         )
     d = ""
     for i, p in enumerate(points):
         if p.best is None:
             continue
         d += f"M{x(i):.1f} {y(p.best):.1f}" if not d else f"H{x(i):.1f}V{y(p.best):.1f}"
-    d += f"H{x(n - 1):.1f}"
-    marks += html.element("path", {"class": "ch-line", "d": d, "fill": "none"}, [])
+    marks += html.element("path", {"class": "ch-line", "d": d + f"H{x(n - 1):.1f}", "fill": "none"}, [])
     for i, p in enumerate(points):
-        if p.raw is None:
-            continue
-        cls = "ch-dot" if p.value is not None else "ch-dot ch-dot-off"
-        marks += html.shape(
-            "circle", {"class": cls, "cx": f"{x(i):.1f}", "cy": f"{y(p.raw):.1f}", "r": "2.5"}
-        )
-    label = 0
+        if p.raw is not None:
+            cls = "ch-dot" if p.value is not None else "ch-dot ch-dot-off"
+            marks += html.shape(
+                "circle", {"class": cls, "cx": f"{x(i):.1f}", "cy": f"{y(p.raw):.1f}", "r": "2"}
+            )
     span = max(bests) - min(bests)
+    steps = [
+        (i, p)
+        for i, p in enumerate(points)
+        if p.improved and p.delta is not None and abs(p.delta) >= LABEL_SHARE * span
+    ]
+    steps.sort(key=lambda item: -abs(item[1].delta))
+    named: list[tuple[float, float, float]] = []  # (left, right, y) of each name
+    shown_steps: list[tuple[int, str, float, float]] = []
+    for i, p in steps[:MAX_LABELS]:
+        text = f"{p.hypothesis}: {numbers.brief(p.delta, unit, source, signed=True)}"
+        size = LABEL_CHAR * len(text)
+        end = x(i) > width * 0.6
+        box_left, box_right = (x(i) - size, x(i)) if end else (x(i) + 6, x(i) + 6 + size)
+        for dy in (-12, -32, 22):
+            at = y(p.best) + dy
+            if box_left < 0 or box_right > width or at < 12 or at > height - bottom:
+                continue
+            if all(box_right < a or box_left > b or abs(at - c) > LABEL_HEIGHT for a, b, c in named):
+                named.append((box_left, box_right, at))
+                shown_steps.append((i, text, at, 0.0 if not end else 1.0))
+                break
     for i, p in enumerate(points):
-        if not p.improved or p.best is None:
-            continue
-        marks += html.shape(
-            "circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{y(p.best):.1f}", "r": "5"}
-        )
-        # A step is named when it is at least 4% of the whole climb; smaller steps keep their dot.
-        if p.delta is None or abs(p.delta) < LABEL_SHARE * span:
-            continue
-        sign = "+" if p.delta > 0 else ""
-        text = f"{p.hypothesis}: {sign}{numbers.short(p.delta, source)} {found.unit}".strip()
-        dy = -12 - 20 * (label % 3)
-        label += 1
-        end = " ch-note-end" if x(i) > width * 0.72 else ""
+        if p.improved and p.best is not None:
+            marks += html.shape(
+                "circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{y(p.best):.1f}", "r": "4"}
+            )
+    for i, label, at, end in shown_steps:
+        cls = "ch-note ch-note-end" if end else "ch-note"
         marks += html.element(
             "text",
-            {"class": f"ch-note{end}", "x": f"{x(i):.1f}", "y": f"{y(p.best) + dy:.1f}"},
-            [pencil(text, source)],
+            {"class": cls, "x": f"{x(i) - (2 if end else -6):.1f}", "y": f"{at:.1f}"},
+            [pencil(label, source)],
         )
-    for i in {0, n - 1, n // 2}:
+    for i in {0, n - 1}:
         marks += html.element(
             "text",
-            {"class": "ch-tick ch-tick-x", "x": f"{x(i):.1f}", "y": f"{height - 14}"},
+            {"class": "ch-tick ch-tick-x", "x": f"{x(i):.1f}", "y": f"{height - 10}"},
             [pencil(points[i].trial.id, source)],
         )
     svg = html.element(
@@ -342,8 +363,25 @@ def _highlight(
         )
     found = progress.series(record, chosen.progress)
     pols = [s for p in chosen.polaroids for s in _polaroid(record, layout, found, chosen, p, shown)]
-    grid = _el("section", "hl-grid", [*_el("section", "polaroids", pols), *_notes(record, found, table)])
-    return _el("section", "highlight", [*head, *grid, *_chart(record, found)], id="highlight")
+    first = next(t for t in record.trials if t.id == chosen.polaroids[0].trial)
+    retake = shown.retake(record, first)
+    interval = retake.interval if retake is not None else layout.interval
+    together = _el(
+        "section",
+        "polaroids",
+        pols,
+        **{
+            "data-sync": "yes",
+            "data-interval": str(interval),
+            "data-play": text.SYNC_PLAY,
+            "data-pause": text.SYNC_PAUSE,
+            "data-label": text.SYNC_LABEL,
+        },
+    )
+    side = _el("section", "side", [*_notes(record, found, table), *_chart(record, found)])
+    return _el(
+        "section", "highlight", [*head, *_el("section", "hl-grid", [*together, *side])], id="highlight"
+    )
 
 
 # The discovered spec
@@ -377,6 +415,8 @@ def _rule(
     checked: bool,
     known: set[str],
 ) -> list[Segment]:
+    """One compact card: the id and stamp, the rule, and where it was rewritten. The scope and the evidence
+    are in a closed note."""
     rv = view.rows[index]
     row = rv.row
     src = f"{snapshot.design.source} line {row.line}"
@@ -389,7 +429,6 @@ def _rule(
         *_el(
             "p", "rule-text struck" if rv.struck else "rule-text", html.text(_cell(snapshot, row, row.rule))
         ),
-        *_el("p", "rule-scope", html.text(_cell(snapshot, row, row.scope))),
     ]
     if rv.target is not None:
         target = view.rows[rv.target].row
@@ -408,13 +447,15 @@ def _rule(
         )
     elif rv.note is not None:
         body += _el("p", "rule-rewrite", [*say_text("REWRITTEN_NOWHERE"), *html.text(pencil(rv.note, src))])
+    more = _el("p", "rule-scope", html.text(_cell(snapshot, row, row.scope)))
     evidence: list[Segment] = []
     if row.experiments:
         evidence += [*say_text("FROM_EXPERIMENTS"), *_refs(snapshot, row, row.experiments, known)]
     if row.predictions:
         evidence += [*say_text("FROM_PREDICTIONS"), *_refs(snapshot, row, row.predictions, known)]
     if evidence:
-        body += _el("p", "rule-evidence", evidence)
+        more += _el("p", "rule-evidence", evidence)
+    body += _el("details", "rule-more", [*html.element("summary", None, say_text("RULE_MORE")), *more])
     cls = f"rule rule-{row.status}" if row.status in progress.STATUSES else "rule"
     return html.element("li", {"class": cls, "id": addresses.row(row.id, src)}, body)
 
@@ -444,22 +485,27 @@ def _plan(record: RecordModel) -> list[Segment]:
         found = _TASK.match(line)
         if found is None:
             continue
-        done = found.group(1) != " "
         source = f"{snapshot.tasks.source} line {number}"
-        steps.append((done, Authored(found.group(2), text.author, source).segment()))
+        steps.append((found.group(1) != " ", Authored(found.group(2), text.author, source).segment()))
     if not steps:
         return []
     items: list[Segment] = []
     for i, (done, segment) in enumerate(steps, start=1):
+        number = _el("span", "plan-num", html.text(pencil(str(i), snapshot.tasks.source)))
+        words = _el("span", "plan-text", html.text(segment))
         items += html.element(
             "li",
             {"class": "plan-step plan-done" if done else "plan-step"},
-            [*_el("span", "plan-num", html.text(pencil(str(i), snapshot.tasks.source))), *html.text(segment)],
+            html.element("details", None, html.element("summary", None, [*number, *words])),
         )
     return _el(
         "section",
         "plan",
-        [*_el("h3", "cap", say_text("PLAN_HEADING")), *_el("ol", "plan-list", items)],
+        [
+            *_el("h3", "cap", say_text("PLAN_HEADING")),
+            *_el("p", "hint", say_text("PLAN_HINT")),
+            *_el("ol", "plan-list", items),
+        ],
         id="plan",
     )
 
@@ -486,9 +532,8 @@ def _outcome_line(record: RecordModel, hypothesis: Hypothesis, outcomes: dict[st
         ]
         if outcome.value is not None:
             where = f"{_src(record, outcome.seq)}: {prediction.id}"
-            out += html.text(
-                pencil(f" {prediction.measurement} {numbers.short(outcome.value, where)}", source)
-            )
+            shown = numbers.brief(outcome.value, _unit(record, prediction.measurement), where)
+            out += html.text(pencil(f" {prediction.measurement} {shown}", source))
     return out
 
 
@@ -541,7 +586,7 @@ def _trial_card(
             *html.text(param.name.segment()),
             *html.text(pencil(f" = {numbers.short(param.value, f'{source}: {trial.id}')}", source)),
         ]
-    values = [*html.text(pencil(_values(record, trial), source))]
+    values = [*html.text(pencil(_values(record, trial, full=True), source))]
     if best:
         values += [markup(" "), *_new_best()]
     return html.element(
@@ -759,8 +804,8 @@ def body(
     out = [
         *parts.web("book-web"),
         *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
-        *_el("h2", "book-title", _human(title, start)),
-        *_el("p", "book-summary", _human(chosen.summary, f"{chosen.file} key summary")),
+        *_el("h2", "book-title", [*_human(title, start), *_ours()]),
+        *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
         *_chips(record, chosen, lab, table),
         *_highlight(record, layout, chosen, table, shown),
         *_spec(record, table, checked),

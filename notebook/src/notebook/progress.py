@@ -134,8 +134,7 @@ def best_value_text(found: Series) -> str | None:
     best = found.best
     if best is None:
         return None
-    text = numbers.short(best.value, f"{found.spec.source} best")
-    return f"{text} {found.unit}".strip()
+    return numbers.brief(best.value, found.unit, f"{found.spec.source} best")
 
 
 def outcome_of(record: RecordModel, prediction: str) -> Outcome:

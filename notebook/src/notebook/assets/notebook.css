@@ -46,6 +46,7 @@
   --ink-drkiro: #82e6a4;
   --ink-pencil: #d3cbe0;
   --ink-commentary: #ffa24d;
+  --title: #f6eed8;
   --text: #e9e2f2;
   --muted: #a99bc0;
   --frame-green: #4fd37f;
@@ -83,6 +84,7 @@ html[data-mode="day"] {
   --ink-drkiro: #1b7a45;
   --ink-pencil: #3d3d3d;
   --ink-commentary: #c4560a;
+  --title: #2b2118;
   --text: #2b2118;
   --muted: #6d6256;
   --frame-green: #1f9d57;
@@ -174,6 +176,18 @@ ol {
   font-size: 0.92em;
 }
 .ink-c {
+  color: var(--text);
+}
+.ours {
+  margin-left: 0.5rem;
+  color: var(--ink-commentary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ours .ink-c {
   color: var(--ink-commentary);
 }
 .ink-s {
@@ -258,6 +272,7 @@ h3.cap {
   line-height: 1;
 }
 .big-title .ink-c {
+  color: var(--title);
   font-family: var(--font-script);
 }
 .lab-about {
@@ -387,6 +402,7 @@ h3.cap {
   line-height: 1.05;
 }
 .card-title .ink-c {
+  color: var(--title);
   font-family: var(--font-script);
 }
 .card-line {
@@ -434,6 +450,7 @@ h3.cap {
   line-height: 1.02;
 }
 .book-title .ink-c {
+  color: var(--title);
   font-family: var(--font-script);
 }
 .book-summary {
@@ -486,23 +503,24 @@ h3.cap {
 .icon {
   flex: none;
 }
-/* The highlight: two large photos, three sticky notes, the best so far. */
+/* The highlight: two large photos that play together, three sticky notes and the best so far, on one screen. */
 .hl-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.8rem;
   align-items: start;
 }
 .polaroids {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.6rem;
+  gap: 1.2rem 1.2rem;
+  align-content: start;
 }
 .polaroid,
 .hyp-pic .photo,
 .trial-card {
   --ink-pencil: #3d3d3d;
-  --ink-commentary: #b4480a;
+  --ink-commentary: #3d3126;
   --ink-drkiro: #17653a;
   --text: #2b2118;
   --muted: #6d6256;
@@ -510,7 +528,7 @@ h3.cap {
 }
 .polaroid {
   position: relative;
-  padding: 1.1rem 0.9rem 0.9rem;
+  padding: 1rem 0.7rem 0.7rem;
   background: #fbf8ef;
   box-shadow: 0 6px 14px var(--shadow);
 }
@@ -518,23 +536,25 @@ h3.cap {
 .hyp-pic .photo::before {
   content: "";
   position: absolute;
-  top: -0.9rem;
+  top: -0.8rem;
   left: 50%;
-  width: 6rem;
-  height: 1.6rem;
-  margin-left: -3rem;
+  width: 5rem;
+  height: 1.4rem;
+  margin-left: -2.5rem;
   background: rgba(229, 196, 98, 0.7);
   transform: rotate(-3deg);
 }
 .tilt-left {
-  transform: rotate(-1.6deg);
+  transform: rotate(-1.2deg);
 }
 .tilt-right {
-  transform: rotate(1.4deg);
-  margin-top: 1.2rem;
+  transform: rotate(1deg);
 }
 .polaroid .cap {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.polaroid .cap .ink-c {
+  color: #b4480a;
 }
 .polaroid .cap .ink-p {
   font-size: 1em;
@@ -562,11 +582,18 @@ h3.cap {
 }
 .photo-magnified img,
 .photo-magnified canvas {
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .photo figcaption {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   font-size: 0.78rem;
+}
+.reel-clock {
+  display: block;
+  font-size: 0.82rem;
+}
+.reel-clock .ink-c {
+  color: #3d3126;
 }
 .photo-controls {
   display: block;
@@ -587,30 +614,70 @@ h3.cap {
   color: #2b2118;
   font-size: 0.7rem;
 }
+/* Photos that play together have one set of controls under them. */
+section[data-sync] .photo-controls button[data-action="play"],
+section[data-sync] .photo-controls button[data-action="pause"],
+section[data-sync] .photo-controls button[data-action="step"] {
+  display: none;
+}
+.sync-bar {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--chip-edge);
+  border-radius: 999px;
+  background: var(--chip);
+}
+.sync-bar button {
+  padding: 0.1rem 0.9rem;
+  border: 2px solid var(--ink-commentary);
+  border-radius: 999px;
+  background: var(--page);
+  color: var(--ink-commentary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sync-bar input {
+  flex: 1;
+  accent-color: var(--ink-commentary);
+}
 .pol-words {
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
   font-family: var(--font-script);
-  font-size: 1.45rem;
-  line-height: 1.1;
+  font-size: 1.3rem;
+  line-height: 1.08;
 }
 .pol-words .ink-c {
+  color: #2b2118;
   font-family: var(--font-script);
 }
 .pol-values {
-  margin-top: 0.3rem;
-  font-size: 0.78rem;
+  margin-top: 0.25rem;
+  font-size: 0.74rem;
 }
-.notes {
+.side {
   display: flex;
   flex-direction: column;
-  gap: 1.3rem;
+  gap: 1.2rem;
+}
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 .note {
   --ink-pencil: #3d3d3d;
-  --ink-commentary: #7a3a0a;
-  padding: 1rem 1.1rem 1.1rem;
+  --ink-commentary: #3d3126;
+  padding: 0.7rem 0.8rem 0.8rem;
   color: #2b2118;
   box-shadow: 0 5px 10px var(--shadow);
+}
+.note .ink-c {
+  color: #3d3126;
 }
 .note-yellow {
   background: #ffe97a;
@@ -622,17 +689,17 @@ h3.cap {
   background: #a9d8ff;
 }
 .tilt-one {
-  transform: rotate(-2.2deg);
+  transform: rotate(-2deg);
 }
 .tilt-two {
-  transform: rotate(1.6deg);
+  transform: rotate(1.4deg);
 }
 .tilt-three {
-  transform: rotate(-0.9deg);
+  transform: rotate(-0.8deg);
 }
 .note-big {
   font-family: var(--font-script);
-  font-size: 3.4rem;
+  font-size: 2.3rem;
   line-height: 1;
 }
 .note-big .ink-p {
@@ -641,11 +708,16 @@ h3.cap {
   font-weight: 700;
 }
 .note-about {
-  font-size: 0.88rem;
-  line-height: 1.35;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  line-height: 1.3;
 }
 .progress {
-  margin: 2rem 0 0;
+  margin: 0;
+  padding: 0.6rem 0.8rem 0.5rem;
+  border: 2px solid var(--chip-edge);
+  border-radius: 8px;
+  background: var(--chip);
 }
 .chart {
   width: 100%;
@@ -685,24 +757,25 @@ h3.cap {
 .ch-note {
   fill: var(--ink-commentary);
   font-family: var(--font-script);
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 700;
 }
 .ch-note-end {
   text-anchor: end;
 }
 .progress figcaption {
-  margin-top: 0.4rem;
-  font-size: 0.82rem;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
 }
-/* The discovered spec. */
+/* The discovered spec: compact cards. */
 .rules {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.7rem;
+  align-items: start;
 }
 .rule {
-  padding: 0.7rem 0.9rem 0.8rem;
+  padding: 0.5rem 0.7rem 0.55rem;
   border: 1px solid var(--card-edge);
   border-left: 6px solid var(--muted);
   border-radius: 4px;
@@ -726,37 +799,49 @@ h3.cap {
   justify-content: space-between;
   gap: 0.6rem;
   font-family: var(--font-mono);
+  font-size: 0.85rem;
   font-weight: 600;
 }
+.rule-head .stamp {
+  font-size: 0.7rem;
+}
 .rule-head .stamp-label {
+  font-size: 0.62rem;
   text-align: right;
 }
 .rule-text {
-  margin-top: 0.35rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 .rule-text.struck .ink-k {
   text-decoration: line-through;
   opacity: 0.75;
 }
-.rule-scope {
-  margin-top: 0.25rem;
-  font-size: 0.78rem;
-}
-.rule-scope .ink-k {
-  opacity: 0.85;
-}
 .rule-rewrite {
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.5rem;
   border-left: 3px dashed var(--ink-commentary);
   background: var(--rewrite-bg);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+.rule-more {
+  margin-top: 0.4rem;
+  font-size: 0.74rem;
+}
+.rule-more summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.rule-more summary .ink-c {
+  color: var(--muted);
+}
+.rule-scope {
+  margin-top: 0.25rem;
 }
 .rule-evidence {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
+  margin-top: 0.25rem;
 }
 .rule-evidence .ink-c {
   color: var(--muted);
@@ -765,101 +850,131 @@ h3.cap {
   margin-bottom: 0.8rem;
   font-size: 0.85rem;
 }
-/* Dr. Kiro's plan: numbers in circles joined by arrows. */
+/* Dr. Kiro's plan: numbers in circles joined by arrows, one line each. */
 .plan-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem 0;
+  gap: 0.6rem 0;
+  align-items: flex-start;
 }
 .plan-step {
+  position: relative;
+  max-width: 22rem;
+  padding-right: 2rem;
+  font-family: var(--font-script);
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+.plan-step details {
+  min-width: 0;
+}
+.plan-step summary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  max-width: 24rem;
-  padding-right: 2.2rem;
-  position: relative;
-  font-family: var(--font-script);
-  font-size: 1.25rem;
-  line-height: 1.1;
+  cursor: pointer;
+  list-style: none;
+}
+.plan-step summary::-webkit-details-marker {
+  display: none;
 }
 .plan-step::after {
   content: "→";
   position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  margin-top: -0.9rem;
+  top: 0.35rem;
+  right: 0.45rem;
   color: var(--muted);
   font-family: var(--font-sans);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 .plan-step:last-child::after {
   content: "";
 }
-.plan-step .ink-k {
+.plan-text {
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plan-step details[open] .plan-text {
+  max-width: 20rem;
   white-space: normal;
+}
+.plan-step .ink-k {
+  white-space: inherit;
 }
 .plan-num {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2rem;
+  height: 2rem;
   border: 2px dashed var(--ink-pencil);
   border-radius: 50%;
 }
 .plan-num .ink-p {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 .plan-done .plan-num {
   border-style: solid;
   border-color: var(--ink-drkiro);
 }
-/* Every experiment and hypothesis. */
+/* Every experiment and hypothesis: cards in two columns. */
 .hint {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   font-size: 0.85rem;
 }
 .hint .ink-c {
   color: var(--muted);
 }
 .hyps {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
 }
 .hyp {
   display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr);
-  gap: 1.2rem;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0.8rem;
   align-items: start;
+  padding: 0.7rem;
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
+  background: var(--rule-bg);
+}
+.hyp:has(details[open]) {
+  grid-column: 1 / -1;
+  grid-template-columns: 13rem minmax(0, 1fr);
 }
 .hyp-pic .photo {
-  padding: 0.55rem 0.55rem 0.6rem;
+  padding: 0.4rem 0.4rem 0.45rem;
   background: #fbf8ef;
   box-shadow: 0 4px 10px var(--shadow);
   transform: rotate(-1.2deg);
 }
 .hyp-pic .never-run {
-  padding: 2rem 0.5rem;
+  padding: 1.5rem 0.4rem;
   border: 2px dashed var(--chip-edge);
   text-align: center;
   font-family: var(--font-script);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 .hyp-detail {
   min-width: 0;
 }
 .hyp-summary {
   display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
   grid-template-areas:
-    "num title stamps"
-    "num expect expect"
-    "num results results";
-  gap: 0.15rem 0.8rem;
-  padding: 0.5rem 0.6rem;
+    "num title"
+    "num expect"
+    "results results"
+    "stamps stamps";
+  gap: 0.15rem 0.6rem;
   border-radius: 6px;
   cursor: pointer;
   list-style: none;
@@ -875,28 +990,33 @@ h3.cap {
   grid-area: num;
   align-items: center;
   justify-content: center;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border: 3px solid var(--ink-commentary);
   border-radius: 50%;
   font-weight: 600;
 }
 .hnum .ink-p {
   color: var(--ink-commentary);
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 .hyp-title {
   grid-area: title;
   font-family: var(--font-script);
-  font-size: 1.55rem;
-  line-height: 1.1;
+  font-size: 1.4rem;
+  line-height: 1.05;
 }
 .hyp-title .ink-k {
   white-space: normal;
 }
 .hyp-expect {
+  display: -webkit-box;
   grid-area: expect;
-  font-size: 0.85rem;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .hyp-expect .ink-k {
   white-space: normal;
@@ -904,9 +1024,13 @@ h3.cap {
 .hyp-expect .ink-c {
   color: var(--muted);
 }
+.hyp-detail[open] .hyp-expect {
+  display: block;
+  -webkit-line-clamp: unset;
+}
 .hyp-results {
   grid-area: results;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 .hyp-results .ink-c {
   color: var(--muted);
@@ -919,8 +1043,8 @@ h3.cap {
   display: flex;
   grid-area: stamps;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
 }
 .mini-stamp {
   padding: 0 0.4rem;
@@ -928,7 +1052,7 @@ h3.cap {
   border-radius: 5px;
   color: var(--ink-pencil);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 600;
   text-transform: uppercase;
   transform: rotate(-2deg);
@@ -939,11 +1063,9 @@ h3.cap {
   white-space: normal;
 }
 .newbest {
-  grid-column: 3;
-  align-self: end;
   color: #e0a800;
   font-family: var(--font-script);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 .newbest .ink-c {
   color: #e0a800;
@@ -953,15 +1075,15 @@ h3.cap {
   --ink-pencil: #3d3d3d;
   --ink-commentary: #7a3a0a;
   --ink-drkiro: #17653a;
-  margin: 0.5rem 0 0 3.6rem;
-  padding: 1.1rem 1.2rem 1.2rem;
+  margin: 0.6rem 0 0;
+  padding: 1rem 1.1rem 1.1rem;
   background: #ffe97a;
   color: #2b2118;
   box-shadow: 0 6px 12px var(--shadow);
-  transform: rotate(-0.4deg);
+  transform: rotate(-0.3deg);
 }
 .sticky-open .ink-c {
-  color: #7a3a0a;
+  color: #3d3126;
 }
 .predictions {
   display: flex;
@@ -1352,4 +1474,17 @@ html[data-mode="day"] .deco-sun {
     top: 0.5rem;
     right: 0.6rem;
   }
+}
+/* Orange is for small headings, the marks "our notes" and the switch; the other text is ordinary text. */
+.cap .ink-c,
+.kicker .ink-c,
+.mode-toggle .ink-c {
+  color: var(--ink-commentary);
+}
+.mode-toggle .ink-c,
+.sync-bar button .ink-c {
+  color: inherit;
+}
+.hyp-pic .photo-controls button[data-action="step"] {
+  display: none;
 }

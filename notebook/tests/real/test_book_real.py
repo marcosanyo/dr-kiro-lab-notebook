@@ -24,6 +24,7 @@ def _argv(out: Path) -> list[str]:
         "--scan-config", str(ROOT / "body-lab" / "adapter" / "scan_sources.toml"),
         "--scan-config", str(ROOT / "wind-tunnel" / "adapter" / "scan_sources.toml"),
         "--stop-list", str(ROOT / ".kiro" / "blind-scan" / "stop-list.txt"),
+        "--display", str(ROOT / "notebook" / "display"),
         "--out", str(out),
     ]  # fmt: skip
 
@@ -124,3 +125,42 @@ def test_body_1_has_no_table_and_says_so(site):
     page, found = _page(site, "body-lab-body-1.html")
     assert found.classes["rule"] == 0
     assert "no discovered spec in the record" in page
+
+
+def _closed_part(page: str) -> str:
+    """The page without its opened notes: what is seen before anything is pressed."""
+    return re.sub(r'<section class="sticky-open">.*?</details>', "", page, flags=re.S)
+
+
+def test_the_top_of_a_page_has_no_exponent_numbers(site):
+    for name in ("body-lab-body-2.html", "body-lab-body-1.html", "wind-tunnel-wt-004.html"):
+        page = _closed_part((site / name).read_text(encoding="utf-8"))
+        text = re.sub(r"<[^>]*>", " ", page)
+        assert not re.search(r"\d[eE][-+]?\d", text), name
+
+
+def test_the_two_highlight_photos_play_together_with_a_slider_and_say_how_far_they_came(site):
+    page, found = _page(site, "body-lab-body-2.html")
+    assert found.classes["polaroids"] == 1 and 'data-sync="yes"' in page
+    assert 'data-interval="200"' in page and 'data-whole-src="p/' in page
+    first = re.search(r'<span class="reel-clock" data-frame="0" hidden="hidden">(.*?)</span>', page)
+    assert first and "t = 0.2 s" in first.group(1)
+    assert "forward" in page and " cm" in page
+
+
+def test_the_chart_names_at_most_four_steps_each_with_a_hypothesis(site):
+    page, found = _page(site, "body-lab-body-2.html")
+    names = re.findall(r'<text class="ch-note[^"]*"[^>]*>(H\d+: [+-][^<]*)</text>', page)
+    assert 1 <= len(names) <= 4 and all(re.fullmatch(r"H\d+: [+-][\d.]+ (cm|m)", n) for n in names), names
+
+
+def test_titles_are_marked_as_our_notes_and_the_other_pages_have_every_retaken_picture(site):
+    page, found = _page(site, "body-lab-body-2.html")
+    assert found.classes["ours"] == 2
+    pictures = set(re.findall(r'src="(p/[0-9a-f]{64}\.png)"', page))
+    assert len(pictures) >= 39  # every trial's retaken sheet (the recorded sheets load only when asked)
+
+
+def test_the_plan_steps_and_the_rule_details_are_closed_notes(site):
+    page, found = _page(site, "body-lab-body-2.html")
+    assert found.classes["plan-step"] == 13 and found.classes["rule-more"] == 14
