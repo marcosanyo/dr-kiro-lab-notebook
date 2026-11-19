@@ -1,0 +1,22 @@
+title = "Four Ideas Down"
+subtitle = "the first walk needed a wave, and it came only after four rejected ideas"
+summary = """Dr. Kiro began by predicting that a constant signal on a channel, or one sine on one channel, would move the body. The experiments said no, four times in a row. The first forward travel came when all five channels were driven by a travelling wave at the right frequency, and the session ended at 0.66 m forward after 40 trials. The record has no final spec table, so this notebook shows no rules for it."""
+line = "Four rejected ideas, then a wave that walks 0.66 m."
+model = "<fill in>"
+date = "2026-11-13"
+color = "amber"
+
+[progress]
+measurement = "x"
+better = "higher"
+
+[[polaroid]]
+heading = "The miss"
+trial = "T10"
+words = "A wave meant to drive the body forward pushed it back."
+
+[[polaroid]]
+heading = "Best gait"
+trial = "T39"
+words = "The best walk of the session."
+star = true
