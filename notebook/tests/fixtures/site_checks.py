@@ -26,6 +26,12 @@ FORBIDDEN = (
     "<object",
     "<embed",
 )
+# The one form control of the site: the radio of a lab tab on the cover. It sits outside any `<form>` (which
+# stays forbidden), is named "lab-tab" and has no `value`, so it cannot send anything. Its markup is removed
+# before the search for `<input`, so any other input still fails.
+TAB_RADIO = re.compile(
+    r'<input type="radio" name="lab-tab" id="tab-[a-z0-9-]+" class="tab-radio"( checked="checked")?>'
+)
 # Script calls that send or fetch data (3.2, 3.3).
 FORBIDDEN_SCRIPT = (
     "fetch(",
@@ -37,7 +43,14 @@ FORBIDDEN_SCRIPT = (
     "import ",
 )
 # The only buttons: the moving picture controls (design 10).
-BUTTON_ACTIONS = {"play", "pause", "step", "sheet"}
+BUTTON_ACTIONS = {"play", "pause", "step", "sheet", "back"}
+# The assets of `a/`: the stylesheet, the script, the typefaces and their licence (all served by the site).
+ASSETS = {
+    addresses.STYLESHEET,
+    addresses.SCRIPT,
+    addresses.FONT_LICENSE,
+    *(f"{addresses.ASSET_DIR}/{name}" for name in addresses.FONT_FILES),
+}
 _CSS_URL = re.compile(r"url\(\s*['\"]?([^'\")]*)", re.IGNORECASE)
 _SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
 
@@ -110,8 +123,8 @@ def layout_problems(site: Path) -> list[str]:
             if not base.endswith(".html"):
                 out.append(f"{f}: a file at the site root that is not a page")
         elif base.startswith(f"{addresses.ASSET_DIR}/"):
-            if base not in (addresses.STYLESHEET, addresses.SCRIPT) or base.count("/") != 1:
-                out.append(f"{f}: an asset that is not the stylesheet or the script")
+            if base not in ASSETS or base.count("/") != 1:
+                out.append(f"{f}: an asset that is not the stylesheet, the script, a typeface or the licence")
         elif not re.fullmatch(r"p/[0-9a-f]{64}\.png", f):
             out.append(f"{f}: a file in a subfolder that is not a picture or an asset")
     return out
@@ -123,7 +136,7 @@ def text_problems(site: Path) -> list[str]:
     for f in files(site):
         if not f.endswith(TEXT_SUFFIXES + (SIDECAR_SUFFIX,)):
             continue
-        content = (site / f).read_text(encoding="utf-8").lower()
+        content = TAB_RADIO.sub("", (site / f).read_text(encoding="utf-8")).lower()
         for item in FORBIDDEN:
             if item in content:
                 out.append(f"{f}: holds {item!r}")
@@ -164,6 +177,8 @@ def link_problems(site: Path) -> list[str]:
     for f in files(site):
         if f.endswith(".css"):
             for match in _CSS_URL.finditer((site / f).read_text(encoding="utf-8")):
+                if match.group(1) in addresses.FONT_FILES:
+                    continue  # a typeface file beside the stylesheet, in `a/`
                 problem = _link_problem(match.group(1))
                 if problem is not None:
                     out.append(f"{f}: url({match.group(1)!r}) {problem}")

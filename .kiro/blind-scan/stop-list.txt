@@ -83,6 +83,16 @@ domain
 geometry
 constants
 monitors
+# 2026-11-19, notebook polish pass (approved by the user in chat): "ahead". Its source is wind-tunnel/model/constants.toml,
+# line 27: `ahead = 6.0  # brief, measured from the centre of the body`, the length of flow domain upstream of the body.
+# It is a solver-setup length and says nothing about the structure of the body. The word is also in the id and the
+# words of the committed request build-from-spec/requests/stop-ahead.toml and in the names of its six runs, which the
+# notebook shows. Listing it removes it as a derived term everywhere, as for every word of this list.
+ahead
+# 2026-11-19, notebook polish pass (approved by the user in chat): "spacing". Its source is wind-tunnel/model/constants.toml,
+# line 69: `spacing = 1.0`, in the [picture] section, a setting of the wind tunnel like "ahead". It says nothing about the
+# structure of the body. The notebook stylesheet also uses the CSS property name letter-spacing for its small headings.
+spacing
 # 2026-11-19, PR #37: "build" is a derived term from wind-tunnel/model/constants.toml (its comments say "3e-8 builds" and
 # "a failed build"). It is an ordinary English word, and the bench's own record text uses it ("build-from-spec").
 # Approved by the user.

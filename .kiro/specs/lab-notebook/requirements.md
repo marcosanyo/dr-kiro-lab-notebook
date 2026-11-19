@@ -256,7 +256,7 @@ record of work.
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown
    as sticky notes.
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with
-   the word "miss".
+   the word "miss"; on the cover the stamp "missed" says it (13.9).
 5. Halloween SHALL appear only as small decoration that holds no text, does not overlap any text, table, chart or
    experiment entry, and does not lower the contrast of any text below the ratio of Requirement 4.6. THE decoration SHALL be inline in the
    page markup, not a separate file, and SHALL carry no namespace URL (Decision 46).
@@ -273,7 +273,8 @@ numbers.
 #### Acceptance criteria
 
 1. THE notebook SHALL keep a frame layout table, `notebook/layouts.toml`, with one entry per application: the
-   number of frames, rows, columns, and the gap in pixels between cells, with the application's spec named as the
+   number of frames, rows, columns, the gap in pixels between cells, and the interval in milliseconds at which a
+   moving picture shows one cell (body-lab 220, wind-tunnel 150), with the application's spec named as the
    source of each entry (`body-lab` design: 10 frames, 2 rows of 5, no gap; `wind-tunnel` Requirement 9.4: 6
    frames, 2 rows of 3, a gap of 4 pixels).
 2. IF an entry's number of frames does not equal its rows times its columns, THEN THE build SHALL fail, naming the
@@ -285,12 +286,14 @@ numbers.
 4. THE notebook SHALL NOT change any file in `bench/`.
 5. IF a record's application has no entry in the frame layout table, THEN THE build SHALL fail, naming it.
 6. THE site SHALL show a moving picture by showing the cells of the sheet in reading order (left to right, then top
-   to bottom), one at a time at a fixed rate set in the visual system, and then starting again.
+   to bottom), one at a time at the rate of the application's entry in the frame layout table (7.1), and then starting again. THE
+   site SHALL show only the cells of the sheet, with no frame made between two of them.
 7. THE site SHALL copy each picture as recorded, byte for byte, under a name made from its blob hash, and SHALL NOT
    re-encode it.
-8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole sheet at once.
+8. A moving picture SHALL have controls to pause, to step one cell, and to see the whole picture at once; on a
+   narrow screen and on a touch screen each control SHALL be at least 44 by 44 CSS pixels.
 9. FOR each body-lab trial's moving picture, except the small pictures of the lab cards (Requirement 13.4), THE site
-   SHALL show beside it an enlarged picture of the moving body: a magnified view, derived by the build from the record's own
+   SHALL show beside it (on the cover, in the top row of the miss: 13.1) an enlarged picture of the moving body: a magnified view, derived by the build from the record's own
    picture sheet, in which the body in its cell is readable. THE build SHALL choose the region of the enlarged picture
    as the box, over all frames of the sheet, of the pixels that change between frames, plus a margin of 4 pixels,
    clipped to its cell; SHALL scale it by the smallest whole-number factor (nearest neighbour) that makes it at least
@@ -299,7 +302,8 @@ numbers.
    derive the enlarged picture at build time, SHALL NOT change the recorded PNG file (Requirement 7.7 still holds for it), SHALL write the
    enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
    "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
-   (Decision 50). THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
+   (Decision 50). THE enlarged picture SHALL move as a moving picture does (7.6, 7.8), with the interval of the
+   trial's application; the whole picture of a body-lab trial SHALL NOT be on the page at first, because its cells side by side read as many small bodies; the control "whole picture" of the enlarged picture SHALL swap it in at the same place, and it SHALL then move one cell at a time with the same interval. A body-lab picture without an enlarged one (a lab card) SHALL show its first cell only. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
    the flow moves through the whole sheet and no region of it is the moving body (Decision 50).
 
 ### Requirement 8: The discovered spec table
@@ -347,6 +351,16 @@ word and its evidence one press away, so that I see what was found and how sure 
     site SHALL show the row's "replaced by" tab open by default, so that the replacing row's rule text and the link
     to that row are readable when the table is shown, without a click. THE tab's content and link SHALL be as in 8.3,
     and a visitor MAY close the tab (Decision 49).
+14. THE site SHALL show each row of the table as a card, one block per row, with its stamp, its rule text and its
+    other cells, each of the other cells with the name of its column as a small caption; the row's refused-end note
+    and its opened row (8.8) SHALL be inside the card. THE header row SHALL stay in the HTML and out of sight. THE
+    table and its parts SHALL carry the ARIA roles `table`, `rowgroup`, `row`, `columnheader` and `cell`, so that a
+    screen reader still reads a table where the browser drops the table semantics of the card layout. THE card of a
+    `rejected` row SHALL be in the rewrite red (Decision 51). WHERE the column beside the margin has room for two
+    cards, THE cards SHALL stand side by side. A card SHALL show its rule text, its stamp and its "replaced by" line;
+    its scope with the run bands, its experiments, its predictions and its opened row SHALL be closed until the visitor
+    opens the card's `<details>`, without a script. THE explanation of the run bands SHALL be on the page once, above the
+    cards, in a closed `<details>` with the summary "How to read the bands", without a script. In a `rejected` card only the rule text SHALL be struck through (8.3).
 
 ### Requirement 9: What was run, beside each row
 
@@ -492,26 +506,61 @@ once that the experiment gets the final edit.
 
 #### Acceptance criteria
 
-1. THE cover SHALL show one large pinned instant photo playing the image sheet of the trial recorded with the
-   outcome of the missed prediction that the cover file names; beside it the prediction in Dr. Kiro's ink, the
-   measured value in pencil, and "miss" in the miss red.
-2. WHEN the table of that session's `end` snapshot has rows, THE cover SHALL also show every row that cites the
-   prediction and, for each such row that is `rejected`, the row that replaces it; IF no row cites the prediction,
-   THEN THE cover SHALL say so.
+1. THE cover SHALL show, in this order: a head (a kicker, the title, the tagline and one line naming the three
+   inks, linked to the ink legend); the missed prediction; the reader (13.11); and one tab per lab (13.4). THE
+   missed prediction SHALL be a top row, a row of evidence below it, and the card of rules below that (13.2). THE top
+   row SHALL hold the claim card (the prediction in Dr. Kiro's ink; the registered range and the measured value in
+   pencil, one under the other, each with a small heading; and the stamp "missed" in the miss red), the sticky note
+   (13.8) and, WHERE the trial is a body-lab trial, the magnified picture of Requirement 7.9. THE row of evidence
+   SHALL hold one large instant photo playing the image sheet of the trial recorded with the outcome of the
+   missed prediction that the cover file names, and the track (13.7).
+2. WHEN the table of that session's `end` snapshot has rows, THE card of rules SHALL show every row that cites the
+   prediction as a card of its own and, for each such row that is `rejected`, one line in its card with the id and
+   the rule text of the row that replaces it (the replacing row is not drawn again as a card); IF no row cites the
+   prediction, THEN THE cover SHALL say so.
 3. IF the cover file says "none" for the prediction, THEN THE cover SHALL say that the session has no missed
    prediction, in place of the photo.
-4. BELOW, THE cover SHALL show one card per lab with a small moving picture, the trial of which the cover file
-   names, and a link to the lab's list of sessions.
+4. BELOW, THE cover SHALL show one tab per lab, in the order of the cover file. THE panel of a tab SHALL show a
+   small moving picture, the trial of which the cover file names, the lab's ended sessions (each with its trial
+   count and the number of rows of its `end` table per status word, or "no table"), and a link to the lab's list of
+   sessions. Only the panel of the checked tab SHALL show, with no script. WHEN the page is loaded, THE tab of the
+   lab of the missed prediction SHALL be the checked one; IF the cover file says "none", THEN the first tab. IF the
+   lab of the missed prediction has no tab, THEN THE build SHALL fail, naming the cover file.
 5. THE cover file, `notebook/choices/cover.toml`, SHALL name the session of 13.1 and either a prediction or
-   "none", and the session and trial of each lab card; the cover SHALL label them "chosen by a person"; and the
+   "none", and the session and trial of each lab tab, with the four words of the tab (kicker, title, engine, unit);
+   the cover SHALL label the choices "chosen by a person"; and the
    build SHALL fail, naming the entry, if the file is missing, names a stopped session, names a session, trial or
    prediction that is not in the records, names a prediction whose outcome is not miss, or says "none" while that
    session has a missed prediction.
-6. THE cover's commentary visible before any detail is opened SHALL be at most 60 words, counted as
+6. THE cover's commentary visible before any detail is opened SHALL be at most 240 words, counted as
    whitespace-separated tokens, excluding Dr. Kiro's text and recorded values. Details SHALL open on demand.
 7. WHERE the trial of 13.1 has recorded series measurements (body-lab track), THE cover SHALL also show the
-   recorded track of that trial as an overhead path in pencil beside the photo, unless the series is a not-measured
-   outcome (Decision 36).
+   recorded track of that trial as an overhead path in pencil in the row of the photo, unless the series is a
+   not-measured outcome (Decision 36). THE track SHALL be drawn in a box cropped to the drawing, so that no empty
+   band stands above or below it on a narrow screen (Decision 51).
+8. THE sticky note SHALL show the measured value with the name of the measurement and its unit, one sentence of what
+   happened, and the conditions of the prediction, from the record alone: "expected <measurement> between <low> and
+   <high> <unit>, measured <value> <unit>: below the range" (or "above the range"), with ", on the other side of
+   zero" added WHEN the range lies on one side of zero and the value on the other. THE sentence SHALL NOT name a
+   direction of travel unless the declaration's `measured_by` text says the measurement is taken in the direction the
+   body faces at the start ("x in the direction the body faces at the start"); WHEN it does and the range lies on one
+   side of zero, THE sentence SHALL read "expected to go forward <low> to <high> <unit>, went back <value> <unit>"
+   ("forward" for a positive number, "back" for a negative one, each number as its size, from the record alone). The
+   build SHALL fail IF a missed prediction has no
+   value or its value lies inside its range, because the bench records neither (a prediction it cannot check is
+   `not-checkable`, not a miss).
+9. THE cover SHALL NOT show a row for the outcome of the missed prediction; the stamp "missed" says it.
+10. THE `<details>` of the cover SHALL be the last part of the card of rules, inside it.
+11. WHERE the build has build-from-spec runs, THE cover SHALL show, after the missed prediction, a section of the
+    reader: what the runs were, the committed request in words, and the number of runs that passed per setup, each
+    number from the run files.
+12. WHEN the viewport is 1000 CSS pixels wide or wider and the top row has a magnified picture (13.1), THE top row
+    SHALL have two columns, the magnified picture at the left and, at its right, the claim card and the sticky note
+    side by side; WHERE the top row has no magnified picture, THE claim card and the sticky note SHALL stand side by
+    side in its one column. THE row of evidence SHALL follow below the top row, so that the prediction, the measured
+    value and the stamp stand in the first screen with the picture (Decision 51). On a narrow screen the cover SHALL
+    be one column in this order: the claim card, the sticky note, the magnified picture, the moving picture, the
+    track and the card of rules.
 
 ### Requirement 14: Lab pages and stopped sessions
 
@@ -813,7 +862,8 @@ exception to a rule.
     non-empty output folder is refused (Requirement 1.3, 1.4).
 27. **Series measurements** (builder). body-lab's recorded track is shown as a small path in pencil; it is a
     measurement the bench recorded (Requirement 10.10).
-28. **Cover length** (builder). At most 60 words of commentary on the cover (Requirement 13.6).
+28. **Cover length** (builder). At most 240 words of commentary on the cover (Requirement 13.6; it was 60, see
+    Decision 51).
 29. **Build-from-spec pass or fail** (builder). The notebook uses the check `build-from-spec` provides and fails the
     build on disagreement; it never judges a run (Requirement 19.6).
 30. **Rescanning the written site** (builder). The build writes what the blind scan needs to scan the site again at
@@ -946,6 +996,18 @@ exception to a rule.
     record's own picture sheet; the recorded PNG file is not changed. Its alt text says that it is a
     magnified view of the picture beside it, and uses no word of the commentary word list (Requirement 7.9; design
     N32).
+51. **Notebook polish pass** (user, 2026-11-19). The cover shows the prediction and the miss in the first screen: a
+    top row with the claim card, the sticky note and the magnified picture, then the row with the moving picture and
+    the track (Requirement 13.1, 13.12). The sticky note says in one sentence what happened, from recorded numbers
+    only (13.8). The row of the outcome is dropped, because the stamp says it (13.9). The details sit inside the
+    card of rules (13.10). The cover opens on the tab of the lab of the missed prediction, and the tabs keep the
+    order of the cover file (13.4). The cover's limit is 240 words (13.6). On a phone the track box is cropped to
+    the drawing (13.7) and the picture controls are 44 px targets (7.8). The discovered spec table is shown as
+    cards (8.14). A rejected row or card has a rewrite red (`--rewrite-red` on `--rewrite-bg`), which is not the
+    miss red (6.4): the miss red stays for misses. The stylesheet bundles the typefaces Lora, IBM Plex Mono and
+    Caveat as files of the site, with their licence; this fetches nothing from another host (3.2). The word
+    "spacing", a setting of the wind tunnel like "ahead", is on the stop list, and small headings are letter-spaced.
+    The steering file `notebook-visual.md` holds the details.
 
 ## Open questions
 

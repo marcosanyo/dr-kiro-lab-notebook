@@ -2,13 +2,19 @@
 application = "body-lab"
 session = "body-2"
 prediction = "H4.P1"
-
-[[card]]
-application = "body-lab"
-session = "body-2"
-trial = "T31"
-
 [[card]]
 application = "wind-tunnel"
 session = "wt-004"
 trial = "T1"
+kicker = "LAB I · BY DAYLIGHT"
+title = "The Wind Tunnel"
+engine = "OpenFOAM"
+unit = "runs"
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+kicker = "LAB II · KEPT SECRET"
+title = "The Stitched Body"
+engine = "MuJoCo"
+unit = "trials"

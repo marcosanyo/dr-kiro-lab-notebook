@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `15a99d9ac63f0173e3482597efe653a483c7d558a2f4724748cf1e34f64c84ec`
+> 原文 SHA-256: `ce52010dbe9104b4206860054e6299f4c406470418c4f22618f9c250c16d2c3a`
 
 # Design: lab-notebook
 
@@ -265,9 +265,11 @@ class Segment:
 
 ### 10. Moving pictures (Requirement 7.6, 7.8, 3.6)
 
-HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、500 ms に 1 セル、ループする。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、シート全体。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
+HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、`data-interval` ms（レイアウトの `interval`。ラボごとに違う）に 1 セル、ループする。描くのはシートのセルだけで、セルとセルの間のフレームは作らず、補間もしない。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、全体の画像（シートそのまま）。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
 
-body-lab の各フルサイズの画像（ラボのカードの画像は除く）の隣に、ページは動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
+どの画像が動くか: body-lab の試行では、体はシートの中で数ピクセルしかないので、下の拡大した画像が自分で動く。全体の画像はページに出さない。拡大した figure がそのシートを名指し（`data-whole-src`、`data-whole-gap`、`data-whole-tile-width`、`data-whole-tile-height`）し、「whole picture」を押すと同じ場所、同じセルで入れ替わり、同じ間隔で 1 セルずつ動く。「magnified picture」で戻る。スクリプトがなければ拡大した画像は最初のセルを見せる。ラボのカードは最初のセルを見せて「play」を待つ（`data-start="first"`）。wind-tunnel の画像は試行の唯一の画像なので、自分で動く。
+
+body-lab の各試行について（ラボのカードは除く）、ページは全体の画像の代わりに、動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32。操作と `data-` 属性は動く画像と同じで、全体のシートの名指しがつく `<figure class="photo photo-magnified">` で、拡大したシートについて、列と行は同じ、隙間 0、拡大した 1 セルの大きさ、ラボの interval）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
 
 ### 11. Scan (Requirement 20)
 
@@ -296,6 +298,7 @@ frames = 10
 rows = 2
 columns = 5
 gap = 0
+interval = 220
 source = "body-lab design, picture: 10 frames, 2 rows of 5"
 
 [wind-tunnel]
@@ -303,10 +306,11 @@ frames = 6
 rows = 2
 columns = 3
 gap = 4
+interval = 150
 source = "wind-tunnel Requirement 9.4"
 ```
 
-各表は、まさにこの 5 つのキーを持つ。整数は `>= 1`（gap は `>= 0`）。`source` は空でない文字列。テストのフィクスチャは、`fake` のエントリー（1 フレーム、1 行、1 列、gap 0）を持つ自前のレイアウトファイルを使う。
+各表は、まさにこの 6 つのキーを持つ。整数は `>= 1`（gap は `>= 0`、`interval >= 50`）。`interval` は、そのアプリケーションの動く画像が 1 セルを見せる時間（ミリ秒。body-lab 220、wind-tunnel 150、ユーザー）。`source` は空でない文字列。テストのフィクスチャは、`fake` のエントリー（1 フレーム、1 行、1 列、gap 0）を持つ自前のレイアウトファイルを使う。
 
 ### Choice file `notebook/choices/<application>/<session-id>.toml` (Requirement 12)
 
@@ -327,17 +331,25 @@ session = "body-2"
 prediction = "H4.P1"          # or "none"
 
 [[card]]
-application = "body-lab"
-session = "body-2"
-trial = "T31"
-
-[[card]]
 application = "wind-tunnel"
 session = "wt-004"
 trial = "T1"
+kicker = "LAB I · BY DAYLIGHT"
+title = "The Wind Tunnel"
+engine = "OpenFOAM"
+unit = "runs"
+
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+kicker = "LAB II · KEPT SECRET"
+title = "The Stitched Body"
+engine = "MuJoCo"
+unit = "trials"
 ```
 
-`sessions/` にあるアプリケーションごとに、カードはちょうど 1 枚で、アプリケーションのコードポイント順に見せる。`[miss]` のセッションは、終了したセッションでなければならない。その予測の結果は miss でなければならない。"none" は、そのセッションに外れがないときだけ受理される。
+`sessions/` にあるアプリケーションごとに、カードはちょうど 1 枚で、ファイルの順に 1 枚ずつタブとして見せる（タブは 1 から 4 個）。カードの 4 つの語（kicker、title、engine、unit）は、そのタブに付ける人の言葉で、解説である。`[miss]` のセッションのラボのタブが、開いた状態のタブになる。`[miss]` のセッションは、終了したセッションでなければならない。その予測の結果は miss でなければならない。"none" は、そのセッションに外れがないときだけ受理される。
 
 ### `notebook/commentary-words.txt` (Requirement 5.5)
 
@@ -513,7 +525,7 @@ trial = "T1"
 
 - 引数: 欠けているオプションはそれぞれ名指しされる。空でない出力フォルダーは拒否される（1.3、1.4）。
 - スキャン: スキャンのソースの語を `text.py` の文字列に仕込むとビルドが失敗する。同じ語がフィクスチャの記録の Dr. Kiro のテキストにあっても失敗しない（20.5）。選択の理由に仕込んだ語は失敗する（12.8）。
-- 解説: `text.py` のすべての文字列が語のリストを通る。仕込んだリストの語は失敗する（5.5）。`<details>` の外にあるカバーの解説は、最大 60 トークン（13.6）。
+- 解説: `text.py` のすべての文字列が語のリストを通る。仕込んだリストの語は失敗する（5.5）。`<details>` の外にあるカバーの解説は、最大 240 トークン（13.6）。
 - サイト: すべてのページがルートにあり、どのリンクにも `..` がない。2 つのアドレスを等しくしうる id はビルドを失敗させる（N28）。どのファイルにも `xmlns`、`http:`、`https:`、URL の先頭の `//`、`<form`、リプレイと画像のボタン以外の `<input`、`<iframe` が含まれない（3.1-3.3）。テキストはスクリプトなしで HTML の中にある（3.4）。すべての画像の名前は、そのバイト列の SHA-256 である（7.7）。すべてのページが `legend.html` にリンクする（4.5）。
 - 色: ビジュアルのステアリングで宣言された前景と背景の組はすべて、CSS のカスタムプロパティから WCAG の式で計算したコントラスト比が 4.5:1 以上である（4.6、6.5）。
 - `uv.lock` に `mcp` がない。`git diff --stat bench/` が、タスクの検証ステップで空である（7.4）。
@@ -524,23 +536,24 @@ trial = "T1"
 
 ## Visual system
 
-最初のタスクで、どのページよりも前に、ステアリングファイル `.kiro/steering/notebook-visual.md` として書きます（6.1）。下の提案が、そのファイルに入る内容です。マイルストーン 1 でのユーザーのレビューで変わることがあり、変更はまずステアリングファイルに入れます（6.6）。使うのはシステムのフォントスタックだけで、フォントファイルは取得も同梱もしません。
+最初のタスクで、どのページよりも前に、ステアリングファイル `.kiro/steering/notebook-visual.md` として書きます（6.1）。下の提案が、そのファイルに入る内容です。マイルストーン 1 でのユーザーのレビューで変わることがあり、変更はまずステアリングファイルに入れます（6.6）。スタイルシートは Lora、IBM Plex Mono、Caveat を、サイト自身の woff2 ファイルとしてライセンスとともに同梱し、下のスタックの先頭に置きます。システムのスタックはフォールバックとして残ります。他のホストからは何も取得しません（3.2）。スタックとカバーのレイアウトは、できあがりのとおりステアリングファイルにあります（Decision 51）。
 
 | Element | Proposal |
 |---|---|
-| Paper | 背景 `#fbf7ec`。行の高さごとにかすかな横罫線 `#dfe6ef`（CSS のグラデーション）。内容の列は最大 72rem |
+| Paper | 背景 `#fbf7ec`。かすかな方眼紙の線 `#dfe6ef`。1.5rem のタイルごとに、下の辺と右の辺に 1 本ずつ（CSS のグラデーション）。内容の列は最大 72rem |
 | Dr. Kiro's ink | 色 `#1f3a8a`。セリフ体 `ui-serif, Georgia, "Times New Roman", serif`。立体。ブロックは同じ色の 2px の実線の左罫と、ラベル "written by Dr. Kiro" を持つ。Dr. Kiro のコードブロックは、同じ左罫つきで `ui-monospace` を使う |
 | Pencil | 色 `#3d3d3d`。`ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`。罫なし |
 | Commentary ink | 色 `#2b2118`。`system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`。0.95em |
-| Miss red | `#b3261e`。外れた予測とその計測値にだけ使い、必ず "miss" の語とともに使う（6.4） |
-| Bench stamp | 大文字のサンセリフ、太字、字間を空ける、角の丸い 2px の枠、-2deg 回転。語ごとの色: validated `#1d5e3a`、partly `#7a4b00`、observed `#3a4a5c`、rejected `#5b2a6e`（決して赤にしない）。ラベル（"checked by the bench"）は、下に小さな解説の書体で |
+| Miss red | `#b3261e`。外れた予測とその計測値にだけ使い、必ず "miss" の語とともに使う（カバーの判子は "missed" と書く）（6.4） |
+| Rewrite red | `#fbe8e4` の上の `#a3302a`。`rejected` の行とカードに使う（帯、カバーのカードの取り消し線、点線の replaced-by の行）。外れには決して使わない（Decision 51） |
+| Bench stamp | 大文字の等幅書体、セミボールド、角の丸い 2px の枠、-2deg 回転。語ごとの色: validated `#1d5e3a`、partly `#7a4b00`、observed `#3a4a5c`、rejected `#5b2a6e`（決して赤にしない）。ラベル（"checked by the bench"）は、下に小さな解説の書体で |
 | Instant photo | 白い枠（左右 8px、下 28px）、やわらかい影、試行番号から決まる固定の規則で ±1.5deg の範囲で回転、上に真鍮色のピン `#b08d3c`。キャプションは下 |
 | Sticky note | 背景 `#fff1a8`、解説のインク、1deg 回転、影。拒否された終了の注記は、付箋の上にスタンプの枠を使う |
-| Strike-through | 2px の黒鉛色の `line-through`。文字は十分なコントラストのまま。"replaced by" タブは、行の右端に紙のタブとして置く |
+| Strike-through | 表の行では 2px の黒鉛色の `line-through`、カバーのカードでは書き直し用の赤。文字は十分なコントラストのまま。"replaced by" の行は、カードの最後の点線の行 |
 | Type and spacing | 基準 17px / 1.5。間隔の尺度は 4、8、16、24、40px |
-| Narrow screen | 360px では 1 列。余白の写真は表の下へ移る。幅の広い表は、それ自身の箱の中でスクロールする |
+| Narrow screen | 360px では 1 列。余白の写真は表の下へ移る。発見した spec の表はカードなので、横スクロールはない |
 | Halloween | インクで描いた小さなコウモリ 1 匹とクモの巣の角 1 つ（ページのマークアップの中のインライン SVG。ファイルなし、`xmlns` 属性なし、テキストなし）。幅 1000px 以上のビューポートの、ページの余白にだけ置く。`aria-hidden`、テキストなし、何の後ろにも置かない（6.5） |
-| Motion | 1 セルあたり 500 ms。モーション低減は一時停止で始まる（3.6） |
+| Motion | レイアウトの `interval` ごとに 1 セル（body-lab 220 ms、wind-tunnel 150 ms）。モーション低減は一時停止で始まる（3.6） |
 
 上のすべての文字色は、その背景（紙と付箋の黄色）の上で 4.5:1 以上に達します。テストが、CSS から各組を確認します。
 
@@ -588,7 +601,7 @@ trial = "T1"
 - **N5 Segments carry ink and source.** インクがスタイルを与える。スキャンの書き手は、Dr. Kiro のインクなら `dr-kiro`、それ以外のすべては `bench` である。サイドカーの形式がその 2 つの書き手しか知らないためである。
 - **N6 Escaping.** `html.escape(quote=True)` に、キャリッジリターンのための `&#13;` を加える。Dr. Kiro のテキストは `white-space: pre-wrap` の要素の内容にだけ置く。他の C0 制御文字はビルドを失敗させる。
 - **N7 Two scan passes.** ソースでのセグメント（検出はソースのファイルと行を名指しする）。次に、完成した各ファイルをその範囲を通して。後で `bench-scan` がサイトに対して見るのと同じ断片である。
-- **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「シート全体」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
+- **N8 Moving pictures by canvas.** シート全体は `<img>`（スクリプトなしと「全体の画像」の表示）。JavaScript は、隙間を含むソースの矩形から、一度に 1 セルを描く。再エンコードはしない。CSS の `background-position` は選ばなかった。隙間つきの 2 軸のステップ送りは、レイアウトごとに生成するセル単位のキーフレームを必要とするため。
 - **N9 Addresses.** Components 9 の表のとおり。id はパターンで検査したベンチの id。
 - **N10 Replay as static pages (on hold, requirements Decision 48).** ステップごとに 1 ページ。すべてのステップのテキストが HTML の中にあり、固定のアドレスを持つ。「再生」は進むリンクをたどるだけ。
 - **N11 Number format.** `.4g` と `repr`。Data Models のとおり。

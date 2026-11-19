@@ -30,7 +30,15 @@ _CONTROLS = (
     ("pause", "PHOTO_PAUSE"),
     ("step", "PHOTO_STEP"),
     ("sheet", "PHOTO_SHEET"),
+    ("back", "PHOTO_BACK"),
 )
+# Which controls a figure has. A body-lab picture never shows its sheet side by side (the body is a few
+# pixels in a tile, so the strip reads as many small bodies): its magnified picture swaps to the whole picture
+# and back; a body-lab picture without a magnified one (a lab card) has only the three motion controls; a
+# wind-tunnel picture keeps "whole picture" as the sheet itself.
+_MOTION = ("play", "pause", "step")
+_SWAP = (*_MOTION, "sheet", "back")
+_SHEET = (*_MOTION, "sheet")
 
 
 @dataclass(frozen=True)
@@ -80,7 +88,7 @@ def magnified_file(
     return PictureFile(addresses.picture(digest, source), data)
 
 
-def photo(
+def figures(
     record: RecordModel,
     trial: Trial,
     layout: Layout,
@@ -88,17 +96,13 @@ def photo(
     *,
     trial_word: bool = True,
     magnified: bool = True,
-) -> tuple[list[Segment], list[PictureFile]]:
-    """The instant photo of one trial and the picture files it shows.
-
-    Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
-    `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
-    sheet that does not divide into whole cells fails the build, naming the record and the trial
-    (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
-    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default) a
-    body-lab photo, except on the lab cards, is shown beside its magnified picture in one row (Requirement
-    7.9); the returned files are the recorded sheet, then the magnified picture. A wind-tunnel photo has no
-    magnified picture."""
+    captions: tuple[str, str] | None = None,
+) -> tuple[list[Segment], list[Segment], list[PictureFile]]:
+    """The moving picture of one trial, its magnified picture and the picture files: the recorded sheet,
+    then the magnified picture when there is one. A body-lab trial with a magnified picture has that one
+    figure only (the first list is empty): it moves cell by cell and swaps in place to the whole picture,
+    which is not on the page until asked for. Any other trial has the first figure only.
+    Arguments and checks are those of `photo`."""
     if size not in SIZES:
         raise ValueError(f"unknown photo size {size!r}")
     if layout.application != record.application:
@@ -111,55 +115,119 @@ def photo(
     classes = f"photo tilt-{ids.parse_trial_id(tid) % TILTS}"
     if size:
         classes += f" photo-{size}"
-    attrs = {
-        "class": classes,
+    body_lab = record.application in MAGNIFIED_APPLICATIONS
+    has_magnified = magnified and body_lab
+    if has_magnified:
+        enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
+        enlarged_width, enlarged_height = _image_size(enlarged.data)
+        enlarged_cell_width = enlarged_width // layout.columns
+        enlarged_cell_height = enlarged_height // layout.rows
+        # The whole picture is not on the page. Its sheet is named here and the script swaps it in at the
+        # place of the magnified picture, when its control is pressed (visual steering, "Magnified picture").
+        # Without the script the magnified picture shows its first cell.
+        swap_attrs = {
+            **_motion_attrs(layout, enlarged_cell_width, enlarged_cell_height, gap=0),
+            "data-whole-src": picture.path,
+            "data-whole-gap": str(layout.gap),
+            "data-whole-tile-width": str(cells.width),
+            "data-whole-tile-height": str(cells.height),
+        }
+        enlarged_img = html.void(
+            "img",
+            {
+                "src": enlarged.path,
+                "width": str(enlarged_cell_width),
+                "height": str(enlarged_cell_height),
+                "class": "first-cell",
+                "alt": text.PHOTO_MAGNIFIED_ALT,
+            },
+        )
+        # The cover's visible commentary is limited (13.6): there the caption holds the trial id and one word.
+        if captions is not None:
+            enlarged_caption = [*html.text(pencil(tid, source)), *say_text(captions[1])]
+        else:
+            enlarged_caption = [
+                *(say_text("PHOTO_TRIAL") if trial_word else []),
+                *html.text(pencil(tid, source)),
+            ]
+        enlarged_classes = "photo photo-magnified"
+        if size:
+            enlarged_classes += f" photo-{size}"
+        enlarged_figure = html.element(
+            "figure",
+            {"class": enlarged_classes, **swap_attrs},
+            [*enlarged_img, *html.element("figcaption", None, [*enlarged_caption, *_controls(_SWAP)])],
+        )
+        return [], enlarged_figure, [picture, enlarged]
+    attrs = {"class": classes, **_motion_attrs(layout, cells.width, cells.height)}
+    if body_lab:
+        # A lab card: the first cell, never the sheet side by side; it moves when play is pressed.
+        attrs["data-start"] = "first"
+    img_attrs = {"src": picture.path, "width": str(width), "height": str(height), "alt": text.PHOTO_ALT}
+    if body_lab:
+        img_attrs.update(width=str(cells.width), height=str(cells.height), **{"class": "first-cell"})
+    img = html.void("img", img_attrs)
+    caption = [
+        *(say_text("PHOTO_TRIAL") if trial_word and captions is None else []),
+        *html.text(pencil(tid, source)),
+        *(say_text(captions[0]) if captions is not None else []),
+        *_controls(_MOTION if body_lab else _SHEET),
+    ]
+    figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
+    return figure, [], [picture]
+
+
+def _motion_attrs(
+    layout: Layout, tile_width: int, tile_height: int, gap: int | None = None
+) -> dict[str, str]:
+    """The layout of a sheet for the script: it draws one cell at a time, each for `data-interval` ms."""
+    return {
         "data-columns": str(layout.columns),
         "data-rows": str(layout.rows),
-        "data-gap": str(layout.gap),
+        "data-gap": str(layout.gap if gap is None else gap),
         # "tile", not "cell": the two-word form with "cell" is a forbidden term of the blind scan, and these
         # attributes and the script that reads them are builder-level text of the site.
-        "data-tile-width": str(cells.width),
-        "data-tile-height": str(cells.height),
+        "data-tile-width": str(tile_width),
+        "data-tile-height": str(tile_height),
+        "data-interval": str(layout.interval),
     }
-    img = html.void(
-        "img",
-        {
-            "src": picture.path,
-            "width": str(width),
-            "height": str(height),
-            "alt": text.PHOTO_ALT,
-        },
-    )
+
+
+def _controls(actions: tuple[str, ...]) -> list[Segment]:
     buttons: list[Segment] = []
     for action, label in _CONTROLS:
+        if action not in actions:
+            continue
         buttons += html.element(
             "button", {"type": "button", "data-action": action, "hidden": "hidden"}, say_text(label)
         )
-    caption = [
-        *(say_text("PHOTO_TRIAL") if trial_word else []),
-        *html.text(pencil(tid, source)),
-        *html.element("span", {"class": "photo-controls"}, buttons),
-    ]
-    figure = html.element("figure", attrs, [*img, *html.element("figcaption", None, caption)])
-    if not magnified or record.application not in MAGNIFIED_APPLICATIONS:
-        return figure, [picture]
-    # The magnified picture beside the moving picture, in one row that wraps on a narrow screen (visual
-    # steering, "Magnified picture"). It is a static picture: the whole magnified sheet, no script.
-    enlarged = magnified_file(record, trial, layout, cells.width, cells.height)
-    enlarged_width, enlarged_height = _image_size(enlarged.data)
-    enlarged_img = html.void(
-        "img",
-        {
-            "src": enlarged.path,
-            "width": str(enlarged_width),
-            "height": str(enlarged_height),
-            "alt": text.PHOTO_MAGNIFIED_ALT,
-        },
+    return html.element("span", {"class": "photo-controls"}, buttons)
+
+
+def photo(
+    record: RecordModel,
+    trial: Trial,
+    layout: Layout,
+    size: str = "",
+    *,
+    trial_word: bool = True,
+    magnified: bool = True,
+    captions: tuple[str, str] | None = None,
+) -> tuple[list[Segment], list[PictureFile]]:
+    """The instant photo of one trial and the picture files it shows (see `figures` for the arguments).
+
+    Every page is at the site root, so the picture is linked as `p/<sha256>.png` (design N28). `size` is
+    `""`, `"large"` (the cover) or `"small"` (lab cards). The sheet is checked against the layout first, so a
+    sheet that does not divide into whole cells fails the build, naming the record and the trial
+    (Requirement 7.3). With `trial_word=False` the caption shows the trial id without the word "trial" (the
+    cover, whose visible commentary is limited, Requirement 13.6). With `magnified=True` (the default) a
+    body-lab photo, except on the lab cards, is shown as its magnified picture, which swaps to the whole
+    picture (Requirement 7.9); the returned files are the recorded sheet, then the magnified picture. A
+    wind-tunnel photo has no magnified picture."""
+    moving, enlarged, pictures = figures(
+        record, trial, layout, size, trial_word=trial_word, magnified=magnified, captions=captions
     )
-    # No caption: the alt text says what the picture is, and the cover's visible commentary is limited (13.6).
-    enlarged_figure = html.element("figure", {"class": "photo photo-magnified"}, enlarged_img)
-    row = html.element("section", {"class": "photo-pair"}, [*figure, *enlarged_figure])
-    return row, [picture, enlarged]
+    return [*moving, *enlarged], pictures
 
 
 class Pins:

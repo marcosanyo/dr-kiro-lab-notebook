@@ -3,7 +3,31 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: ローカル、2026-11-17、`lab-notebook` を PR にする前（拡大画像の領域の規則を確定した後）。
+最終更新: Kiro Web、2026-11-19、全体の絵の切り替え・帯の読み方・main の取り込み（ブランチ `feat/notebook-polish`）の後。
+
+## ノートの見た目の直し（ブランチ `feat/notebook-polish`、新しいブランチは切らない）
+- **済み（2026-11-19）:** 表紙と spec の表を直した。1 つ直すごとにコミットした。
+  - 除外リストに `spacing` を足した（ユーザー承認。出どころは風洞の `constants.toml` で、`ahead` と同じ）。小見出しは字の間を少し空けた。
+  - 表紙: OUTCOME の行を消して MISSED の判子だけにした。付箋は記録の数字だけの 1 文にした（例: 「expected x between 0.2 and 3 m, measured -0.2047 m: below the range, on the other side of zero」）。
+    details は規則のカードの中に入れた。ラボのタブは外れた予測のラボ（LAB II）を最初に開く（並びは LAB I が左のまま）。
+  - 表紙の最初の画面: 上の段に予測のカード、付箋、拡大した画像シート、その下の段に動く写真と軌跡を置いた（1000px 以上）。スマホ幅では軌跡の前後の空白を詰めた。画像のボタンは 44px にした。
+  - セッションページの発見した spec の表は、行ごとのカードで見せる。書き直し用の赤（`--rewrite-red`）は外れの赤と別にした。
+  - 表紙の語数の上限は 240 語（ユーザー承認）。spec（要件 13 ほか）、設計、訳、`notebook-visual.md` を、できあがりに合わせて直した（この順で最後に直した）。
+- **済み（2026-11-19、ユーザーの画面確認の後の直し）:**
+  - 付箋: body-2 の宣言の `measured_by`（「x は開始時に体が向いている方向」）を読み、「expected to go forward 0.2 to 3 m, went back 0.2047 m」と言う。数字は記録のもので、表紙のいつもの 4 桁（0.2047。0.20 ではない）。`measured_by` に向きの文がなければ、前の中立な文のまま。
+  - 動き: 拡大した画像（体が大きいシート）が 1 コマずつ動く。全体の画像は「whole picture」の側で、play を押したときだけ動く（body-lab のラボのカードの小さい画像も同じ）。コマの間隔は `notebook/layouts.toml` の `interval`（body-lab 220 ms、風洞 150 ms）。風洞は記録の 6 コマだけで、間のコマも補間もない。動きを減らす設定では止めた状態で始まる。
+  - spec のカード: 閉じた状態は規則の文、状態の判子、replaced by の行だけ。scope と run band、experiments、predictions、開いた行は `<details>` を開くと出る（CSS の `:has` で隠す。`:has` がないブラウザーは全部見せる）。「What the record says was run…」はページの上に 1 回。rejected のカードは規則の文だけに取り消し線。
+  - ゆるめたテスト: なし。構造に合わせて変えたもの: `test_milestone_1_real.py` の取り消し線の 2 件（取り消し線を引く範囲が規則の文だけになったので、確かめる範囲を合わせた。より厳しくなった）、`test_visual.py` の `@supports` の読み取りと取り消し線の確認、`test_photo_plots.py` の間隔の確認（CSS の変数から figure の `data-interval` へ）。
+- **済み（2026-11-19、全体の絵と帯の直し）:**
+  - 全体の絵（体が小さい）と、コマを並べた形は、ページのどこにも出さない（表紙、セッションページ、ラボのカード、スクリプトなしの場合も）。body-lab の試行は拡大した絵だけを見せる。「whole picture」を押すと同じ場所、同じコマで全体の絵に替わり、同じ間隔で 1 コマずつ動く。「magnified picture」で戻る。スクリプトがないときは最初の 1 コマだけ。ラボのカードも最初の 1 コマで、play で動く。風洞の絵は今までどおり。
+  - 帯の説明は閉じた `<details>`（「How to read the bands」）にした。
+  - R2 の replaced by の最後の「, R1」は、置き換える行へのリンクを文のあとに別に付けていたのが原因。記録の replaced by は R1 だけで、リストにあるのは記録の置き換えだけ。リンクは規則の文そのものにした。
+  - main（#37、`build` が除外リストに入った）を取り込み、`stop-list.txt` と `test_scan.py` の衝突は `ahead`、`spacing`、`build` が全部残る形で直した。
+  - 変えたテスト: `test_photo_real.py`（body-lab は拡大した 1 つの figure、全体のシートは名指しだけ、ラボのカードは最初の 1 コマ）、`test_photo_plots.py`（`"still"` から `"first"` と `data-whole-src`）。ゆるめたものはない。
+- **次の一手:** ユーザーが画面を見て、直しを返す。そのあと PR を作る。
+  （前の回の次の一手:）ユーザーがスマホで画面の画像を見て、直しを返す。そのあと PR を作る。PR の説明には、ゆるめたテストの 2 か所と、その理由を書く。
+- **未解決:** main の風洞のテストが 2 件落ちている。ノートとは混ぜず、ノートの PR が終わった後に、別の小さな PR で直す。どの 2 件かは、まだ調べていない。
+- `docs/ja/lab-notebook/tasks.md` の訳は、以前から原文と食い違っていた（ブランチ作成前から `ja-check` が止まっていた）。このとき原文に合わせて直した。
 
 ## brief の改訂（ブランチ `docs/brief-final-edit`）
 - `docs/brief.md` を今の方針に合わせた: 題は Dr. Kiro's Lab Notebook、決め台詞は The experiment gets the final edit.。ノートは発見した spec の表が中心

@@ -35,7 +35,10 @@ from notebook.inputs import Inputs
 from notebook.pages import cover
 from notebook.records import RecordModel
 
-LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 2 x 2 picture"\n'
+LAYOUTS = (
+    "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
+    'source = "test fixture: one 2 x 2 picture"\n'
+)
 WORDS = "# test fixture word list\nlimp\n"
 REASON = "test fixture: nothing chosen"
 
@@ -67,6 +70,7 @@ def _cover(record: RecordModel, prediction: str) -> str:
         f'prediction = "{prediction}"\n\n'
         f'[[card]]\napplication = "{record.application}"\nsession = "{record.session}"\n'
         f'trial = "{record.trials[0].id}"\n'
+        'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
     )
 
 
@@ -80,7 +84,7 @@ def _fitting_cover(record: RecordModel, loaded: list[RecordModel], choices: Path
     for prediction in misses or ["none"]:
         (choices / "cover.toml").write_text(_cover(record, prediction))
         try:
-            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table)
+            cover.page(loaded, notebook_choices.load_cover(choices, loaded), table, [], {})
         except NotebookError as error:
             if "words of commentary" not in error.problem:
                 raise
@@ -107,6 +111,7 @@ def _write_inputs(root: Path, synthesized) -> Inputs | None:
         return None
     return Inputs(
         sessions=sessions,
+        requests=root / "requests",
         choices=choices,
         layouts=root / "layouts.toml",
         words=root / "words.txt",
@@ -122,6 +127,7 @@ def _moved(inputs: Inputs, old: Path, new: Path, out: Path) -> Inputs:
 
     return Inputs(
         sessions=move(inputs.sessions),
+        requests=move(inputs.requests),
         choices=move(inputs.choices),
         layouts=move(inputs.layouts),
         words=move(inputs.words),
@@ -181,8 +187,8 @@ def test_the_build_is_deterministic(synthesized, rng):
         forbidden = [str(p) for p in (out_a, out_b, out_c, first_root, second_root, tmp_root)]
         forbidden += [str(Path.home()), str(REPO), str(tmp_root.resolve())]
         for path, data in site_a.items():
-            if path.endswith(".png"):
-                continue
+            if path.endswith((".png", ".woff2")):
+                continue  # pictures and typefaces are copied bytes, not text
             content = data.decode("utf-8")
             for value in forbidden:
                 assert value not in content, (path, value)

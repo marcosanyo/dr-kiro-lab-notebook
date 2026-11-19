@@ -2,7 +2,8 @@
 
 The track is the recorded series `track_x` and `track_y` of a trial (body-lab; Requirements 10.10,
 13.7). It is drawn seen from above: x to the right, y up, with equal x and y scale, fitted to the trial's own
-track, and the first sample marked with a circle. Every recorded sample is one point of the path.
+track, and the first sample marked with a circle. The drawing box is cropped to the track plus a margin.
+Every recorded sample is one point of the path.
 Coordinates are written with 2 decimals so the output is stable.
 
 When a series is a not-measured outcome, no path is drawn; its name, outcome name and the recorded reason are
@@ -73,10 +74,13 @@ def _not_measured(record: RecordModel, trial: Trial, name: str, value: NotMeasur
     ]
 
 
-def track(record: RecordModel, trial: Trial, caption: str = "TRACK_CAPTION") -> list[Segment]:
+def track(
+    record: RecordModel, trial: Trial, caption: str = "TRACK_CAPTION", *, label: list[Segment] | None = None
+) -> list[Segment]:
     """The overhead track of one trial as a small figure in pencil, or the not-measured outcome by name and
     reason. A trial without track series gives no segments. `caption` is the name of the caption in
-    `text.py` (the cover uses a shorter one and explains the drawing in its details)."""
+    `text.py` (the cover uses a shorter one and explains the drawing in its details). `label`, when given,
+    comes before the caption (the cover names the trial there)."""
     if not has_track(record, trial):
         return []
     series = _series(trial)
@@ -95,11 +99,23 @@ def track(record: RecordModel, trial: Trial, caption: str = "TRACK_CAPTION") -> 
         raise NotebookError(f"{record.name}/log.jsonl line {trial.seq}", f"{trial.id}: {error}") from error
     path = " ".join(f"{_coordinate(x)},{_coordinate(y)}" for x, y in drawn)
     start_x, start_y = drawn[0]
-    box = _coordinate(BOX)
+    # The box is cropped to the drawing plus the margin, so a wide or flat track leaves no empty band above
+    # or below it; a track that fills the square box keeps the whole box.
+    left = min(x for x, _ in drawn) - MARGIN
+    top = min(y for _, y in drawn) - MARGIN
+    width = max(x for x, _ in drawn) + MARGIN - left
+    height = max(y for _, y in drawn) + MARGIN - top
+    if width <= 2 * MARGIN and height <= 2 * MARGIN:  # one place: the whole box, the point in its centre
+        left, top, width, height = 0.0, 0.0, BOX, BOX
     svg = html.element(
         "svg",
         # HTML parsers turn `viewbox` into the SVG attribute `viewBox`; `html.py` takes lowercase names only.
-        {"viewbox": f"0 0 {box} {box}", "width": box, "height": box, "aria-hidden": "true"},
+        {
+            "viewbox": f"{_coordinate(left)} {_coordinate(top)} {_coordinate(width)} {_coordinate(height)}",
+            "width": _coordinate(width),
+            "height": _coordinate(height),
+            "aria-hidden": "true",
+        },
         [
             *html.element(
                 "polyline",
@@ -124,5 +140,5 @@ def track(record: RecordModel, trial: Trial, caption: str = "TRACK_CAPTION") -> 
     return html.element(
         "figure",
         {"class": "track ink-p"},
-        [*svg, *html.element("figcaption", None, say_text(caption))],
+        [*svg, *html.element("figcaption", None, [*(label or []), *say_text(caption)])],
     )

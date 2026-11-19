@@ -27,6 +27,7 @@ class _Parser(argparse.ArgumentParser):
 def _parser() -> argparse.ArgumentParser:
     parser = _Parser(prog=PROG, description="Build the lab notebook from the sealed session records.")
     parser.add_argument("--sessions", required=True, type=Path, help="the folder of sealed records")
+    parser.add_argument("--requests", required=True, type=Path, help="the folder of the reader's requests")
     parser.add_argument("--choices", required=True, type=Path, help="the choice files and cover.toml")
     parser.add_argument("--layouts", required=True, type=Path, help="the frame layout table")
     parser.add_argument("--words", required=True, type=Path, help="the commentary word list")
@@ -48,6 +49,7 @@ def parse(argv: list[str]) -> Inputs:
     args = _parser().parse_args(argv)
     return Inputs(
         sessions=args.sessions,
+        requests=args.requests,
         choices=args.choices,
         layouts=args.layouts,
         words=args.words,

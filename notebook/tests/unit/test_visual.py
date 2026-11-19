@@ -8,7 +8,7 @@ import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 from bench.scan.scan import Scanner
 
-from notebook import ink
+from notebook import addresses, ink
 from notebook.pages import parts
 
 PROJECT = Path(__file__).resolve().parents[2]
@@ -42,7 +42,7 @@ def _rules(css: str) -> list[tuple[str, str]]:
                 depth -= 1
             j += 1
         body = css[open_at + 1 : j - 1]
-        if head.startswith("@media"):
+        if head.startswith(("@media", "@supports")):
             rules.extend(_rules(body))
         else:
             assert "{" not in body, f"nested block in {head!r}"
@@ -136,15 +136,32 @@ def test_miss_red_is_used_only_by_the_miss_classes():
     assert users
     for selector, body in users:
         for one in selector.split(","):
-            assert re.search(r"\.miss(-value|-mark)?$", one.strip()), selector
+            assert re.search(r"\.miss(-value|-mark|-stamp)?$", one.strip()), selector
         assert "var(--miss-red)" in body
     root = [body for sel, body in _rules(CSS.read_text(encoding="utf-8")) if sel == ":root"][0]
     assert "var(--miss-red)" not in root
 
 
-def test_no_remote_or_font_file_in_the_stylesheet():
+def test_the_stylesheet_fetches_only_the_typefaces_shipped_with_the_site():
     css = CSS.read_text(encoding="utf-8")
-    assert "url(" not in css and "@import" not in css and "@font-face" not in css
+    assert "@import" not in css
+    urls = re.findall(r"url\(([^)]*)\)", css)
+    assert urls, "the stylesheet names no typeface file"
+    # Every url() is one of the shipped typeface files, written without a folder (the stylesheet is in `a/`).
+    assert sorted(set(urls)) == sorted(addresses.FONT_FILES)
+    for name in addresses.FONT_FILES:
+        assert (ASSETS / "fonts" / name).is_file(), name
+    # Every @font-face names its file through url() and a face: no other source such as local().
+    for selector, body in _rules(css):
+        if selector == "@font-face":
+            src = _declarations(body)["src"]
+            assert re.fullmatch(r"url\([a-z0-9-]+\.woff2\) format\(\"woff2\"\)", src), src
+
+
+def test_the_typeface_licences_are_shipped_and_named():
+    licence = (ASSETS / "fonts" / "LICENSE.txt").read_text(encoding="utf-8")
+    for family in ("Caveat", "Lora", "IBM Plex Mono", "SIL Open Font License, Version 1.1"):
+        assert family in licence, family
 
 
 def test_decoration_holds_no_text_and_is_hidden_from_assistive_technology():
@@ -201,3 +218,105 @@ def test_decoration_shows_only_from_1000px_in_a_reserved_gutter():
     assert deco["position"] == "fixed" and deco["width"] == "64px"
     # Left 16px plus 64px wide stays inside the 96px gutter.
     assert deco["left"] == "var(--space-3)" and _custom_properties()["--space-3"] == "16px"
+
+
+def test_picture_buttons_are_44px_targets_on_a_phone_or_a_touch_screen():
+    css = CSS.read_text(encoding="utf-8")
+    start = css.index("@media (max-width: 559px), (pointer: coarse) {")
+    block = css[start : css.index("\n}\n", start)]
+    assert ".photo-controls button {" in block
+    assert "min-width: 44px;" in block and "min-height: 44px;" in block
+
+
+def _declared(selector: str) -> dict[str, str]:
+    """The declarations of every rule that lists `selector` among its comma-separated selectors."""
+    css = CSS.read_text(encoding="utf-8")
+    out: dict[str, str] = {}
+    for sel, body in _rules(css):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector}"
+    return out
+
+
+def _wide_block(css: str) -> re.Match[str]:
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    found = list(re.finditer(r"@media \(min-width: 1000px\) \{(.*?)\n\}", css, flags=re.S))
+    assert len(found) == 1
+    return found[0]
+
+
+def _declared_wide(selector: str) -> dict[str, str]:
+    """The declarations of the rules for `selector` inside the `@media (min-width: 1000px)` block only."""
+    out: dict[str, str] = {}
+    for sel, body in _rules(_wide_block(CSS.read_text(encoding="utf-8")).group(1)):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector} from 1000px"
+    return out
+
+
+def _declared_below_wide(selector: str) -> dict[str, str]:
+    """The declarations of the rules for `selector` outside the `@media (min-width: 1000px)` block."""
+    css = re.sub(r"/\*.*?\*/", "", CSS.read_text(encoding="utf-8"), flags=re.S)
+    css = css.replace(_wide_block(css).group(0), "")
+    out: dict[str, str] = {}
+    for sel, body in _rules(css):
+        if selector in [part.strip() for part in sel.split(",")]:
+            out.update(_declarations(body))
+    assert out, f"no rule for {selector} below 1000px"
+    return out
+
+
+def test_the_cover_top_row_places_its_parts_in_grid_columns_only_when_it_has_a_magnified_sheet():
+    css = CSS.read_text(encoding="utf-8")
+    rules = _rules(_wide_block(css).group(1))
+    placed = [sel for sel, body in rules if re.search(r"grid-(column|row)\s*:", body)]
+    assert sorted(placed) == [".cover-top.with-sheet .cover-claim", ".cover-top.with-sheet .photo-magnified"]
+    assert _declared_wide(".cover-top.with-sheet")["grid-template-columns"].startswith("clamp(")
+    # Nothing places a part of the top row for a top row without a sheet: it keeps its one column.
+    assert not [sel for sel, _ in rules if ".cover-top" in sel and "with-sheet" not in sel]
+
+
+def test_the_spec_table_header_row_is_clipped_out_of_sight_and_not_removed():
+    head = _declared(".spec-table thead")
+    assert "display" not in head, "display: none would hide the column names from a screen reader"
+    assert head["position"] == "absolute" and head["width"] == "1px" and head["height"] == "1px"
+    assert head["clip-path"] == "inset(50%)" and head["overflow"] == "hidden"
+
+
+def test_each_spec_row_is_a_block_card_and_its_cells_carry_their_header_word_as_a_caption():
+    for tag in (".spec-table tbody", ".spec-table tr", ".spec-table td"):
+        assert _declared(tag)["display"] == "block", tag
+    caption = _declared(".spec-row > tr[id] > td::before")
+    assert caption["content"] == "attr(data-label)"
+    # One column of cards below 1000px; two or more only where the margin column leaves room (from 1000px),
+    # and by width, not by count: as many columns as are at least 21rem wide.
+    assert _declared_below_wide(".spec-table")["display"] == "block"
+    wide = _declared_wide(".spec-table")
+    assert wide["display"] == "grid"
+    assert wide["grid-template-columns"] == "repeat(auto-fill, minmax(21rem, 1fr))"
+
+
+def test_the_strike_through_of_a_rejected_row_is_on_the_rule_sentence_only():
+    strike = _declared('.row-rejected td[data-label="rule"]')
+    assert strike["text-decoration"].startswith("line-through")
+
+
+def test_a_card_hides_scope_experiments_and_predictions_until_its_details_is_open():
+    css = CSS.read_text(encoding="utf-8")
+    closed = ".spec-row:not(:has(details.evidence[open]))"
+    for label in ("scope", "experiments", "predictions"):
+        selector = f'{closed} > tr[id] > td[data-label="{label}"]'
+        assert _declared(selector)["display"] == "none"
+    # Only where `:has` is known; elsewhere the whole card stays drawn.
+    assert "@supports selector(:has(a))" in css
+    assert '"id status"' in _declared(f"{closed} > tr[id]")["grid-template-areas"]
+
+
+def test_the_replaced_by_arrow_is_a_drawn_shape_because_no_typeface_has_the_arrow_character():
+    css = CSS.read_text(encoding="utf-8")
+    assert "\u2192" not in css and "\\2192" not in css
+    for selector in (".cover-replaced::before", ".spec-row .tab > summary::before"):
+        shape = _declared(selector)
+        assert shape["content"] == '""' and shape["clip-path"].startswith("polygon(")

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from bench.core import ids
+from bench.core.session import DISCOVERED_TABLE_VALUES
 from bench.record.chain import AUTHORS, BLOB_DIR, LOG_NAME, VerifyError, verify
 
 from notebook.errors import NotebookError
@@ -292,14 +293,22 @@ class RecordModel:
 # Loading
 
 
+# The one folder of `sessions/` that holds the reader's runs, not an application's sessions. The reader's runs
+# are read by their own page kind, never by this loader.
+READER_FOLDER = "build-from-spec"
+
+
 def load(sessions: Path, *, allow_fake: bool = False) -> list[RecordModel]:
     """Every record in `sessions/`, sorted by (application, session id) in code-point order (21.2).
+    The folder `build-from-spec` is skipped by name: it holds the reader's runs.
     `allow_fake` is for test fixtures only and is never set by the command line (design N19)."""
     sessions = Path(sessions)
     if not sessions.is_dir():
         raise NotebookError(str(sessions), "the sessions folder is not a folder")
     records = []
     for application in sorted(sessions.iterdir(), key=lambda p: p.name):
+        if application.name == READER_FOLDER and application.is_dir():
+            continue
         if not application.is_dir():
             raise NotebookError(f"{sessions.name}/{application.name}", "not an application folder")
         for folder in sorted(application.iterdir(), key=lambda p: p.name):
@@ -462,6 +471,12 @@ class _Reader:
         )
 
     def _start(self, body: Any) -> tuple[str, str, int, int, int, Declaration]:
+        # `discovered_table` is in the start entry of a record made after the bench began to write it.
+        # A record made before has no such key and is read as it is; any other value than the two fails.
+        if isinstance(body, dict) and "discovered_table" in body:
+            if body["discovered_table"] not in DISCOVERED_TABLE_VALUES:
+                raise self.fail(f"discovered_table {body['discovered_table']!r} is not a known setting")
+            body = {k: v for k, v in body.items() if k != "discovered_table"}
         body = self.keys(body, _BODY_KEYS["start"], "start entry")
         self.keys(body["spec_files"], SPEC_KEYS, "spec_files")
         self.string(body["experiments_dir"], "experiments_dir")

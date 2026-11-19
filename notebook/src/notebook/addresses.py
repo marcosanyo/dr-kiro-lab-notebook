@@ -23,6 +23,15 @@ PICTURE_DIR = "p"
 ASSET_DIR = "a"
 STYLESHEET = f"{ASSET_DIR}/notebook.css"
 SCRIPT = f"{ASSET_DIR}/notebook.js"
+# The typefaces and their licence, served from the site itself (the stylesheet names them without a folder).
+FONT_FILES = (
+    "caveat-700.woff2",
+    "lora-400.woff2",
+    "lora-600.woff2",
+    "plex-mono-400.woff2",
+    "plex-mono-600.woff2",
+)
+FONT_LICENSE = f"{ASSET_DIR}/fonts-license.txt"
 
 
 def site_id(kind: str, text: str, source: str) -> str:

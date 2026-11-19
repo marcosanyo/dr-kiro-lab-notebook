@@ -95,6 +95,7 @@ def _parse(path: Path) -> Node:
 def _argv(out: Path) -> list[str]:
     return [
         "--sessions", str(SESSIONS),
+        "--requests", str(ROOT / "build-from-spec" / "requests"),
         "--choices", str(ROOT / "notebook" / "choices"),
         "--layouts", str(ROOT / "notebook" / "layouts.toml"),
         "--words", str(ROOT / "notebook" / "commentary-words.txt"),
@@ -202,8 +203,9 @@ def test_body_2_replacing_rows_show_their_reverse_links(site, loaded):
 
 def test_body_2_r13_carries_the_refused_end_note_with_both_messages_in_their_inks(site, loaded):
     record = loaded["body-2"]
-    body = _session_page(site, record).find("tbody")
-    trs = [n for n in body.elements() if n.tag == "tr"]
+    # One `tbody.spec-row` per row (a card); the rows of all of them, in table order.
+    bodies = _session_page(site, record).find_all("tbody")
+    trs = [n for body in bodies for n in body.elements() if n.tag == "tr"]
     notes = [i for i, tr in enumerate(trs) if "row-note" in tr.classes]
     assert len(notes) == 1
     (at,) = notes
@@ -327,10 +329,12 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
     cover = _parse(site / "index.html")
     t12 = _trial(loaded["body-2"], "T12")
     miss = cover.find(cls="cover-miss")
-    large = miss.find("figure", "photo-large")
-    assert large.find("img").attrs["src"] == f"p/{t12.picture.digest}.png"
+    magnified = miss.find("figure", "photo-magnified")
+    assert "T12" in magnified.find("figcaption").text()
+    # The whole picture is not on the page: the magnified figure names its sheet for the swap.
+    assert magnified.attrs["data-whole-src"] == f"p/{t12.picture.digest}.png"
+    assert all(i.attrs["src"] != magnified.attrs["data-whole-src"] for i in miss.find_all("img"))
     assert (site / f"p/{t12.picture.digest}.png").read_bytes() == t12.picture.data
-    assert "T12" in large.find("figcaption").text()
 
     measured = dict(t12.measurements)
     xs = measured["track_x"]
@@ -340,21 +344,29 @@ def test_cover_shows_h4_p1_with_t12_picture_track_and_miss(site, loaded):
 
     claim = miss.find(cls="cover-claim")
     assert "H4.P1" in [s.text() for s in claim.find_all("span", "ink-p")]
-    assert claim.find("span", "miss").text() == "miss"
-    assert claim.find("span", "miss-value").text() == "-0.2047"
+    # The cover has no outcome row; the MISSED stamp says it (polish pass).
+    assert claim.find_all("span", "miss") == []
+    assert claim.find("span", "miss-stamp").text() == text.COVER_MISSED_STAMP
+    # The measured value carries the recorded unit of x, in the list and on the sticky note.
+    assert claim.find("span", "miss-value").text() == "-0.2047 m"
+    assert claim.find("span", "sticky-number").text() == "x -0.2047 m"
 
 
 def test_cover_shows_rows_r4_and_its_replacement_r5(site):
     claim = _parse(site / "index.html").find(cls="cover-rows")
     links = [a.attrs["href"] for a in claim.find_all("a")]
     assert links == ["body-lab-body-2.html#row-R4", "body-lab-body-2.html#row-R5"]
+    # One card, R4. R5 is a single line inside it ("replaced by R5 <rule>"), not a second card (user, polish).
     (item,) = claim.find_all("li")
-    assert "row-rejected" in item.classes
+    assert "row-rejected" in item.classes and "rule-card" in item.classes
+    (replaced,) = item.find_all("span", "cover-replaced")
+    assert [a.attrs["href"] for a in replaced.find_all("a")] == ["body-lab-body-2.html#row-R5"]
+    assert replaced.find_all("span", "stamp") == [] and replaced.find_all("span", "stamp-label") == []
     stamps = [s.text() for s in claim.find_all("span", "stamp")]
-    assert stamps == ["rejected", "observed"]
-    # Each row's stamp keeps its label, as in the table (Requirement 8.2; user, checkpoint 11).
+    assert stamps == ["rejected"]
+    # The stamp keeps its label, as in the table (Requirement 8.2; user, checkpoint 11).
     labels = [s.text() for s in claim.find_all("span", "stamp-label")]
-    assert labels == [text.CHECKED, text.CHECKED]
+    assert labels == [text.CHECKED]
     for status in claim.find_all("span", "cover-status"):
         assert [(c.tag, sorted(c.classes)[0]) for c in status.elements()] == [
             ("span", "stamp"),
@@ -395,11 +407,10 @@ def _struck_selectors() -> set[str]:
     return found
 
 
-def test_the_strike_through_rules_leave_the_status_cell_and_the_cover_status_out():
+def test_the_strike_through_rules_strike_the_rule_sentence_only():
     assert _struck_selectors() == {
-        ".row-rejected td:not(.status)",
-        ".cover-rows .row-rejected > a",
-        ".cover-rows .row-rejected > .cover-rule",
+        '.row-rejected td[data-label="rule"]',
+        ".cover-rows .row-rejected .cover-rule",
     }
 
 
@@ -414,12 +425,12 @@ def test_no_stamp_label_sits_inside_a_struck_element(site, loaded):
             for i, above in enumerate(ancestors):
                 parent = ancestors[i - 1] if i else None
                 in_rejected_row = parent is not None and "row-rejected" in parent.classes
-                # `.row-rejected td:not(.status)`
-                assert not (above.tag == "td" and in_rejected_row and "status" not in above.classes)
-                # `.row-rejected > a`, `.row-rejected > .cover-rule`
-                assert not (in_rejected_row and (above.tag == "a" or "cover-rule" in above.classes))
-    # Every label of body-2's table (14 rows) and of the cover's two cited rows was looked at.
-    assert labels >= 14 + 2
+                # `.row-rejected td[data-label="rule"]`
+                assert not (above.tag == "td" and in_rejected_row and above.attrs["data-label"] == "rule")
+                # `.cover-rows .row-rejected .cover-rule`: the struck rule text, which holds no stamp label
+                assert "cover-rule" not in above.classes
+    # Every label of body-2's table (14 rows) and of the cover's one cited card was looked at.
+    assert labels >= 14 + 1
     rejected = [r for r in _rows(pages[0]) if "row-rejected" in r.classes]
     assert len(rejected) == len(BODY_2_TABS)
     for row in rejected:
@@ -428,28 +439,78 @@ def test_no_stamp_label_sits_inside_a_struck_element(site, loaded):
         assert [c for c in _cells(row) if "status" in c.classes] == [status]
 
 
-def test_cover_photo_and_track_are_siblings_in_one_row(site):
-    evidence = _parse(site / "index.html").find(cls="cover-evidence")
-    children = evidence.elements()
-    # The photo pair (the moving picture and its magnified picture, Requirement 7.9) and the track.
-    assert [(c.tag, "photo-pair" in c.classes or "track" in c.classes) for c in children] == [
-        ("section", True),
-        ("figure", True),
-    ]
-    assert "photo-pair" in children[0].classes and "track" in children[1].classes
-    assert children[0].find("figure", "photo-large") is not None
+def _rule_block(css: str, selector: str) -> str:
+    start = css.index(selector + " {")
+    block = css[start:]
+    return block[: block.index("}")]
+
+
+def test_cover_top_row_holds_the_claim_and_the_magnified_sheet_and_the_row_below_the_moving_picture(site):
+    miss = _parse(site / "index.html").find(cls="cover-miss")
+    # Phone order: heading, the top row (claim card, sticky note, magnified sheet), the moving picture with
+    # the track, the rule cards.
+    kinds = [("h2", "cap-heading"), ("section", "cover-top"), ("section", "cover-evidence")]
+    kinds.append(("section", "cover-rules"))
+    children = miss.elements()
+    assert [c.tag for c in children] == [tag for tag, _ in kinds]
+    assert all(name in c.classes for c, (_, name) in zip(children, kinds, strict=True))
+    top, evidence = miss.elements()[1:3]
+    assert "with-sheet" in top.classes
+    claim, sheet = top.elements()
+    assert "cover-claim" in claim.classes and "photo-magnified" in sheet.classes
+    card, note = claim.elements()
+    assert (card.tag, note.tag) == ("section", "aside")
+    assert "claim-card" in card.classes and "sticky" in note.classes
+    # The row below holds the track alone: no whole picture and no strip of cells is on the cover.
+    (track,) = evidence.elements()
+    assert "track" in track.classes
+    assert evidence.find_all(cls="photo") == [] and evidence.find_all(cls="photo-pair") == []
+
+    # Below 1000px one column (the order above); from 1000px the sheet is the left column, the claim card
+    # and the sticky note are to its right, and the moving picture and the track are in one row.
     css = CSS.read_text(encoding="utf-8")
-    rule = css[css.index(".cover-evidence {") :]
-    rule = rule[: rule.index("}")]
-    assert "display: flex;" in rule and "flex-wrap: wrap;" in rule
+    assert "display: grid;" in _rule_block(css, ".cover-top")
+    assert "display: flex;" in _rule_block(css, ".cover-evidence")
+    assert "flex-direction: column;" in _rule_block(css, ".cover-evidence")
+    wide = css[css.index("@media (min-width: 1000px)") :]
+    assert "grid-template-columns: clamp(" in _rule_block(wide, "  .cover-top.with-sheet")
+    sheet_rule = _rule_block(wide, "  .cover-top.with-sheet .photo-magnified")
+    assert "grid-column: 1;" in sheet_rule and "grid-row: 1;" in sheet_rule
+    claim_rule = _rule_block(wide, "  .cover-top.with-sheet .cover-claim")
+    assert "grid-column: 2;" in claim_rule and "grid-row: 1;" in claim_rule
+    assert "display: flex;" in _rule_block(wide, "  .cover-claim")
+    assert "flex-direction: row;" in _rule_block(wide, "  .cover-evidence")
 
 
-def test_cover_cards_label_sits_directly_above_the_cards(site):
-    cards = _parse(site / "index.html").find("section", "cover-cards")
-    label, row = cards.elements()
-    assert "block-label" in label.classes and label.text() == text.CHOSEN_BY_A_PERSON
-    assert "card-row" in row.classes
-    assert [len(c.find_all("figure", "photo-small")) for c in row.elements()] == [1, 1]
+def test_cover_track_box_is_cropped_to_the_drawing_and_sizes_with_its_view_box(site):
+    (svg,) = _parse(site / "index.html").find(cls="cover-evidence").find_all("svg")
+    left, top, width, height = (float(v) for v in svg.attrs["viewbox"].split())
+    assert (float(svg.attrs["width"]), float(svg.attrs["height"])) == (width, height)
+    (polyline,) = svg.find_all("polyline")
+    xy = [tuple(float(v) for v in p.split(",")) for p in polyline.attrs["points"].split()]
+    # The drawing leaves at most the margin of the box (8 units) above, below and to both sides.
+    gaps = (
+        min(x for x, _ in xy) - left,
+        left + width - max(x for x, _ in xy),
+        min(y for _, y in xy) - top,
+        top + height - max(y for _, y in xy),
+    )
+    assert all(0 <= gap <= 8.01 for gap in gaps), gaps
+    # No fixed height anywhere: not on a phone, not at any width.
+    css = CSS.read_text(encoding="utf-8")
+    rule = _rule_block(css, ".cover-evidence .track svg")
+    assert "height: auto;" in rule and "max-height" not in rule
+    assert "max-height" not in _rule_block(css, ".cover-evidence .track")
+    assert ".cover-evidence .track svg {\n    max-height" not in css
+
+
+def test_each_lab_panel_labels_its_chosen_trial_directly_above_the_photo(site):
+    panels = _parse(site / "index.html").find_all("section", "tab-panel")
+    assert len(panels) == 2
+    for panel in panels:
+        label, figure = panel.find(cls="panel-photo").elements()
+        assert "block-label" in label.classes and label.text() == text.CHOSEN_BY_A_PERSON
+        assert figure.tag == "figure" and "photo-small" in figure.classes
 
 
 def test_sticky_note_sets_the_measurement_name_apart(site, loaded):

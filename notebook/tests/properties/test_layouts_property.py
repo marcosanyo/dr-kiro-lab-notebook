@@ -21,6 +21,7 @@ gaps = st.integers(min_value=0, max_value=5)
 def _entry(frames: int, rows: int, columns: int, gap: int) -> str:
     return (
         f"[fake]\nframes = {frames}\nrows = {rows}\ncolumns = {columns}\ngap = {gap}\n"
+        "interval = 200\n"
         'source = "test fixture"\n'
     )
 
@@ -40,7 +41,9 @@ def test_layout_accepted_iff_frames_equal_rows_times_columns(
 ) -> None:
     text = _entry(frames, rows, columns, gap)
     if frames == rows * columns:
-        assert parse(text, "f.toml") == {"fake": Layout("fake", frames, rows, columns, gap, "test fixture")}
+        assert parse(text, "f.toml") == {
+            "fake": Layout("fake", frames, rows, columns, gap, 200, "test fixture")
+        }
     else:
         with pytest.raises(NotebookError) as caught:
             parse(text, "f.toml")
@@ -52,7 +55,7 @@ def layout_and_size(draw: st.DrawFn) -> tuple[Layout, int, int]:
     rows = draw(counts)
     columns = draw(counts)
     gap = draw(gaps)
-    layout = Layout("fake", rows * columns, rows, columns, gap, "test fixture")
+    layout = Layout("fake", rows * columns, rows, columns, gap, 200, "test fixture")
     if draw(st.booleans()):
         # A size built from whole cells, possibly nudged by one pixel so the near misses are tried.
         width = columns * draw(st.integers(1, 8)) + (columns - 1) * gap + draw(st.sampled_from([-1, 0, 0, 1]))

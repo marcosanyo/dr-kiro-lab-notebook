@@ -3,6 +3,7 @@ frames = 10
 rows = 2
 columns = 5
 gap = 0
+interval = 220
 source = "body-lab design, picture: 10 frames, 2 rows of 5"
 
 [wind-tunnel]
@@ -10,4 +11,5 @@ frames = 6
 rows = 2
 columns = 3
 gap = 4
+interval = 150
 source = "wind-tunnel Requirement 9.4"

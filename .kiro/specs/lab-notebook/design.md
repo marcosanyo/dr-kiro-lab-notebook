@@ -382,10 +382,20 @@ The HTML holds a `<figure class="photo">` with an `<img>` of the whole sheet (wo
 the cell size (N28). `notebook.js` replaces the
 visible image with a `<canvas>` of one cell and draws cell k with `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)`,
 where `sx = (k mod columns) * (cw + gap)` and `sy = floor(k / columns) * (ch + gap)`, in reading order, one cell per
-500 ms, looping. The PNG is never re-encoded. Controls: pause/play, step one cell, whole sheet. With
-`prefers-reduced-motion: reduce`, it starts paused on cell 0.
+`data-interval` ms (the layout's `interval`, so each lab has its own), looping. Only the cells of the sheet are
+drawn; there is no frame between two cells and no interpolation. The PNG is never re-encoded. Controls: pause/play,
+step one cell, whole picture (the sheet as it is). With `prefers-reduced-motion: reduce`, it starts paused on cell 0.
 
-Beside each body-lab moving picture, except the lab cards, the page shows a magnified picture of the moving body: the box of the
+Which picture moves: for a body-lab trial the body is a few pixels in the whole sheet, so the magnified picture below is
+the one that moves on its own. The whole picture is not on the page: the magnified figure names its sheet
+(`data-whole-src`, `data-whole-gap`, `data-whole-tile-width`, `data-whole-tile-height`) and "whole picture" swaps it in
+at the same place and cell, moving one cell at a time with the same interval; "magnified picture" swaps back. Without
+the script the magnified picture shows its first cell. A lab card shows the first cell and waits for "play"
+(`data-start="first"`). A wind-tunnel picture is the only picture of its trial and moves on its own.
+
+For each body-lab trial, except on the lab cards, the page shows a magnified picture of the moving body instead of the whole picture (a
+`<figure class="photo photo-magnified">` with the same controls and `data-` attributes as the whole picture, for the
+magnified sheet: same columns and rows, gap 0, the size of one magnified cell, the lab's interval): the box of the
 pixels that change between frames, plus a 4 px margin (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as
 `p/<sha256>.png` (the SHA-256 of its bytes) with the alt text "Magnified view of the picture beside it", and leaves the
 recorded PNG file untouched. A wind-tunnel moving picture has none: the flow moves through the whole sheet, so no
@@ -432,6 +442,7 @@ frames = 10
 rows = 2
 columns = 5
 gap = 0
+interval = 220
 source = "body-lab design, picture: 10 frames, 2 rows of 5"
 
 [wind-tunnel]
@@ -439,10 +450,13 @@ frames = 6
 rows = 2
 columns = 3
 gap = 4
+interval = 150
 source = "wind-tunnel Requirement 9.4"
 ```
 
-Each table has exactly these five keys; integers `>= 1` (gap `>= 0`); `source` a non-empty string. Test fixtures use
+Each table has exactly these six keys; integers `>= 1` (gap `>= 0`, `interval >= 50`); `interval` is the time in
+milliseconds that a moving picture of the application shows one cell (body-lab 220, wind-tunnel 150, user); `source` a
+non-empty string. Test fixtures use
 their own layouts file with a `fake` entry (1 frame, 1 row, 1 column, gap 0).
 
 ### Choice file `notebook/choices/<application>/<session-id>.toml` (Requirement 12)
@@ -465,17 +479,27 @@ session = "body-2"
 prediction = "H4.P1"          # or "none"
 
 [[card]]
-application = "body-lab"
-session = "body-2"
-trial = "T31"
-
-[[card]]
 application = "wind-tunnel"
 session = "wt-004"
 trial = "T1"
+kicker = "LAB I · BY DAYLIGHT"
+title = "The Wind Tunnel"
+engine = "OpenFOAM"
+unit = "runs"
+
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+kicker = "LAB II · KEPT SECRET"
+title = "The Stitched Body"
+engine = "MuJoCo"
+unit = "trials"
 ```
 
-Exactly one card per application present in `sessions/`, shown in application code-point order. The `[miss]`
+Exactly one card per application present in `sessions/`, shown as one tab each in the order of the file (one to four
+tabs). The four words of a card are the person's words for its tab; they are commentary. The tab of the lab of the
+`[miss]` session is the checked one. The `[miss]`
 session must be an ended session; its prediction must have the outcome miss; "none" is accepted only when that
 session has no miss.
 
@@ -741,7 +765,7 @@ These read the committed `sessions/`, `notebook/choices/` and the scan sources a
 - Scan: a term from the scan sources planted in a `text.py` string fails the build; the same term in a Dr. Kiro text
   of a fixture record does not (20.5). A planted term in a choice reason fails (12.8).
 - Commentary: every string in `text.py` passes the word list; a planted listed word fails (5.5). Cover commentary
-  outside `<details>` is at most 60 tokens (13.6).
+  outside `<details>` is at most 240 tokens (13.6).
 - Site: every page is at the root and no link contains `..`; ids that could make two addresses equal fail the
   build (N28); no file contains `xmlns`, `http:`, `https:`, `//` at the start of a URL, `<form`, `<input` other than the replay and
   picture buttons, or `<iframe` (3.1-3.3); text is in the HTML without script (3.4); every picture's name is the
@@ -759,23 +783,26 @@ screen at milestone 1 (22.4), recorded in `docs/status.md`.
 
 Written as the steering file `.kiro/steering/notebook-visual.md` in the first task, before any page (6.1). The
 proposal below is what that file will hold; the user's review at milestone 1 may change it, and any change goes
-into the steering file first (6.6). Only system font stacks are used; no font file is fetched or shipped.
+into the steering file first (6.6). The stylesheet bundles Lora, IBM Plex Mono and Caveat as woff2 files of the
+site, with their licence, and lists them first in the stacks below; the system stacks stay as fallbacks. Nothing is
+fetched from another host (3.2). The steering file holds the stacks and the cover layout as built (Decision 51).
 
 | Element | Proposal |
 |---|---|
-| Paper | background `#fbf7ec`; faint horizontal rule lines `#dfe6ef` every line height (CSS gradient); content column max 72rem |
+| Paper | background `#fbf7ec`; faint graph-paper lines `#dfe6ef`, one along the bottom and one along the right edge of each 1.5rem tile (CSS gradient); content column max 72rem |
 | Dr. Kiro's ink | colour `#1f3a8a`; serif `ui-serif, Georgia, "Times New Roman", serif`; upright; blocks have a 2px solid left rule in the same colour and the label "written by Dr. Kiro"; Dr. Kiro's code blocks use `ui-monospace` with the same left rule |
 | Pencil | colour `#3d3d3d`; `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`; no rule |
 | Commentary ink | colour `#2b2118`; `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`; 0.95em |
-| Miss red | `#b3261e`, only on missed predictions and their measured values, always with the word "miss" (6.4) |
-| Bench stamp | uppercase sans, bold, letter-spaced, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c`, rejected `#5b2a6e` (never red); the label ("checked by the bench") below in small commentary type |
+| Miss red | `#b3261e`, only on missed predictions and their measured values, always with the word "miss" (the cover's stamp says "missed") (6.4) |
+| Rewrite red | `#a3302a` on `#fbe8e4`, for rejected rows and cards (band, strike on cover cards, dotted replaced-by line); never on a miss (Decision 51) |
+| Bench stamp | uppercase monospace, semibold, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c`, rejected `#5b2a6e` (never red); the label ("checked by the bench") below in small commentary type |
 | Instant photo | white frame (8px sides, 28px bottom), soft shadow, rotated within +-1.5deg by a fixed rule from the trial number, a brass pin `#b08d3c` at the top; caption below |
 | Sticky note | background `#fff1a8`, commentary ink, rotated 1deg, shadow; the refused-end note uses the stamp border on a sticky note |
-| Strike-through | `line-through` 2px graphite; text stays at full contrast; the "replaced by" tab sits at the row's right edge as a paper tab |
+| Strike-through | `line-through` 2px graphite in a table row, rewrite red on a cover card; text stays at full contrast; the "replaced by" line is the dotted last line of the card |
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
-| Narrow screen | at 360px one column; margin photos move below the table; wide tables scroll inside their own box |
+| Narrow screen | at 360px one column; margin photos move below the table; the spec table is cards, so it has no sideways scroll |
 | Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
-| Motion | 500 ms per cell; reduced motion starts paused (3.6) |
+| Motion | one cell per `interval` of the lab's layout (body-lab 220 ms, wind-tunnel 150 ms); reduced motion starts paused (3.6) |
 
 All text colours above reach at least 4.5:1 on their backgrounds (paper and sticky yellow); the test checks each
 pair from the CSS.
@@ -840,7 +867,7 @@ changes `bench/`.
   content with `white-space: pre-wrap`; other C0 control characters fail the build.
 - **N7 Two scan passes.** Segments at their sources (findings name the source file and line), then each finished
   file through its ranges, the same pieces a later `bench-scan` of the site would see.
-- **N8 Moving pictures by canvas.** The whole sheet is an `<img>` (the no-script and "whole sheet" view); JavaScript
+- **N8 Moving pictures by canvas.** The whole sheet is an `<img>` (the no-script and "whole picture" view); JavaScript
   draws one cell at a time from source rectangles that include the gap. No re-encoding. CSS `background-position`
   was not chosen because two-axis stepping with gaps needs per-cell keyframes generated per layout.
 - **N9 Addresses.** As in the table of Components 9; ids are bench ids checked by pattern.

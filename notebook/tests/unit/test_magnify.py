@@ -10,7 +10,7 @@ BACKGROUND = (200, 200, 200)
 SQUARE = (0, 0, 0)
 GAP_COLOUR = (255, 255, 255)
 CELL_W, CELL_H, GAP = 20, 12, 2
-LAYOUT = Layout("fixture", frames=2, rows=1, columns=2, gap=GAP, source="fixture")
+LAYOUT = Layout("fixture", frames=2, rows=1, columns=2, gap=GAP, interval=200, source="fixture")
 
 
 def _sheet(squares: list[tuple[int, int]]) -> bytes:

@@ -36,7 +36,7 @@ from notebook.pages.photo import Pins
 from notebook.records import RecordModel
 
 # The synthetic pictures are one cell each (`fixtures.synth._picture`).
-LAYOUT = Layout("fake", frames=1, rows=1, columns=1, gap=0, source="test fixture")
+LAYOUT = Layout("fake", frames=1, rows=1, columns=1, gap=0, interval=200, source="test fixture")
 _VOID = frozenset(("img", "br", "hr", "meta", "link", "input", "wbr", "source"))
 
 

@@ -9,7 +9,7 @@ from bench.pictures import encode_png
 from notebook.errors import NotebookError
 from notebook.layouts import Cells, Layout, check_sheet, layout_for, load, parse
 
-FAKE = Layout("fake", frames=6, rows=2, columns=3, gap=4, source="test fixture")
+FAKE = Layout("fake", frames=6, rows=2, columns=3, gap=4, interval=200, source="test fixture")
 
 
 def _png(width: int, height: int) -> bytes:
@@ -17,7 +17,14 @@ def _png(width: int, height: int) -> bytes:
 
 
 def _entry(**overrides: object) -> str:
-    values: dict[str, object] = {"frames": 1, "rows": 1, "columns": 1, "gap": 0, "source": '"test fixture"'}
+    values: dict[str, object] = {
+        "frames": 1,
+        "rows": 1,
+        "columns": 1,
+        "gap": 0,
+        "interval": 200,
+        "source": '"test fixture"',
+    }
     values.update(overrides)
     return "[fake]\n" + "".join(f"{key} = {value}\n" for key, value in values.items() if value is not None)
 
@@ -26,13 +33,13 @@ def test_committed_layouts_file() -> None:
     path = Path(__file__).resolve().parents[2] / "layouts.toml"
     layouts = load(path)
     assert layouts == {
-        "body-lab": Layout("body-lab", 10, 2, 5, 0, "body-lab design, picture: 10 frames, 2 rows of 5"),
-        "wind-tunnel": Layout("wind-tunnel", 6, 2, 3, 4, "wind-tunnel Requirement 9.4"),
+        "body-lab": Layout("body-lab", 10, 2, 5, 0, 220, "body-lab design, picture: 10 frames, 2 rows of 5"),
+        "wind-tunnel": Layout("wind-tunnel", 6, 2, 3, 4, 150, "wind-tunnel Requirement 9.4"),
     }
 
 
 def test_fixture_entry_parses() -> None:
-    assert parse(_entry(), "f.toml") == {"fake": Layout("fake", 1, 1, 1, 0, "test fixture")}
+    assert parse(_entry(), "f.toml") == {"fake": Layout("fake", 1, 1, 1, 0, 200, "test fixture")}
 
 
 @pytest.mark.parametrize(
@@ -40,6 +47,9 @@ def test_fixture_entry_parses() -> None:
     [
         ({"frames": 2}, "does not equal rows times columns"),
         ({"gap": None}, "missing key(s): gap"),
+        ({"interval": None}, "missing key(s): interval"),
+        ({"interval": 49}, "interval must be at least 50"),
+        ({"interval": '"0.2"'}, "interval must be a whole number"),
         ({"extra": 1}, "unknown key(s): extra"),
         ({"rows": 0}, "rows must be at least 1"),
         ({"gap": -1}, "gap must be at least 0"),

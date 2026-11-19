@@ -14,7 +14,7 @@ import pytest
 from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
 from fixtures.session import FAKE_SOURCES, STOP_LIST, Lab, accepted_session
-from notebook import build, cli, records, site, text
+from notebook import addresses, build, cli, records, site, text
 from notebook.errors import NotebookError
 from notebook.ink import markup
 from notebook.inputs import Inputs
@@ -23,8 +23,12 @@ CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
 COVER = (
     '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
     '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
+    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
 )
-LAYOUTS = '[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\nsource = "test fixture: one 8 x 8 picture"\n'
+LAYOUTS = (
+    "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
+    'source = "test fixture: one 8 x 8 picture"\n'
+)
 WORDS = "# test fixture word list\nlimp\n"
 
 
@@ -40,6 +44,7 @@ def fixture_inputs(tmp_path_factory) -> tuple[Path, Inputs]:
     (root / "words.txt").write_text(WORDS)
     inputs = Inputs(
         sessions=made.sessions,
+        requests=root / "requests",
         choices=choices,
         layouts=root / "layouts.toml",
         words=root / "words.txt",
@@ -82,7 +87,8 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
         "a/notebook.css",
         "a/notebook.js",
     }
-    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures
+    shipped = {addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES)}
+    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures | shipped
     assert _all_files(built) == expected
     for path in pictures:
         data = (built / path).read_bytes()
@@ -116,6 +122,7 @@ def test_the_command_line_refuses_fake_records(fixture_inputs, tmp_path, capsys)
     _, inputs = fixture_inputs
     argv = [
         "--sessions", str(inputs.sessions),
+        "--requests", str(inputs.requests),
         "--choices", str(inputs.choices),
         "--layouts", str(inputs.layouts),
         "--words", str(inputs.words),

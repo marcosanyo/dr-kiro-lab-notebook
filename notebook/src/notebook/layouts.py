@@ -1,8 +1,9 @@
 """The frame layout table and the picture size check (design 7, Requirement 7).
 
-`layouts.toml` has one table per application with exactly the keys `frames`, `rows`, `columns`, `gap` and
-`source`. A picture sheet is accepted only when it is a PNG that passes the bench's picture check and its size
-divides into whole cells of its application's layout.
+`layouts.toml` has one table per application with exactly the keys `frames`, `rows`, `columns`, `gap`,
+`interval` (milliseconds a moving picture shows one cell) and `source`. A picture sheet is accepted only
+when it is a PNG that passes the bench's picture check and its size divides into whole cells of its
+application's layout.
 """
 
 import struct
@@ -14,8 +15,10 @@ from bench.pictures import PictureError, check_picture
 
 from notebook.errors import NotebookError
 
-KEYS = frozenset({"frames", "rows", "columns", "gap", "source"})
+KEYS = frozenset({"frames", "rows", "columns", "gap", "interval", "source"})
 SHEET_MEDIA = "image/png"
+# The shortest time a cell may be shown, in milliseconds; below it the cells would not be seen one by one.
+MIN_INTERVAL = 50
 
 
 @dataclass(frozen=True)
@@ -25,6 +28,7 @@ class Layout:
     rows: int
     columns: int
     gap: int
+    interval: int
     source: str
 
 
@@ -67,6 +71,7 @@ def parse(text: str, where: str) -> dict[str, Layout]:
         rows = _integer(entry_where, "rows", entry["rows"], 1)
         columns = _integer(entry_where, "columns", entry["columns"], 1)
         gap = _integer(entry_where, "gap", entry["gap"], 0)
+        interval = _integer(entry_where, "interval", entry["interval"], MIN_INTERVAL)
         source = entry["source"]
         if not isinstance(source, str) or not source.strip():
             raise NotebookError(entry_where, "source must be a non-empty string")
@@ -74,7 +79,7 @@ def parse(text: str, where: str) -> dict[str, Layout]:
             raise NotebookError(
                 entry_where, f"frames ({frames}) does not equal rows times columns ({rows} x {columns})"
             )
-        layouts[application] = Layout(application, frames, rows, columns, gap, source)
+        layouts[application] = Layout(application, frames, rows, columns, gap, interval, source)
     return layouts
 
 

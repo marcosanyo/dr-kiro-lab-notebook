@@ -2,17 +2,19 @@
 facts of the committed records and of the approved cover and choice files (requirements introduction and
 Decisions 36, 37), not results the notebook claims."""
 
+import html
 import re
 from pathlib import Path
 
 import pytest
 
-from notebook import choices, ink, layouts, records, text, views, words
+from notebook import choices, ink, layouts, readerrequest, readerruns, records, text, views, words
 from notebook.ink import Ink
 from notebook.pages import cover, photo, session
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
+REQUESTS = ROOT / "build-from-spec" / "requests"
 CHOICES = ROOT / "notebook" / "choices"
 LAYOUTS = ROOT / "notebook" / "layouts.toml"
 WORDS = ROOT / "notebook" / "commentary-words.txt"
@@ -30,7 +32,10 @@ def table() -> dict[str, layouts.Layout]:
 
 @pytest.fixture(scope="module")
 def built(loaded, table):
-    return cover.page(loaded, choices.load_cover(CHOICES, loaded), table)
+    runs = readerruns.load(SESSIONS)
+    return cover.page(
+        loaded, choices.load_cover(CHOICES, loaded), table, runs, readerrequest.load(REQUESTS, runs)
+    )
 
 
 def _by_session(loaded, session_id: str) -> records.RecordModel:
@@ -49,23 +54,78 @@ def test_cover_shows_body_2_h4_p1_with_t12_its_track_and_miss(loaded, built) -> 
     body_2 = _by_session(loaded, "body-2")
     t12 = _trial(body_2, "T12")
     assert pictures[0].path == f"p/{t12.picture.digest}.png"
-    large = re.search(r'<figure class="photo tilt-\d photo-large"[^>]*><img src="([^"]+)"', page)
+    # The page shows the magnified picture only; the recorded sheet is named for the "whole picture" swap.
+    large = re.search(r'<figure class="photo photo-magnified photo-large"[^>]*data-whole-src="([^"]+)"', page)
     assert large is not None and large.group(1) == pictures[0].path
+    assert f'<img src="{pictures[0].path}"' not in page
     assert page.count("<polyline") == 1  # the track of T12, beside the photo
     assert '<span class="ink-p">H4.P1</span>' in page
     statement = next(h for h in body_2.hypotheses if h.id == "H4").statement.text
     assert f'<span class="ink-k">{statement}</span>' in page
-    assert '<span class="ink-p miss">miss</span>' in page
-    assert re.search(r'<span class="ink-p miss-value">-0\.2047</span>', page)
+    assert f'<span class="miss-stamp"><span class="ink-c">{text.COVER_MISSED_STAMP}</span></span>' in page
+    assert '<span class="miss"><span class="ink-p">miss</span></span>' not in page
+    # The list holds predicted and measured only: no outcome heading (the stamp says it).
+    measures = page[page.index('<dl class="measures">') : page.index("</dl>")]
+    assert re.findall(r'<dt><span class="ink-c">([^<]+)</span></dt>', measures) == [
+        text.COVER_PREDICTED,
+        text.COVER_MEASURED_HEAD,
+    ]
+    assert re.search(r'<span class="miss-value"><span class="ink-p">-0\.2047 m</span></span>', page)
+
+
+def test_the_sticky_note_says_in_one_line_what_happened_to_h4_p1(loaded, built) -> None:
+    page = ink.join(built[0])[0]
+    body_2 = _by_session(loaded, "body-2")
+    outcome = next(o for o in body_2.outcomes if o.prediction == "H4.P1")
+    assert outcome.value is not None and outcome.value < 0  # recorded: -0.2047...
+    start = page.index('<aside class="sticky">')
+    sticky = page[start : page.index("</aside>", start)]
+    line = sticky[sticky.index('<span class="sticky-line sticky-happened">') :]
+    line = html.unescape(re.sub(r"<[^>]+>", "", line[: line.index("</span></span>")]))
+    # The registered range [0.2, 3.0] m and the recorded value, rounded to four digits like every cover value.
+    # The start record says x is taken in the direction the body faces at the start, so the line says
+    # forward and back, with the same recorded numbers.
+    assert line == "expected to go forward 0.2 to 3 m, went back 0.2047 m"
 
 
 def test_cover_rows_are_r4_rejected_and_r5_replacing_it(built) -> None:
     page = ink.join(built[0])[0]
     rows = re.findall(r'href="body-lab-body-2\.html#row-(R\d+)"', page)
     assert rows == ["R4", "R5"]
-    assert '<li class="row-rejected"><a href="body-lab-body-2.html#row-R4">' in page
+    assert (
+        '<li class="rule-card row-rejected st-rejected"><span class="rule-head">'
+        '<a href="body-lab-body-2.html#row-R4">' in page
+    )
     assert '<span class="stamp stamp-rejected"><span class="ink-s">rejected</span></span>' in page
-    assert '<span class="stamp stamp-observed"><span class="ink-s">observed</span></span>' in page
+    # R5 is one line under R4 ("replaced by R5 ..."), not a second card with its own stamp.
+    replaced = '<span class="cover-replaced"><span class="ink-c">replaced by </span>'
+    assert replaced + '<a href="body-lab-body-2.html#row-R5">' in page
+    assert page.count('class="rule-card') == 1
+    assert '<span class="stamp stamp-observed">' not in page
+
+
+def test_cover_details_sit_inside_the_rules_card(built) -> None:
+    page = ink.join(built[0])[0]
+    start = page.index('<section class="cover-rules">')
+    card = page[start : page.index("</section>", start) + len("</section>")]
+    assert page.count('<details class="cover-details">') == 1
+    assert card.count('<details class="cover-details">') == 1
+    assert card.index('<ul class="cover-rows">') < card.index('<details class="cover-details">')
+    assert card.endswith("</details></section>")
+
+
+def test_cover_opens_on_the_lab_of_the_miss_and_keeps_the_cover_file_order(built) -> None:
+    page = ink.join(built[0])[0]
+    radios = re.findall(
+        r'<input type="radio" name="lab-tab" id="(tab-[a-z0-9-]+)" class="tab-radio"( checked="checked")?>',
+        page,
+    )
+    # LAB I (wind tunnel) stays on the left; LAB II (body lab, where H4.P1 missed) is the one that is open.
+    assert [(name, bool(checked)) for name, checked in radios] == [
+        ("tab-wind-tunnel", False),
+        ("tab-body-lab", True),
+    ]
+    assert page.index('for="tab-wind-tunnel"') < page.index('for="tab-body-lab"')
 
 
 def test_cover_cards_and_labels(loaded, built) -> None:
@@ -74,7 +134,7 @@ def test_cover_cards_and_labels(loaded, built) -> None:
     t31 = _trial(_by_session(loaded, "body-2"), "T31")
     wt_t1 = _trial(_by_session(loaded, "wt-004"), "T1")
     # The miss shows its recorded sheet and its magnified picture first (Requirement 7.9), then the cards.
-    assert [p.path for p in pictures[2:]] == [f"p/{t31.picture.digest}.png", f"p/{wt_t1.picture.digest}.png"]
+    assert [p.path for p in pictures[2:]] == [f"p/{wt_t1.picture.digest}.png", f"p/{t31.picture.digest}.png"]
     assert page.count("photo-small") == 2
     assert 'href="body-lab.html"' in page and 'href="wind-tunnel.html"' in page
     assert page.count("chosen by a person") >= 2
@@ -102,12 +162,26 @@ def test_session_margin_pins_the_chosen_trials_as_photos(loaded, table) -> None:
     page = ink.join(session.table_section(views.full(record), chosen, pins))[0]
     margin = page[page.index('<aside class="margin">') :]
     pinned = re.findall(
-        r'<figure class="pinned" data-trial="(T\d+)"><section class="photo-pair">'
-        r'<figure class="photo tilt-\d photo-small"',
+        r'<figure class="pinned" data-trial="(T\d+)"><figure class="photo photo-magnified photo-small"',
         margin,
     )
     assert pinned == ["T25", "T30", "T36"]
-    # Each pin keeps its recorded sheet, then its magnified picture (Requirement 7.9).
+    # Each pin keeps its recorded sheet (named for the swap, not shown), then its magnified picture (7.9).
+    assert "photo-pair" not in margin
     recorded = [p.path for p in pins.files[::2]]
     assert recorded == [f"p/{_trial(record, tid).picture.digest}.png" for tid in ("T25", "T30", "T36")]
     assert len(pins.files) == 6
+
+
+def test_cover_reader_line_gives_the_passes_of_the_six_runs(built) -> None:
+    page = ink.join(built[0])[0]
+    chips = re.findall(r'<span class="reader-chip reader-(\w+)"><span class="ink-p">([^<]+)</span>', page)
+    assert chips == [("spec", "spec 2/2"), ("record", "record 1/2"), ("none", "none 0/2")]
+    assert page.index("cover-miss") < page.index("cover-reader") < page.index("cover-labs")
+
+
+def test_cover_tabs_list_the_ended_sessions_of_each_lab(built) -> None:
+    page = ink.join(built[0])[0]
+    assert page.count('<input type="radio" name="lab-tab"') == 2
+    sessions = re.findall(r'<li class="session-line"><span class="session-id"><a href="([^"]+)"', page)
+    assert sessions == ["wind-tunnel-wt-004.html", "body-lab-body-1.html", "body-lab-body-2.html"]

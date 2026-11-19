@@ -33,14 +33,22 @@ session = "body-2"
 prediction = "H4.P1"
 
 [[card]]
-application = "body-lab"
-session = "body-2"
-trial = "T31"
-
-[[card]]
 application = "wind-tunnel"
 session = "wt-004"
 trial = "T1"
+kicker = "LAB I · BY DAYLIGHT"
+title = "The Wind Tunnel"
+engine = "OpenFOAM"
+unit = "runs"
+
+[[card]]
+application = "body-lab"
+session = "body-2"
+trial = "T31"
+kicker = "LAB II · KEPT SECRET"
+title = "The Stitched Body"
+engine = "MuJoCo"
+unit = "trials"
 """
 
 
@@ -93,8 +101,8 @@ def test_the_approved_content_is_accepted(tmp_path: Path, loaded) -> None:
     assert (cover.miss.session, cover.miss.prediction) == ("body-2", "H4.P1")
     assert cover.miss.outcome is not None and cover.miss.outcome.trial == "T12"
     assert [(c.application, c.session, c.trial) for c in cover.cards] == [
-        ("body-lab", "body-2", "T31"),
         ("wind-tunnel", "wt-004", "T1"),
+        ("body-lab", "body-2", "T31"),
     ]
 
 
@@ -202,9 +210,9 @@ def test_a_stray_file_in_the_choices_folder_is_refused(tmp_path: Path, loaded) -
         ('prediction = "H4.P1"', 'prediction = "H9.P9"', "key miss prediction", "not in the record"),
         ('prediction = "H4.P1"', 'prediction = "none"', "key miss prediction", "has a missed prediction"),
         ('prediction = "H4.P1"', 'prediction = "H4.P1"\nextra = 1', "key miss", "unknown key"),
-        ('trial = "T31"', 'trial = "T99"', "key card 1 trial", "'T99' is not in"),
-        ('session = "wt-004"', 'session = "wt-002"', "key card 2 session", "stopped"),
-        ('session = "wt-004"', 'session = "wt-005"', "key card 2 session", "names no record"),
+        ('trial = "T31"', 'trial = "T99"', "key card 2 trial", "'T99' is not in"),
+        ('session = "wt-004"', 'session = "wt-002"', "key card 1 session", "stopped"),
+        ('session = "wt-004"', 'session = "wt-005"', "key card 1 session", "names no record"),
         (
             'application = "wind-tunnel"\nsession = "wt-004"\ntrial = "T1"',
             'application = "body-lab"\nsession = "body-1"\ntrial = "T1"',
@@ -226,7 +234,7 @@ def test_a_cover_prediction_that_is_a_hit_is_refused(tmp_path: Path, loaded) -> 
 
 
 def test_a_cover_without_a_card_for_an_application_is_refused(tmp_path: Path, loaded) -> None:
-    cut = COVER.split('[[card]]\napplication = "wind-tunnel"')[0]
+    cut = COVER.split('[[card]]\napplication = "body-lab"')[0]
     folder = _write(tmp_path, {}, cover=cut)
     _refused(lambda: choices.load_cover(folder, loaded), "cover.toml key card", "no card for the application")
 
