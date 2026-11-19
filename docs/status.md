@@ -3,7 +3,19 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: ローカル、2026-11-17、`lab-notebook` を PR にする前（拡大画像の領域の規則を確定した後）。
+最終更新: Kiro Web、2026-11-19、ノートの見た目の直し（ブランチ `feat/notebook-polish`）の後。
+
+## ノートの見た目の直し（ブランチ `feat/notebook-polish`、新しいブランチは切らない）
+- **済み（2026-11-19）:** 表紙と spec の表を直した。1 つ直すごとにコミットした。
+  - 除外リストに `spacing` を足した（ユーザー承認。出どころは風洞の `constants.toml` で、`ahead` と同じ）。小見出しは字の間を少し空けた。
+  - 表紙: OUTCOME の行を消して MISSED の判子だけにした。付箋は記録の数字だけの 1 文にした（例: 「expected x between 0.2 and 3 m, measured -0.2047 m: below the range, on the other side of zero」）。
+    details は規則のカードの中に入れた。ラボのタブは外れた予測のラボ（LAB II）を最初に開く（並びは LAB I が左のまま）。
+  - 表紙の最初の画面: 上の段に予測のカード、付箋、拡大した画像シート、その下の段に動く写真と軌跡を置いた（1000px 以上）。スマホ幅では軌跡の前後の空白を詰めた。画像のボタンは 44px にした。
+  - セッションページの発見した spec の表は、行ごとのカードで見せる。書き直し用の赤（`--rewrite-red`）は外れの赤と別にした。
+  - 表紙の語数の上限は 240 語（ユーザー承認）。spec（要件 13 ほか）、設計、訳、`notebook-visual.md` を、できあがりに合わせて直した（この順で最後に直した）。
+- **次の一手:** ユーザーがスマホで画面の画像を見て、直しを返す。そのあと PR を作る。PR の説明には、ゆるめたテストの 2 か所と、その理由を書く。
+- **未解決:** main の風洞のテストが 2 件落ちている。ノートとは混ぜず、ノートの PR が終わった後に、別の小さな PR で直す。どの 2 件かは、まだ調べていない。
+- `docs/ja/lab-notebook/tasks.md` の訳は、以前から原文と食い違っていた（ブランチ作成前から `ja-check` が止まっていた）。このとき原文に合わせて直した。
 
 ## brief の改訂（ブランチ `docs/brief-final-edit`）
 - `docs/brief.md` を今の方針に合わせた: 題は Dr. Kiro's Lab Notebook、決め台詞は The experiment gets the final edit.。ノートは発見した spec の表が中心
