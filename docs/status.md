@@ -6,13 +6,36 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
 ## ノートの棚（ブランチ `feat/notebook-shelf`、PR #40、2026-11-20、ローカル）
-- **サイト:** `/` は扉 2 つの入口（このまま。後で中に動く絵と一言の主張を入れる）。`/wind-tunnel/`（昼に固定）と `/body-lab/`（夜に固定）。昼夜の切り替えボタンと、アプリ内の CASE 札は無くした。ページの上に小さなリンク 2 つ（`/` と、もう 1 つのアプリ）。アプリの設定と choices は `wind-tunnel/notebook/` と `body-lab/notebook/`（`app.toml`、`choices/`、ロボットは `display/`）。`notebook-build` は `--app <application>/notebook` をアプリごとに 1 つ受け取る。ノートを作るコードは `notebook/` の 1 つ。
-- **各ノートのページ:** 要約の下に「What happened here」の 3 段（矢印）。数字は記録、表、リーダーの実行から。1 つ目は「24 predictions, each before its experiment ran」（実際は仮説ごとに実験の前に登録されるので「全部を走らせる前」とは書いていない）。3 つ目は、リーダーの実行があるセッション（body-2）ではその結果、風洞では「どの行を信じてよく、どの行がまだ試されていないか」と、2 人目の Kiro は走らせていないこと。リーダーの結果は見どころのすぐ下へ。各節の頭に 1 行の説明。H4 や R5 は小さな札。「11 of 24 predictions, written before the run, came true」。
-- **グラフ:** 揺れた鉛筆の線 1 本（同じ記録なら毎回同じ線）、大きい段だけ手書きの名前と短い線で点につなぐ。点は描かない。縦軸は線の範囲に合わせた。風洞は全試行の中の最小の cd の線で、渦が止まった最初の試行（T8）に破線と「vortices stop」。choices の `[progress]` の `mark`、`mark_equals`、`mark_words`。
-- **昼と夜:** 風洞 = 明るい方眼紙、青いペン、飾りなし。ロボット = さらに黒く、ランプ、月、クモの巣、クモ、コウモリ 4 匹。止まったセッション（wt-002、wt-003）は消さず、下に小さなカードで並べた。
-- **ロボットの絵（前回までに済み）:** `notebook-retake` で body-1、body-2 の全 79 試行を走らせ直して一致を確認。風洞は走らせ直さず記録のコマの切り抜き。
-- **ビルドの確認:** `sh scripts/view-notebook.sh` を止めてもう一度実行するとビルドし直して配信する。
-- 見ていないもの: 実機の 360px の全体（iframe で幅 360 の横はみ出しなしは確認済み）。`notebook` のテストと ruff は通る。
+最終更新: ローカル。ブランチは push 済み（最後のコミットは `notebook: fixed day and night, two small links instead of tabs, ...`）。PR #40 は開いたまま、マージはまだ。`notebook` のテスト 375 件と ruff は通る。`sh scripts/ja-check.sh` も通る。
+
+### 次の一手（ユーザーの指示、順番どおり）
+1. **入口 `/` を作り直す。** ユーザーは「ページが固まってから」と言っていた。今は、扉 2 つ（昼の風洞と夜のロボット）と「骨格の下の 2 層」だけの短いページ。やること: (a) 扉の中に本物の動く絵を入れる（風洞は T1 の渦、ロボットは体の絵。記録の絵と `body-lab/notebook/display/` から）、(b) 上に作品の主張を一言で置く。主張は 2 つ: 「実験すると、spec のどの行が確かめられ、どの行が間違っていたかが残る」「直した spec は次の Kiro の役に立つ」。数字は記録から（作らない）。言葉はふつうの英語。入口の文は `pages/front.py` と `text.py`、扉の文は各 `app.toml` の `door` と `door_line`。
+2. PR #40 をユーザーが見てマージする。マージ後は `main` から作業する。
+
+### 今のサイトの形
+- `/` は入口（`pages/front.py`）。`/wind-tunnel/`（昼に固定、青いペン、飾りなし）と `/body-lab/`（夜に固定、ほぼ真っ黒、ランプ、月、クモの巣、クモ、コウモリ 4 匹、カボチャなし）。各フォルダーに `index.html`、セッションのページ `<session>.html`、`legend.html`、`how.html`、`a/`、`p/` があり、`a/` は各フォルダーに 1 組ずつ。アプリからほかへのリンクだけ絶対形の `/` と `/<application>/`（サイトはルートで配信する前提。`file://` では動かない）。
+- 昼夜の切り替えボタンと CASE の札は無い。ページの上に小さなリンク 2 つ。止まったセッション（wt-002、wt-003）は下に小さなカード。
+- ノートを作るコードは `notebook/` の 1 つ。アプリごとの設定は `wind-tunnel/notebook/` と `body-lab/notebook/`（`app.toml`、`choices/<session>.toml`、ロボットは `display/`）。`notebook-build` は `--app <application>/notebook` をアプリごとに 1 つ受け取る。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
+- 各ノート: 題と要約（人が書く、choices）、「What happened here」の 3 段（`_story`、数字は記録・表・リーダーの実行から）、チップ、見どころ（写真 2 枚が一緒に動く、つまみ、「t = 3.0 s forward 38 cm」、付箋 3 枚は choices の `[[note]]` で選ぶ、揺れた鉛筆の線のグラフ）、リーダーの結果、発見した spec のカード、Dr. Kiro の計画、全部の実験（2 列のカード、押すと開く付箋）。
+- 風洞の見どころは T1（渦が出る）と T12（静か）。グラフは全試行の最小 cd の線で、渦が止まった最初の試行 T8 に破線の印（choices の `mark`、`mark_equals`、`mark_words`）。
+
+### ロボットの絵（済み）
+`uv run notebook-retake --sessions sessions --out <新しいフォルダー> --session body-1 --session body-2` で全 79 試行を記録の入力から走らせ直し、x、y、heading、track 3 本が記録と厳密に一致した。体を追う上からのカメラ、0.2 秒ごと 25 コマ、1 コマ 320px、色の下位 3 ビットを落として 1 シート約 0.3MB（全体 20MB）。アダプターは変えていない。出力フォルダーは新しいか空でなければならない。風洞は走らせ直さず、記録のコマの切り抜き（`zoom.py`）。走らせ直すにはソルバーのサンプリング変更が要り、`wind-tunnel` の spec の変更になる。ユーザーは「今回はなし」と言った。
+
+### 未解決・ユーザーに聞くこと
+- `date`（各 choices）は、各記録が git に入った日にしてある。実際のセッションの日と違えば直す。
+- 実機の 360px 幅の全体は見ていない（iframe で横はみ出しなしは確認済み）。
+- 1 つ目の段の言葉は、ユーザーの例の「before running anything」ではなく「each before its experiment ran」にした（予測は仮説ごとに実験の前に登録されるため）。直したければユーザーに確認する。
+- `notebook/display` を `body-lab/notebook/display` へ移したので、古い `notebook/choices` と `notebook/display` はもう無い。
+
+### 作業の注意（次のセッションへ）
+- 目隠しスキャンは HTML、CSS、JS、class 名、コメント、人が書く文のすべてを見る。ストップリストは触らない。これまでに引っかかった語: `Backwards`（題）、`thickness`（CSS）、`tag`（CSS のコメント）。`div`、`outline`、`linear-gradient`、`letter-spacing`、`frames` なども禁止。ビルドの失敗は言い換えで直す。
+- CSS を一括置換の正規表現で消すと、ブロックの閉じ括弧を巻き込んで壊れた。1 つずつ、規則の始まりの行から次の閉じ括弧までを消す（`/tmp` の script は消えるので `notebook` のテストの CSS 部分と目で確認）。
+- `python3`（システムの 3.9）にヒアドキュメントで日本語を渡すと失敗することがある。日本語を含む script はファイルに書いて `uv run python` で動かす。
+- 並列のツール呼び出しは、ファイルを書く呼び出しとそれを読む呼び出しを同時に出すと読み込みが先に走る。依存があるときは順に出す。
+- `rm -rf` はユーザーの設定で拒否される（ユーザーの許可なしに別の方法で消さない）。空でないフォルダーは `mv` で脇へ寄せた。
+- ビルドは新しい空のフォルダーに出す（`mktemp -d`）。`scripts/view-notebook.sh` がそれをしてローカルで配信する（ポートは `--port`）。
+- `body-lab/notebook/display/` は 20MB ある。今の `display.py` は、全項目を手でチェックする（ハッシュ、元の記録の絵のハッシュ、測った値）。
 ## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
 - **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
   - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。
