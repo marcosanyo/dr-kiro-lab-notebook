@@ -303,8 +303,7 @@ numbers.
    enlarged picture as a file of the site with a name made from the blob hash, and SHALL give it the alt text
    "Magnified view of the picture beside it", which uses no word of the commentary word list (Requirement 5.5)
    (Decision 50). THE enlarged picture SHALL move as a moving picture does (7.6, 7.8), with the interval of the
-   trial's application; the whole picture of a body-lab trial SHALL show its sheet and move only when the visitor
-   presses "play", because the body is a few pixels in it. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
+   trial's application; the whole picture of a body-lab trial SHALL NOT be on the page at first, because its cells side by side read as many small bodies; the control "whole picture" of the enlarged picture SHALL swap it in at the same place, and it SHALL then move one cell at a time with the same interval. A body-lab picture without an enlarged one (a lab card) SHALL show its first cell only. THE site SHALL NOT show an enlarged picture beside a wind-tunnel trial's moving picture, because
    the flow moves through the whole sheet and no region of it is the moving body (Decision 50).
 
 ### Requirement 8: The discovered spec table
@@ -361,7 +360,7 @@ word and its evidence one press away, so that I see what was found and how sure 
     cards, THE cards SHALL stand side by side. A card SHALL show its rule text, its stamp and its "replaced by" line;
     its scope with the run bands, its experiments, its predictions and its opened row SHALL be closed until the visitor
     opens the card's `<details>`, without a script. THE explanation of the run bands SHALL be on the page once, above the
-    cards. In a `rejected` card only the rule text SHALL be struck through (8.3).
+    cards, in a closed `<details>` with the summary "How to read the bands", without a script. In a `rejected` card only the rule text SHALL be struck through (8.3).
 
 ### Requirement 9: What was run, beside each row
 

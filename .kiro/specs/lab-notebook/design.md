@@ -387,10 +387,13 @@ drawn; there is no frame between two cells and no interpolation. The PNG is neve
 step one cell, whole picture (the sheet as it is). With `prefers-reduced-motion: reduce`, it starts paused on cell 0.
 
 Which picture moves: for a body-lab trial the body is a few pixels in the whole sheet, so the magnified picture below is
-the one that moves on its own, and the whole picture (`data-start="still"`) shows its sheet and moves only when
-"play" is pressed. A wind-tunnel picture is the only picture of its trial and moves on its own.
+the one that moves on its own. The whole picture is not on the page: the magnified figure names its sheet
+(`data-whole-src`, `data-whole-gap`, `data-whole-tile-width`, `data-whole-tile-height`) and "whole picture" swaps it in
+at the same place and cell, moving one cell at a time with the same interval; "magnified picture" swaps back. Without
+the script the magnified picture shows its first cell. A lab card shows the first cell and waits for "play"
+(`data-start="first"`). A wind-tunnel picture is the only picture of its trial and moves on its own.
 
-Beside each body-lab whole picture, except the lab cards, the page shows a magnified picture of the moving body (a
+For each body-lab trial, except on the lab cards, the page shows a magnified picture of the moving body instead of the whole picture (a
 `<figure class="photo photo-magnified">` with the same controls and `data-` attributes as the whole picture, for the
 magnified sheet: same columns and rows, gap 0, the size of one magnified cell, the lab's interval): the box of the
 pixels that change between frames, plus a 4 px margin (7.9, N32): the build derives it from the recorded sheet with the standard library only, writes it as

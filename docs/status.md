@@ -3,7 +3,7 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-最終更新: Kiro Web、2026-11-19、ノートの動きと spec カードの直し（ブランチ `feat/notebook-polish`）の後。
+最終更新: Kiro Web、2026-11-19、全体の絵の切り替え・帯の読み方・main の取り込み（ブランチ `feat/notebook-polish`）の後。
 
 ## ノートの見た目の直し（ブランチ `feat/notebook-polish`、新しいブランチは切らない）
 - **済み（2026-11-19）:** 表紙と spec の表を直した。1 つ直すごとにコミットした。
@@ -18,6 +18,12 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
   - 動き: 拡大した画像（体が大きいシート）が 1 コマずつ動く。全体の画像は「whole picture」の側で、play を押したときだけ動く（body-lab のラボのカードの小さい画像も同じ）。コマの間隔は `notebook/layouts.toml` の `interval`（body-lab 220 ms、風洞 150 ms）。風洞は記録の 6 コマだけで、間のコマも補間もない。動きを減らす設定では止めた状態で始まる。
   - spec のカード: 閉じた状態は規則の文、状態の判子、replaced by の行だけ。scope と run band、experiments、predictions、開いた行は `<details>` を開くと出る（CSS の `:has` で隠す。`:has` がないブラウザーは全部見せる）。「What the record says was run…」はページの上に 1 回。rejected のカードは規則の文だけに取り消し線。
   - ゆるめたテスト: なし。構造に合わせて変えたもの: `test_milestone_1_real.py` の取り消し線の 2 件（取り消し線を引く範囲が規則の文だけになったので、確かめる範囲を合わせた。より厳しくなった）、`test_visual.py` の `@supports` の読み取りと取り消し線の確認、`test_photo_plots.py` の間隔の確認（CSS の変数から figure の `data-interval` へ）。
+- **済み（2026-11-19、全体の絵と帯の直し）:**
+  - 全体の絵（体が小さい）と、コマを並べた形は、ページのどこにも出さない（表紙、セッションページ、ラボのカード、スクリプトなしの場合も）。body-lab の試行は拡大した絵だけを見せる。「whole picture」を押すと同じ場所、同じコマで全体の絵に替わり、同じ間隔で 1 コマずつ動く。「magnified picture」で戻る。スクリプトがないときは最初の 1 コマだけ。ラボのカードも最初の 1 コマで、play で動く。風洞の絵は今までどおり。
+  - 帯の説明は閉じた `<details>`（「How to read the bands」）にした。
+  - R2 の replaced by の最後の「, R1」は、置き換える行へのリンクを文のあとに別に付けていたのが原因。記録の replaced by は R1 だけで、リストにあるのは記録の置き換えだけ。リンクは規則の文そのものにした。
+  - main（#37、`build` が除外リストに入った）を取り込み、`stop-list.txt` と `test_scan.py` の衝突は `ahead`、`spacing`、`build` が全部残る形で直した。
+  - 変えたテスト: `test_photo_real.py`（body-lab は拡大した 1 つの figure、全体のシートは名指しだけ、ラボのカードは最初の 1 コマ）、`test_photo_plots.py`（`"still"` から `"first"` と `data-whole-src`）。ゆるめたものはない。
 - **次の一手:** ユーザーが画面を見て、直しを返す。そのあと PR を作る。
   （前の回の次の一手:）ユーザーがスマホで画面の画像を見て、直しを返す。そのあと PR を作る。PR の説明には、ゆるめたテストの 2 か所と、その理由を書く。
 - **未解決:** main の風洞のテストが 2 件落ちている。ノートとは混ぜず、ノートの PR が終わった後に、別の小さな PR で直す。どの 2 件かは、まだ調べていない。

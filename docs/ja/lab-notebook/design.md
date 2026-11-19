@@ -267,9 +267,9 @@ class Segment:
 
 HTML は、シート全体の `<img>`（JavaScript なしで動き、「シート全体」の表示にもなる）を持つ `<figure class="photo">` と、`data-` 属性（列、行、隙間、およびセルの大きさのための `data-tile-width` と `data-tile-height`。N28）を持つ。`notebook.js` は、見えている画像を 1 つのセルの `<canvas>` に置き換え、セル k を `drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch)` で描く。ここで `sx = (k mod columns) * (cw + gap)`、`sy = floor(k / columns) * (ch + gap)` である。読む順序で、`data-interval` ms（レイアウトの `interval`。ラボごとに違う）に 1 セル、ループする。描くのはシートのセルだけで、セルとセルの間のフレームは作らず、補間もしない。PNG は決して再エンコードしない。操作: 一時停止/再生、1 セル進む、全体の画像（シートそのまま）。`prefers-reduced-motion: reduce` のときは、セル 0 で一時停止して始まる。
 
-どの画像が動くか: body-lab の試行では、体はシートの中で数ピクセルしかないので、下の拡大した画像が自分で動く。全体の画像（`data-start="still"`）はシートを見せ、「play」を押したときだけ動く。wind-tunnel の画像は試行の唯一の画像なので、自分で動く。
+どの画像が動くか: body-lab の試行では、体はシートの中で数ピクセルしかないので、下の拡大した画像が自分で動く。全体の画像はページに出さない。拡大した figure がそのシートを名指し（`data-whole-src`、`data-whole-gap`、`data-whole-tile-width`、`data-whole-tile-height`）し、「whole picture」を押すと同じ場所、同じセルで入れ替わり、同じ間隔で 1 セルずつ動く。「magnified picture」で戻る。スクリプトがなければ拡大した画像は最初のセルを見せる。ラボのカードは最初のセルを見せて「play」を待つ（`data-start="first"`）。wind-tunnel の画像は試行の唯一の画像なので、自分で動く。
 
-body-lab の各全体の画像（ラボのカードの画像は除く）の隣に、ページは動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32。全体の画像と同じ操作と `data-` 属性を持つ `<figure class="photo photo-magnified">` で、拡大したシートについて、列と行は同じ、隙間 0、拡大した 1 セルの大きさ、ラボの interval）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
+body-lab の各試行について（ラボのカードは除く）、ページは全体の画像の代わりに、動く体を拡大した画像（フレーム間で変わるピクセルの箱に 4 px の余白を足したもの）を見せる（7.9、N32。操作と `data-` 属性は動く画像と同じで、全体のシートの名指しがつく `<figure class="photo photo-magnified">` で、拡大したシートについて、列と行は同じ、隙間 0、拡大した 1 セルの大きさ、ラボの interval）: ビルドは標準ライブラリだけで記録されたシートからそれを導出し、`p/<sha256>.png`（そのバイト列の SHA-256）として書き、代替テキスト "Magnified view of the picture beside it" をつけ、記録された PNG ファイルには触れない。wind-tunnel の動く画像には付けない: 流れがシート全体を動くので、動く体にあたる領域がないためである（7.9、Decision 50）。
 
 ### 11. Scan (Requirement 20)
 

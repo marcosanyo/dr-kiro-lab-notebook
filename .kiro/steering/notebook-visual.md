@@ -109,12 +109,15 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 
 ## Magnified picture (Requirement 7.9, design N32)
 
-- Beside each moving picture, except the lab cards, one magnified picture of the body, in one row with it (class
-  `.photo-pair`, a wrapping flex row). On a narrow screen the magnified picture moves below the moving picture. On
-  the cover it is not beside the moving picture: it stands in the top row of the miss (next section).
+- A body-lab trial is shown as its magnified picture alone, wherever it appears (the cover, the session pages). The
+  whole picture, where the body is a few pixels, is not on the page: the sheet of its cells side by side reads as
+  many small bodies, so it is never drawn as a strip. On the cover the magnified picture stands in the top row of
+  the miss (next section). A lab card has no magnified picture (Requirement 7.9): it shows the first cell only
+  (`img.first-cell`, the image cut to one cell with `object-fit: none`) and moves when "play" is pressed.
 - The magnified picture is framed like an instant photo (class `.photo .photo-magnified`) with no tilt class. It is
   the picture that moves: one magnified cell at a time on a canvas, with the same controls as a moving picture
-  (play, pause, step, whole picture; "whole picture" shows the whole magnified sheet). Its pixels are drawn without
+  (play, pause, step, whole picture; "whole picture" swaps the picture, in place and at the same cell, to the whole
+  picture, which then moves one cell at a time with the same interval; "magnified picture" swaps back). Its pixels are drawn without
   smoothing (`image-rendering: pixelated`), on the canvas too. Its caption holds the controls, and on the cover the
   trial id and the caption words.
 - Its alt text is "Magnified view of the picture beside it".
@@ -183,8 +186,8 @@ the lab tabs (`.cover-labs`); the footer.
   the stamp and its label (`.stamp-label`, "checked by the bench" and the others) and the "replaced by" line are
   never struck through: in the table only the rule cell is struck, and on the cover only the rule text
   (`.cover-rule`).
-- The "replaced by" tab (`.tab`) is a `<details>` whose content is the replacing row's rule text and a link to that
-  row. It is open when the table is shown (`open="open"`, Requirement 8.13, Decision 49); a visitor may close it. In
+- The "replaced by" tab (`.tab`) is a `<details>` whose content is the replacing row's rule text, which is itself the link to that
+  row (no second id after it). It is open when the table is shown (`open="open"`, Requirement 8.13, Decision 49); a visitor may close it. In
   a card (next section) it is the dotted last line of the card, with a drawn arrow in front of its words, not a
   paper tab; the background `--tab` `#f1e9d2` is used by the opened evidence of a row and by the tabs of the cover.
 - Reverse links ("replaces <id>, <id>") use `.replaces`.
@@ -246,9 +249,12 @@ the lab tabs (`.cover-labs`); the footer.
 - A moving picture shows one cell every `interval` ms of its lab's entry in `notebook/layouts.toml` (body-lab
   220 ms, wind-tunnel 150 ms; user), in reading order, looping. The figure carries it as `data-interval`. Only the
   cells of the recorded sheet are shown: no frame is made between two cells and nothing is interpolated.
-- Of a body-lab trial, the magnified picture moves on its own. The whole picture (`data-start="still"`) shows the
-  sheet and moves only when "play" is pressed, because the body is a few pixels in it, on the lab cards too. A
-  wind-tunnel picture is its trial's only picture and moves on its own.
+- Of a body-lab trial, the magnified picture moves on its own. Its whole picture is named by `data-whole-src` (with
+  `data-whole-gap` and `data-whole-tile-*`), is loaded by the script when "whole picture" is pressed, and then moves
+  one cell at a time like the magnified one (same interval, nothing between cells). Without the script, a body-lab
+  picture shows its first cell. A lab card (`data-start="first"`) waits on its first cell until "play". A
+  wind-tunnel picture is its trial's only picture and moves on its own, and its "whole picture" button shows the
+  sheet as before.
 - With `prefers-reduced-motion: reduce`, a moving picture starts paused on its first cell, and CSS transitions and
   animations are off.
 
