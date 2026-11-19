@@ -1,5 +1,23 @@
-contrast = ["T1", "T3"]
-best = "none"
-best_reason = "no trial without shedding"
-missed = "none"
-missed_reason = "no prediction missed"
+title = "Three Runs"
+subtitle = "the session stopped before Dr. Kiro could finish its second hypothesis"
+summary = """Dr. Kiro ran the square body three times and its first hypothesis held: the flow sheds and the drag is high. The second hypothesis never got a verdict, because the bench process ended unexpectedly. No run had the flow steady, so none counts toward the goal of the lowest drag without shedding."""
+line = "Stopped after 3 runs: the bench process ended."
+model = "<fill in>"
+date = "2026-11-16"
+color = "rose"
+
+[progress]
+measurement = "cd"
+better = "lower"
+require = "shedding"
+equals = 0
+
+[[polaroid]]
+heading = "First run"
+trial = "T1"
+words = "The square body: the flow sheds."
+
+[[polaroid]]
+heading = "Last run"
+trial = "T3"
+words = "The last picture before the stop."

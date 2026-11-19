@@ -13,18 +13,13 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
+from fixtures.choices import CHOICE, COVER
 from fixtures.session import FAKE_SOURCES, STOP_LIST, Lab, accepted_session
 from notebook import addresses, build, cli, records, site, text
 from notebook.errors import NotebookError
 from notebook.ink import markup
 from notebook.inputs import Inputs
 
-CHOICE = 'contrast = ["T1", "T2"]\nbest = "T7"\nmissed = "H2.P1"\n'
-COVER = (
-    '[miss]\napplication = "fake"\nsession = "s1"\nprediction = "H2.P1"\n\n'
-    '[[card]]\napplication = "fake"\nsession = "s1"\ntrial = "T1"\n'
-    'kicker = "LAB"\ntitle = "The Fake"\nengine = "Sim"\nunit = "runs"\n'
-)
 LAYOUTS = (
     "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
     'source = "test fixture: one 8 x 8 picture"\n'
@@ -80,7 +75,6 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
     # No replay pages: the replay steps are not in this version (Decision 48).
     texts = {
         "index.html",
-        "fake.html",
         "legend.html",
         "how.html",
         "fake-s1.html",
@@ -112,7 +106,7 @@ def test_every_sidecar_is_compact_sorted_and_read_by_the_bench(built):
 
 
 def test_every_page_of_a_fixture_build_carries_the_banner(built):
-    for path in ("index.html", "fake.html", "legend.html", "how.html", "fake-s1.html"):
+    for path in ("index.html", "legend.html", "how.html", "fake-s1.html"):
         page = (built / path).read_text(encoding="utf-8")
         assert page.count(text.FIXTURE_BANNER) == 1
         assert page.index(text.FIXTURE_BANNER) > page.index("<body>")

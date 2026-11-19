@@ -93,8 +93,6 @@ def test_the_page_names_the_four_tools_and_links_only_pages_of_the_site(loaded, 
         addresses.LEGEND,
         addresses.HOW,
         addresses.STYLESHEET,
-        "body-lab.html",
-        "wind-tunnel.html",
     }
     expected |= {f"{r.application}-{r.session}.html" for r in loaded}
     assert set(page.links) == expected

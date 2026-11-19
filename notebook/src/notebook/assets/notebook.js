@@ -12,6 +12,7 @@
    magnified one (a lab card, data-start "first") waits on its first cell until play is pressed.
    When the browser asks for reduced motion, a moving picture starts paused on its first cell.
 
+   The night lab and the day lab: a button switches `data-mode` on the root element.
    Addresses: the <details> named by the address, and every <details> around it, are opened.
 
    Without this script a body-lab picture shows its first cell and a wind-tunnel picture its whole sheet;
@@ -217,9 +218,60 @@
   }
 
   var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // A figure inside a closed <details> is set up when the note is first opened, so a page with many trials
+  // moves only the pictures that are in view.
   document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
-    setUp(figure, reduced);
+    var note = figure.closest("details");
+    if (note === null || note.open) {
+      setUp(figure, reduced);
+      return;
+    }
+    note.addEventListener(
+      "toggle",
+      function () {
+        if (figure.getAttribute("data-ready") === null) {
+          figure.setAttribute("data-ready", "yes");
+          setUp(figure, reduced);
+        }
+      },
+      { once: true }
+    );
   });
+  // The night lab and the day lab. The page opens in the night lab; the button switches it and the choice is
+  // kept for the other pages when the browser allows it (it is the only thing the script stores).
+  var KEY = "notebook-mode";
+  var root = document.documentElement;
+  var toggle = document.querySelector("button.mode-toggle");
+  function applyMode(mode) {
+    if (mode === "day") {
+      root.setAttribute("data-mode", "day");
+    } else {
+      root.removeAttribute("data-mode");
+    }
+    if (toggle !== null) {
+      var label = toggle.querySelector("span") || toggle;
+      label.textContent = toggle.getAttribute(mode === "day" ? "data-to-night" : "data-to-day");
+    }
+  }
+  if (toggle !== null) {
+    var saved = null;
+    try {
+      saved = localStorage.getItem(KEY);
+    } catch (error) {
+      saved = null; // storage is blocked: the page simply opens in the night lab
+    }
+    applyMode(saved === "day" ? "day" : "night");
+    toggle.hidden = false;
+    toggle.addEventListener("click", function () {
+      var next = root.getAttribute("data-mode") === "day" ? "night" : "day";
+      applyMode(next);
+      try {
+        localStorage.setItem(KEY, next);
+      } catch (error) {
+        return; // storage is blocked: the choice lasts for this page only
+      }
+    });
+  }
   openAddress();
   addEventListener("hashchange", openAddress);
 })();

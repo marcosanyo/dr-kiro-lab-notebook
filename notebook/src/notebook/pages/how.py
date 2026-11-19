@@ -95,12 +95,11 @@ def _application(application: str, group: list[RecordModel]) -> list[Segment]:
         ]
         for m in declared.measurements
     ]
-    lab_page = addresses.lab(application, source)
     return html.element(
         "section",
         {"class": "how-app"},
         [
-            *html.element("h3", None, link(lab_page, _value(application, source))),
+            *html.element("h3", None, _value(application, source)),
             *html.element("p", None, [*say_text("HOW_APP_SESSIONS"), *sessions]),
             *html.element("p", None, [*say_text("HOW_GOAL"), *html.text(declared.goal.segment())]),
             *html.element("p", None, say_text("HOW_KNOBS")),

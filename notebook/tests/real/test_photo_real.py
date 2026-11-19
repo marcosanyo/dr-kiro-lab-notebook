@@ -2,13 +2,12 @@
 asserted are facts of the committed records (requirements introduction and Decision 15), not results."""
 
 import hashlib
-import re
 from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
 
-from notebook import ink, layouts, plots, records
+from notebook import ink, layouts, records
 from notebook.pages import photo
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -133,21 +132,6 @@ def test_every_picture_is_named_by_the_sha256_of_its_bytes(loaded, table) -> Non
             assert picture.path == f"p/{hashlib.sha256(picture.data).hexdigest()}.png"
 
 
-def test_body_2_t12_track_has_one_point_per_recorded_sample(loaded) -> None:
-    record = loaded["body-2"]
-    trial = _trial(record, "T12")
-    samples = dict(trial.measurements)["track_x"]
-    page = ink.join(plots.track(record, trial))[0]
-    (points,) = re.findall(r'<polyline points="([^"]*)"', page)
-    assert len(points.split(" ")) == len(samples) == 51
-    assert "xmlns" not in page and "http" not in page
-
-
-def test_wind_tunnel_trials_have_no_track(loaded) -> None:
-    record = loaded["wt-004"]
-    assert plots.track(record, record.trials[0]) == []
-
-
 def test_script_and_parts_pass_the_builder_level_scan(loaded, table) -> None:
     from bench.scan.levels import AUTHOR_LEVEL
     from bench.scan.scan import Scanner
@@ -165,7 +149,6 @@ def test_script_and_parts_pass_the_builder_level_scan(loaded, table) -> None:
     record = loaded["body-2"]
     trial = _trial(record, "T12")
     segments, _ = photo.photo(record, trial, table[record.application])
-    segments += plots.track(record, trial)
     for segment in segments:
         if segment.ink is not ink.Ink.DRKIRO:
             assert scanner.scan_text(segment.text, level, segment.source) == [], segment

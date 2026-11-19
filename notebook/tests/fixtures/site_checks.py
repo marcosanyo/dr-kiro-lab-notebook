@@ -93,6 +93,8 @@ class _Page(HTMLParser):
             self.tables += 1
         if tag == "tr" and (a.get("id") or "").startswith("row-"):
             self.row_ids.append(a["id"][len("row-") :])
+        if tag == "li" and (a.get("id") or "").startswith("row-"):
+            self.row_ids.append(a["id"][len("row-") :])
         if tag in ("script", "style"):
             self._in.append(tag)
 
@@ -200,6 +202,8 @@ def page_problems(site: Path) -> list[str]:
         if p.styles != [addresses.STYLESHEET]:
             out.append(f"{page}: stylesheets {p.styles}, expected only {addresses.STYLESHEET}")
         for b in p.buttons:
+            if b.get("type") == "button" and b.get("class") == "mode-toggle":
+                continue  # the night and day switch
             if b.get("type") != "button" or b.get("data-action") not in BUTTON_ACTIONS:
                 out.append(f"{page}: a button that is not a moving picture control: {b}")
         anchors = {v for tag, name, v in p.links if tag == "a" and name == "href"}

@@ -26,11 +26,6 @@ def link(href: str, children: list[Segment]) -> list[Segment]:
     return html.element("a", {"href": href}, children)
 
 
-def row_link(row_id: str, source: str, children: list[Segment]) -> list[Segment]:
-    """A link to a row of the table on the same page (`#row-<id>`)."""
-    return link(addresses.here(addresses.row(row_id, source)), children)
-
-
 def stamp(status: Segment, label: str) -> list[Segment]:
     """A status word in the bench's stamp style, with its label below (Requirements 8.2, 15.2).
 
@@ -50,84 +45,138 @@ def sticky(children: list[Segment], *, stamped: bool = False) -> list[Segment]:
     return html.element("aside", {"class": "sticky sticky-stamp" if stamped else "sticky"}, children)
 
 
-def tab(target_id: Segment, target_rule: Segment, source: str) -> list[Segment]:
-    """The "replaced by <id>" tab: a `<details>` whose content is the replacing row's rule text in small type
-    as a link to that row in its own place (Requirement 8.3). It is open when the table is shown, so the
-    replacing rule is readable without a click; a visitor may close it (Requirement 8.13, Decision 49)."""
-    summary = html.element("summary", None, [*say_text("REPLACED_BY"), *html.text(target_id)])
-    # The link is the rule text itself: the id is already in the summary, so no second id follows it.
-    content = row_link(
-        target_id.text, source, html.element("span", {"class": "rule-small"}, html.text(target_rule))
-    )
-    return html.element("details", {"class": "tab", "open": "open"}, [*summary, *content])
-
-
-def drkiro_block(segment: Segment) -> list[Segment]:
-    """A block of Dr. Kiro's text with the label "written by Dr. Kiro" (visual steering, `.block-k`)."""
-    return [
-        *html.element("span", {"class": "block-label"}, say_text("WRITTEN_BY_DRKIRO")),
-        *html.text(segment, block=True),
-    ]
-
-
-def chosen() -> list[Segment]:
-    """The label of every chosen item (Requirement 12.7)."""
-    return html.element("span", {"class": "block-label"}, say_text("CHOSEN_BY_A_PERSON"))
-
-
-# The Halloween decoration: a cobweb corner and a small bat, drawn with paths only (visual steering,
-# "Halloween"; design N28). Coordinates in a 64 x 128 box.
+# The Halloween decoration: drawn with paths only, no text, hidden from assistive technology (design N28).
+# Each piece is its own inline SVG; the stylesheet places them at the corners of the page and shows the night
+# pieces only at night and the day piece only by day. No namespace attribute (HTML puts an inline `<svg>` in
+# the SVG namespace by itself) and no `<div>` (the generic block element is a term of the blind scan).
 _WEB = (
-    "M0 0 L64 0",
-    "M0 0 L0 64",
-    "M0 0 L60 60",
-    "M0 0 L32 62",
-    "M0 0 L62 32",
-    "M14 0 Q12 12 0 14",
-    "M28 0 Q26 18 18 18 Q18 26 0 28",
-    "M44 0 Q41 24 30 30 Q24 41 0 44",
-    "M60 0 Q56 32 44 44 Q32 56 0 60",
+    "M64 0 L0 0",
+    "M64 0 L64 64",
+    "M64 0 L4 60",
+    "M64 0 L32 62",
+    "M64 0 L2 32",
+    "M50 0 Q52 12 64 14",
+    "M36 0 Q38 18 46 18 Q46 26 64 28",
+    "M20 0 Q23 24 34 30 Q40 41 64 44",
+    "M4 0 Q8 32 20 44 Q32 56 64 60",
 )
 _BAT = (
     "M32 100 C28 94 20 92 10 94 C14 97 15 100 14 104 C18 102 22 103 24 106 C26 103 29 102 32 104 "
     "C35 102 38 103 40 106 C42 103 46 102 50 104 C49 100 50 97 54 94 C44 92 36 94 32 100 Z",
     "M29 97 L30 93 L32 96 L34 93 L35 97 Z",
 )
+_SPIDER_LIMBS = (
+    "M20 22 Q10 12 4 18 M20 24 Q8 22 2 30 M20 26 Q10 32 6 42 M20 28 Q14 36 12 46 "
+    "M28 22 Q38 12 44 18 M28 24 Q40 22 46 30 M28 26 Q38 32 42 42 M28 28 Q34 36 36 46"
+)
+_RAYS = (
+    "M30 4 L30 14 M30 46 L30 56 M4 30 L14 30 M46 30 L56 30 "
+    "M12 12 L19 19 M41 41 L48 48 M48 12 L41 19 M19 41 L12 48"
+)
 
 
-def decoration() -> list[Segment]:
-    """The Halloween decoration as inline SVG: no text, hidden from assistive technology, no namespace
-    attribute (HTML puts an inline `<svg>` in the SVG namespace by itself). It is drawn in `currentColor`, and
-    the stylesheet shows it only in the page gutter from 1000px (Requirement 6.5)."""
-    web = html.element(
-        "g",
-        {
-            "fill": "none",
-            "stroke": "currentColor",
-            "stroke-width": "1",
-            "stroke-linecap": "round",
-            "opacity": "0.55",
-        },
-        [segment for d in _WEB for segment in html.element("path", {"d": d}, [])],
-    )
-    bat = [
-        segment
-        for d in _BAT
-        for segment in html.element("path", {"d": d, "fill": "currentColor", "opacity": "0.8"}, [])
-    ]
+def _svg(cls: str, box: str, width: int, height: int, children: list[Segment]) -> list[Segment]:
     # HTML parsers turn `viewbox` into the SVG attribute `viewBox`; `html.py` takes lowercase names only.
-    # In HTML, an SVG element left open would hold the elements after it, so each one has an end tag.
     return html.element(
         "svg",
         {
-            "class": "deco",
-            "viewbox": "0 0 64 128",
-            "width": "64",
-            "height": "128",
+            "class": f"deco {cls}",
+            "viewbox": box,
+            "width": str(width),
+            "height": str(height),
             "aria-hidden": "true",
             "focusable": "false",
         },
-        [*web, *bat],
+        children,
+    )
+
+
+def _path(d: str, **attrs: str) -> list[Segment]:
+    return html.shape("path", {"d": d, **attrs})
+
+
+def web(cls: str) -> list[Segment]:
+    """A cobweb in the top right corner of its box, drawn in the colour of the text around it."""
+    lines = html.element(
+        "g",
+        {"fill": "none", "stroke": "currentColor", "stroke-width": "1", "stroke-linecap": "round"},
+        [s for d in _WEB for s in _path(d)],
+    )
+    return _svg(f"deco-web {cls}".strip(), "0 0 64 64", 120, 120, lines)
+
+
+def decoration() -> list[Segment]:
+    """The Halloween pieces: moon and cobweb (night), a sun (day), a hanging spider, bats and a pumpkin."""
+    moon = [
+        *html.shape("circle", {"class": "moon-disc", "cx": "44", "cy": "44", "r": "34"}),
+        *html.shape("circle", {"class": "moon-pit", "cx": "32", "cy": "36", "r": "6"}),
+        *html.shape("circle", {"class": "moon-pit", "cx": "54", "cy": "52", "r": "8"}),
+        *html.shape("circle", {"class": "moon-pit", "cx": "50", "cy": "28", "r": "4"}),
+    ]
+    sun = [
+        *html.shape("circle", {"class": "sun-disc", "cx": "30", "cy": "30", "r": "13"}),
+        *html.element(
+            "path",
+            {"d": _RAYS, "stroke": "currentColor", "stroke-width": "3", "stroke-linecap": "round"},
+            [],
+        ),
+    ]
+    spider = [
+        *html.element(
+            "path", {"class": "thread", "d": "M24 0 L24 64", "stroke": "currentColor", "fill": "none"}, []
+        ),
+        *html.element(
+            "path",
+            {
+                "d": _SPIDER_LIMBS,
+                "stroke": "currentColor",
+                "fill": "none",
+                "stroke-width": "1.6",
+                "stroke-linecap": "round",
+                "transform": "translate(0 66)",
+            },
+            [],
+        ),
+        *html.shape("ellipse", {"class": "spider-body", "cx": "24", "cy": "98", "rx": "9", "ry": "11"}),
+        *html.shape("circle", {"class": "spider-head", "cx": "24", "cy": "84", "r": "6"}),
+    ]
+    bats = [s for d in _BAT for s in html.element("path", {"d": d, "fill": "currentColor"}, [])]
+    pumpkin = [
+        *html.shape("ellipse", {"class": "pk-side", "cx": "24", "cy": "52", "rx": "20", "ry": "26"}),
+        *html.shape("ellipse", {"class": "pk-side", "cx": "62", "cy": "52", "rx": "20", "ry": "26"}),
+        *html.shape("ellipse", {"class": "pk-mid", "cx": "43", "cy": "52", "rx": "20", "ry": "28"}),
+        *html.element("path", {"class": "pk-stem", "d": "M40 26 Q40 12 50 8 L54 14 Q46 17 47 26 Z"}, []),
+        *html.element("path", {"class": "pk-face", "d": "M24 44 L36 44 L30 33 Z M50 44 L62 44 L56 33 Z"}, []),
+        *html.element(
+            "path",
+            {"class": "pk-face", "d": "M22 58 L30 64 L36 58 L43 66 L50 58 L56 64 L64 58 Q43 80 22 58 Z"},
+            [],
+        ),
+    ]
+    return [
+        *web(""),
+        *_svg("deco-moon", "0 0 88 88", 96, 96, moon),
+        *_svg("deco-sun", "0 0 60 60", 84, 84, sun),
+        *_svg("deco-spider", "0 0 48 112", 44, 100, spider),
+        *_svg("deco-bat deco-bat-one", "0 88 64 24", 54, 20, bats),
+        *_svg("deco-bat deco-bat-two", "0 88 64 24", 38, 14, bats),
+        *_svg("deco-pumpkin", "0 0 86 82", 104, 100, pumpkin),
+    ]
+
+
+def mode_button() -> list[Segment]:
+    """The switch between the night lab and the day lab. It is hidden until the page script runs; without
+    the script the notebook stays in the night lab."""
+    return html.element(
+        "button",
+        {
+            "type": "button",
+            "class": "mode-toggle",
+            "hidden": "hidden",
+            "data-to-day": text.MODE_DAY,
+            "data-to-night": text.MODE_NIGHT,
+        },
+        say_text("MODE_DAY"),
     )
 
 
@@ -166,6 +215,7 @@ def page(title: str, children: list[Segment]) -> list[Segment]:
         None,
         [
             *decoration(),
+            *mode_button(),
             *html.element("main", {"class": "page"}, children),
             *footer(),
             *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),

@@ -12,7 +12,7 @@ from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
 from fixtures.session import DESIGN_START, Lab, exp_file, hyp_block, ok
 from notebook import records, scan, text
-from notebook.choices import Choice, Choices
+from notebook.choices import Choices
 from notebook.errors import NotebookError
 from notebook.ink import Ink, Segment, commentary, join, markup, pencil
 from notebook.pages import parts
@@ -86,26 +86,29 @@ def test_the_same_term_in_dr_kiros_text_of_a_fixture_record_passes(scanner, term
         scan.check(scanner, {"page.html": [commentary(segment.text, "probe")]})
 
 
-def test_a_term_planted_in_a_choice_reason_fails_naming_the_file_and_key(scanner, term) -> None:
-    def none(key: str, reason: str) -> Choice:
-        return Choice(None, reason, f"choices/fake/s1.toml key {key}")
-
+def test_a_term_planted_in_a_choice_text_fails_naming_the_file_and_key(scanner, term) -> None:
     chosen = Choices(
         record="sessions/fake/s1",
         file="choices/fake/s1.toml",
-        contrast=none("contrast", "no trial was run"),
-        best=none("best", f"the {term} did not move"),
-        missed=none("missed", "no trial was run"),
+        title="A title",
+        subtitle=f"the {term} did not move",
+        summary="A summary.",
+        line="A line.",
+        model="a model",
+        date="2026-01-01",
+        color="violet",
+        progress=None,
+        polaroids=(),
     )
-    assert [s.text for s in scan.choice_segments([chosen])] == [
-        "no trial was run",
+    assert [s.text for s in scan.choice_segments([chosen])][:3] == [
+        "A title",
         f"the {term} did not move",
-        "no trial was run",
+        "A summary.",
     ]
     with pytest.raises(scan.ScanFailed) as caught:
         scan.check(scanner, {}, scan.choice_segments([chosen]))
     assert [(f.file, f.kind, f.match) for f in caught.value.findings] == [
-        ("choices/fake/s1.toml key best", "term", term)
+        ("choices/fake/s1.toml key subtitle", "term", term)
     ]
 
 

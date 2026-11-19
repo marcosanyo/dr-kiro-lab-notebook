@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import AUTHOR_LEVEL
 
-from notebook import choices, ink, layouts, plots, readerrequest, readerruns, records, refusals, scan, views
-from notebook.pages import cover, how, lab, parts, photo, replay, session
+from notebook import build, choices, ink, records, refusals, scan
+from notebook.inputs import Inputs
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
@@ -36,22 +36,6 @@ def loaded() -> list[records.RecordModel]:
     return records.load(SESSIONS)
 
 
-def _segments(
-    record: records.RecordModel, chosen: choices.Choices, table: layouts.Layout
-) -> list[ink.Segment]:
-    def pin(trial: records.Trial) -> list[ink.Segment]:
-        figure, _ = photo.photo(record, trial, table)
-        return [*figure, *plots.track(record, trial)]
-
-    out: list[ink.Segment] = [*parts.decoration()]
-    if record.snapshots or record.seal.end == "ended":
-        out += session.table_section(views.full(record), chosen, pin)
-    for trial in record.trials:
-        out += pin(trial)
-    out += parts.footer()
-    return out
-
-
 class _Links(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -70,41 +54,38 @@ def _links_stay_in_the_site(name: str, written: str) -> None:
         assert ".." not in link and not link.startswith("/") and ":" not in link, (name, link)
 
 
-def test_every_record_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
+def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_site(scanner) -> None:
     # The scanner flags the generic block element and a parent-folder link, so a clean result means something.
     assert {f.kind for f in scanner.scan_text('<div><a href="../x.html">', "builder", "probe")} == {
         "term",
         "path",
     }
-    chosen = choices.load(CHOICES, loaded)
-    table = layouts.load(LAYOUTS)
-    files = {
-        f"{r.application}-{r.session}.html": _segments(
-            r, chosen[(r.application, r.session)], table[r.application]
-        )
-        for r in loaded
-    }
-    joined = scan.check(scanner, files, scan.choice_segments(chosen.values()))
-    assert len(joined) == 5
-    for name, (written, _) in joined.items():
-        _links_stay_in_the_site(name, written)
-        assert "<div" not in written
-
-
-@pytest.mark.skip(reason="not in this version, Decision 48")
-def test_every_replay_page_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
-    # Requirement 16 and 20: the step pages are scanned at the builder level and the Dr. Kiro level, like the
-    # session pages, and their links stay in the flat site (task 18.1).
-    chosen = choices.load(CHOICES, loaded)
-    table = layouts.load(LAYOUTS)
-    pages = {}
-    for r in loaded:
-        steps = replay.step_pages(r, table[r.application], chosen[(r.application, r.session)])
-        pages.update({name: segments for name, (segments, _) in steps.items()})
-    assert len(pages) == sum(len(views.steps(r)) for r in loaded)
-    joined = scan.check(scanner, pages)
-    assert sorted(joined) == sorted(pages)
-    for name, (written, _) in joined.items():
+    inputs = Inputs(
+        sessions=SESSIONS,
+        requests=REQUESTS,
+        choices=CHOICES,
+        layouts=LAYOUTS,
+        words=ROOT / "notebook" / "commentary-words.txt",
+        scan_configs=(
+            ROOT / "body-lab" / "adapter" / "scan_sources.toml",
+            ROOT / "wind-tunnel" / "adapter" / "scan_sources.toml",
+        ),
+        stop_list=ROOT / ".kiro" / "blind-scan" / "stop-list.txt",
+        out=ROOT / "notebook" / "does-not-exist",
+    )
+    files = build.render(build.model(build.check_inputs(inputs, allow_fake=False)))  # scans while rendering
+    pages = {n: d.decode("utf-8") for n, d in files.items() if n.endswith(".html")}
+    assert sorted(pages) == [
+        "body-lab-body-1.html",
+        "body-lab-body-2.html",
+        "how.html",
+        "index.html",
+        "legend.html",
+        "wind-tunnel-wt-002.html",
+        "wind-tunnel-wt-003.html",
+        "wind-tunnel-wt-004.html",
+    ]
+    for name, written in pages.items():
         _links_stay_in_the_site(name, written)
         assert "<div" not in written and "xmlns" not in written and "http" not in written, name
 
@@ -118,7 +99,8 @@ def test_every_refusal_message_and_choice_reason_passes_at_its_authors_level(sca
             segments += [*message.parts, *([message.note] if message.note else [])]
     assert {AUTHOR_LEVEL[ink.SCAN_AUTHOR[s.ink]] for s in segments} == {"builder", "dr-kiro"}
     assert any("requirements.md" in s.text and s.ink is ink.Ink.PENCIL for s in segments)
-    reasons = scan.choice_segments(choices.load(CHOICES, loaded).values())
+    cover = choices.load_cover(CHOICES, loaded)
+    reasons = scan.choice_segments(choices.load(CHOICES, loaded).values(), cover)
     assert reasons
     assert scan.segment_findings(scanner, [*segments, *reasons]) == []
 
@@ -129,27 +111,6 @@ def test_dr_kiros_fixed_words_of_every_record_pass_at_the_builder_level(scanner,
     assert words
     assert {AUTHOR_LEVEL[ink.SCAN_AUTHOR[s.ink]] for s in words} == {"builder"}
     assert scan.segment_findings(scanner, words) == []
-
-
-def test_the_cover_passes_both_scan_passes_and_links_stay_in_the_site(scanner, loaded) -> None:
-    runs = readerruns.load(SESSIONS)
-    requests = readerrequest.load(REQUESTS, runs)
-    segments, _ = cover.page(
-        loaded, choices.load_cover(CHOICES, loaded), layouts.load(LAYOUTS), runs, requests
-    )
-    written, _ = scan.check(scanner, {"index.html": segments})["index.html"]
-    _links_stay_in_the_site("index.html", written)
-    assert "<div" not in written and "xmlns" not in written and "http" not in written
-
-
-def test_the_lab_pages_and_the_legend_pass_both_scan_passes_and_links_stay_in_the_site(
-    scanner, loaded
-) -> None:
-    pages = {**lab.pages(loaded), "legend.html": lab.legend(), "how.html": how.page(loaded)}
-    assert sorted(pages) == ["body-lab.html", "how.html", "legend.html", "wind-tunnel.html"]
-    for name, (written, _) in scan.check(scanner, pages).items():
-        _links_stay_in_the_site(name, written)
-        assert "<div" not in written and "xmlns" not in written and "http" not in written, name
 
 
 def test_the_stylesheet_passes_the_builder_level_scan(scanner) -> None:

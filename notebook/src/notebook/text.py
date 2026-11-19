@@ -309,10 +309,8 @@ REPLAY_NOT_RUN = "This item has not been run at this step, so it is left out her
 NOT_YET_CHECKED = "not yet checked by the bench"
 
 # The highlight (Requirements 10.3, 10.4, 12.7).
-HIGHLIGHT_HEADING = "Highlight"
 HIGHLIGHT_CONTRAST = "A contrast: two trials side by side"
 HIGHLIGHT_BEST = "The best result"
-HIGHLIGHT_NONE = "none. The reason given: "
 
 # Measured values of a trial (Requirements 5.3, 5.4). Lists round to 4 significant digits; the opened trial
 # shows every recorded value in full.
@@ -343,7 +341,6 @@ CHART_SCALE = "; scale of the measurement "
 CHART_NO_VALUE = "; no measured value is drawn"
 
 # Dr. Kiro's plan (Requirement 10.6, design N18).
-PLAN_HEADING = "Dr. Kiro's plan"
 PLAN_NOTE = "The plan file of the session's last snapshot, as written."
 PLAN_REQUIREMENTS = "Dr. Kiro's requirements file of the same snapshot, as written"
 
@@ -459,3 +456,62 @@ HOW_SESSION_OF = ", session "
 FIXTURE_BANNER = (
     "test fixture: this page is built from labelled fixture records, and nothing on it is a result."
 )
+
+
+# The shelf and the opened notebook (notebook-shelf design). Orange-pen commentary of the builder.
+SHELF_TITLE = "Dr. Kiro's Lab Notebook"
+KICKER = "laboratory notebook · discover the spec"
+MASTHEAD_TITLE = "Dr. Kiro's Lab Notebook"
+KEY_GREEN = "green ink: Dr. Kiro's own words"
+KEY_ORANGE = "orange pen: our notes"
+KEY_PENCIL = "pencil: values the bench measured"
+MODE_DAY = "Switch to day"
+MODE_NIGHT = "Switch to night"
+CARD_BEST = "best "
+CARD_HITS = " predictions hit"
+CHIP_MODEL = "model "
+CHIP_DATE = "date "
+CHIP_PREDICTIONS = "predictions hit "
+CHIP_STOPPED = "stopped: "
+CHIP_NO_TABLE = "no discovered spec in the record"
+HIGHLIGHT_HEADING = "The highlight and progress"
+HIGHLIGHT_NONE = "No trial ran in this session, so there is nothing to show here."
+NEW_BEST = "new best"
+NOTE_BEST_BEFORE = "best "
+NOTE_BEST_AFTER = " so far, set by "
+NOTE_NO_BEST = "No trial counts toward the best yet."
+NOTE_HITS = "predictions hit, of all the bench checked"
+NOTE_REJECTED_RULES = "rules rejected, each kept in the table beside its replacement"
+NOTE_REJECTED_VERDICTS = "hypotheses Dr. Kiro rejected (this record holds no table)"
+PROGRESS_NONE = "No trial counts toward the best, so there is no line to draw."
+PROGRESS_LINE = "The line is the best "
+PROGRESS_BETTER_HIGHER = " after each trial (higher is better). Each step up names the hypothesis behind it."
+PROGRESS_BETTER_LOWER = " after each trial (lower is better). Each step up names the hypothesis behind it."
+PROGRESS_ONLY_WHEN = " Only trials with "
+PROGRESS_OFF = " count; the hollow dots do not."
+SPEC_HEADING = "The discovered spec"
+SPEC_NONE = "The record holds no discovered spec table that can be shown."
+SPEC_UNCHECKED = (
+    "This table is the last one in the record. The bench did not check it, because the session "
+    "did not end through the bench's check."
+)
+REWRITTEN_AS = "rewritten as "
+REWRITTEN_NOWHERE = "rewritten nowhere: "
+FROM_EXPERIMENTS = "from "
+FROM_PREDICTIONS = " · predictions "
+PLAN_HEADING = "Dr. Kiro's plan"
+ALL_BEFORE = "All "
+ALL_AFTER = " experiments and hypotheses"
+ALL_HINT = "Press a row to open the note: Dr. Kiro's words and every trial of that hypothesis."
+EXPECTS = "expects "
+NEVER_RUN = "never run"
+OUTCOME_NOT_RUN = " not run"
+READER_HEADING = "The reader's test"
+READER_ABOUT = (
+    "A second Kiro, the reader, never saw the experiments. It answered this request three ways. "
+    "Pass or fail is decided by the bench against ranges written before the runs."
+)
+READER_SETUP_SPEC = "Spec only"
+READER_SETUP_RECORD = "Raw record only"
+READER_SETUP_NONE = "Nothing"
+READER_PASSED = "runs passed"
