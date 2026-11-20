@@ -443,9 +443,8 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         elif not corners:
             corners.append((x(i), y(p.best)))
     corners.append((x(n - 1), corners[-1][1]))
-    # A soft glow under the line, the line itself, and a second fainter pass of the pencil beside it.
+    # The line, and a second fainter pass of the pencil beside it.
     line = _pencil_line(corners, record.name)
-    marks += html.element("path", {"class": "ch-glow", "d": line, "fill": "none"}, [])
     marks += html.element("path", {"class": "ch-line", "d": line, "fill": "none"}, [])
     marks += html.element(
         "path", {"class": "ch-pass", "d": _pencil_line(corners, f"{record.name}:second"), "fill": "none"}, []

@@ -38,33 +38,33 @@
 }
 :root {
   color-scheme: dark;
-  --paper: #050304;
-  --grid-line: rgba(255, 150, 60, 0.05);
-  --lamp: rgba(255, 128, 24, 0.2);
-  --brew: rgba(140, 255, 60, 0.09);
+  --paper: #0b0806;
+  --grid-line: rgba(232, 214, 180, 0.08);
+  --lamp: rgba(255, 170, 80, 0.1);
+  --brew: transparent;
   --vignette: rgba(0, 0, 0, 0.88);
-  --page: rgba(12, 8, 6, 0.94);
-  --page-edge: #3d2a1a;
-  --hole: #140d08;
-  --ink-drkiro: #a8f04c;
-  --ink-pencil: #ddd5c8;
-  --ink-commentary: #ff9f3a;
-  --title: #ffb24d;
-  --text: #eee6da;
-  --muted: #ab9f8f;
-  --frame-green: #8fe03a;
-  --chip: #130d09;
-  --chip-edge: #45301e;
-  --card: #0f0a07;
-  --card-edge: #55391f;
-  --miss-red: #ff5f55;
-  --stamp-validated: #a8f04c;
-  --stamp-partly: #ffc24a;
-  --stamp-observed: #b8b0a4;
-  --stamp-rejected: #ff4a42;
-  --rule-bg: #120c09;
-  --rewrite-bg: #2b110d;
-  --deco: #bdae98;
+  --page: #211b15;
+  --page-edge: #3b3024;
+  --hole: #050302;
+  --ink-drkiro: #9ccf7f;
+  --ink-pencil: #d6cdbd;
+  --ink-commentary: #ec9a48;
+  --title: #f0a650;
+  --text: #ebe2d2;
+  --muted: #ab9f8c;
+  --frame-green: #9ccf7f;
+  --chip: #211a14;
+  --chip-edge: #4a3c2c;
+  --card: #2a2219;
+  --card-edge: #45382a;
+  --miss-red: #e8665a;
+  --stamp-validated: #9ccf7f;
+  --stamp-partly: #dcb556;
+  --stamp-observed: #b6ab97;
+  --stamp-rejected: #ec5a4f;
+  --rule-bg: #2a2219;
+  --rewrite-bg: #2f1e17;
+  --deco: #b8aa92;
   --moon: #f6efc7;
   --moon-pit: #d9cf9d;
   --pk: #f08a24;
@@ -703,13 +703,6 @@ section[data-sync] .photo-controls button[data-action="step"] {
   stroke: var(--ink-drkiro);
   stroke-width: 4;
   stroke-linejoin: round;
-}
-.ch-glow {
-  stroke: var(--ink-drkiro);
-  stroke-width: 12;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  opacity: 0.22;
 }
 .ch-pass {
   stroke: var(--ink-drkiro);
@@ -1810,37 +1803,6 @@ html[data-app="front"] {
 .page {
   padding-top: 1.2rem;
 }
-/* The night lab: pumpkin light for titles and our notes, a poison green for Dr. Kiro, blood red for what the
-   experiment struck out. Seams in the cards like the stitched body. Only the night pages. */
-html[data-mode="night"] .big-title .ink-c,
-html[data-mode="night"] .book-title .ink-c {
-  text-shadow: 0 0 18px rgba(255, 140, 30, 0.45);
-}
-html[data-mode="night"] .card,
-html[data-mode="night"] .hyp {
-  border-style: dashed;
-}
-html[data-mode="night"] .card {
-  border-left-style: solid;
-}
-html[data-mode="night"] .rule {
-  border-top-style: dashed;
-  border-right-style: dashed;
-  border-bottom-style: dashed;
-}
-html[data-mode="night"] .rule-text.struck .ink-k {
-  text-decoration: line-through 2px var(--stamp-rejected);
-  opacity: 0.85;
-}
-html[data-mode="night"] .rule-rejected {
-  box-shadow: 0 0 14px rgba(255, 60, 50, 0.22);
-}
-html[data-mode="night"] .rule-rewrite {
-  border-left-color: var(--stamp-rejected);
-}
-html[data-mode="night"] .stamp-rejected {
-  text-shadow: 0 0 8px rgba(255, 70, 60, 0.6);
-}
 /* A rule the bench would not let the session end on, and the reader's runs line by line. */
 .rule-refused {
   margin-top: 0.45rem;
@@ -1899,4 +1861,158 @@ html[data-mode="night"] .stamp-rejected {
 }
 .refused-more summary .ink-c {
   color: var(--muted);
+}
+/* The corner map on a retaken moving picture: a small paper note with the track drawn in pencil. */
+.corner-map {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 30%;
+  height: auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(60, 45, 30, 0.35);
+  border-radius: 2px;
+  background: rgba(255, 249, 232, 0.9);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.3);
+  transform: rotate(-1.5deg);
+  pointer-events: none;
+}
+.map-line {
+  stroke: #3d3126;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.map-start {
+  fill: none;
+  stroke: #3d3126;
+  stroke-width: 1.4;
+}
+.map-dot {
+  fill: #c4560a;
+  stroke: #fff8e6;
+  stroke-width: 1;
+}
+.map-dot[hidden] {
+  display: none;
+}
+.map-bar {
+  stroke: #3d3126;
+  stroke-width: 1.4;
+}
+.map-bar-words {
+  fill: #3d3126;
+  font-family: var(--font-mono);
+  font-size: 8px;
+}
+/* The night lab: the same paper notebook, on a desk by candlelight. Real inks, no glow: green ink for
+   Dr. Kiro, orange crayon for our notes, red ink for what the experiment struck out. The cards are paper
+   cards taped in; a spec card is stitched along its coloured edge, like the body. The Halloween marks are
+   things on the page: a ring left by a jar of something green, drops of candle wax. */
+html[data-mode="night"] body {
+  background-image:
+    radial-gradient(ellipse 60% 45% at 18% 0%, var(--lamp), transparent 70%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%);
+  background-size: 100% 100%, 100% 100%;
+  background-attachment: fixed, fixed;
+}
+html[data-mode="night"] .book {
+  background-color: var(--page);
+  background-image:
+    radial-gradient(circle at 93% 96%, transparent 2.9rem, rgba(150, 190, 90, 0.16) 3rem, rgba(150, 190, 90, 0.08) 3.3rem, transparent 3.45rem),
+    radial-gradient(ellipse 0.9rem 0.6rem at 22% 0, rgba(236, 226, 200, 0.2) 95%, transparent 100%),
+    radial-gradient(ellipse 0.35rem 0.8rem at 22.6% 0.5rem, rgba(236, 226, 200, 0.18) 95%, transparent 100%),
+    radial-gradient(circle 0.22rem at 21.4% 1.1rem, rgba(236, 226, 200, 0.16) 95%, transparent 100%),
+    conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--grid-line) 90deg 180deg, transparent 180deg 360deg),
+    conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--grid-line) 90deg 180deg, transparent 180deg 360deg);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+html[data-mode="night"] .book::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3.4rem;
+  border-left: 1px solid rgba(214, 90, 70, 0.4);
+  pointer-events: none;
+}
+html[data-mode="night"] .deco-moon {
+  filter: none;
+}
+html[data-mode="night"] .rule,
+html[data-mode="night"] .tile,
+html[data-mode="night"] .hyp {
+  position: relative;
+  border-color: var(--card-edge);
+  border-radius: 2px;
+  background: var(--card);
+  box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.45);
+}
+html[data-mode="night"] .rule {
+  border-left: 6px solid var(--muted);
+}
+html[data-mode="night"] .rule-validated {
+  border-left-color: var(--stamp-validated);
+}
+html[data-mode="night"] .rule-partly {
+  border-left-color: var(--stamp-partly);
+}
+html[data-mode="night"] .rule-observed {
+  border-left-color: var(--stamp-observed);
+}
+html[data-mode="night"] .rule-rejected {
+  border-left-color: var(--stamp-rejected);
+}
+/* A piece of tape at the top of each card. */
+html[data-mode="night"] .rule::before,
+html[data-mode="night"] .tile::before {
+  content: "";
+  position: absolute;
+  top: -0.45rem;
+  left: 50%;
+  width: 3.4rem;
+  height: 0.9rem;
+  background: rgba(214, 196, 150, 0.26);
+  transform: translateX(-50%) rotate(-2deg);
+  pointer-events: none;
+}
+/* Stitches through the coloured edge of a spec card. */
+html[data-mode="night"] .rule::after {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: -4px;
+  border-left: 2px dashed rgba(236, 226, 205, 0.7);
+  pointer-events: none;
+}
+html[data-mode="night"] .tile {
+  border-width: 1px;
+  border-top-width: 5px;
+}
+html[data-mode="night"] .tile-spec {
+  border-top-color: var(--stamp-validated);
+}
+html[data-mode="night"] .tile-record {
+  border-top-color: var(--stamp-partly);
+}
+html[data-mode="night"] .tile-none {
+  border-top-color: var(--stamp-rejected);
+}
+/* Red ink through the struck rule; the rewrite under it is marked in the same red. */
+html[data-mode="night"] .rule-text.struck .ink-k {
+  text-decoration: line-through 2px var(--stamp-rejected);
+  text-decoration-skip-ink: none;
+  opacity: 0.8;
+}
+html[data-mode="night"] .rule-rewrite {
+  border-left: 2px solid var(--stamp-rejected);
+}
+/* A rubber stamp: a little faded. */
+html[data-mode="night"] .stamp {
+  border-radius: 3px;
+  opacity: 0.9;
+  letter-spacing: 0.04em;
 }

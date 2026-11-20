@@ -178,6 +178,7 @@ def figures(
             {"class": enlarged_classes, **swap_attrs},
             [
                 *enlarged_img,
+                *(_corner_map(trial, retake, source) if retake else []),
                 *html.element(
                     "figcaption",
                     None,
@@ -252,6 +253,73 @@ def _clock(retake: "Retake", source: str) -> list[Segment]:
         lines += html.element("span", attrs, pieces)
     # The lines share one place of a fixed height, so the picture does not move when the words change.
     return html.element("span", {"class": "reel-lines"}, lines)
+
+
+TRACK_SIDE = "track_y"  # the recorded series across, beside the one along (`Retake.track`)
+MAP_SIZE = 100.0  # the corner map's drawing area, in its own units
+MAP_MIN_SPAN = 0.3  # metres: a short track is not blown up to fill the map
+
+
+def _corner_map(trial: Trial, retake: "Retake", source: str) -> list[Segment]:
+    """The whole recorded track seen from above, small, in the top left corner of the moving picture, with a
+    dot at the place of the cell on view. The camera of the retaken picture stays above the body, so the body
+    is always in the middle and the corner is free; the map shows where the body has gone. Both axes have one
+    scale, and the picture's axes: along to the right, across upward. Drawn from the record only."""
+    recorded = dict(trial.measurements)
+    if retake.track not in recorded or TRACK_SIDE not in recorded:
+        raise NotebookError(
+            source, f"the trial has no recorded {retake.track} and {TRACK_SIDE} for the corner map"
+        )
+    along, across = recorded[retake.track], recorded[TRACK_SIDE]
+    if not isinstance(along, tuple) or not isinstance(across, tuple) or len(along) != len(across):
+        raise NotebookError(source, f"{retake.track} and {TRACK_SIDE} are not two series of one length")
+    frames = retake.frames
+    if (len(along) - 1) % frames:
+        raise NotebookError(source, f"{retake.track} has {len(along)} samples, not a whole number per cell")
+    step = (len(along) - 1) // frames
+    xs, ys = [float(v) for v in along], [float(v) for v in across]
+    span = max(max(xs) - min(xs), max(ys) - min(ys), MAP_MIN_SPAN)
+    cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+    pad = 12.0
+    scale = (MAP_SIZE - 2 * pad) / span
+
+    def at(i: int) -> tuple[float, float]:
+        return MAP_SIZE / 2 + (xs[i] - cx) * scale, MAP_SIZE / 2 - (ys[i] - cy) * scale
+
+    line = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in (at(i) for i in range(len(xs))))
+    sx, sy = at(0)
+    marks = [
+        *html.element("path", {"class": "map-line", "d": line, "fill": "none"}, []),
+        *html.shape("circle", {"class": "map-start", "cx": f"{sx:.1f}", "cy": f"{sy:.1f}", "r": "3.2"}),
+    ]
+    last = frames - 1
+    for k in range(frames):
+        dx, dy = at(step * (k + 1))
+        attrs = {"class": "map-dot", "cx": f"{dx:.1f}", "cy": f"{dy:.1f}", "r": "4.2", "data-frame": str(k)}
+        if k != last:
+            attrs["hidden"] = "hidden"
+        marks += html.shape("circle", attrs)
+    # A bar of 10 cm, so the size of the track can be read.
+    bar = 0.1 * scale
+    marks += html.shape(
+        "line",
+        {"class": "map-bar", "x1": f"{pad:.1f}", "x2": f"{pad + bar:.1f}", "y1": "93", "y2": "93"},
+    )
+    marks += html.element(
+        "text", {"class": "map-bar-words", "x": f"{pad + bar + 3:.1f}", "y": "96"}, [pencil("10 cm", source)]
+    )
+    return html.element(
+        "svg",
+        {
+            "class": "corner-map",
+            "viewbox": f"0 0 {MAP_SIZE:.0f} {MAP_SIZE:.0f}",
+            "width": f"{MAP_SIZE:.0f}",
+            "height": f"{MAP_SIZE:.0f}",
+            "role": "img",
+            "aria-label": "the recorded track seen from above; the dot is where the body is in the picture",
+        },
+        marks,
+    )
 
 
 def _controls(actions: tuple[str, ...]) -> list[Segment]:

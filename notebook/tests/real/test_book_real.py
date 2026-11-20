@@ -356,3 +356,15 @@ def test_the_chart_line_wavers_like_a_pencil_line_and_is_the_same_every_build(si
     assert path.count("L") > 40  # many short pieces, not four straight strokes
     again = re.search(r'<path class="ch-line" d="([^"]*)"', _page(site, "body-lab/body-2.html")[0]).group(1)
     assert path == again
+
+
+def test_each_retaken_picture_has_a_corner_map_with_one_dot_per_cell(site):
+    page, _found = _page(site, "body-lab/body-2.html")
+    maps = re.findall(r'<svg class="corner-map".*?</svg>', page, re.S)
+    assert maps
+    for one in maps:
+        dots = re.findall(r'class="map-dot"[^>]*data-frame="(\d+)"', one)
+        assert dots == [str(k) for k in range(25)]
+        # Only the last dot shows without the script.
+        assert one.count('hidden="hidden"') == 24
+        assert 'class="map-line"' in one and "10 cm" in one
