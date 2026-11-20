@@ -1510,18 +1510,17 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   --muted: #5a6b86;
   --shadow: rgba(30, 50, 90, 0.2);
 }
-/* The front page: two doors on one skeleton. */
-html[data-app="front"] {
-  --paper: #0d0b14;
-  --lamp: rgba(122, 78, 200, 0.14);
-  --text: #ece6f5;
-  --muted: #a99bc0;
-  --title: #f6eed8;
-  --ink-commentary: #e9e2f2;
-}
+/* The front page: two doors on one skeleton. It has no palette of its own: the paper and the inks are the
+   notebook's (the night candle paper by default, the day paper where the visitor's system asks for it). */
 .front-head {
   max-width: 46rem;
   padding: 1rem 0 1.4rem;
+}
+.front-claim {
+  max-width: 40rem;
+  margin: 0.6rem 0 0;
+  font-size: 1.2rem;
+  color: var(--text);
 }
 .front-tagline {
   font-family: var(--font-script);
@@ -1554,7 +1553,7 @@ html[data-app="front"] {
   background: var(--face);
   color: var(--ink);
   text-decoration: none;
-  box-shadow: 0 10px 26px var(--shadow);
+  box-shadow: 0 6px 18px var(--shadow);
 }
 .door::after {
   content: "";
@@ -1566,22 +1565,22 @@ html[data-app="front"] {
   border-radius: 50%;
   background: var(--knob);
 }
+/* Each door takes the paper and the inks of its lab's notebook: the day paper for the wind tunnel, the night
+   candle paper for the body lab. The values are the day and night palettes above, copied here because a door
+   sits on the front page, which has no mode of its own. */
 .door-day {
-  --edge: #8fb0dc;
-  --face: #f7faff;
-  --ink: #13233f;
-  --knob: #1f4fa3;
-  --accent: #1f4fa3;
-  --shadow: rgba(30, 50, 90, 0.35);
+  --edge: #e3d9bf;
+  --face: #fffaf0;
+  --ink: #2b2118;
+  --knob: #1b7a45;
+  --accent: #1b7a45;
 }
 .door-night {
-  --edge: #4a3470;
-  --face: #0b0713;
-  --ink: #f3ead2;
-  --knob: #ffa24d;
-  --accent: #ffa24d;
-  --shadow: rgba(0, 0, 0, 0.7);
-  background: radial-gradient(ellipse 70% 50% at 50% 24%, rgba(122, 78, 200, 0.4), transparent 70%), var(--face);
+  --edge: #45382a;
+  --face: #2a2219;
+  --ink: #ebe2d2;
+  --knob: #9ccf7f;
+  --accent: #9ccf7f;
 }
 .door .ink-c {
   color: inherit;

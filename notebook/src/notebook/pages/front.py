@@ -38,6 +38,7 @@ def page(apps: tuple[App, ...]) -> list[Segment]:
         [
             *_el("p", "kicker", say_text("FRONT_KICKER")),
             *_el("h1", "big-title", say_text("MASTHEAD_TITLE")),
+            *_el("p", "front-claim", say_text("FRONT_CLAIM")),
             *_el("p", "front-tagline", say_text("FRONT_TAGLINE")),
             *_el("p", "front-lead", say_text("FRONT_LEAD")),
         ],

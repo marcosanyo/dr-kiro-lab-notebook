@@ -537,10 +537,14 @@ PREDICTION_IN = " in "
 NOTE_MISSED = " missed: "
 NOTE_EXPECTED = " was expected in "
 NOTE_TRIALS_USED = " used, of the whole budget"
-FRONT_LINK = "both labs"
+FRONT_LINK = "All labs"
 KEY_NOTES_BLUE = "blue pen: our notes"
 KEY_NOTES_ORANGE = "orange label: our notes"
 FRONT_KICKER = "a laboratory · two cases"
+FRONT_CLAIM = (
+    "An MCP bench makes a blind Kiro agent register predictions first, keeps its wrong rules struck "
+    "through, and a second Kiro builds from that spec alone."
+)
 FRONT_TAGLINE = "The experiment gets the final edit."
 FRONT_LEAD = (
     "Dr. Kiro, a Kiro agent, studies a system it has no description of and writes down the spec it finds. "
