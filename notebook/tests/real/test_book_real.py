@@ -73,7 +73,7 @@ def test_the_front_page_has_two_doors_and_each_application_opens_on_its_notebook
     assert (site / "wind-tunnel" / "index.html").read_bytes() == (
         site / "wind-tunnel/wt-004.html"
     ).read_bytes()
-    assert (site / "body-lab" / "index.html").read_bytes() == (site / "body-lab/body-2.html").read_bytes()
+    assert (site / "body-lab" / "index.html").read_bytes() == (site / "body-lab/body-3.html").read_bytes()
 
 
 def test_each_application_opens_in_its_own_theme_and_only_the_robot_has_decoration(site):
