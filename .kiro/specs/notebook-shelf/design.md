@@ -10,13 +10,15 @@ The build keeps its four phases. Phase 1 reads the records, the choice files (`c
 
 ## Pages
 
-- One page per session, `<application>-<session>.html`, and `index.html`, which is the page of the session `cover.toml` names for its first lab. The two are the same bytes.
-- Every page holds the masthead, the lab tabs (links to the session each lab opens), the cards of the open lab (links), and the opened notebook (`article.book`).
+- The root holds the front page (`index.html`) and `a/`. Each application is a folder, `<application>/`, with one page per session (`<session>.html`), `index.html` (the same bytes as the page of the session `app.toml` names), `legend.html`, `how.html`, `p/` and `a/`. Every folder has its own copy of the stylesheet, the script and the typefaces, so a folder is a notebook on its own. The write step creates the folders; a path is the application, then `a/`, `p/` or a page.
+- Every page of an application holds the two small links at the top (`/` and `/<other application>/`), the masthead, the cards of the application (links; sessions that stopped are small cards in a row of their own), and the opened notebook (`article.book`). A page of an application has a footer link to the front page, `/`.
+- The `<html>` element of a page carries `data-app` (the application, or `front`), `data-mode` (the theme the page opens in) and `data-pen`. There is no theme switch and the script stores nothing: an application's theme is fixed by `app.toml`.
+- The `/` and `/<application>/` links are the only links that are not relative. The blind scan reads them as it reads every link: they name no folder outside the site.
 - Ids on a page: `row-<id>` on a rule card, `H<n>` on a hypothesis row, `E<n>` on an experiment, `E<n>-T<n>` on a trial card, `H<n>.P<n>` on a prediction. A link to an id inside a closed note opens it (`notebook.js`).
 
-## Choice files (requirement 2.3)
+## Settings and choice files (requirement 2.3)
 
-`choices/<application>/<session>.toml`: `title`, `subtitle`, `summary`, `line`, `model`, `date` (YYYY-MM-DD), `color` (one of the six band colours), `[progress]` (`measurement`, `better`, optional `require` with `equals`), `[[polaroid]]` twice (`heading`, `trial`, `words`, optional `star`) and `[[note]]` three times (`kind` is `best`, `hits`, `rejected`, `trials` or `miss`; a `miss` names its `prediction`, which must be a missed one with a value; the three differ). A session with one trial needs one photo, with none needs none and no `[progress]`. `choices/cover.toml`: one `[[lab]]` per application with `application`, `case`, `about`, `open`, `unit`. Every text has a length limit. The `model` and `date` are not in the record; a person writes them. A `<fill in>` model is shown as written.
+`<application>/notebook/app.toml`: `application`, `order`, `case`, `door`, `door_line`, `about`, `open`, `unit`, `theme` (`day` or `night`), `pen` (`blue` or `orange`), `decoration` (`none` or `halloween`) and, when the application has retaken pictures, `display` (a folder name). `<application>/notebook/choices/<session>.toml`: `title`, `subtitle`, `summary`, `line`, `model`, `date` (YYYY-MM-DD), `color` (one of the six band colours), `[progress]` (`measurement`, `better`, optional `require` with `equals`), `[[polaroid]]` twice (`heading`, `trial`, `words`, optional `star`) and `[[note]]` three times (`kind` is `best`, `hits`, `rejected`, `trials` or `miss`; a `miss` names its `prediction`, which must be a missed one with a value; the three differ). A session with one trial needs one photo, with none needs none and no `[progress]` and no note. Every text has a length limit. The `model` and `date` are not in the record; a person writes them. `notebook-build` takes one `--app <application>/notebook` per application; an application of the records without one, or one without records, fails the build.
 
 ## The best so far (requirement 3.3)
 
@@ -25,6 +27,14 @@ The build keeps its four phases. Phase 1 reads the records, the choice files (`c
 ## The opened note of a hypothesis
 
 Dr. Kiro's hypothesis text is shown as it reads: its `###` line as a heading and its sentence as a paragraph; the fenced prediction block is left out and each prediction is one line from the record, "cd in [0.5, 1.25] when aspect = 3 → hit". The lines under a moving photo share one place of a fixed height, so the card does not change height as the words change. On a narrow screen the cards are one column.
+
+## What happened here
+
+`_story` builds three sentences from the record. Step 1: the number of predictions registered (all hypotheses), each written before its experiment ran. Step 2: the misses, and the rows with the status `rejected` when a table exists (a stopped session says how many of the checked predictions came true instead). Step 3: the reader's tally of the setups `spec` and `none` when runs of this session exist; else the counts of `validated` and of `partly` plus `observed` in the table with the sentence that no second Kiro has been run; else the sentence for a record with no spec. A record with no prediction gets one sentence.
+
+## The chart line
+
+The step line is a path through its exact corners with short pieces between them offset by a deterministic wobble (a hash of the record name and the piece number, at most 1.2 units), so every build draws the same line. The names of the largest steps are joined to their dots by a short curved stroke. A choice file may name a second measurement and a value (`mark`, `mark_equals`, `mark_words`); the first trial where it takes the value gets a dashed line and the words a person wrote (the wind tunnel: the first run without shedding). The vertical axis spans the line with a quarter of its range on each side.
 
 ## Predictions hit
 

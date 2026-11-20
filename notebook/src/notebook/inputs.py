@@ -12,15 +12,12 @@ class Inputs:
 
     sessions: Path
     requests: Path
-    choices: Path
+    apps: tuple[Path, ...]  # one notebook folder per application: app.toml, choices/, display/
     layouts: Path
     words: Path
     scan_configs: tuple[Path, ...]
     stop_list: Path
     out: Path
-    # The folder of retaken display pictures (`display.py`), or None for none: then every trial shows its
-    # recorded picture. It is the one field with a default, because giving no folder is a choice.
-    display: Path | None = None
 
 
 def check_out(out: Path) -> None:

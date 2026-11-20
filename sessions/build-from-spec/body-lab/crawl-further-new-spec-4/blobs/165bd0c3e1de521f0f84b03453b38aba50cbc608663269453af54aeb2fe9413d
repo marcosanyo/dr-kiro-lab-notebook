@@ -1,0 +1,12 @@
+# Design
+
+## Findings (this session)
+
+- At 2.1 Hz, with c3 lagging c2 by 170, 185, 200 and 225 deg, heading is +55, +34, +11 and -8 deg and x is 0.278, 0.318, 0.294 and 0.266 m (E1, E2, and the given E8).
+- Raising the frequency by 0.1 Hz shifts heading by about -30 deg and lowers x slightly (2.2 Hz, lag 200: x 0.275, heading -19).
+- c4 added to the c2, c3 pair hurts: in phase with c2 gives heading +72 deg and x 0.10 m; lagging 90 deg gives x 0.207 m.
+- Lag 180 to 192 deg at 2.15 to 2.2 Hz gives x 0.303 to 0.328 m, y 0.11 to 0.17 m and heading -1 to +12 deg (E3, E4).
+
+## Answer
+
+c2 = sin(2 pi 2.15 t), c3 = sin(2 pi 2.15 t - 192 deg), c0 = c1 = c4 = 0: x = 0.315 m, y = 0.109 m, heading -1.2 deg (E4). E3 at lag 190 gave x = 0.328 m, heading +4.1 deg.

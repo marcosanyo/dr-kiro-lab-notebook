@@ -1,0 +1,29 @@
+# H4: Constant c1 at +1 moves the body in x on this bench
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a0", "a1", "a2", "a3", "a4"]
+TRIALS = [
+    [0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1],
+    [-1, -1, -1, -1, -1],
+]
+
+
+def c0(t, a0, a1, a2, a3, a4):
+    return a0
+
+
+def c1(t, a0, a1, a2, a3, a4):
+    return a1
+
+
+def c2(t, a0, a1, a2, a3, a4):
+    return a2
+
+
+def c3(t, a0, a1, a2, a3, a4):
+    return a3
+
+
+def c4(t, a0, a1, a2, a3, a4):
+    return a4

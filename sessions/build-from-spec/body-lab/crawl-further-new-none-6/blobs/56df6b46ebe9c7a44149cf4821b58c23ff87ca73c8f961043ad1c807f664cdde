@@ -1,0 +1,29 @@
+# H6: A three-channel wave on c2 to c4 crawls forward
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "ph", "amp", "mode"]
+TRIALS = [
+    [10.0, 2.0944, 1.0, 3],
+]
+
+
+def c0(t, f, ph, amp, mode):
+    return 0
+
+
+def c1(t, f, ph, amp, mode):
+    return 0
+
+
+def c2(t, f, ph, amp, mode):
+    return amp * math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, ph, amp, mode):
+    return amp * math.sin(2 * math.pi * f * t - ph)
+
+
+def c4(t, f, ph, amp, mode):
+    return amp * math.sin(2 * math.pi * f * t - 2 * ph)

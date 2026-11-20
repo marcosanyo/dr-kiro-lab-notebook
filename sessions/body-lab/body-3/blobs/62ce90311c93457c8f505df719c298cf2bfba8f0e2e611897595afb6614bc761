@@ -1,0 +1,21 @@
+### H5: Phase offset between c2 and c3 changes turning and forward motion
+
+WHEN c2 carries sin(2 pi t) and c3 carries the same sine delayed by 180 deg, THE system SHALL turn by less than 30 deg in magnitude, and WHEN the delay is 90 deg THE system SHALL move forward by more than 0.05 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30.0, 30.0]
+label = "new-combination"
+[prediction.when]
+phi = 180
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.05, 1.0]
+label = "new-combination"
+[prediction.when]
+phi = 90
+```

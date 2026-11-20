@@ -1,0 +1,26 @@
+### H3: A travelling wave across c0..c4 moves this body, with direction set by the sign of the phase lag
+
+WHEN all five inputs are 1 Hz unit sines with phase lag ph = 1 rad per channel index, THE system SHALL reach |x| above 0.1 m, and the sign of x SHALL flip when ph = -1.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+amp = 1
+f = 1
+ph = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-1.5, -0.1]
+label = "new-combination"
+[prediction.when]
+amp = 1
+f = 1
+ph = -1
+```

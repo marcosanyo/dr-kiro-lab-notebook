@@ -195,6 +195,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sessions", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path, help="the display folder; absent or empty")
     parser.add_argument("--session", action="append", required=True, help="a body-lab session id; repeat")
+    parser.add_argument(
+        "--unlabelled-body",
+        default=None,
+        help="the body of a session whose record names none (made before body labels); never guessed",
+    )
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
         if args.out.exists() and any(args.out.iterdir()):
@@ -203,11 +208,19 @@ def main(argv: list[str] | None = None) -> int:
         for name in args.session:
             if name not in loaded:
                 raise NotebookError(name, "is not a body-lab session of the records")
-        adapter = BodyAdapter()
+        adapters: dict[str, BodyAdapter] = {}
         args.out.mkdir(parents=True, exist_ok=True)
         blocks: list[str] = []
         for name in args.session:
             record = loaded[name]
+            body = record.variant or args.unlabelled_body
+            if body is None:
+                raise NotebookError(
+                    name, "the record names no body; give --unlabelled-body to say which it was"
+                )
+            if body not in adapters:
+                adapters[body] = BodyAdapter(variant=body)
+            adapter = adapters[body]
             for trial in record.trials:
                 data, _ = retake(adapter, trial, record)
                 file = f"{record.session}-{trial.id}.png"

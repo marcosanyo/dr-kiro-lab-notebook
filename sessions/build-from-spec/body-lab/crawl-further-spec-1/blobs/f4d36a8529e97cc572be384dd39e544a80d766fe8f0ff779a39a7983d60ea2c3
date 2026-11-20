@@ -1,0 +1,8 @@
+# Tasks
+
+- [x] E1 a1 in {-0.5, -0.75} with c3 sine at 2 Hz; a1=-1 with s3=0.6 (best): no travel
+- [x] E2 a1=-1, s3=1, f 2 and 1.5 (best): no travel, given beliefs do not reproduce
+- [x] E3 travelling wave ph 1, -1, 0 (best): rotation only
+- [x] E4 constants c1=+1; all +1; all -1 (best): no motion
+- [x] E5 c1/c3 quadrature sine at 2 Hz (best): no travel
+- [ ] Budget used up (12 of 12). Goal (x 0.3 to 0.5 m) not reached.

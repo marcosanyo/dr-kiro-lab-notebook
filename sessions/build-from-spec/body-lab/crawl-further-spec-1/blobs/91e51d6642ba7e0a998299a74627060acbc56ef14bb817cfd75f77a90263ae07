@@ -1,0 +1,30 @@
+### H4: Constant c1 at +1 moves the body in x on this bench
+
+WHEN c1 is held at +1 with the other inputs 0, THE system SHALL end with |x| above 0.1 m, and WHEN all five inputs are held at +1 or all at -1, THE system SHALL end with |x| above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.4, -0.1]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 1
+a2 = 0
+a3 = 0
+a4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-1.5, -0.1]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = 1
+a2 = 1
+a3 = 1
+a4 = 1
+```

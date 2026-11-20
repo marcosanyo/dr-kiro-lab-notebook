@@ -72,7 +72,14 @@ def test_records_without_an_end_snapshot_are_not_checked(by_name, name) -> None:
 def test_middle_snapshots_go_through_the_bench_reader(by_name) -> None:
     # Every middle snapshot of the committed records has a table with no rows, which the bench's reader
     # refuses; the notebook keeps the section as written and the bench's message.
+    # In body-3, Dr. Kiro wrote its table before the session ended: its last middle snapshot holds a table
+    # (checked below); the earlier ones are empty like the other records'.
     for record in by_name.values():
+        if record.session == "body-3":
+            middle = [tables.read(record, s) for s in record.snapshots if s.for_ != "end"]
+            assert all(isinstance(m, tables.Unreadable) for m in middle[:-1])
+            assert not isinstance(middle[-1], tables.Unreadable)
+            continue
         for snapshot in record.snapshots:
             if snapshot.for_ == "end":
                 continue

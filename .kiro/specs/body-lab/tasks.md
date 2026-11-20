@@ -45,3 +45,30 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
     has 14 rows: 2 `validated`, 4 `observed`, 8 `rejected`, each naming the row that replaces it. Dr. Kiro named
     only `workflow` and `method` as its steering.
   - _Requirements: 6.2_
+
+## Amendment: a second body (Requirement 7)
+
+Needs `lab-bench` task 38 (the `variant` setting) first. Branch `feat/second-body`.
+
+- [x] 7. Body `b` and the body choice
+  - `specimen_02.xml`, `BODIES`, `sim.build(settings, body)`, `BodyAdapter(variant=...)` and `variants`
+    (design 10); the second `scan_sources.toml` source; `tests/test_bodies.py`; the told-text golden file stays as it
+    is. The README gets the option and the labels.
+  - _Requirements: 7.1-7.6_
+
+- [x] 8. Same inputs on both bodies
+  - Run the comparison of design 10 (three probes only; the runs of body-1 and body-2 were left out on the user's
+    instruction, to save credit). `scripts/compare_bodies.py`. Result, body `a` and body `b` (x, y in m, heading in degrees):
+    - all channels 0: `a` x 4.8e-05, y -2.1e-05, heading 0.009; `b` x 2.5e-05, y -5.3e-06, heading -0.004.
+    - wheel channel +1: `a` x -0.230, y 0.011, heading 39.18; `b` x 2.5e-05, y -5.3e-06, heading -0.004 (no motion).
+    - wheel channel -1: `a` x 0.113, y 0.027, heading -34.96; `b` x 2.5e-05, y -5.3e-06, heading -0.004 (no motion).
+    Without the tire, body `b` does not move on any of the three probes: the axle cannot push the floor.
+  - _Requirements: 7.8_
+
+- [x] 9. Blind check — **Stop and ask**
+  - Done: `bench-scan` on the repository lab (no findings) and on a copy of it (checked by `diff`: only the empty
+    `experiments` and `pictures` folders differ); `bench-new-session` without `variant` and with `variant = "c"` is
+    refused, naming `a, b`; with `variant = "b"` it starts and the start entry holds `"b"`; `bench-scan` on that new
+    record (not sealed) gives no findings. Not done, moved to the production session on the user's instruction: a
+    sealed record of body `b`, `bench-verify` on it, and the notebook build.
+  - _Requirements: 7.3, 7.4, 7.7, 7.9_

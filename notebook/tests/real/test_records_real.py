@@ -12,11 +12,12 @@ def _by_name() -> dict[str, records.RecordModel]:
     return {r.name: r for r in records.load(SESSIONS)}
 
 
-def test_the_five_records_load_in_code_point_order() -> None:
+def test_the_six_records_load_in_code_point_order() -> None:
     loaded = records.load(SESSIONS)
     assert [r.name for r in loaded] == [
         "sessions/body-lab/body-1",
         "sessions/body-lab/body-2",
+        "sessions/body-lab/body-3",
         "sessions/wind-tunnel/wt-002",
         "sessions/wind-tunnel/wt-003",
         "sessions/wind-tunnel/wt-004",

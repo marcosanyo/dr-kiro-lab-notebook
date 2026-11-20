@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from notebook import addresses, ink, records, text
+from notebook import addresses, choices, ink, records, text
 from notebook.ink import Ink
 from notebook.pages import how
 
@@ -21,9 +21,17 @@ def loaded() -> list[records.RecordModel]:
     return records.load(SESSIONS)
 
 
+APPS = [ROOT / "wind-tunnel" / "notebook", ROOT / "body-lab" / "notebook"]
+
+
 @pytest.fixture(scope="module")
-def written(loaded) -> str:
-    return ink.join(how.page(loaded))[0]
+def app(loaded) -> choices.App:
+    return choices.load_apps(APPS, loaded).apps[0]
+
+
+@pytest.fixture(scope="module")
+def written(loaded, app) -> str:
+    return ink.join(how.page(loaded, app))[0]
 
 
 class _Page(HTMLParser):
@@ -67,7 +75,7 @@ def test_both_applications_budgets_and_declarations_come_from_the_records(loaded
     groups = how.declarations(loaded)
     # The shown parts of the declaration are the same across each application's committed records.
     assert [(a, [r.session for r in g]) for a, g in groups] == [
-        ("body-lab", ["body-1", "body-2"]),
+        ("body-lab", ["body-1", "body-2", "body-3"]),
         ("wind-tunnel", ["wt-002", "wt-003", "wt-004"]),
     ]
     shown = "".join(_parse(written).text)
@@ -83,7 +91,7 @@ def test_both_applications_budgets_and_declarations_come_from_the_records(loaded
     assert {g[0].declaration.budget for _, g in groups} == {40, 24}
 
 
-def test_the_page_names_the_four_tools_and_links_only_pages_of_the_site(loaded, written) -> None:
+def test_the_page_names_the_four_tools_and_links_only_pages_of_the_site(loaded, written, app) -> None:
     page = _parse(written)
     shown = "".join(page.text)
     for tool in ("register_hypothesis", "run_experiment", "record_verdict", "end_session"):
@@ -93,16 +101,19 @@ def test_the_page_names_the_four_tools_and_links_only_pages_of_the_site(loaded, 
         addresses.LEGEND,
         addresses.HOW,
         addresses.STYLESHEET,
+        "/index.html",
     }
-    expected |= {f"{r.application}-{r.session}.html" for r in loaded}
+    expected |= {f"{r.session}.html" for r in loaded}
     assert set(page.links) == expected
     # The commentary names no folder (18.5). Recorded refusal messages name lab spec files and are shown as
     # recorded (18.4).
-    assert not any(".kiro" in s.text or "/" in s.text for s in how.page(loaded) if s.ink is Ink.COMMENTARY)
+    assert not any(
+        ".kiro" in s.text or "/" in s.text for s in how.page(loaded, app) if s.ink is Ink.COMMENTARY
+    )
 
 
-def test_declared_values_are_pencil_and_the_commentary_comes_from_text_py(loaded) -> None:
-    segments = how.page(loaded)
+def test_declared_values_are_pencil_and_the_commentary_comes_from_text_py(loaded, app) -> None:
+    segments = how.page(loaded, app)
     for segment in segments:
         if segment.ink is Ink.COMMENTARY:
             assert segment.source.startswith(f"{text.SOURCE_FILE}: ")

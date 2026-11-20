@@ -55,7 +55,8 @@ mkdir -p $R/state sessions
 bench-make-lab body-lab/lab                      # after builder files change; the lab is committed
 bench-new-session --application body-lab --adapter body_lab.adapter:BodyAdapter \
   --scan-sources body-lab/adapter/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
-  --lab body-lab/lab --state $R/state --sessions sessions --session-id body-1 --seed 1 --config-out $R/body-1.toml
+  --lab body-lab/lab --state $R/state --sessions sessions --session-id body-1 --seed 1 --variant a \
+  --config-out $R/body-1.toml
 export BENCH_SESSION_CONFIG="$PWD/$R/body-1.toml"
 export BENCH_HOOK_LOG="$PWD/$R/body-1.hook-log.jsonl"
 cd body-lab/lab
@@ -87,6 +88,16 @@ bench-check-discovered sessions discovered
 ```
 
 body-1 has no copy: it was sealed before the bench recorded the spec files at the end (`discovered/README.md`).
+
+## Two bodies (body-lab task 7)
+Choose the body when the session starts, with `--variant`: `a` is the original body, `b` is the same body without the
+rubber tire of the wheel (the axle stays and touches nothing). The label goes into the record's start entry. There is no
+default: without `--variant`, or with a label other than `a` or `b`, the session does not start. Dr. Kiro is told
+nothing about the label. `build-from-spec`'s `bfs-run` takes the same `--variant`. Sessions sealed before this change
+(body-1 and body-2) have no label in their records and need no action.
+
+`scripts/compare_bodies.py` runs three probes on both bodies (all channels at 0; the wheel's channel at +1 and -1)
+and prints x, y and heading. It is for the builder, not for Dr. Kiro, and is not part of the product.
 
 ## Limits
 

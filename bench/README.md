@@ -178,6 +178,9 @@ uv tool install --editable './bench[frontend]' --reinstall
 ```
 
 - Start line (type it as the first message): `Begin the session.`
+- Variant (lab-bench Requirement 23): `bench-new-session --variant <label>` for an application whose adapter
+  declares `variants` (body-lab: `a`, `b`). Such an application does not start without a label or with an
+  unknown one, and no default is filled in. An application without `variants` refuses the option.
 - Continue line (only if Kiro CLI ends a turn before the session ends): `Continue the session.`
 - Send nothing else. Dr. Kiro does not ask questions.
 - Without interaction, if you have a `KIRO_API_KEY`:

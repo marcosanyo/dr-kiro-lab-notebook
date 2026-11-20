@@ -10,5 +10,9 @@ path = "../model/specimen_01.xml"
 extractor = "mjcf"
 
 [[source]]
+path = "../model/specimen_02.xml"
+extractor = "mjcf"
+
+[[source]]
 path = "../model/specimen_01.wiring.json"
 extractor = "wiring-json"

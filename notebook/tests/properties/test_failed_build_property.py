@@ -26,7 +26,7 @@ import pytest
 from hypothesis import HealthCheck, event, given, settings
 from hypothesis import strategies as st
 
-from fixtures.choices import CHOICE, COVER
+from fixtures.choices import CHOICE, write_app
 from fixtures.session import FAKE_SOURCES, STOP_LIST, accepted_session
 from notebook import build, scan, text
 from notebook.errors import NotebookError
@@ -43,7 +43,7 @@ LAYOUTS = (
 )
 WORDS = "# test fixture word list\nlimp\n"
 RECORD = Path("sessions") / "fake" / "s1"
-CHOICE_FILE = Path("choices") / "fake" / "s1.toml"
+CHOICE_FILE = Path("app") / "choices" / "s1.toml"
 
 
 @dataclass(frozen=True)
@@ -56,7 +56,7 @@ def _inputs(root: Path, out: Path) -> Inputs:
     return Inputs(
         sessions=root / "sessions",
         requests=root / "requests",
-        choices=root / "choices",
+        apps=(root / "app",),
         layouts=root / "layouts.toml",
         words=root / "words.txt",
         scan_configs=(FAKE_SOURCES,),
@@ -71,9 +71,7 @@ def base(tmp_path_factory) -> Base:
     made = accepted_session(work / "lab")
     root = work / "valid"
     shutil.copytree(made.sessions, root / "sessions")
-    (root / CHOICE_FILE).parent.mkdir(parents=True)
-    (root / CHOICE_FILE).write_text(CHOICE)
-    (root / "choices" / "cover.toml").write_text(COVER)
+    write_app(root / "app")
     (root / "layouts.toml").write_text(LAYOUTS)
     (root / "words.txt").write_text(WORDS)
     # The uncorrupted input set builds (so every failure below comes from its corruption).

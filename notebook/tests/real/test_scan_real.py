@@ -4,6 +4,7 @@ level, pass 2 over the joined file through its author ranges. Every refusal mess
 choice reason pass at their authors' levels (Requirement 12.8). Every link is relative and holds no `..`
 (Requirement 3.2, design N28)."""
 
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -15,7 +16,7 @@ from notebook.inputs import Inputs
 
 ROOT = Path(__file__).resolve().parents[3]
 SESSIONS = ROOT / "sessions"
-CHOICES = ROOT / "notebook" / "choices"
+APPS = (ROOT / "wind-tunnel" / "notebook", ROOT / "body-lab" / "notebook")
 REQUESTS = ROOT / "build-from-spec" / "requests"
 LAYOUTS = ROOT / "notebook" / "layouts.toml"
 
@@ -51,7 +52,13 @@ def _links_stay_in_the_site(name: str, written: str) -> None:
     parser.close()
     assert parser.links, name
     for link in parser.links:
-        assert ".." not in link and not link.startswith("/") and ":" not in link, (name, link)
+        # Relative links, except `/index.html` and `/<application>/index.html` (the front page, another
+        # application).
+        assert ".." not in link and ":" not in link, (name, link)
+        assert not link.startswith("/") or re.fullmatch(r"/index\.html|/[a-z0-9-]+/index\.html", link), (
+            name,
+            link,
+        )
 
 
 def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_site(scanner) -> None:
@@ -63,7 +70,7 @@ def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_si
     inputs = Inputs(
         sessions=SESSIONS,
         requests=REQUESTS,
-        choices=CHOICES,
+        apps=APPS,
         layouts=LAYOUTS,
         words=ROOT / "notebook" / "commentary-words.txt",
         scan_configs=(
@@ -76,14 +83,19 @@ def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_si
     files = build.render(build.model(build.check_inputs(inputs, allow_fake=False)))  # scans while rendering
     pages = {n: d.decode("utf-8") for n, d in files.items() if n.endswith(".html")}
     assert sorted(pages) == [
-        "body-lab-body-1.html",
-        "body-lab-body-2.html",
-        "how.html",
+        "body-lab/body-1.html",
+        "body-lab/body-2.html",
+        "body-lab/body-3.html",
+        "body-lab/how.html",
+        "body-lab/index.html",
+        "body-lab/legend.html",
         "index.html",
-        "legend.html",
-        "wind-tunnel-wt-002.html",
-        "wind-tunnel-wt-003.html",
-        "wind-tunnel-wt-004.html",
+        "wind-tunnel/how.html",
+        "wind-tunnel/index.html",
+        "wind-tunnel/legend.html",
+        "wind-tunnel/wt-002.html",
+        "wind-tunnel/wt-003.html",
+        "wind-tunnel/wt-004.html",
     ]
     for name, written in pages.items():
         _links_stay_in_the_site(name, written)
@@ -99,8 +111,8 @@ def test_every_refusal_message_and_choice_reason_passes_at_its_authors_level(sca
             segments += [*message.parts, *([message.note] if message.note else [])]
     assert {AUTHOR_LEVEL[ink.SCAN_AUTHOR[s.ink]] for s in segments} == {"builder", "dr-kiro"}
     assert any("requirements.md" in s.text and s.ink is ink.Ink.PENCIL for s in segments)
-    cover = choices.load_cover(CHOICES, loaded)
-    reasons = scan.choice_segments(choices.load(CHOICES, loaded).values(), cover)
+    apps = choices.load_apps(list(APPS), loaded)
+    reasons = scan.choice_segments(apps.choices.values(), apps.apps)
     assert reasons
     assert scan.segment_findings(scanner, [*segments, *reasons]) == []
 

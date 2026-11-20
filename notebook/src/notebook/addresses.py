@@ -1,10 +1,12 @@
 """Every address of the site, in one place (design 9, N28).
-
-The site is flat: every page is at the site root, and the only folders are `p/` (pictures) and `a/` (the
-stylesheet and the script). So every link is relative and none contains `..` or a folder level for a page
-(Requirement 3.2). Application and session ids are put into page names only when they match `SITE_ID`, lower
-case only, so two addresses cannot differ by case. Ids put in a fragment are checked against the bench's id
-patterns (`html.check_id`). `Site` (task 9.2) refuses two files with the same path.
+The site root holds the front page and one folder per application. A folder is flat: its pages are in it, and
+its only folders are `p/` (pictures) and `a/` (the stylesheet, the script and the typefaces); the root has its
+own `a/`. So every link is relative and none contains `..`, except the two forms that go from an application
+to the front page or to another application: `/index.html` and `/<application>/index.html` (the site is
+served at its root).
+Application and session ids are put into page names only when they match `SITE_ID`, lower case only, so two
+addresses cannot differ by case. Ids put in a fragment are checked against the bench's id patterns
+(`html.check_id`). `Site` refuses two files with the same path.
 """
 
 import re
@@ -19,6 +21,7 @@ COVER = "index.html"
 HOW = "how.html"
 BUILT = "built.html"
 LEGEND = "legend.html"
+RESERVED = (COVER, HOW, BUILT, LEGEND)
 PICTURE_DIR = "p"
 ASSET_DIR = "a"
 STYLESHEET = f"{ASSET_DIR}/notebook.css"
@@ -43,23 +46,29 @@ def site_id(kind: str, text: str, source: str) -> str:
     return text
 
 
-def lab(application: str, source: str) -> str:
-    """The lab page `<app>.html`."""
-    return f"{site_id('application', application, source)}.html"
-
-
 def session(application: str, session_id: str, source: str) -> str:
-    """The session page `<app>-<session>.html`."""
-    app = site_id("application", application, source)
-    return f"{app}-{site_id('session', session_id, source)}.html"
+    """The session page `<session>.html` inside its application's folder. Both ids are checked; a session
+    cannot be named like a page of the folder."""
+    site_id("application", application, source)
+    sid = site_id("session", session_id, source)
+    if f"{sid}.html" in RESERVED:
+        raise NotebookError(source, f"the session id {sid!r} is the name of a page of the site")
+    return f"{sid}.html"
 
 
-def replay(application: str, session_id: str, step: int, source: str) -> str:
-    """Replay step `step` (1-based) of a session, `<app>-<session>-replay-<n>.html`."""
-    if not isinstance(step, int) or isinstance(step, bool) or step < 1:
-        raise ValueError(f"a replay step is a whole number from 1, got {step!r}")
-    app = site_id("application", application, source)
-    return f"{app}-{site_id('session', session_id, source)}-replay-{step}.html"
+def door(application: str, source: str) -> str:
+    """The folder of an application, as the front page links it (relative, downward)."""
+    return f"{site_id('application', application, source)}/{COVER}"
+
+
+def apps_link(application: str, source: str) -> str:
+    """The link from inside one application to another, or to the front page when `application` is empty.
+    The applications are folders of the site root, so these two forms are the only links that are not
+    relative (design, "Pages"): `/index.html` and `/<application>/index.html`. The page is named in full
+    so the site opens from a plain file store (S3 behind CloudFront) that adds no `index.html` to a folder."""
+    if not application:
+        return f"/{COVER}"
+    return f"/{site_id('application', application, source)}/{COVER}"
 
 
 def picture(digest: str, source: str) -> str:

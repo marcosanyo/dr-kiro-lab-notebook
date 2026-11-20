@@ -97,6 +97,8 @@ class SessionConfig:
     stop_list: Path
     # Whether ending needs the ## Discovered spec table: "required" or "not-required" (build-from-spec 12.1).
     discovered_table: str
+    # A named variant of the application (lab-bench 23). None when the config has none.
+    variant: str | None = None
 
 
 DISCOVERED_TABLE_VALUES = ("required", "not-required")
@@ -218,7 +220,7 @@ class Session:
     @classmethod
     def _check_config(cls, config: SessionConfig) -> tuple[Declaration, Scanner]:
         for f in fields(SessionConfig):
-            if getattr(config, f.name, None) is None:
+            if f.name != "variant" and getattr(config, f.name, None) is None:
                 raise _refuse(f"cannot start: {f.name} is missing")
         for name in ("session_id", "application"):
             value = getattr(config, name)
@@ -243,6 +245,11 @@ class Session:
             raise _refuse("cannot start: scan_sources is empty")
         if config.discovered_table not in DISCOVERED_TABLE_VALUES:
             raise _refuse("cannot start: discovered_table must be required or not-required")
+        accepted = getattr(config.adapter, "variants", None)
+        if accepted is None and config.variant is not None:
+            raise _refuse("cannot start: this application has no variants; remove the variant setting")
+        if accepted is not None and config.variant not in accepted:
+            raise _refuse("cannot start: the variant setting must be one of " + ", ".join(accepted))
         try:
             decl = config.adapter.declaration()
             check_declaration(decl)
@@ -284,6 +291,7 @@ class Session:
                 "experiments_dir": config.experiments_dir,
                 "discovered_table": config.discovered_table,
                 "step_bound": STEP_BOUND,
+                **({"variant": config.variant} if config.variant is not None else {}),
             },
         )
         store.builder_log(f"started session {config.session_id}")
@@ -305,6 +313,9 @@ class Session:
             store.close()
             raise SessionError("the record does not begin with a start entry")
         start = entries[0]["body"]
+        if config.variant is None and "variant" in start:
+            store.close()
+            raise SessionError("the record has a variant, but the config names none")
         expected = {
             "session": config.session_id,
             "application": config.application,
@@ -312,6 +323,8 @@ class Session:
             "declaration": declaration_record(decl),
             "discovered_table": config.discovered_table,
         }
+        if config.variant is not None:
+            expected["variant"] = config.variant
         for key, value in expected.items():
             if key not in start:
                 store.close()

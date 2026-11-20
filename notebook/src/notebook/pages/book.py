@@ -6,13 +6,15 @@ The title, the summary and the words on the photos are written by a person (choi
 number comes from the record; Dr. Kiro's words keep Dr. Kiro's ink.
 """
 
+import hashlib
+import math
 import re
 from dataclasses import dataclass
 
 from bench.specfiles.discovered import Row, Table
 
-from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables, text
-from notebook.choices import Choices, Lab, Note, Polaroid
+from notebook import addresses, html, numbers, progress, readerrequest, readerruns, refusals, tables, text
+from notebook.choices import App, Choices, Note, Polaroid
 from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Authored, Ink, Segment, commentary, markup, pencil
@@ -115,7 +117,7 @@ def _icon(status: str) -> list[Segment]:
     )
 
 
-def _chips(record: RecordModel, chosen: Choices, lab: Lab, table: Table | None) -> list[Segment]:
+def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) -> list[Segment]:
     source = f"{record.name}: chips"
     counts = progress.predictions(record)
     chips: list[list[Segment]] = [
@@ -123,6 +125,12 @@ def _chips(record: RecordModel, chosen: Choices, lab: Lab, table: Table | None) 
         [*html.text(pencil(str(len(record.trials)), source)), markup(" "), *_human(lab.unit, lab.source)],
         [*say_text("CHIP_DATE"), *_human(chosen.date, f"{chosen.file} key date")],
     ]
+    if record.variant is not None:
+        chips.append(
+            [*say_text("CHIP_BODY"), *html.text(pencil(record.variant, f"{record.name}: start entry"))]
+        )
+    elif chosen.body is not None:
+        chips.append([*say_text("CHIP_BODY"), *_human(chosen.body, f"{chosen.file} key body")])
     if table is None:
         chips.append(say_text("CHIP_NO_TABLE"))
     else:
@@ -140,10 +148,147 @@ def _chips(record: RecordModel, chosen: Choices, lab: Lab, table: Table | None) 
                     ],
                 )
             )
-    chips.append([*say_text("CHIP_PREDICTIONS"), *html.text(pencil(f"{counts.hit}/{counts.total}", source))])
+    chips.append(
+        [
+            *html.text(pencil(str(counts.hit), source)),
+            *say_text("OF"),
+            *html.text(pencil(str(counts.total), source)),
+            *say_text("CHIP_PREDICTIONS"),
+        ]
+    )
     if record.seal.end == "stopped":
         chips.append([*say_text("CHIP_STOPPED"), *html.text(record.seal.reason.segment())])
     return _el("ul", "chips", [s for chip in chips for s in html.element("li", None, chip)])
+
+
+def _sentence(source: str, *pieces: str) -> list[Segment]:
+    """One sentence of the story: a piece that starts with `@` is a string of `text.py` (our words); any other
+    piece is a number the notebook counted from the record, in pencil."""
+    out: list[Segment] = []
+    for piece in pieces:
+        out += say_text(piece[1:]) if piece.startswith("@") else html.text(pencil(piece, source))
+    return out
+
+
+def _own(record: RecordModel, runs: list[readerruns.Run]) -> list[readerruns.Run]:
+    """The reader's runs made from this session's record, on the body this session ran on."""
+    return [
+        r
+        for r in runs
+        if (r.source_application, r.source_session) == (record.application, record.session)
+        and r.variant == record.variant
+    ]
+
+
+def _borrowed(record: RecordModel, runs: list[readerruns.Run]) -> list[readerruns.Run]:
+    """The reader's runs on this session's body that were given another session's spec: an earlier spec tried
+    on a body that has changed since. Only a record with a body label has them."""
+    if record.variant is None:
+        return []
+    return [
+        r
+        for r in runs
+        if r.source_application == record.application
+        and r.source_session != record.session
+        and r.variant == record.variant
+        and r.setup == "spec"
+    ]
+
+
+def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run]) -> list[Segment]:
+    """What happened in this session, in three steps joined by arrows. Every number is counted from the
+    record, the table or the reader's runs; the words are plain English."""
+    source = f"{record.name}: what happened"
+    counts = progress.predictions(record)
+    registered = sum(len(h.predictions) for h in record.hypotheses)
+    head = [
+        *_el("h3", "cap", say_text("STORY_HEADING")),
+    ]
+    if registered == 0:
+        return _el("section", "story", [*head, *_el("p", "story-none", say_text("STORY_NONE"))], id="story")
+    first = _sentence(source, "@STORY_WROTE_BEFORE", str(registered), "@STORY_WROTE_AFTER")
+    stopped = record.seal.end == "stopped"
+    if stopped:
+        second = _sentence(source, str(counts.hit), "@OF", str(counts.total), "@STORY_CHECKED_STOPPED")
+    elif table is None:
+        second = _sentence(source, str(counts.miss), "@STORY_MISSED_NO_TABLE")
+    else:
+        rejected = progress.status_counts(table)["rejected"]
+        missed = {o.prediction for o in record.outcomes if o.outcome == "miss"}
+        # Rows that cite a missed prediction and are not validated: what the misses changed, when no rule
+        # had to be struck out.
+        left = [
+            (r.id, r.status)
+            for r in table.rows
+            if r.status in ("partly", "observed") and missed & set(r.predictions)
+        ]
+        if rejected:
+            second = _sentence(source, str(counts.miss), "@STORY_MISSED", str(rejected), "@STORY_STRUCK")
+        elif left:
+            pieces: list[str] = [
+                str(counts.miss),
+                "@STORY_MISSED_LEFT" if counts.miss == 1 else "@STORY_MISSES_LEFT",
+            ]
+            for n, (row_id, status) in enumerate(left):
+                if n:
+                    pieces.append("@LIST_SEPARATOR")
+                pieces += [row_id, "@STORY_LEFT_AS", status]
+            pieces.append("@STORY_LEFT_END")
+            second = _sentence(source, *pieces)
+        else:
+            second = _sentence(source, str(counts.miss), "@STORY_MISSED_NONE_STRUCK")
+    mine = _own(record, runs)
+    if mine:
+        tally = {
+            setup: (passes, total) for setup, passes, total, _ in readerruns.tally(mine, mine[0].request_id)
+        }
+        spec, none = tally["spec"], tally["none"]
+        third = _sentence(
+            source,
+            "@STORY_READER_A",
+            str(spec[0]),
+            "@OF",
+            str(spec[1]),
+            "@STORY_READER_B",
+            str(none[0]),
+            "@OF",
+            str(none[1]),
+            "@STORY_END",
+        )
+        for session in sorted({r.source_session for r in _borrowed(record, runs)}):
+            theirs = [r for r in _borrowed(record, runs) if r.source_session == session]
+            third += _sentence(
+                source,
+                "@STORY_BORROWED_A",
+                session,
+                "@STORY_BORROWED_B",
+                str(sum(1 for r in theirs if r.result == "pass")),
+                "@OF",
+                str(len(theirs)),
+                "@STORY_END",
+            )
+    elif table is not None:
+        by = progress.status_counts(table)
+        third = _sentence(
+            source,
+            str(by["validated"]),
+            "@STORY_TRUST_A",
+            str(by["partly"] + by["observed"]),
+            "@STORY_TRUST_B",
+        )
+    else:
+        third = say_text("STORY_NO_SPEC")
+    steps = [
+        s
+        for n, words in enumerate((first, second, third), start=1)
+        for s in html.element("li", {"class": f"story-step story-{n}"}, words)
+    ]
+    return _el(
+        "section",
+        "story",
+        [*head, *_el("ol", "story-steps", steps)],
+        id="story",
+    )
 
 
 # The highlight
@@ -198,7 +343,7 @@ def _note(
     record: RecordModel,
     found: progress.Series,
     table: Table | None,
-    lab: Lab,
+    lab: App,
     note: Note,
     outcomes: dict[str, Outcome],
 ) -> tuple[list[Segment], list[Segment]]:
@@ -250,7 +395,7 @@ def _notes(
     found: progress.Series,
     table: Table | None,
     chosen: Choices,
-    lab: Lab,
+    lab: App,
 ) -> list[Segment]:
     outcomes = {o.prediction: o for o in record.outcomes}
     styles = ("note-yellow tilt-one", "note-pink tilt-two", "note-blue tilt-three")
@@ -265,18 +410,44 @@ def _value_text(value: float, unit: str, where: str) -> str:
     return f"{numbers.short(value, where)} {unit}".strip()
 
 
+def _jitter(seed: str, k: int) -> float:
+    """A number from -1 to 1 that depends only on the seed and k, so the same record always draws the same
+    line."""
+    digest = hashlib.sha256(f"{seed}:{k}".encode()).hexdigest()
+    return int(digest[:8], 16) / 0xFFFFFFFF * 2 - 1
+
+
+def _pencil_line(corners: list[tuple[float, float]], seed: str) -> str:
+    """The step line as a path that wavers a little between its corners, like a line drawn by hand. The
+    corners themselves are exact."""
+    out = f"M{corners[0][0]:.1f} {corners[0][1]:.1f}"
+    k = 0
+    for (x0, y0), (x1, y1) in zip(corners, corners[1:], strict=False):
+        length = math.hypot(x1 - x0, y1 - y0) or 1.0
+        pieces = max(2, int(length / 9))
+        for j in range(1, pieces + 1):
+            px, py = x0 + (x1 - x0) * j / pieces, y0 + (y1 - y0) * j / pieces
+            if j < pieces:
+                k += 1
+                wobble = _jitter(seed, k) * 2.4
+                px += -(y1 - y0) / length * wobble
+                py += (x1 - x0) / length * wobble
+            out += f"L{px:.1f} {py:.1f}"
+    return out
+
+
 def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     """The best so far after every trial, as a step line. Only the largest steps up are named, each with its
     hypothesis and the change ("H10: +9.2 cm"), and no two names overlap."""
     source = f"{record.name}: progress"
     width, height, left, right, top, bottom = 520.0, 250.0, 62.0, 16.0, 40.0, 30.0
     points = found.points
-    raws = [p.raw for p in points if p.raw is not None]
     bests = [p.best for p in points if p.best is not None]
     if not bests:
         return _el("p", "chart-none", say_text("PROGRESS_NONE"))
-    low, high = min(raws), max(raws)
-    pad = (high - low) * 0.1 or 1.0
+    # The axis fits the line, so the line never lies on the bottom of the frame.
+    low, high = min(bests), max(bests)
+    pad = (high - low) * 0.25 or abs(high) * 0.05 or 1.0
     low, high = low - pad, high + pad
     n = len(points)
     unit = found.unit
@@ -288,7 +459,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         return top + (height - top - bottom) * (1 - (v - low) / (high - low))
 
     marks: list[Segment] = []
-    for v in (min(raws), max(raws)):
+    for v in sorted({min(bests), max(bests)}):
         marks += html.shape(
             "line",
             {
@@ -304,18 +475,38 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
             {"class": "ch-tick", "x": f"{left - 6}", "y": f"{y(v) + 4:.1f}"},
             [pencil(numbers.brief(v, unit, source), source)],
         )
-    d = ""
+    corners: list[tuple[float, float]] = []
     for i, p in enumerate(points):
         if p.best is None:
             continue
-        d += f"M{x(i):.1f} {y(p.best):.1f}" if not d else f"H{x(i):.1f}V{y(p.best):.1f}"
-    marks += html.element("path", {"class": "ch-line", "d": d + f"H{x(n - 1):.1f}", "fill": "none"}, [])
-    for i, p in enumerate(points):
-        if p.raw is not None:
-            cls = "ch-dot" if p.value is not None else "ch-dot ch-dot-off"
-            marks += html.shape(
-                "circle", {"class": cls, "cx": f"{x(i):.1f}", "cy": f"{y(p.raw):.1f}", "r": "2"}
-            )
+        if corners and abs(corners[-1][1] - y(p.best)) > 0.01:
+            corners += [(x(i), corners[-1][1]), (x(i), y(p.best))]
+        elif not corners:
+            corners.append((x(i), y(p.best)))
+    corners.append((x(n - 1), corners[-1][1]))
+    # The line, and a second fainter pass of the pencil beside it.
+    line = _pencil_line(corners, record.name)
+    marks += html.element("path", {"class": "ch-line", "d": line, "fill": "none"}, [])
+    marks += html.element(
+        "path", {"class": "ch-pass", "d": _pencil_line(corners, f"{record.name}:second"), "fill": "none"}, []
+    )
+    if found.mark_index is not None:
+        m = found.mark_index
+        marks += html.shape(
+            "line",
+            {
+                "class": "ch-mark",
+                "x1": f"{x(m):.1f}",
+                "x2": f"{x(m):.1f}",
+                "y1": f"{top - 12}",
+                "y2": f"{height - bottom + 6}",
+            },
+        )
+        marks += html.element(
+            "text",
+            {"class": "ch-flag", "x": f"{x(m):.1f}", "y": f"{height - 6}"},
+            [commentary(found.spec.mark_words, f"{found.spec.source} key mark_words")],
+        )
     span = max(bests) - min(bests)
     steps = [
         (i, p)
@@ -324,30 +515,42 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     ]
     steps.sort(key=lambda item: -abs(item[1].delta))
     named: list[tuple[float, float, float]] = []  # (left, right, y) of each name
-    shown_steps: list[tuple[int, str, float, float]] = []
+    shown_steps: list[tuple[int, str, float, float, float]] = []
     for i, p in steps[:MAX_LABELS]:
         text = f"{p.hypothesis}: {numbers.brief(p.delta, unit, source, signed=True)}"
         size = LABEL_CHAR * len(text)
         end = x(i) > width * 0.6
-        box_left, box_right = (x(i) - size, x(i)) if end else (x(i) + 6, x(i) + 6 + size)
+        box_left, box_right = (x(i) - 10 - size, x(i) - 10) if end else (x(i) + 8, x(i) + 8 + size)
         for dy in (-12, -32, 22):
             at = y(p.best) + dy
             if box_left < 0 or box_right > width or at < 12 or at > height - bottom:
                 continue
             if all(box_right < a or box_left > b or abs(at - c) > LABEL_HEIGHT for a, b, c in named):
                 named.append((box_left, box_right, at))
-                shown_steps.append((i, text, at, 0.0 if not end else 1.0))
+                shown_steps.append((i, text, at, 0.0 if not end else 1.0, y(p.best)))
                 break
     for i, p in enumerate(points):
         if p.improved and p.best is not None:
             marks += html.shape(
                 "circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{y(p.best):.1f}", "r": "4"}
             )
-    for i, label, at, end in shown_steps:
+    for i, label, at, end, dot in shown_steps:
+        edge = x(i) - 8 if end else x(i) + 6
+        aim = (x(i) - 3, dot - 5) if at < dot else (x(i) - 3, dot + 5)
+        marks += html.element(
+            "path",
+            {
+                "class": "ch-leader",
+                "fill": "none",
+                "d": f"M{edge:.1f} {at + (3 if at < dot else -9):.1f} Q{edge + (3 if end else -3):.1f} "
+                f"{(at + dot) / 2:.1f} {aim[0]:.1f} {aim[1]:.1f}",
+            },
+            [],
+        )
         cls = "ch-note ch-note-end" if end else "ch-note"
         marks += html.element(
             "text",
-            {"class": cls, "x": f"{x(i) - (2 if end else -6):.1f}", "y": f"{at:.1f}"},
+            {"class": cls, "x": f"{x(i) - (10 if end else -8):.1f}", "y": f"{at:.1f}"},
             [pencil(label, source)],
         )
     for i in {0, n - 1}:
@@ -371,6 +574,14 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         *html.text(pencil(found.spec.measurement, source)),
         *say_text("PROGRESS_BETTER_HIGHER" if found.spec.better == "higher" else "PROGRESS_BETTER_LOWER"),
     ]
+    if found.spec.mark is not None and found.mark_index is not None:
+        caption += [
+            *say_text("PROGRESS_MARK_A"),
+            *html.text(
+                pencil(f"{found.spec.mark} = {numbers.short(found.spec.mark_equals, source)}", source)
+            ),
+            *say_text("PROGRESS_MARK_B"),
+        ]
     if found.spec.require is not None:
         caption += [
             *say_text("PROGRESS_ONLY_WHEN"),
@@ -385,10 +596,10 @@ def _highlight(
     layout: Layout,
     chosen: Choices,
     table: Table | None,
-    lab: Lab,
+    lab: App,
     shown: Shown,
 ) -> list[Segment]:
-    head = _el("h3", "cap", say_text("HIGHLIGHT_HEADING"))
+    head = [*_el("h3", "cap", say_text("HIGHLIGHT_HEADING")), *_el("p", "intro", say_text("HIGHLIGHT_INTRO"))]
     if chosen.progress is None:
         return _el(
             "section", "highlight", [*head, *_el("p", None, say_text("HIGHLIGHT_NONE"))], id="highlight"
@@ -479,6 +690,25 @@ def _rule(
         )
     elif rv.note is not None:
         body += _el("p", "rule-rewrite", [*say_text("REWRITTEN_NOWHERE"), *html.text(pencil(rv.note, src))])
+    refused = refusals.refused_end_note(row.id, record.refusals)
+    if refused is not None:
+        said: list[Segment] = []
+        for m in refused.messages:
+            said += _el("p", "rule-refused-message", list(m.parts))
+        said += _el("p", "rule-refused-quote", [refused.messages[0].note] if refused.messages[0].note else [])
+        body += _el(
+            "section",
+            "rule-refused",
+            [
+                *_el("p", "rule-refused-head", list(refused.heading)),
+                *_el("p", "rule-refused-sealed", [refused.sealed]),
+                *_el(
+                    "details",
+                    "refused-more",
+                    [*html.element("summary", None, say_text("REFUSED_END_SHOW")), *said],
+                ),
+            ],
+        )
     more = _el("p", "rule-scope", html.text(_cell(snapshot, row, row.scope)))
     evidence: list[Segment] = []
     if row.experiments:
@@ -493,7 +723,7 @@ def _rule(
 
 
 def _spec(record: RecordModel, table: Table | None, checked: bool) -> list[Segment]:
-    head = _el("h3", "cap", say_text("SPEC_HEADING"))
+    head = [*_el("h3", "cap", say_text("SPEC_HEADING")), *_el("p", "intro", say_text("SPEC_INTRO"))]
     snapshot = tables.end_snapshot(record) or (record.snapshots[-1] if record.snapshots else None)
     if table is None or snapshot is None:
         return _el("section", "spec", [*head, *_el("p", None, say_text("SPEC_NONE"))], id="spec")
@@ -535,6 +765,7 @@ def _plan(record: RecordModel) -> list[Segment]:
         "plan",
         [
             *_el("h3", "cap", say_text("PLAN_HEADING")),
+            *_el("p", "intro", say_text("PLAN_INTRO")),
             *_el("p", "hint", say_text("PLAN_HINT")),
             *_el("ol", "plan-list", items),
         ],
@@ -791,7 +1022,12 @@ def _experiments(
     return _el(
         "section",
         "experiments",
-        [*_el("h3", "cap", heading), *_el("p", "hint", say_text("ALL_HINT")), *_el("ul", "hyps", rows)],
+        [
+            *_el("h3", "cap", heading),
+            *_el("p", "intro", say_text("ALL_INTRO")),
+            *_el("p", "hint", say_text("ALL_HINT")),
+            *_el("ul", "hyps", rows),
+        ],
         id="experiments",
     )
 
@@ -799,12 +1035,47 @@ def _experiments(
 # The reader
 
 
-def _reader(
-    record: RecordModel, runs: list[readerruns.Run], requests: dict[str, readerrequest.Request]
+def _run_line(
+    run: readerruns.Run, source: str, rows: set[str], known: set[str], page: str | None = None
 ) -> list[Segment]:
-    mine = [
-        r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
-    ]
+    """One run: its name and result, the trial at which it was first in range (or that it never was) and its
+    last trial, and the ids it said it relied on, linked where the page holds them."""
+    out = [*html.text(pencil(run.name, source)), markup(" "), *html.text(pencil(run.result, source))]
+    if run.first_in_range is None:
+        out += [*say_text("READER_RUN_NEVER"), *html.text(pencil(run.last_trial, source))]
+    else:
+        out += [
+            *say_text("READER_RUN_FIRST"),
+            *html.text(pencil(run.first_in_range, source)),
+            *say_text("READER_RUN_LAST"),
+            *html.text(pencil(run.last_trial, source)),
+        ]
+    cited = [i for i in run.relied_ids if i != "none"]
+    if not cited:
+        return [*out, *say_text("READER_RUN_CITED_NONE")]
+    out += say_text("READER_RUN_CITED")
+    for n, item in enumerate(cited):
+        if n:
+            out += say_text("LIST_SEPARATOR")
+        piece = html.text(pencil(item, source))
+        if item in rows:
+            anchor = addresses.row(item, source)
+            out += link(addresses.on_page(page, anchor) if page else addresses.here(anchor), piece)
+        elif item in known and page is None:
+            out += link(addresses.here(item), piece)
+        else:
+            out += piece
+    return out
+
+
+def _reader(
+    record: RecordModel,
+    runs: list[readerruns.Run],
+    requests: dict[str, readerrequest.Request],
+    table: Table | None,
+    others: dict[str, RecordModel],
+) -> list[Segment]:
+    mine = _own(record, runs)
     if not mine:
         return []
     ids = sorted({r.request_id for r in mine})
@@ -813,14 +1084,73 @@ def _reader(
     request = requests[ids[0]]
     source = f"{readerruns.FOLDER}: the runs of {ids[0]}"
     tiles: list[Segment] = []
+    for session in sorted({r.source_session for r in _borrowed(record, runs)}):
+        theirs = [r for r in _borrowed(record, runs) if r.source_session == session]
+        for r in theirs:
+            if requests[r.request_id].words != request.words:
+                raise NotebookError(
+                    record.name, f"{r.name} asked {r.request_id!r}, whose words differ from {ids[0]!r}"
+                )
+        other = others.get(session)
+        if other is None:
+            raise NotebookError(
+                record.name, f"{theirs[0].name} names source {session!r}, which has no record"
+            )
+        other_table, _ = progress.table_of(other)
+        other_rows = {r.id for r in other_table.rows} if other_table is not None else set()
+        page = addresses.session(other.application, other.session, other.name)
+        chips: list[Segment] = []
+        for run in theirs:
+            chips += html.element(
+                "li",
+                {"class": f"run run-{run.result}"},
+                _run_line(run, source, other_rows, set(), page),
+            )
+        relied = sorted(
+            {i for r in theirs for i in r.relied_ids if i in other_rows}, key=lambda i: int(i[1:])
+        )
+        snapshot = tables.end_snapshot(other) or (other.snapshots[-1] if other.snapshots else None)
+        if relied and snapshot is not None and other_table is not None:
+            by_id = {r.id: r for r in other_table.rows}
+            said: list[Segment] = []
+            for rid in relied:
+                row = by_id[rid]
+                said += html.element(
+                    "li",
+                    None,
+                    [
+                        *html.text(pencil(rid, source)),
+                        markup(" "),
+                        *html.text(_cell(snapshot, row, row.rule)),
+                    ],
+                )
+            chips += _el(
+                "li", "run-limit", [*say_text("READER_BORROWED_RULES"), *_el("ul", "borrowed-rules", said)]
+            )
+        passes = sum(1 for r in theirs if r.result == "pass")
+        tiles += _el(
+            "section",
+            "tile tile-borrowed",
+            [
+                *_el("p", "cap", [*say_text("READER_SETUP_BORROWED"), *html.text(pencil(session, source))]),
+                *_el("p", "tile-big", html.text(pencil(f"{passes}/{len(theirs)}", source))),
+                *_el("p", "tile-about", say_text("READER_PASSED")),
+                *_el("ul", "runs", chips),
+            ],
+        )
+    rows = {r.id for r in table.rows} if table is not None else set()
+    known = _anchors(record) | {h.id for h in record.hypotheses}
     for setup, passes, total, _other in readerruns.tally(mine, ids[0]):
         runs_of = [r for r in mine if r.setup == setup]
         chips: list[Segment] = []
         for run in runs_of:
             chips += html.element(
-                "li",
-                {"class": f"run run-{run.result}"},
-                [*html.text(pencil(run.name, source)), markup(" "), *html.text(pencil(run.result, source))],
+                "li", {"class": f"run run-{run.result}"}, _run_line(run, source, rows, known)
+            )
+        limits = sorted({limit for run in runs_of for limit in run.limits})
+        for limit in limits:
+            chips += _el(
+                "li", "run-limit", [*say_text("READER_RUN_LIMIT"), *html.text(pencil(limit, source))]
             )
         tiles += _el(
             "section",
@@ -837,6 +1167,7 @@ def _reader(
         "reader",
         [
             *_el("h3", "cap", say_text("READER_HEADING")),
+            *_el("p", "intro", say_text("READER_INTRO")),
             *_el("p", None, say_text("READER_ABOUT")),
             *_el("blockquote", "request", html.text(commentary(request.words, request.where))),
             *_el("section", "tiles", tiles),
@@ -852,12 +1183,14 @@ def body(
     record: RecordModel,
     layout: Layout,
     chosen: Choices,
-    lab: Lab,
+    lab: App,
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
     retakes: Retakes,
+    others: dict[str, RecordModel] | None = None,
 ) -> tuple[list[Segment], list[photo.PictureFile]]:
     """The opened notebook of one session, and the picture files it shows."""
+    others = others or {}
     if chosen.record != record.name:
         raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
     shown = Shown([], retakes)
@@ -865,16 +1198,17 @@ def body(
     title = f"{chosen.title} — {chosen.subtitle}"
     start = f"{chosen.file} key title"
     out = [
-        *parts.web("book-web"),
+        *(parts.web("book-web") if lab.decoration != "none" else []),
         *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
         *_el("h2", "book-title", [*_human(title, start), *_ours()]),
         *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
+        *_story(record, table, runs),
         *_chips(record, chosen, lab, table),
         *_highlight(record, layout, chosen, table, lab, shown),
+        *_reader(record, runs, requests, table, others),
         *_spec(record, table, checked),
         *_plan(record),
         *_experiments(record, layout, chosen, table, shown),
-        *_reader(record, runs, requests),
     ]
     unique: dict[str, photo.PictureFile] = {}
     for picture in shown.files:

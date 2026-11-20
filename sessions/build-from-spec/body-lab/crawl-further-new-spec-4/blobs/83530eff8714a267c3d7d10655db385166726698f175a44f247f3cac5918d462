@@ -1,0 +1,43 @@
+# Requirements (hypotheses)
+
+### H1: Lag 200 deg or an added c4 raises x above 0.266 m at 2.1 Hz
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 200 deg and c0, c1, c4 are 0, THE system SHALL reach x of at least 0.27 m.
+
+```prediction
+# relies on: R8, R7, R5
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0
+phi4 = 0
+```
+
+Notes: Three variants in one compare: lag 200 with no c4; lag 225 with c4 in phase with c2; lag 225 with c4 lagging c2 by 90 deg.
+
+Result (E1): lag 200 gave x = 0.294 m, y = 0.113 m, heading +10.6 deg. c4 variants were worse (x = 0.100 with heading +72 deg; x = 0.207).
+
+### H2: Lag near 180 to 190 deg at 2.1 Hz gives x of at least 0.3 m
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 185 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.5 m with heading within 20 deg of the start.
+
+```prediction
+# relies on: R8
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 185
+a4 = 0
+phi4 = 0
+```
+
+Notes: compare of lag 185 and lag 170 at 2.1 Hz, and lag 200 at 2.2 Hz.

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/body-lab/tasks.md`](../../../.kiro/specs/body-lab/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `e4ed1885fd24e91202a2ce3604845a8d0101dff732d03b8fab7a506f5899501f`
+> 原文 SHA-256: `107f8c2b2e6398cc635677ac28e2c26b51a95abddc76f0ed0bdd27130ba274b6`
 
 # タスク: body-lab
 
@@ -32,3 +32,24 @@
   - その後、ビルダーが結果をここに記録し、`discovered/README.md` を更新する。
   - 結果（body-2、macOS、2026-11-16、コミット `471ca88`）: Dr. Kiro 自身の `end_session` で `ended` として封印された。40 試行のうち 39 を使用（残り 1）、拒否 3 件、再開の一文なし。`bench-verify` は 125 件のエントリーと 77 個の blob を検証した。ラボと封印済みフォルダーに対する `bench-scan` は検出なし。`bench-export-spec` が `discovered/body-lab/body-2/` を書き、`bench-check-discovered` が通り、その写しのスキャンも検出なし。表は 14 行: `validated` 2、`observed` 4、`rejected` 8（それぞれ置き換える行を示す）。Dr. Kiro が挙げたステアリングは `workflow` と `method` だけだった。
   - _要件: 6.2_
+
+## 改訂: 2 つ目のボディ（要件 7）
+
+先に `lab-bench` のタスク 38（`variant` 設定）が要る。ブランチ `feat/second-body`。
+
+- **7. ボディ `b` とボディの選択** — 完了
+  - `specimen_02.xml`、`BODIES`、`sim.build(settings, body)`、`BodyAdapter(variant=...)` と `variants`（設計 10）。`scan_sources.toml` の 2 つ目のソース。`tests/test_bodies.py`。伝える文のゴールデンファイルはそのまま。README にオプションとラベルを書く。
+  - _要件: 7.1-7.6_
+
+- **8. 同じ入力を両方のボディで** — 完了
+  - 設計 10 の比較を 3 つのプローブだけで行った（body-1 と body-2 の全試行の再実行は、ユーザーの指示でクレジット節約のため省いた）。`scripts/compare_bodies.py`。結果、ボディ `a` と `b`（x、y は m、heading は度）:
+    - 全チャンネル 0: `a` x 4.8e-05、y -2.1e-05、heading 0.009。`b` x 2.5e-05、y -5.3e-06、heading -0.004。
+    - 車輪のチャンネル +1: `a` x -0.230、y 0.011、heading 39.18。`b` x 2.5e-05、y -5.3e-06、heading -0.004（動かない）。
+    - 車輪のチャンネル -1: `a` x 0.113、y 0.027、heading -34.96。`b` x 2.5e-05、y -5.3e-06、heading -0.004（動かない）。
+    - タイヤがないと、ボディ `b` は 3 つのプローブのどれでも動かない。軸は床を押せない。
+  - _要件: 7.8_
+
+- **9. 目隠しの確認** — 完了（封印された記録とノートの分は本番の後）
+  - 済み: リポジトリのラボの `bench-scan`（検出なし）。ラボのコピーは `diff` で同じと確認（違うのは空の `experiments` と `pictures` のフォルダーだけ）。`bench-new-session` は variant なしと `c` を拒否し、`a, b` と名指しする。`b` では開始し、開始エントリーは `"b"`。新しい記録（封印なし）の `bench-scan` は検出なし。
+  - 未了（ユーザーの指示で本番のセッションの後）: 体 `b` の封印された記録と `bench-verify`、ノートのビルド。
+  - _要件: 7.3, 7.4, 7.7, 7.9_

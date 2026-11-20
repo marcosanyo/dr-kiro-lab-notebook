@@ -9,9 +9,10 @@ DIGEST = "0" * 63 + "a"
 
 
 def test_pages_are_at_the_site_root() -> None:
-    assert addresses.lab("body-lab", "s") == "body-lab.html"
-    assert addresses.session("wind-tunnel", "wt-004", "s") == "wind-tunnel-wt-004.html"
-    assert addresses.replay("body-lab", "body-2", 3, "s") == "body-lab-body-2-replay-3.html"
+    assert addresses.session("wind-tunnel", "wt-004", "s") == "wt-004.html"
+    assert addresses.door("body-lab", "s") == "body-lab/index.html"
+    assert addresses.apps_link("", "s") == "/index.html"
+    assert addresses.apps_link("body-lab", "s") == "/body-lab/index.html"
     assert addresses.picture(DIGEST, "s") == f"p/{DIGEST}.png"
     assert (addresses.COVER, addresses.LEGEND, addresses.STYLESHEET) == (
         "index.html",
@@ -32,10 +33,10 @@ def test_fragments_are_checked_bench_ids() -> None:
     assert addresses.outcome("E5", "H4.P1", "s") == "E5-H4.P1"
     assert addresses.trial("E5", "T12", "s") == "E5-T12"
     assert addresses.experiment_file("E5", "s") == "E5-file"
-    assert addresses.on_page("body-lab-body-2.html", "E5") == "body-lab-body-2.html#E5"
+    assert addresses.on_page("body-2.html", "E5") == "body-2.html#E5"
     with pytest.raises(NotebookError):
         addresses.row('R1" onclick="x', "s")
     with pytest.raises(NotebookError):
         addresses.picture("../x", "s")
-    with pytest.raises(ValueError):
-        addresses.replay("body-lab", "body-2", 0, "s")
+    with pytest.raises(NotebookError, match="name of a page"):
+        addresses.session("body-lab", "index", "s")

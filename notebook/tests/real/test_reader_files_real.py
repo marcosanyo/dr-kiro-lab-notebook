@@ -19,8 +19,14 @@ def runs() -> list[readerruns.Run]:
     return readerruns.load(SESSIONS)
 
 
-def test_the_six_committed_runs_load_in_request_setup_and_name_order(runs) -> None:
+def test_the_twelve_committed_runs_load_in_request_setup_and_name_order(runs) -> None:
     assert [r.name for r in runs] == [
+        "crawl-further-spec-1",
+        "crawl-further-spec-2",
+        "crawl-further-new-spec-3",
+        "crawl-further-new-spec-4",
+        "crawl-further-new-none-5",
+        "crawl-further-new-none-6",
         "stop-ahead-spec-1",
         "stop-ahead-spec-2",
         "stop-ahead-record-1",
@@ -28,7 +34,10 @@ def test_the_six_committed_runs_load_in_request_setup_and_name_order(runs) -> No
         "stop-ahead-none-1",
         "stop-ahead-none-2",
     ]
-    assert {r.request_id for r in runs} == {"stop-ahead"}
+    assert {r.request_id for r in runs} == {"stop-ahead", "crawl-further", "crawl-further-new"}
+    # The stop-ahead runs ran on the body their source session ran on; the crawl runs name body b.
+    assert {r.variant for r in runs if r.request_id == "stop-ahead"} == {None}
+    assert {r.variant for r in runs if r.request_id != "stop-ahead"} == {"b"}
 
 
 def test_the_tally_counts_passes_per_setup(runs) -> None:
@@ -51,14 +60,15 @@ def test_a_request_with_another_hash_is_refused_naming_both_hashes(runs, tmp_pat
     shutil.copy(REQUESTS / "stop-ahead.toml", tmp_path / "stop-ahead.toml")
     with (tmp_path / "stop-ahead.toml").open("a", encoding="utf-8") as handle:
         handle.write("# changed after the runs\n")
+    stop_ahead = [r for r in runs if r.request_id == "stop-ahead"]
     with pytest.raises(NotebookError) as caught:
-        readerrequest.load(tmp_path, runs)
-    assert runs[0].request_sha256 in str(caught.value)
+        readerrequest.load(tmp_path, stop_ahead)
+    assert stop_ahead[0].request_sha256 in str(caught.value)
 
 
 def test_a_missing_request_is_refused_naming_the_file(runs, tmp_path: Path) -> None:
     with pytest.raises(NotebookError, match="stop-ahead.toml"):
-        readerrequest.load(tmp_path, runs)
+        readerrequest.load(tmp_path, [r for r in runs if r.request_id == "stop-ahead"])
 
 
 def test_a_stray_file_in_the_runs_folder_is_refused(tmp_path: Path) -> None:
@@ -74,7 +84,7 @@ def test_a_run_file_with_another_seal_is_refused(tmp_path: Path) -> None:
     shutil.copytree(SESSIONS / "build-from-spec", folder / "build-from-spec")
     run_file = folder / "build-from-spec" / "body-lab" / "stop-ahead-none-1.run.json"
     text = run_file.read_text(encoding="utf-8")
-    seal = readerruns.load(SESSIONS)[4].seal
+    seal = next(r.seal for r in readerruns.load(SESSIONS) if r.name == "stop-ahead-none-1")
     assert seal in text
     run_file.write_text(text.replace(seal, "0" * 64), encoding="utf-8")
     with pytest.raises(NotebookError, match="seal"):

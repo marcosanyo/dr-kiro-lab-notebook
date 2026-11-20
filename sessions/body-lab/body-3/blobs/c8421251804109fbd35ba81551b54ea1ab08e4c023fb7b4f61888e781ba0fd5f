@@ -1,0 +1,23 @@
+### H1: Each channel held constant, alone
+
+WHEN one channel is held at +1 for the whole trial and the other four are 0, THE system SHALL move the body by a distance that depends on the channel, and with all channels at 0 THE system SHALL stay near the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "new-combination"
+[prediction.when]
+ch = 5
+lvl = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-2.0, 2.0]
+label = "new-combination"
+[prediction.when]
+ch = 0
+lvl = 1
+```

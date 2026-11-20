@@ -1,0 +1,12 @@
+# Design
+
+## Beliefs
+
+- System: 5 inputs c0..c4 (functions of time, [-1,1]), 5 s trials, measures x, y, heading and tracks. Goal: maximise x.
+- E1: constant inputs do not translate the body (|x| < 0.03 m). Constant c2, c3, c4 give a small settled heading offset (+1.7, -3.9, -1.66 deg), settling in ~0.1 s (first 5 samples). c0, c1 constant have no visible effect. The body probably needs oscillating (gait-like) drive to travel.
+- Tracks settle after ~0.1 s for constant inputs, so dynamics are fast and heavily damped.
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|

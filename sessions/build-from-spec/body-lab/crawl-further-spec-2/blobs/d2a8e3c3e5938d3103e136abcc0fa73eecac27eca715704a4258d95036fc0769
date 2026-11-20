@@ -1,0 +1,27 @@
+### H4: Wave phase lag sets whether the body travels or spins
+
+WHEN all five inputs are unit sines at 1.5 Hz with phase lag ph per channel index, THE system SHALL end with heading within 30 deg for ph = 0, and x between 0.3 and 0.5 m for ph = 2.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30, 30]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 2
+```

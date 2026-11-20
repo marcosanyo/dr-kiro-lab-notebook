@@ -28,7 +28,14 @@ def _parser() -> argparse.ArgumentParser:
     parser = _Parser(prog=PROG, description="Build the lab notebook from the sealed session records.")
     parser.add_argument("--sessions", required=True, type=Path, help="the folder of sealed records")
     parser.add_argument("--requests", required=True, type=Path, help="the folder of the reader's requests")
-    parser.add_argument("--choices", required=True, type=Path, help="the choice files and cover.toml")
+    parser.add_argument(
+        "--app",
+        required=True,
+        action="append",
+        type=Path,
+        dest="apps",
+        help="an application's notebook folder (app.toml, choices/); give one per application",
+    )
     parser.add_argument("--layouts", required=True, type=Path, help="the frame layout table")
     parser.add_argument("--words", required=True, type=Path, help="the commentary word list")
     parser.add_argument(
@@ -40,9 +47,6 @@ def _parser() -> argparse.ArgumentParser:
         help="an application's scan_sources.toml; give one per application",
     )
     parser.add_argument("--stop-list", required=True, type=Path, help="the reviewed stop list")
-    parser.add_argument(
-        "--display", type=Path, default=None, help="a folder of retaken display pictures with a manifest.toml"
-    )
     parser.add_argument("--out", required=True, type=Path, help="the output folder: absent or empty")
     return parser
 
@@ -53,13 +57,12 @@ def parse(argv: list[str]) -> Inputs:
     return Inputs(
         sessions=args.sessions,
         requests=args.requests,
-        choices=args.choices,
+        apps=tuple(args.apps),
         layouts=args.layouts,
         words=args.words,
         scan_configs=tuple(args.scan_configs),
         stop_list=args.stop_list,
         out=args.out,
-        display=args.display,
     )
 
 

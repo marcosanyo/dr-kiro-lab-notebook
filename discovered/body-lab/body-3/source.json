@@ -1,0 +1,14 @@
+{
+  "application": "body-lab",
+  "files": {
+    "design.md": "4c011857552a9251f72ca74ec043bfb45c862d08823b92a9c1f41515a907a8a9",
+    "requirements.md": "5d7dcebef010bdaf7edca4a6539c1357b0aef0504c3c2c98642554f70058fccf",
+    "tasks.md": "72761d6cb03886422e1a249b233e07a7caaf4033180fab459750482fa7f6d420"
+  },
+  "seal": "be2a54ea8fab7810af004e92a5bc197f7649f302079ce145647090dfac9e9255",
+  "session": "body-3",
+  "snapshot": {
+    "hash": "53854eb135e971b40417dbe5a46e69424635915cd4e7ba3433ce95a285231f0c",
+    "seq": 103
+  }
+}

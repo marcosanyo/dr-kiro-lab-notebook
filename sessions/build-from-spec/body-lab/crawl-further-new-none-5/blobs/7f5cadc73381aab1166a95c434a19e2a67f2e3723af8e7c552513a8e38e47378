@@ -1,0 +1,71 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Single channel sine drive moves the body
+
+WHEN one control channel (c0) is driven by a 1 Hz sine of amplitude 1 and the other four are zero, THE system SHALL end with a net x displacement smaller than 0.3 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.3, 0.3]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 0
+freq = 1.0
+```
+
+### H2: c3 or c4 alone produce net forward crawl
+
+WHEN c3 alone is driven by a 1 Hz sine of amplitude 1, THE system SHALL end with a net x displacement above 0.1 m.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 3
+freq = 1.0
+```
+
+### H3: Constant c0/c1 act as enable or gain for the sine-driven channels
+
+WHEN c0 and c1 are held at 1 while c2, c3 and c4 carry a 1 Hz sine, THE system SHALL end with a net x displacement above 0.1 m.
+
+```prediction
+# relies on: E1, E2
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 6
+freq = 1.0
+```
+
+### H4: A quarter-cycle phase offset between c3 and c4 produces forward crawl
+
+WHEN c3 is a 1 Hz sine and c4 leads it by 90 degrees with c0, c1 and c2 at zero, THE system SHALL end with x between 0.1 and 0.6 m and heading within 30 degrees of zero.
+
+```prediction
+# relies on: E2
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+phase = 90
+freq = 1.0
+```

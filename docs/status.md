@@ -3,7 +3,53 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## 体が変わった実験とノート（ブランチ `feat/notebook-body-changed`、2026-11-21）
+- main に、ノートの棚の残り（PR #40 の後の 7 コミット）、ノートの見た目の直し、2 つ目の体（`feat/second-body`）をまとめた。
+- 記録：`body-3`（体 b、40 試行）と reader 6 回（頼み `crawl-further` と `crawl-further-new`。文と範囲は同じで、source が違う）。体 b で、body-2 の spec 0/2、body-3 の spec 2/2、何も無し 0/2。
+- ノート：記録の開始の `variant` と run file の `variant` を読む（無ければそのまま。補わない）。セッションのページは、自分の体で自分の記録から作った run だけを reader の節に出す。体にラベルがあるページには、別のセッションの spec をその体で試した run を「Spec of an earlier session」の欄として先頭に足し、頼った行を元の表の文で引く。チップに体（記録から。古い 2 つは choices の `body = "a"`）。
+- 写真：`notebook-retake` は記録の体で走らせ直す（ラベルの無い記録は `--unlabelled-body` が要る）。body-3 の 40 枚を `body-lab/notebook/display/` に足した。
+- 未反映：`.kiro/specs/notebook-shelf/` の文（見た目の直し、variant、新しい欄）。次に spec を触るときにそろえる。
+
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
+
+## ノートの棚（ブランチ `feat/notebook-shelf`、PR #40、2026-11-20、ローカル）
+最終更新: ローカル。ブランチは push 済み（最後のコミットは `notebook: fixed day and night, two small links instead of tabs, ...`）。PR #40 は開いたまま、マージはまだ。`notebook` のテスト 375 件と ruff は通る。`sh scripts/ja-check.sh` も通る。
+
+### 次の一手（ユーザーの指示、順番どおり）
+1. **入口 `/` を作り直す。** ユーザーは「ページが固まってから」と言っていた。今は、扉 2 つ（昼の風洞と夜のロボット）と「骨格の下の 2 層」だけの短いページ。やること: (a) 扉の中に本物の動く絵を入れる（風洞は T1 の渦、ロボットは体の絵。記録の絵と `body-lab/notebook/display/` から）、(b) 上に作品の主張を一言で置く。主張は 2 つ: 「実験すると、spec のどの行が確かめられ、どの行が間違っていたかが残る」「直した spec は次の Kiro の役に立つ」。数字は記録から（作らない）。言葉はふつうの英語。入口の文は `pages/front.py` と `text.py`、扉の文は各 `app.toml` の `door` と `door_line`。
+2. PR #40 をユーザーが見てマージする。マージ後は `main` から作業する。
+
+### 今のサイトの形
+- `/` は入口（`pages/front.py`）。`/wind-tunnel/`（昼に固定、青いペン、飾りなし）と `/body-lab/`（夜に固定、ほぼ真っ黒、ランプ、月、クモの巣、クモ、コウモリ 4 匹、カボチャなし）。各フォルダーに `index.html`、セッションのページ `<session>.html`、`legend.html`、`how.html`、`a/`、`p/` があり、`a/` は各フォルダーに 1 組ずつ。アプリからほかへのリンクだけ絶対形の `/` と `/<application>/`（サイトはルートで配信する前提。`file://` では動かない）。
+- 昼夜の切り替えボタンと CASE の札は無い。ページの上に小さなリンク 2 つ。止まったセッション（wt-002、wt-003）は下に小さなカード。
+- ノートを作るコードは `notebook/` の 1 つ。アプリごとの設定は `wind-tunnel/notebook/` と `body-lab/notebook/`（`app.toml`、`choices/<session>.toml`、ロボットは `display/`）。`notebook-build` は `--app <application>/notebook` をアプリごとに 1 つ受け取る。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
+- 各ノート: 題と要約（人が書く、choices）、「What happened here」の 3 段（`_story`、数字は記録・表・リーダーの実行から）、チップ、見どころ（写真 2 枚が一緒に動く、つまみ、「t = 3.0 s forward 38 cm」、付箋 3 枚は choices の `[[note]]` で選ぶ、揺れた鉛筆の線のグラフ）、リーダーの結果、発見した spec のカード、Dr. Kiro の計画、全部の実験（2 列のカード、押すと開く付箋）。
+- 風洞の見どころは T1（渦が出る）と T12（静か）。グラフは全試行の最小 cd の線で、渦が止まった最初の試行 T8 に破線の印（choices の `mark`、`mark_equals`、`mark_words`）。
+
+### ロボットの絵（済み）
+`uv run notebook-retake --sessions sessions --out <新しいフォルダー> --session body-1 --session body-2` で全 79 試行を記録の入力から走らせ直し、x、y、heading、track 3 本が記録と厳密に一致した。体を追う上からのカメラ、0.2 秒ごと 25 コマ、1 コマ 320px、色の下位 3 ビットを落として 1 シート約 0.3MB（全体 20MB）。アダプターは変えていない。出力フォルダーは新しいか空でなければならない。風洞は走らせ直さず、記録のコマの切り抜き（`zoom.py`）。走らせ直すにはソルバーのサンプリング変更が要り、`wind-tunnel` の spec の変更になる。ユーザーは「今回はなし」と言った。
+
+### 未解決・ユーザーに聞くこと
+- `date`（各 choices）は、各記録が git に入った日にしてある。実際のセッションの日と違えば直す。
+- 実機の 360px 幅の全体は見ていない（iframe で横はみ出しなしは確認済み）。
+- 1 つ目の段の言葉は、ユーザーの例の「before running anything」ではなく「each before its experiment ran」にした（予測は仮説ごとに実験の前に登録されるため）。直したければユーザーに確認する。
+- `notebook/display` を `body-lab/notebook/display` へ移したので、古い `notebook/choices` と `notebook/display` はもう無い。
+
+### 作業の注意（次のセッションへ）
+- 目隠しスキャンは HTML、CSS、JS、class 名、コメント、人が書く文のすべてを見る。ストップリストは触らない。これまでに引っかかった語: `Backwards`（題）、`thickness`（CSS）、`tag`（CSS のコメント）。`div`、`outline`、`linear-gradient`、`letter-spacing`、`frames` なども禁止。ビルドの失敗は言い換えで直す。
+- CSS を一括置換の正規表現で消すと、ブロックの閉じ括弧を巻き込んで壊れた。1 つずつ、規則の始まりの行から次の閉じ括弧までを消す（`/tmp` の script は消えるので `notebook` のテストの CSS 部分と目で確認）。
+- `python3`（システムの 3.9）にヒアドキュメントで日本語を渡すと失敗することがある。日本語を含む script はファイルに書いて `uv run python` で動かす。
+- 並列のツール呼び出しは、ファイルを書く呼び出しとそれを読む呼び出しを同時に出すと読み込みが先に走る。依存があるときは順に出す。
+- `rm -rf` はユーザーの設定で拒否される（ユーザーの許可なしに別の方法で消さない）。空でないフォルダーは `mv` で脇へ寄せた。
+- ビルドは新しい空のフォルダーに出す（`mktemp -d`）。`scripts/view-notebook.sh` がそれをしてローカルで配信する（ポートは `--port`）。
+- `body-lab/notebook/display/` は 20MB ある。今の `display.py` は、全項目を手でチェックする（ハッシュ、元の記録の絵のハッシュ、測った値）。
+## 2 つ目の体（ブランチ `feat/second-body`、main の 9488c40 から）
+- **済み:** spec（body-lab 要件 7、lab-bench 要件 23、コミット 2a4cb3e）。実装: bench の `variant` 設定（`bench-new-session --variant`、開始エントリーに記録）、reader の `bfs-run --variant`（ラッパーまで届く）、体 b（`body-lab/model/specimen_02.xml`、車輪のゴムだけ外し、軸は残す）。
+- **タスク 8（3 プローブ、body-1/2 の再実行はクレジット節約で省いた）:** 体 a は車輪のチャンネルで動く（+1 で x -0.230 m、heading 39.18°、-1 で x 0.113 m、heading -34.96°）。体 b はどのプローブでも動かない（x 約 2.5e-05 m）。タイヤがないと床を押せない。
+- **タスク 9:** リポジトリのラボの `bench-scan` は検出なし。`bench-new-session` は variant なしと `c` を拒否し、`b` で開始する。新しい記録の `bench-scan` も検出なし。
+- **未了（本番の後）:** 体 b の封印された記録と `bench-verify`、ノートのビルド。choices はまだ作っていない（ユーザーの指示）。
+- **次の一手:** 本番の Dr. Kiro を体 b で。開始は `body-lab/README.md` の「Two bodies」と「Running a session」（`--variant b`）。reader を体 b で走らせるのは、その後の実験。
+- **注意:** body-1 と body-2 は variant のない記録で、封印済み。再開は不要。新しいセッションは必ず `--variant a` か `--variant b` を付ける。`rm -rf` は許可設定で拒否される。検証用のフォルダーは `bench-run/body-lab-variant-check-2`（git の対象外）。
 
 ## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
 - ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。

@@ -1,0 +1,27 @@
+### H4: Lag 192 at 2.15 Hz stays inside the goal
+
+WHEN c2 and c3 carry sines at 2.15 Hz with c3 lagging c2 by 192 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.4 m with heading within 15 deg of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.4]
+label = "inside"
+[prediction.when]
+f = 2.15
+phi = 192
+a4 = 0
+phi4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-15.0, 15.0]
+label = "inside"
+[prediction.when]
+f = 2.15
+phi = 192
+a4 = 0
+phi4 = 0
+```

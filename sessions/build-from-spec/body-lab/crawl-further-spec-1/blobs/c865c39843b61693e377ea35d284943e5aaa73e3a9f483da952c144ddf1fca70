@@ -1,0 +1,7 @@
+# Design
+
+- Constant inputs on all channels (one at a time c1 = +1, all +1, all -1) give a transient under 0.1 s and no travel (E4).
+- c1 constant plus a c3 sine gave x between -0.02 and -0.06 m for a1 in [-1, -0.5], s3 in [0.6, 1], f in {1.5, 2}. a1 had almost no effect (E1, E2). The given R9, R11 and R13 do not hold on this body.
+- A five-channel travelling wave at 1 Hz rotates the body (heading +49 to +117 deg) with |x| under 0.05 m (E3).
+- A quadrature c1/c3 sine at 2 Hz gives x -0.056 m, heading -8.6 deg (E5).
+- Last trial (E5 T12) does not reach the goal. No tested input produced forward travel.

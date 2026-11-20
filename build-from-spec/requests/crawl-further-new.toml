@@ -1,0 +1,12 @@
+id = "crawl-further-new"
+application = "body-lab"
+words = "Crawl ahead by 0.3 to 0.5 m, keeping within 0.2 m of the start line and within 20 degrees of the start heading."
+[[pass]]
+measurement = "x"
+range = [0.3, 0.5]
+[[pass]]
+measurement = "heading"
+range = [-20.0, 20.0]
+[[pass]]
+measurement = "y"
+range = [-0.2, 0.2]

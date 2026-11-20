@@ -5,6 +5,7 @@ commentary ink, never in the stamp style. Every page's footer links it (`parts.p
 from bench.specfiles.discovered import STATUSES
 
 from notebook import addresses, html, text
+from notebook.choices import App
 from notebook.errors import NotebookError
 from notebook.ink import Segment
 from notebook.pages import parts
@@ -28,7 +29,7 @@ _STATUS_WORDS = (
 )
 
 
-def legend() -> list[Segment]:
+def legend(app: App) -> list[Segment]:
     """`legend.html`: the three inks and the miss red, each with a colour swatch that holds no text, and the
     four status words, defined in commentary ink (Requirements 4.5, 15.2)."""
     words = {getattr(text, word) for word, _ in _STATUS_WORDS}
@@ -57,4 +58,4 @@ def legend() -> list[Segment]:
         *html.element("p", None, say_text("LEGEND_STATUS_INTRO")),
         *html.element("dl", {"class": "legend"}, statuses),
     ]
-    return parts.page("LEGEND_TITLE", body)
+    return parts.page("LEGEND_TITLE", body, app=app)

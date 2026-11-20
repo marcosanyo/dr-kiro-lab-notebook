@@ -796,3 +796,44 @@ exist in `sessions/build-from-spec/`, so that run records are not treated as Dr.
 amendments, so they take the next two free numbers, 21 and 22 (the last number before this amendment is 20). Their
 details are in design sections D1 and D2.
 
+### Requirement 23: A named variant of the application (amendment)
+
+**Amendment.** Added for the `body-lab` spec (its Requirement 7), implemented as `lab-bench` task 38. No existing
+requirement is renumbered or reworded. Requirements 1.3 and 17.5 apply unchanged: the setting comes from the builder
+at session start and Dr. Kiro cannot set or see it.
+
+**User Story:** As the builder, I want to choose at session start which variant of an application a session runs on,
+and to find the choice in the sealed record, so that records made on different variants can be told apart.
+
+**Concerns:** the builder and the reader. Dr. Kiro is told nothing about it.
+
+#### Acceptance criteria
+
+1. THE session config SHALL have one optional setting `variant`, a non-empty string. The bench SHALL NOT interpret
+   it: the adapter owns its meaning.
+2. AN adapter MAY have an attribute `variants`, a tuple of the labels it accepts. An adapter without the attribute
+   has no variants.
+3. WHEN the adapter has `variants`, THE bench SHALL refuse to start unless the config has `variant` and its value is
+   one of them. The refusal names the setting and, for an unknown value, lists the accepted labels. THE bench SHALL
+   NOT fill in a variant.
+4. WHEN the adapter has no `variants`, THE bench SHALL refuse to start if the config has `variant`, naming the
+   setting.
+5. WHEN the config has `variant`, THE config loader SHALL build the adapter as `factory(variant=<value>)`; otherwise
+   as `factory()`. A factory that does not take the argument is a configuration error, not a retry without it.
+6. THE bench SHALL record `variant` in the start entry of the sealed record, and only when the config has it.
+7. WHEN a session is reopened, THE record SHALL agree with the config: a config with `variant` needs the same value
+   in the start entry; a config without it needs a start entry without the key. Otherwise the reopening is refused.
+8. Records sealed before this amendment have no `variant` key and SHALL stay valid for `bench-verify` and
+   `final_spec`. They are not migrated.
+9. `bench-new-session` SHALL take an optional `--variant` and write it to the config it writes and to the session it
+   starts. Without the option it writes no `variant`.
+10. THE tool descriptions and everything Dr. Kiro sees SHALL NOT depend on `variant` (as in Requirement 21.9, the
+    descriptions depend on the declaration and the `discovered_table` setting only).
+11. THE change SHALL stay small: the setting, its checks at start, its value in the start entry, the one argument of
+    the factory call, `bench-new-session`'s option, and the tests and documentation that state them.
+
+#### Decision (taken by the builder, on the user's answers for the `body-lab` second body)
+
+**Generic, and a stop on a missing or unknown value.** The user chose a generic setting, and that a missing or unknown
+value stops the session instead of choosing a default body. The checks in 23.3 and 23.4 are the stop. Details are in
+design section E1.

@@ -67,6 +67,7 @@ class Run:
     relied_ids: tuple[str, ...]
     relied_problem: str | None
     limits: tuple[str, ...]
+    variant: str | None  # the body the reader ran on, when the run named one
 
 
 def _fail(where: str, problem: str) -> NotebookError:
@@ -90,6 +91,11 @@ def _read(folder: Path, file: Path, where: str) -> Run:
         data = json.loads(file.read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
         raise _fail(where, f"the run file cannot be read as JSON ({error})") from error
+    # `variant` is in a run file of a run made with a named variant; older run files have no such key.
+    variant = None
+    if isinstance(data, dict) and "variant" in data:
+        variant = _string(data["variant"], where, "variant")
+        data = {k: v for k, v in data.items() if k != "variant"}
     data = _shape(data, where, "the run file", set(_KEYS))
     if data["format"] != 1:
         raise _fail(where, f"the run file has format {data['format']!r}, not 1")
@@ -147,6 +153,7 @@ def _read(folder: Path, file: Path, where: str) -> Run:
         relied_ids=tuple(ids),
         relied_problem=problem,
         limits=tuple(limits),
+        variant=variant,
     )
 
 

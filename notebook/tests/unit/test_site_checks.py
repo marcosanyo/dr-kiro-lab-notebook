@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from fixtures import site_checks
-from fixtures.choices import CHOICE, COVER
+from fixtures.choices import write_app
 from fixtures.session import FAKE_SOURCES, STOP_LIST, accepted_session
 from notebook import build, records, tables, text
 from notebook.inputs import Inputs
@@ -25,17 +25,14 @@ WORDS = "# test fixture word list\nlimp\n"
 def fixture_site(tmp_path_factory) -> tuple[Path, Path]:
     root = tmp_path_factory.mktemp("site-checks")
     made = accepted_session(root / "lab")
-    choices = root / "choices"
-    (choices / "fake").mkdir(parents=True)
-    (choices / "fake" / "s1.toml").write_text(CHOICE)
-    (choices / "cover.toml").write_text(COVER)
+    app = write_app(root / "app")
     (root / "layouts.toml").write_text(LAYOUTS)
     (root / "words.txt").write_text(WORDS)
     out = root / "site"
     inputs = Inputs(
         sessions=made.sessions,
         requests=root / "requests",
-        choices=choices,
+        apps=(app,),
         layouts=root / "layouts.toml",
         words=root / "words.txt",
         scan_configs=(FAKE_SOURCES,),
@@ -70,7 +67,7 @@ def test_the_table_and_its_text_are_in_the_html_without_script(fixture_site):
     sessions, site = fixture_site
     (record,) = records.load(sessions, allow_fake=True)
     table = tables.check_end(record)
-    page = site_checks.parse(site, "fake-s1.html")
+    page = site_checks.parse(site, "fake/s1.html")
     assert page.row_ids == [row.id for row in table.rows]
     shown = "".join(page.text)
     for row in table.rows:
@@ -84,7 +81,7 @@ def test_the_table_and_its_text_are_in_the_html_without_script(fixture_site):
         "https://example.org/x.css",
         "http:x",
         "//example.org/x.png",
-        "/index.html",
+        "/other.html",
         "../index.html",
         "q/x.html",
         "data:image/png;base64,AA",

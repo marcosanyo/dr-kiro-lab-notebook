@@ -15,6 +15,7 @@ The commentary comes from `text.py`, quotes no builder spec and names or links n
 """
 
 from notebook import addresses, html, numbers, refusals
+from notebook.choices import App
 from notebook.errors import NotebookError
 from notebook.ink import Segment, pencil
 from notebook.pages import parts
@@ -60,7 +61,7 @@ def _items(items: list[list[Segment]]) -> list[Segment]:
     return [s for item in items for s in html.element("li", None, item)]
 
 
-def _application(application: str, group: list[RecordModel]) -> list[Segment]:
+def _application(application: str, group: list[RecordModel], here: str) -> list[Segment]:
     first = group[0]
     source = _start(first)
     declared = first.declaration
@@ -70,7 +71,8 @@ def _application(application: str, group: list[RecordModel]) -> list[Segment]:
             sessions += say_text("LIST_SEPARATOR")
         start = _start(record)
         page = addresses.session(record.application, record.session, start)
-        sessions += link(page, _value(record.session, start))
+        named = _value(record.session, start)
+        sessions += link(page, named) if application == here else named
     knobs = [
         [
             *_value(k.name, source),
@@ -164,15 +166,22 @@ def _session_refusals(record: RecordModel) -> list[Segment]:
     return html.element("section", {"class": "how-refusals"}, content)
 
 
-def page(records: list[RecordModel]) -> list[Segment]:
-    """`how.html` from every record, in code-point order of (application, session)."""
+def page(records: list[RecordModel], app: App, every: list[RecordModel] | None = None) -> list[Segment]:
+    """`how.html` of one application from its records, in code-point order of session. The applications
+    section shows every application of the site side by side (`every`, all records); the refusals are this
+    application's only."""
     if not records:
         raise NotebookError("how.html", "the page needs at least one record")
     ordered = sorted(records, key=lambda r: (r.application, r.session))
+    side = sorted(every if every is not None else records, key=lambda r: (r.application, r.session))
     tools = [
         say_text(name) for name in ("HOW_TOOL_REGISTER", "HOW_TOOL_RUN", "HOW_TOOL_VERDICT", "HOW_TOOL_END")
     ]
-    apps = [s for application, group in declarations(ordered) for s in _application(application, group)]
+    apps = [
+        s
+        for application, group in declarations(side)
+        for s in _application(application, group, app.application)
+    ]
     body = [
         *html.element("p", None, link(addresses.COVER, say_text("BACK_TO_COVER"))),
         *html.element("h1", None, say_text("HOW_TITLE")),
@@ -216,4 +225,4 @@ def page(records: list[RecordModel]) -> list[Segment]:
             ],
         ),
     ]
-    return parts.page("HOW_TITLE", body)
+    return parts.page("HOW_TITLE", body, app=app)

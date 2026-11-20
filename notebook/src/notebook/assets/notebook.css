@@ -38,30 +38,33 @@
 }
 :root {
   color-scheme: dark;
-  --paper: #150f1f;
-  --grid-line: rgba(176, 140, 235, 0.11);
-  --page: #1d1629;
-  --page-edge: #3b2e52;
-  --hole: #0e0916;
-  --ink-drkiro: #82e6a4;
-  --ink-pencil: #d3cbe0;
-  --ink-commentary: #ffa24d;
-  --title: #f6eed8;
-  --text: #e9e2f2;
-  --muted: #a99bc0;
-  --frame-green: #4fd37f;
-  --chip: #281e38;
-  --chip-edge: #4a3b66;
-  --card: #231a33;
-  --card-edge: #44365e;
-  --miss-red: #ff8f86;
-  --stamp-validated: #7fe0a4;
-  --stamp-partly: #f4c75d;
-  --stamp-observed: #a9c1dd;
-  --stamp-rejected: #d9a6f2;
-  --rule-bg: #261d37;
-  --rewrite-bg: #33223f;
-  --deco: #b9a4e0;
+  --paper: #0b0806;
+  --grid-line: rgba(232, 214, 180, 0.08);
+  --lamp: rgba(255, 170, 80, 0.1);
+  --brew: transparent;
+  --vignette: rgba(0, 0, 0, 0.88);
+  --page: #211b15;
+  --page-edge: #3b3024;
+  --hole: #050302;
+  --ink-drkiro: #9ccf7f;
+  --ink-pencil: #d6cdbd;
+  --ink-commentary: #ec9a48;
+  --title: #f0a650;
+  --text: #ebe2d2;
+  --muted: #ab9f8c;
+  --frame-green: #9ccf7f;
+  --chip: #211a14;
+  --chip-edge: #4a3c2c;
+  --card: #2a2219;
+  --card-edge: #45382a;
+  --miss-red: #e8665a;
+  --stamp-validated: #9ccf7f;
+  --stamp-partly: #dcb556;
+  --stamp-observed: #b6ab97;
+  --stamp-rejected: #ec5a4f;
+  --rule-bg: #2a2219;
+  --rewrite-bg: #2f1e17;
+  --deco: #b8aa92;
   --moon: #f6efc7;
   --moon-pit: #d9cf9d;
   --pk: #f08a24;
@@ -75,7 +78,10 @@
   --line: 1.5;
 }
 html[data-mode="day"] {
+  --brew: transparent;
   color-scheme: light;
+  --lamp: transparent;
+  --vignette: transparent;
   --paper: #fbf7ec;
   --grid-line: #dfe6ef;
   --page: #fffdf6;
@@ -117,6 +123,9 @@ body {
   background-color: var(--paper);
   /* Graph paper: a line along the bottom and one along the right edge of each 1.5rem tile. */
   background-image:
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--lamp), transparent 72%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, var(--brew), transparent 75%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%),
     conic-gradient(
       at 0 calc(100% - 1px),
       transparent 0deg 90deg,
@@ -129,7 +138,8 @@ body {
       var(--grid-line) 90deg 180deg,
       transparent 180deg 360deg
     );
-  background-size: 1.5rem 1.5rem;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-attachment: fixed, fixed, fixed, scroll, scroll;
   font-family: var(--font-sans);
   line-height: var(--line);
   overflow-x: hidden;
@@ -306,50 +316,6 @@ h3.cap {
 }
 .key .ink-c {
   color: var(--text);
-}
-.mode-toggle {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 5;
-  padding: 0.3rem 0.9rem;
-  border: 2px solid var(--ink-commentary);
-  border-radius: 999px;
-  background: var(--page);
-  color: var(--ink-commentary);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.mode-toggle .ink-c {
-  font-family: var(--font-mono);
-}
-.cases {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin: 1.6rem 0 1rem;
-}
-.case-tab {
-  padding: 0.45rem 1.1rem;
-  border: 2px solid var(--chip-edge);
-  border-radius: 999px;
-  background: var(--chip);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.case-tab .ink-c {
-  color: var(--muted);
-}
-.case-tab.is-on {
-  border-color: var(--ink-commentary);
-  background: var(--ink-commentary);
-}
-.case-tab.is-on .ink-c {
-  color: #1d1629;
 }
 /* The cover cards of the open lab. */
 .shelf {
@@ -735,15 +701,15 @@ section[data-sync] .photo-controls button[data-action="step"] {
 }
 .ch-line {
   stroke: var(--ink-drkiro);
-  stroke-width: 3;
+  stroke-width: 4;
   stroke-linejoin: round;
 }
-.ch-dot {
-  fill: var(--ink-pencil);
-}
-.ch-dot-off {
-  fill: none;
-  stroke: var(--muted);
+.ch-pass {
+  stroke: var(--ink-drkiro);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;
 }
 .ch-best {
   fill: var(--page);
@@ -1274,31 +1240,16 @@ section[data-sync] .photo-controls button[data-action="step"] {
   opacity: 0.55;
 }
 .deco-moon {
-  top: 1.2rem;
-  right: 10rem;
+  top: 0.8rem;
+  right: 9rem;
   color: var(--moon);
-  filter: drop-shadow(0 0 18px rgba(246, 239, 199, 0.55));
+  filter: drop-shadow(0 0 28px rgba(246, 239, 199, 0.6));
 }
 .moon-disc {
   fill: var(--moon);
 }
 .moon-pit {
   fill: var(--moon-pit);
-}
-.deco-sun {
-  display: none;
-  top: 1rem;
-  right: 10rem;
-  color: #e69a00;
-}
-.sun-disc {
-  fill: #ffd04a;
-}
-html[data-mode="day"] .deco-moon {
-  display: none;
-}
-html[data-mode="day"] .deco-sun {
-  display: block;
 }
 .deco-spider {
   top: 0;
@@ -1330,27 +1281,13 @@ html[data-mode="day"] .deco-sun {
   top: 3rem;
   right: 29rem;
 }
-.deco-pumpkin {
-  position: fixed;
-  z-index: 0;
-  bottom: 0.4rem;
-  left: 0.5rem;
-  opacity: 0.9;
+.deco-bat-three {
+  top: 9rem;
+  right: 3rem;
 }
-.pk-side,
-.pk-mid {
-  fill: var(--pk);
-  stroke: var(--pk-dark);
-  stroke-width: 2;
-}
-.pk-mid {
-  fill: #f79a36;
-}
-.pk-stem {
-  fill: #4d8a3a;
-}
-.pk-face {
-  fill: var(--pk-face);
+.deco-bat-four {
+  top: 1.2rem;
+  right: 36rem;
 }
 @media (prefers-reduced-motion: no-preference) {
   .deco-spider {
@@ -1361,6 +1298,12 @@ html[data-mode="day"] .deco-sun {
   }
   .deco-bat-two {
     animation: flutter 9s ease-in-out -3s infinite;
+  }
+  .deco-bat-three {
+    animation: flutter 8s ease-in-out -5s infinite;
+  }
+  .deco-bat-four {
+    animation: flutter 11s ease-in-out -2s infinite;
   }
 }
 @keyframes sway {
@@ -1384,8 +1327,7 @@ html[data-mode="day"] .deco-sun {
 /* Narrow screens. */
 @media (max-width: 1100px) {
   .deco-spider,
-  .deco-bat,
-  .deco-pumpkin {
+  .deco-bat {
     display: none;
   }
   .masthead {
@@ -1399,8 +1341,7 @@ html[data-mode="day"] .deco-sun {
   .tiles {
     grid-template-columns: minmax(0, 1fr);
   }
-  .deco-moon,
-  .deco-sun {
+  .deco-moon {
     right: 6rem;
     width: 4rem;
     height: 4rem;
@@ -1423,8 +1364,7 @@ html[data-mode="day"] .deco-sun {
     width: 5rem;
     height: 5rem;
   }
-  .deco-moon,
-  .deco-sun {
+  .deco-moon {
     display: none;
   }
   .book {
@@ -1476,18 +1416,12 @@ html[data-mode="day"] .deco-sun {
     max-width: none;
     width: 100%;
   }
-  .mode-toggle {
-    top: 0.5rem;
-    right: 0.6rem;
-  }
 }
 /* Orange is for small headings, the marks "our notes" and the switch; the other text is ordinary text. */
 .cap .ink-c,
-.kicker .ink-c,
-.mode-toggle .ink-c {
+.kicker .ink-c {
   color: var(--ink-commentary);
 }
-.mode-toggle .ink-c,
 .sync-bar button .ink-c {
   color: inherit;
 }
@@ -1534,4 +1468,572 @@ html[data-mode="day"] .deco-sun {
   .hyp:has(details[open]) {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The wind tunnel opens by day: a bright graph paper, a blue pen, a plain research notebook. Its night is a
+   dark blue desk with the same pen. It has no decoration in its pages. */
+html[data-app="wind-tunnel"] {
+  --brew: transparent;
+  --paper: #0c1420;
+  --grid-line: rgba(120, 160, 230, 0.1);
+  --lamp: transparent;
+  --vignette: transparent;
+  --page: #121c2c;
+  --page-edge: #2a3b57;
+  --chip: #182438;
+  --chip-edge: #34496b;
+  --card: #152033;
+  --card-edge: #2f4466;
+  --rule-bg: #16233a;
+  --rewrite-bg: #2b2540;
+  --ink-commentary: #8fb4ff;
+  --title: #eaf1ff;
+  --text: #e4ecfa;
+  --muted: #9db1d0;
+  --frame-green: #4fd37f;
+}
+html[data-app="wind-tunnel"][data-mode="day"] {
+  --paper: #f7faff;
+  --grid-line: #cfe0f3;
+  --page: #ffffff;
+  --page-edge: #c3d3e8;
+  --hole: #dbe6f4;
+  --chip: #eef4fc;
+  --chip-edge: #c3d3e8;
+  --card: #ffffff;
+  --card-edge: #c3d3e8;
+  --rule-bg: #f3f8ff;
+  --rewrite-bg: #e9efff;
+  --ink-commentary: #1f4fa3;
+  --title: #13233f;
+  --text: #1c2638;
+  --muted: #5a6b86;
+  --shadow: rgba(30, 50, 90, 0.2);
+}
+/* The front page: two doors on one skeleton. */
+html[data-app="front"] {
+  --paper: #0d0b14;
+  --lamp: rgba(122, 78, 200, 0.14);
+  --text: #ece6f5;
+  --muted: #a99bc0;
+  --title: #f6eed8;
+  --ink-commentary: #e9e2f2;
+}
+.front-head {
+  max-width: 46rem;
+  padding: 1rem 0 1.4rem;
+}
+.front-tagline {
+  font-family: var(--font-script);
+  font-size: 1.9rem;
+  color: var(--title);
+}
+.front-lead {
+  max-width: 40rem;
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+.front-lead .ink-c {
+  color: var(--muted);
+}
+.doors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6rem;
+  margin-top: 1rem;
+}
+.door {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 21rem;
+  padding: 6rem 2.4rem 1.8rem;
+  border: 3px solid var(--edge);
+  border-radius: 12rem 12rem 0.6rem 0.6rem;
+  background: var(--face);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 26px var(--shadow);
+}
+.door::after {
+  content: "";
+  position: absolute;
+  top: 55%;
+  right: 1.6rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--knob);
+}
+.door-day {
+  --edge: #8fb0dc;
+  --face: #f7faff;
+  --ink: #13233f;
+  --knob: #1f4fa3;
+  --accent: #1f4fa3;
+  --shadow: rgba(30, 50, 90, 0.35);
+}
+.door-night {
+  --edge: #4a3470;
+  --face: #0b0713;
+  --ink: #f3ead2;
+  --knob: #ffa24d;
+  --accent: #ffa24d;
+  --shadow: rgba(0, 0, 0, 0.7);
+  background: radial-gradient(ellipse 70% 50% at 50% 24%, rgba(122, 78, 200, 0.4), transparent 70%), var(--face);
+}
+.door .ink-c {
+  color: inherit;
+}
+.door-case {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.door-case .ink-c {
+  color: var(--accent);
+}
+.door-title {
+  font-family: var(--font-script);
+  font-size: 2.8rem;
+  line-height: 1;
+}
+.door-line {
+  max-width: 18rem;
+  font-size: 0.95rem;
+}
+.door-open {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+.door-open .ink-c {
+  color: var(--accent);
+}
+.skeleton {
+  margin-top: 1.6rem;
+}
+.skeleton-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.layer {
+  padding: 0.8rem 1.1rem;
+  border: 2px dashed var(--chip-edge);
+  border-radius: 6px;
+  background: var(--chip);
+  font-size: 0.95rem;
+}
+.layer-bench {
+  border-style: solid;
+}
+@media (max-width: 700px) {
+  .doors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .door {
+    min-height: 16rem;
+  }
+}
+.book-title .ours .ink-c,
+.big-title .ours .ink-c {
+  color: var(--ink-commentary);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+.book-summary .ours .ink-c {
+  font-size: 0.85rem;
+}
+/* What happened here: three steps joined by arrows. */
+.story {
+  margin-top: 1.2rem;
+}
+.story .cap {
+  margin: 0 0 0.6rem;
+  border: 0;
+  padding: 0;
+}
+.story-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.8rem;
+}
+.story-step {
+  position: relative;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--chip-edge);
+  border-radius: 8px;
+  background: var(--chip);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.story-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  right: -1.55rem;
+  margin-top: -0.9rem;
+  color: var(--ink-commentary);
+  font-family: var(--font-sans);
+  font-size: 1.6rem;
+}
+.story-step .ink-p {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.story-none {
+  font-size: 0.95rem;
+}
+@media (max-width: 900px) {
+  .story-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .story-step:not(:last-child)::after {
+    content: "↓";
+    top: auto;
+    right: auto;
+    bottom: -1.6rem;
+    left: 1rem;
+    margin-top: 0;
+  }
+}
+.intro {
+  max-width: 52rem;
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.92rem;
+}
+.intro .ink-c {
+  color: var(--muted);
+}
+/* A number such as H4 or R5 is a small label; the sentence beside it is the heading. */
+.hyp-summary {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "num title"
+    "expect expect"
+    "results results"
+    "stamps stamps";
+}
+.hnum {
+  width: auto;
+  height: auto;
+  align-self: start;
+  margin-top: 0.3rem;
+  padding: 0 0.55rem;
+  border-width: 2px;
+  border-radius: 999px;
+}
+.hnum .ink-p {
+  font-size: 0.75rem;
+}
+.rule-head .ink-k {
+  padding: 0 0.5rem;
+  border: 1px solid var(--chip-edge);
+  border-radius: 999px;
+  font-size: 0.72rem;
+}
+.ch-line {
+  stroke-linecap: round;
+}
+.ch-leader {
+  stroke: var(--ink-commentary);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+.ch-mark {
+  stroke: var(--ink-commentary);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+}
+.ch-flag {
+  fill: var(--ink-commentary);
+  font-family: var(--font-script);
+  font-size: 17px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+/* Two small links at the top, in place of the tabs. */
+.lab-links {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+.lab-links a {
+  text-decoration: underline;
+}
+.lab-links .ink-c {
+  color: var(--ink-commentary);
+}
+/* Sessions that stopped early: small, below. */
+.shelf-stopped {
+  padding: 0 0.2rem 1rem;
+}
+.shelf-stopped .cap {
+  margin-bottom: 0.4rem;
+  color: var(--muted);
+}
+.shelf-stopped .cap .ink-c {
+  color: var(--muted);
+}
+.shelf-small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+.card-stopped {
+  flex: 0 0 13rem;
+  gap: 0.15rem;
+  padding: 0.5rem 0.7rem 0.45rem 0.8rem;
+  border-left-width: 8px;
+  box-shadow: none;
+}
+.card-stopped .card-title {
+  font-size: 1.2rem;
+}
+.card-stopped .card-line {
+  font-size: 0.78rem;
+}
+.card-stopped .card-small {
+  display: none;
+}
+.page {
+  padding-top: 1.2rem;
+}
+/* A rule the bench would not let the session end on, and the reader's runs line by line. */
+.rule-refused {
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px dashed var(--stamp-rejected);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.rule-refused-head {
+  margin: 0;
+  color: var(--stamp-rejected);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.rule-refused-head .ink-c {
+  color: var(--stamp-rejected);
+}
+.rule-refused-sealed {
+  margin: 0.15rem 0 0;
+}
+.rule-refused-message {
+  margin: 0.3rem 0 0;
+  word-break: break-word;
+}
+.rule-refused-quote {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+.runs .run {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+.runs .run-limit {
+  margin-top: 0.3rem;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  list-style: none;
+}
+.symbols {
+  max-width: 50rem;
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.symbols .ink-c {
+  color: var(--muted);
+}
+.refused-more {
+  margin-top: 0.3rem;
+}
+.refused-more summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.refused-more summary .ink-c {
+  color: var(--muted);
+}
+/* The corner map on a retaken moving picture: a small paper note with the track drawn in pencil. */
+.corner-map {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 30%;
+  height: auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(60, 45, 30, 0.35);
+  border-radius: 2px;
+  background: rgba(255, 249, 232, 0.9);
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.3);
+  transform: rotate(-1.5deg);
+  pointer-events: none;
+}
+.map-route {
+  stroke: #3d3126;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 3;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+.map-line {
+  stroke: #3d3126;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.map-line[hidden] {
+  display: none;
+}
+.map-start {
+  fill: none;
+  stroke: #3d3126;
+  stroke-width: 1.4;
+}
+.map-dot {
+  fill: #d4600c;
+}
+.map-dot[hidden] {
+  display: none;
+}
+.map-bar {
+  stroke: #3d3126;
+  stroke-width: 1.4;
+}
+.map-bar-words {
+  fill: #3d3126;
+  font-family: var(--font-mono);
+  font-size: 8px;
+}
+/* The night lab: the same paper notebook, on a desk by candlelight. Real inks, no glow: green ink for
+   Dr. Kiro, orange crayon for our notes, red ink for what the experiment struck out. The cards are paper
+   cards taped in; a spec card is stitched along its coloured edge, like the body. The Halloween marks are
+   things on the page: a ring left by a jar of something green, drops of candle wax. */
+html[data-mode="night"] body {
+  background-image:
+    radial-gradient(ellipse 60% 45% at 18% 0%, var(--lamp), transparent 70%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%);
+  background-size: 100% 100%, 100% 100%;
+  background-attachment: fixed, fixed;
+}
+html[data-mode="night"] .book {
+  background-color: var(--page);
+  background-image:
+    radial-gradient(circle at 93% 96%, transparent 2.9rem, rgba(150, 190, 90, 0.16) 3rem, rgba(150, 190, 90, 0.08) 3.3rem, transparent 3.45rem),
+    radial-gradient(ellipse 0.9rem 0.6rem at 22% 0, rgba(236, 226, 200, 0.2) 95%, transparent 100%),
+    radial-gradient(ellipse 0.35rem 0.8rem at 22.6% 0.5rem, rgba(236, 226, 200, 0.18) 95%, transparent 100%),
+    radial-gradient(circle 0.22rem at 21.4% 1.1rem, rgba(236, 226, 200, 0.16) 95%, transparent 100%),
+    conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--grid-line) 90deg 180deg, transparent 180deg 360deg),
+    conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--grid-line) 90deg 180deg, transparent 180deg 360deg);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+html[data-mode="night"] .book::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3.4rem;
+  border-left: 1px solid rgba(214, 90, 70, 0.4);
+  pointer-events: none;
+}
+html[data-mode="night"] .deco-moon {
+  filter: none;
+}
+html[data-mode="night"] .rule,
+html[data-mode="night"] .tile,
+html[data-mode="night"] .hyp {
+  position: relative;
+  border-color: var(--card-edge);
+  border-radius: 2px;
+  background: var(--card);
+  box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.45);
+}
+html[data-mode="night"] .rule {
+  border-left: 6px solid var(--muted);
+}
+html[data-mode="night"] .rule-validated {
+  border-left-color: var(--stamp-validated);
+}
+html[data-mode="night"] .rule-partly {
+  border-left-color: var(--stamp-partly);
+}
+html[data-mode="night"] .rule-observed {
+  border-left-color: var(--stamp-observed);
+}
+html[data-mode="night"] .rule-rejected {
+  border-left-color: var(--stamp-rejected);
+}
+/* A piece of tape at the top of each card. */
+html[data-mode="night"] .rule::before,
+html[data-mode="night"] .tile::before {
+  content: "";
+  position: absolute;
+  top: -0.45rem;
+  left: 50%;
+  width: 3.4rem;
+  height: 0.9rem;
+  background: rgba(214, 196, 150, 0.26);
+  transform: translateX(-50%) rotate(-2deg);
+  pointer-events: none;
+}
+/* Stitches through the coloured edge of a spec card. */
+html[data-mode="night"] .rule::after {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: -4px;
+  border-left: 2px dashed rgba(236, 226, 205, 0.7);
+  pointer-events: none;
+}
+html[data-mode="night"] .tile {
+  border-width: 1px;
+  border-top-width: 5px;
+}
+html[data-mode="night"] .tile-spec {
+  border-top-color: var(--stamp-validated);
+}
+html[data-mode="night"] .tile-record {
+  border-top-color: var(--stamp-partly);
+}
+html[data-mode="night"] .tile-none {
+  border-top-color: var(--stamp-rejected);
+}
+/* Red ink through the struck rule; the rewrite under it is marked in the same red. */
+html[data-mode="night"] .rule-text.struck .ink-k {
+  text-decoration: line-through 2px var(--stamp-rejected);
+  text-decoration-skip-ink: none;
+  opacity: 0.8;
+}
+html[data-mode="night"] .rule-rewrite {
+  border-left: 2px solid var(--stamp-rejected);
+}
+/* A rubber stamp: a little faded. */
+html[data-mode="night"] .stamp {
+  border-radius: 3px;
+  opacity: 0.9;
+  letter-spacing: 0.04em;
+}
+.tile-borrowed {
+  border-color: var(--muted);
+}
+html[data-mode="night"] .tile-borrowed {
+  border-top-color: var(--muted);
+}
+.borrowed-rules {
+  margin: 0.3rem 0 0;
+  padding-left: 1rem;
+}
+.borrowed-rules li {
+  margin-bottom: 0.25rem;
 }

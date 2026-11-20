@@ -1,0 +1,13 @@
+application = "body-lab"
+order = 2
+case = "CASE 2 · THE STITCHED BODY (MUJOCO)"
+door = "The Stitched Body"
+door_line = "A body nobody has described, tried out after dark."
+about = """A body that Dr. Kiro has never seen and nobody has described. It can only send a signal into each of five unlabeled channels and watch where the body ends up and which way it faces. 40 trials of 5 seconds each."""
+open = "body-2"
+unit = "trials"
+theme = "night"
+pen = "orange"
+decoration = "halloween"
+display = "display"
+symbols = """c0 to c4: the signal sent into each of the five unlabeled channels over time, from -1 to 1. x: metres moved in the direction the body first faced. y: metres to the side. heading: degrees it turned."""

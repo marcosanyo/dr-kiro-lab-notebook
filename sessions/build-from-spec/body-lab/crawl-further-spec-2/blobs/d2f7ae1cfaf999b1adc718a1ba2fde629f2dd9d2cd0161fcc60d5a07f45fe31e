@@ -1,0 +1,30 @@
+# H1: Half-strength c1 with a c3 sine gives a straight crawl of 0.3 to 0.5 m
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f"]
+TRIALS = [
+    [-0.5, 1, 2],
+    [-0.5, 1, 1.5],
+]
+
+
+def c0(t):
+    return 0
+
+
+def c1(t, a1):
+    return a1
+
+
+def c2(t):
+    return 0
+
+
+def c3(t, s3, f):
+    return s3 * math.sin(2 * math.pi * f * t)
+
+
+def c4(t):
+    return 0

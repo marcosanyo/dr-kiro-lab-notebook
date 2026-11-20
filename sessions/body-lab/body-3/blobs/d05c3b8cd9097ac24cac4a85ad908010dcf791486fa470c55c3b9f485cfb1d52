@@ -1,0 +1,21 @@
+### H4: Combined sines drive the strong turn seen with all channels in phase
+
+WHEN c2, c3 and c4 carry the same in-phase 1 Hz sine and c0, c1 are 0, THE system SHALL turn by more than 60 deg, and WHEN only c0 and c1 carry the sine THE system SHALL stay within 5 deg of the start heading.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [60.0, 180.0]
+label = "new-combination"
+[prediction.when]
+set = 5
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-5.0, 5.0]
+label = "new-combination"
+[prediction.when]
+set = 1
+```
