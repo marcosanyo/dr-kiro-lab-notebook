@@ -1,0 +1,16 @@
+### H5: A quadrature stroke on c1 and c3 gives forward travel
+
+WHEN c1 and c3 are unit sines at 2 Hz with c3 lagging c1 by a quarter cycle and the other inputs are 0, THE system SHALL reach x between 0.3 and 0.5 m with |heading| under 20 deg.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+amp = 1
+f = 2
+lag = 0.25
+```

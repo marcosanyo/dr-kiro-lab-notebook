@@ -1,0 +1,16 @@
+### H2: c3 or c4 alone produce net forward crawl
+
+WHEN c3 alone is driven by a 1 Hz sine of amplitude 1, THE system SHALL end with a net x displacement above 0.1 m.
+
+```prediction
+# relies on: E1
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 3
+freq = 1.0
+```

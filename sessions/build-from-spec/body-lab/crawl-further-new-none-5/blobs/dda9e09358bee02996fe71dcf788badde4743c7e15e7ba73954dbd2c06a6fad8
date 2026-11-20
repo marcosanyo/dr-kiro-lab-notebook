@@ -1,0 +1,16 @@
+### H1: Single channel sine drive moves the body
+
+WHEN one control channel (c0) is driven by a 1 Hz sine of amplitude 1 and the other four are zero, THE system SHALL end with a net x displacement smaller than 0.3 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.3, 0.3]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 0
+freq = 1.0
+```

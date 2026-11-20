@@ -1,0 +1,17 @@
+### H2: Lag near 180 to 190 deg at 2.1 Hz gives x of at least 0.3 m
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 185 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.5 m with heading within 20 deg of the start.
+
+```prediction
+# relies on: R8
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 185
+a4 = 0
+phi4 = 0
+```

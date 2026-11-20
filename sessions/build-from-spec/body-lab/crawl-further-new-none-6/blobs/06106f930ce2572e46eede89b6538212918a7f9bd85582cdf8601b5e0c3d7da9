@@ -1,0 +1,31 @@
+# H3: Higher frequency travelling wave moves further
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "ph", "amp"]
+TRIALS = [
+    [3.0, 1.2566, 1.0],
+    [6.0, 1.2566, 1.0],
+    [10.0, 1.2566, 1.0],
+]
+
+
+def c0(t, f, ph, amp):
+    return amp * math.sin(2 * math.pi * f * t)
+
+
+def c1(t, f, ph, amp):
+    return amp * math.sin(2 * math.pi * f * t - ph)
+
+
+def c2(t, f, ph, amp):
+    return amp * math.sin(2 * math.pi * f * t - 2 * ph)
+
+
+def c3(t, f, ph, amp):
+    return amp * math.sin(2 * math.pi * f * t - 3 * ph)
+
+
+def c4(t, f, ph, amp):
+    return amp * math.sin(2 * math.pi * f * t - 4 * ph)

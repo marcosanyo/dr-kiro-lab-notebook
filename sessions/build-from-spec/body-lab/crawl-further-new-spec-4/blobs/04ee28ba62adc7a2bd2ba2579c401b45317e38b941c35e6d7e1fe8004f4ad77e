@@ -1,0 +1,29 @@
+# H4: Lag 192 at 2.15 Hz stays inside the goal
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "phi", "a4", "phi4"]
+TRIALS = [
+    [2.15, 192, 0, 0],
+]
+
+
+def c0(t, f, phi, a4, phi4):
+    return 0
+
+
+def c1(t, f, phi, a4, phi4):
+    return 0
+
+
+def c2(t, f, phi, a4, phi4):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi, a4, phi4):
+    return math.sin(2 * math.pi * f * t - math.radians(phi))
+
+
+def c4(t, f, phi, a4, phi4):
+    return a4 * math.sin(2 * math.pi * f * t - math.radians(phi4))

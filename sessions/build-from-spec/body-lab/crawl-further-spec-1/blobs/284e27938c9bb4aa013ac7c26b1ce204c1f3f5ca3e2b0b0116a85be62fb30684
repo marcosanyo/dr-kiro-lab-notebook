@@ -1,0 +1,31 @@
+# H3: A travelling wave across c0..c4 moves this body, with direction set by the sign of the phase lag
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "f", "ph"]
+TRIALS = [
+    [1, 1, 1],
+    [1, 1, -1],
+    [1, 1, 0],
+]
+
+
+def c0(t, amp, f, ph):
+    return amp * math.sin(2 * math.pi * f * t)
+
+
+def c1(t, amp, f, ph):
+    return amp * math.sin(2 * math.pi * f * t - ph)
+
+
+def c2(t, amp, f, ph):
+    return amp * math.sin(2 * math.pi * f * t - 2 * ph)
+
+
+def c3(t, amp, f, ph):
+    return amp * math.sin(2 * math.pi * f * t - 3 * ph)
+
+
+def c4(t, amp, f, ph):
+    return amp * math.sin(2 * math.pi * f * t - 4 * ph)

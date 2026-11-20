@@ -1,0 +1,36 @@
+# H5: A quadrature stroke on two adjacent channels gives forward travel
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a", "f", "ph", "p"]
+TRIALS = [
+    [1, 2, 1.5708, 0],
+    [1, 2, 1.5708, 1],
+]
+
+
+def c0(t):
+    return 0
+
+
+def c1(t):
+    return 0
+
+
+def c2(t, a, f, ph, p):
+    if p == 0:
+        return a * math.sin(2 * math.pi * f * t)
+    return 0
+
+
+def c3(t, a, f, ph, p):
+    if p == 0:
+        return a * math.sin(2 * math.pi * f * t - ph)
+    return a * math.sin(2 * math.pi * f * t)
+
+
+def c4(t, a, f, ph, p):
+    if p == 1:
+        return a * math.sin(2 * math.pi * f * t - ph)
+    return 0

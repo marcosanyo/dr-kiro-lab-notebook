@@ -1,0 +1,25 @@
+### H3: A small in-phase c4 at 2.2 Hz lifts x past 0.3 m and brings heading back near 0
+
+WHEN c2 and c3 carry 2.2 Hz sines with c3 lagging by 200 deg and c4 carries the c2 sine at amplitude 0.3, THE system SHALL reach x of at least 0.3 m with heading within 20 deg of the start and y within 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 200
+c4a = 0.3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 200
+c4a = 0.3
+```

@@ -1,0 +1,37 @@
+# H2: c3 or c4 alone produce net forward crawl
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "ch", "freq"]
+TRIALS = [
+    [1.0, 3, 1.0],
+    [1.0, 4, 1.0],
+    [1.0, 5, 1.0],
+]
+
+
+def drive(t, amp, ch, freq, me):
+    if ch == me or ch == 5:
+        return amp * math.sin(2 * math.pi * freq * t)
+    return 0
+
+
+def c0(t, amp, ch, freq):
+    return 0
+
+
+def c1(t, amp, ch, freq):
+    return 0
+
+
+def c2(t, amp, ch, freq):
+    return 0
+
+
+def c3(t, amp, ch, freq):
+    return drive(t, amp, ch, freq, 3)
+
+
+def c4(t, amp, ch, freq):
+    return drive(t, amp, ch, freq, 4)

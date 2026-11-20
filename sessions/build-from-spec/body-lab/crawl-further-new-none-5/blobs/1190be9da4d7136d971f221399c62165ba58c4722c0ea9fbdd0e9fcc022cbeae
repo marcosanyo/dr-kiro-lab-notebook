@@ -1,0 +1,39 @@
+# H3: Constant c0/c1 act as enable or gain for the sine-driven channels
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "ch", "freq"]
+TRIALS = [
+    [1.0, 6, 1.0],
+    [1.0, 7, 1.0],
+    [1.0, 8, 1.0],
+]
+
+
+def s(t, amp, freq):
+    return amp * math.sin(2 * math.pi * freq * t)
+
+
+def c0(t, amp, ch, freq):
+    if ch == 6 or ch == 7:
+        return 1.0
+    return 0
+
+
+def c1(t, amp, ch, freq):
+    if ch == 6 or ch == 8:
+        return 1.0
+    return 0
+
+
+def c2(t, amp, ch, freq):
+    return s(t, amp, freq)
+
+
+def c3(t, amp, ch, freq):
+    return s(t, amp, freq)
+
+
+def c4(t, amp, ch, freq):
+    return s(t, amp, freq)

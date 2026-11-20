@@ -1,0 +1,16 @@
+### H3: Constant c0/c1 act as enable or gain for the sine-driven channels
+
+WHEN c0 and c1 are held at 1 while c2, c3 and c4 carry a 1 Hz sine, THE system SHALL end with a net x displacement above 0.1 m.
+
+```prediction
+# relies on: E1, E2
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+ch = 6
+freq = 1.0
+```

@@ -1,0 +1,100 @@
+# Requirements
+
+(H1 registered; see below. E1 result: constant drive on c0/c1/c2 gave near-zero motion.)
+
+### H1: Single channel c0 drives motion
+
+WHEN c0 is held at 0.8 and c1 to c4 are held at 0, THE system SHALL end the trial displaced from the start by a small amount, with x between -0.5 and 0.5 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.5, 0.5]
+label = "outside"
+[prediction.when]
+a0 = 0.8
+a1 = 0
+a2 = 0
+a3 = 0
+a4 = 0
+```
+
+Result E1: supported (trivially). x ~ 2e-5 m for c0 and c1, -0.02 m for c2 (heading 2 deg). Constant drive does not crawl.
+
+### H2: Travelling-wave drive moves the body forward
+
+WHEN all five channels carry a 1 Hz sine of amplitude 1 with a phase step of 2*pi/5 between neighbouring channels, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 1.0
+ph = 1.2566
+amp = 1.0
+```
+
+Result E2: rejected. Travelling wave at 1 Hz gave x = 0.041 m, heading 0.75 deg. In-phase gave heading 117 deg, anti-phase 35 deg.
+
+### H3: Higher frequency travelling wave moves further
+
+WHEN the five channels carry a travelling-wave sine of amplitude 1, phase step 1.2566 rad and frequency 3 Hz, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 3.0
+ph = 1.2566
+amp = 1.0
+```
+
+Result E3: rejected. x = -0.025, 0.021, 0.041 m at 3, 6, 10 Hz; heading 44, 46, 59 deg. Steady creep at 10 Hz, but slow and turning.
+
+### H4: Two channels in quadrature give straighter, faster crawl
+
+WHEN only c0 and c1 carry a 10 Hz sine of amplitude 1 with c1 lagging c0 by pi/2 and c2 to c4 are zero, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 10.0
+ph = 1.5708
+amp = 1.0
+mode = 1
+```
+
+Result E4: rejected. c0 and c1 at 10 Hz quadrature gave no motion (x 6e-5 m). They look inert.
+
+### H5: c2 and c3 in quadrature at 10 Hz crawl forward
+
+WHEN only c2 and c3 carry a 10 Hz sine of amplitude 1 with c3 lagging c2 by pi/2 and the other channels are zero, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 10.0
+ph = 1.5708
+amp = 1.0
+mode = 2
+```

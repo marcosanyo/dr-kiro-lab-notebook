@@ -1,0 +1,16 @@
+### H2: Travelling-wave drive moves the body forward
+
+WHEN all five channels carry a 1 Hz sine of amplitude 1 with a phase step of 2*pi/5 between neighbouring channels, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 1.0
+ph = 1.2566
+amp = 1.0
+```

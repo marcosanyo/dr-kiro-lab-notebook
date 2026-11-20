@@ -1,0 +1,27 @@
+### H5: A quadrature stroke on two adjacent channels gives forward travel
+
+WHEN two adjacent channels get unit sines at 2 Hz with a quarter-cycle lag and the other three inputs are 0, THE system SHALL end at x between 0.1 and 0.5 m, for the pair (c2, c3) and for the pair (c3, c4).
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.5]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 2
+ph = 1.5708
+p = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.1, 0.5]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 2
+ph = 1.5708
+p = 1
+```

@@ -1,0 +1,37 @@
+# H1: Single channel sine drive moves the body
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "ch", "freq"]
+TRIALS = [
+    [1.0, 0, 1.0],
+    [1.0, 1, 1.0],
+    [1.0, 2, 1.0],
+]
+
+
+def drive(t, amp, ch, freq, me):
+    if ch == me:
+        return amp * math.sin(2 * math.pi * freq * t)
+    return 0
+
+
+def c0(t, amp, ch, freq):
+    return drive(t, amp, ch, freq, 0)
+
+
+def c1(t, amp, ch, freq):
+    return drive(t, amp, ch, freq, 1)
+
+
+def c2(t, amp, ch, freq):
+    return drive(t, amp, ch, freq, 2)
+
+
+def c3(t, amp, ch, freq):
+    return 0
+
+
+def c4(t, amp, ch, freq):
+    return 0
