@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `25e7a7a8850fa1a653ba3aaa5c0d77e453f1b8d68cbf19fb128407792b7d3d46`
+> 原文 SHA-256: `e36d182172e07fc4ed17a3d1cd425482adace2a4a773141b6e88fce661cd6df0`
 
 # タスク: lab-bench
 
@@ -306,3 +306,11 @@ import する唯一の場所です。
 - **37. `check_copies` が `sessions/build-from-spec/` を飛ばす** — 完了
   - `record/spec_copy.py`: `RUN_RECORDS` と `_records` での飛ばし、報告の行。テストは `bench/tests/unit/test_spec_copy.py`（`build-from-spec` タスク 2.1）。
   - _要件: 22.1-22.5_
+
+## 改訂: 名前付きバリアント（要件 23）
+
+`body-lab` spec（その要件 7）のために追加した。設計: 「改訂: 名前付きバリアント（要件 23）」。
+
+- **38. `variant` 設定** — 未着手
+  - `SessionConfig.variant`、任意の設定フィールドとファクトリー呼び出し、アダプターの `variants` に対する開始時の検査、開始エントリーと再開時の検査、`bench-new-session --variant`。設計 E2 のテスト。`bench/README.md` の設定の行。`sh bench/scripts/check.sh` が通る。
+  - _要件: 23.1-23.11_

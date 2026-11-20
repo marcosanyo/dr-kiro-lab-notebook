@@ -45,3 +45,23 @@ Each task ends with `sh bench/scripts/check.sh` and the adapter's tests passing.
     has 14 rows: 2 `validated`, 4 `observed`, 8 `rejected`, each naming the row that replaces it. Dr. Kiro named
     only `workflow` and `method` as its steering.
   - _Requirements: 6.2_
+
+## Amendment: a second body (Requirement 7)
+
+Needs `lab-bench` task 38 (the `variant` setting) first. Branch `feat/second-body`.
+
+- [ ] 7. Body `b` and the body choice
+  - `specimen_02.xml`, `BODIES`, `sim.build(settings, body)`, `BodyAdapter(variant=...)` and `variants`
+    (design 10); the second `scan_sources.toml` source; `tests/test_bodies.py`; the told-text golden file stays as it
+    is. The README gets the option and the labels.
+  - _Requirements: 7.1-7.6_
+
+- [ ] 8. Same inputs on both bodies
+  - Run the comparison of design 10 and write its output here as a result line. Report the difference to the user.
+  - _Requirements: 7.8_
+
+- [ ] 9. Blind check — **Stop and ask**
+  - `bench-scan` on the lab, on a sealed record of a short session on body `b` (run with `bench-new-session
+    --variant b`), and on a notebook build of it; `bench-verify`; the start entry holds the label. Check that a start
+    without `variant` and with `variant = "c"` is refused. Report to the user.
+  - _Requirements: 7.3, 7.4, 7.7, 7.9_

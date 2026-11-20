@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/body-lab/tasks.md`](../../../.kiro/specs/body-lab/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `e4ed1885fd24e91202a2ce3604845a8d0101dff732d03b8fab7a506f5899501f`
+> 原文 SHA-256: `1f0a82bdf104aac4a66a94146bdc1afbae7268d24e44d26ce1befaf37d6e86d6`
 
 # タスク: body-lab
 
@@ -32,3 +32,19 @@
   - その後、ビルダーが結果をここに記録し、`discovered/README.md` を更新する。
   - 結果（body-2、macOS、2026-11-16、コミット `471ca88`）: Dr. Kiro 自身の `end_session` で `ended` として封印された。40 試行のうち 39 を使用（残り 1）、拒否 3 件、再開の一文なし。`bench-verify` は 125 件のエントリーと 77 個の blob を検証した。ラボと封印済みフォルダーに対する `bench-scan` は検出なし。`bench-export-spec` が `discovered/body-lab/body-2/` を書き、`bench-check-discovered` が通り、その写しのスキャンも検出なし。表は 14 行: `validated` 2、`observed` 4、`rejected` 8（それぞれ置き換える行を示す）。Dr. Kiro が挙げたステアリングは `workflow` と `method` だけだった。
   - _要件: 6.2_
+
+## 改訂: 2 つ目のボディ（要件 7）
+
+先に `lab-bench` のタスク 38（`variant` 設定）が要る。ブランチ `feat/second-body`。
+
+- **7. ボディ `b` とボディの選択** — 未着手
+  - `specimen_02.xml`、`BODIES`、`sim.build(settings, body)`、`BodyAdapter(variant=...)` と `variants`（設計 10）。`scan_sources.toml` の 2 つ目のソース。`tests/test_bodies.py`。伝える文のゴールデンファイルはそのまま。README にオプションとラベルを書く。
+  - _要件: 7.1-7.6_
+
+- **8. 同じ入力を両方のボディで** — 未着手
+  - 設計 10 の比較を走らせ、その出力を結果の行としてここに書く。差をユーザーに報告する。
+  - _要件: 7.8_
+
+- **9. 目隠しの確認** — **止めて確認** — 未着手
+  - ラボ、ボディ `b` の短いセッション（`bench-new-session --variant b` で走らせる）の封印された記録、そのノートのビルドに対する `bench-scan`。`bench-verify`。開始エントリーがラベルを持つこと。`variant` なしの開始と `variant = "c"` の開始が拒否されること。ユーザーに報告する。
+  - _要件: 7.3, 7.4, 7.7, 7.9_

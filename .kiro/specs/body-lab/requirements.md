@@ -14,9 +14,10 @@ on the user's Mac, which also completes `dr-kiro` task 5.
 
 ## Glossary
 
-- **Body**: the model in `body-lab/model/specimen_01.xml`.
+- **Body**: a model in `body-lab/model/`. Two exist: body `a`, `specimen_01.xml`, and body `b`, `specimen_02.xml`
+  (Requirement 7). The label (`a`, `b`) is the only name the records and the notebook use for a body.
 - **Channel**: one control input, known to Dr. Kiro only by its number.
-- **Wiring**: `body-lab/model/specimen_01.wiring.json`: which channel drives which actuator, with which sign, and
+- **Wiring**: `body-lab/model/specimen_01.wiring.json`, shared by both bodies: which channel drives which actuator, with which sign, and
   the control rate, trial length and settle time.
 - **Tracked point**: the point on the body whose pose the camera would read from a marker (the prototype's marker
   on the body).
@@ -103,4 +104,37 @@ meet the same contract later.
 1. THE adapter tests SHALL check: a trial result meets the contract (`check_result`); the same inputs give the same
    result twice; a trial that ends with the body turned over gives `lost`; the picture passes `check_picture`.
 2. ONE full Dr. Kiro session of 40 trials SHALL run on the user's Mac. Pass: the record is sealed as `ended`, and
+
    `bench-scan` on the lab and on the sealed folder reports nothing. The same session checks `dr-kiro` task 5.
+
+### Requirement 7: A second body
+
+**User story:** As the builder, I want a second body that differs from the first in one known way, and a choice of
+body at session start that the record keeps, so that what Dr. Kiro's spec says about one body can be tested on the
+other and the two sessions can be told apart.
+
+**Concerns:** the builder, and the reader of the records. Dr. Kiro is told nothing about the body or the choice.
+
+#### Acceptance criteria
+
+1. Body `b` SHALL be `body-lab/model/specimen_02.xml`, a new file. It SHALL differ from body `a` only in the
+   wheel's tire: the rubber cylinder is removed; the wheel's joint, the motor (actuator) and a small axle stay. The
+   axle SHALL NOT collide with anything (it takes no part in contact), and SHALL stay clear of the floor. Nothing
+   else in the model changes. `specimen_01.xml` and the wiring file SHALL NOT be edited.
+2. Both bodies SHALL use the same wiring file, so the channels, their order and their signs are the same
+   (Requirement 1). A test SHALL check that every actuator the wiring names exists in both models.
+3. THE adapter SHALL accept the variant labels `a` and `b` through the bench's `variant` setting (`lab-bench`
+   Requirement 23), and SHALL have `variants = ("a", "b")`. A missing or unknown label stops the session at start.
+   There SHALL be no default body.
+4. THE sealed record's start entry SHALL hold the label (`lab-bench` 23.6).
+5. THE declaration, the knobs, the measurements, the picture layout and every text Dr. Kiro sees SHALL be the same for
+   both bodies. A test SHALL compare the told text of the two. The label SHALL NOT appear in anything Dr. Kiro sees.
+6. `body-lab/adapter/scan_sources.toml` SHALL name both model files with the `mjcf` extractor, and a test SHALL fail
+   when a model file or wiring file in `body-lab/model/` is not named there, so that a file added later cannot
+   escape the blind scan. Every name in `specimen_02.xml` SHALL be a forbidden term at builder level like those of
+   `specimen_01.xml`; the stop list does not change.
+7. `bench-scan` on the lab, on a sealed record of a session on body `b`, and on the notebook build output SHALL
+   report nothing.
+8. THE builder SHALL run the same inputs on both bodies and report the difference in `x`, `y` and `heading` to the
+   user (task 8). The numbers come from the runs and are written in `tasks.md`.
+9. THE notebook is not changed by this requirement. Showing where the body changes is a later request.
