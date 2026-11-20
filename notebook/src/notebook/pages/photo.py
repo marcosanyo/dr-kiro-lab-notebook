@@ -304,7 +304,7 @@ def _corner_map(trial: Trial, retake: "Retake", source: str) -> list[Segment]:
         marks += html.element("path", line, [])
     for k in range(frames):
         dx, dy = at(step * (k + 1))
-        dot = {"class": "map-dot", "cx": f"{dx:.1f}", "cy": f"{dy:.1f}", "r": "6", "data-frame": str(k)}
+        dot = {"class": "map-dot", "cx": f"{dx:.1f}", "cy": f"{dy:.1f}", "r": "4.6", "data-frame": str(k)}
         if k != last:
             dot["hidden"] = "hidden"
         marks += html.shape("circle", dot)

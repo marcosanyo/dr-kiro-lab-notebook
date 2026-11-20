@@ -1901,8 +1901,6 @@ html[data-app="front"] {
 }
 .map-dot {
   fill: #d4600c;
-  stroke: #3d3126;
-  stroke-width: 1.4;
 }
 .map-dot[hidden] {
   display: none;
