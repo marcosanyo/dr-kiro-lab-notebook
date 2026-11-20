@@ -1,12 +1,16 @@
-"""Choice files and the cover file (notebook-shelf design 2). A person writes them; the notebook reads them.
-A choice file `<folder>/<application>/<session-id>.toml` holds what a person says about one session: the
-title of its notebook and the sentence after the dash, a summary, the one line on its card, the model that
-ran Dr. Kiro, the date, the colour of its card, which measurement is "the best so far" and in which
-direction, and the trials shown as the two large photos with a handwritten line each.
-The cover file `<folder>/cover.toml` holds one `[[lab]]` per application: the text on its round tab, the
-description under the title and the session whose notebook the first page opens.
+"""The settings of an application's notebook and the choice files of its sessions (notebook-shelf design 2).
+An application's notebook folder (`<application>/notebook/`) holds `app.toml`, the choice files
+`choices/<session-id>.toml` and, when the application has retaken pictures, a display folder.
+`app.toml` says how the application's notebook opens: its place in the order of the cases, the text of its
+tab and of its door on the front page, the description under the title, the session whose notebook the first
+page opens, the word for one budgeted step, the theme it opens in (day or night), the colour of the pen of our
+notes (blue or orange) and the decoration (none or halloween).
+A choice file holds what a person says about one session: the title of its notebook and the sentence after
+the dash, a summary, the one line on its card, the model that ran Dr. Kiro, the date, the colour of its card,
+which measurement is "the best so far" and in which direction, the trials shown as the two large photos with
+a handwritten line each, and the three sticky notes.
 Everything is checked against the records before anything is rendered; a failure names the file and the key.
-Every text here is builder-level text (orange pen); this module does not scan, `scan.choice_segments` does.
+Every text here is builder-level text; this module does not scan, `scan.choice_segments` does.
 """
 
 import tomllib
@@ -17,7 +21,10 @@ from typing import Any
 from notebook.errors import NotebookError
 from notebook.records import RecordModel
 
-COVER_NAME = "cover.toml"
+APP_NAME = "app.toml"
+THEMES = ("day", "night")
+PENS = ("blue", "orange")
+DECORATIONS = ("none", "halloween")
 COLORS = ("violet", "green", "amber", "rose", "blue", "teal")
 BETTER = ("higher", "lower")
 POLAROIDS = 2
@@ -27,10 +34,24 @@ BOOK_KEYS = frozenset(
 NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
 NOTE_KEYS = frozenset({"kind", "prediction"})
 NOTES = 3
-PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals"})
+PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals", "mark", "mark_equals", "mark_words"})
 POLAROID_KEYS = frozenset({"heading", "trial", "words", "star"})
-LAB_KEYS = frozenset({"application", "case", "about", "open", "unit"})
-COVER_KEYS = frozenset({"lab"})
+APP_KEYS = frozenset(
+    {
+        "application",
+        "order",
+        "case",
+        "door",
+        "door_line",
+        "about",
+        "open",
+        "unit",
+        "theme",
+        "pen",
+        "decoration",
+        "display",
+    }
+)
 SUMMARY_MAX = 700
 TITLE_MAX = 60
 SUBTITLE_MAX = 110
@@ -48,6 +69,9 @@ class Progress:
     better: str
     require: str | None
     equals: float | None
+    mark: str | None  # a measurement whose first value `mark_equals` is flagged on the chart
+    mark_equals: float | None
+    mark_words: str | None  # the words a person writes at the flag
     source: str
 
 
@@ -86,19 +110,33 @@ class Choices:
 
 
 @dataclass(frozen=True)
-class Lab:
+class App:
+    """One application of the front page: how its notebook opens and what its door says."""
+
     application: str
+    order: int
     case: str
+    door: str
+    door_line: str
     about: str
-    open: str  # the session id the first page opens
+    open: str  # the session id the application's first page opens
     unit: str  # the word for one budgeted step, "trials" or "runs"
-    source: str
+    theme: str  # "day" or "night": the theme its notebook opens in
+    pen: str  # "blue" or "orange": the colour of the pen of our notes
+    decoration: str  # "none" or "halloween"
+    display: Path | None  # the folder of retaken pictures, when the application has one
+    folder: Path
+    source: str  # the file, for messages
+
+    @property
+    def slug(self) -> str:
+        return self.application
 
 
 @dataclass(frozen=True)
-class Cover:
-    file: str
-    labs: tuple[Lab, ...]  # in the order of the cover file
+class Apps:
+    apps: tuple[App, ...]  # in the order of the front page
+    choices: dict[tuple[str, str], Choices]
 
 
 def _read_toml(path: Path) -> dict[str, Any]:
@@ -151,7 +189,20 @@ def _progress(file: str, data: Any, record: RecordModel) -> Progress:
         if isinstance(equals, bool) or not isinstance(equals, int | float):
             raise NotebookError(f"{where} equals", "must be a number")
         equals = float(equals)
-    return Progress(measurement, better, require, equals, where)
+    given = [k for k in ("mark", "mark_equals", "mark_words") if k in data]
+    if given and len(given) != 3:
+        raise NotebookError(where, "`mark`, `mark_equals` and `mark_words` are given together or not at all")
+    mark = mark_equals = mark_words = None
+    if given:
+        mark = _string(f"{where} mark", data["mark"], 40)
+        if mark not in scalars:
+            raise NotebookError(f"{where} mark", f"{mark!r} is not a scalar measurement of the lab")
+        value = data["mark_equals"]
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            raise NotebookError(f"{where} mark_equals", "must be a number")
+        mark_equals = float(value)
+        mark_words = _string(f"{where} mark_words", data["mark_words"], 30)
+    return Progress(measurement, better, require, equals, mark, mark_equals, mark_words, where)
 
 
 def _polaroid(file: str, index: int, data: Any, record: RecordModel) -> Polaroid:
@@ -251,65 +302,91 @@ def load_file(path: Path, record: RecordModel) -> Choices:
     )
 
 
-def load(folder: Path, records: list[RecordModel]) -> dict[tuple[str, str], Choices]:
-    """Every choice file in `folder`, one per record, keyed by (application, session id). The folder holds the
-    cover file and one subfolder per application; anything else fails, naming it."""
-    folder = Path(folder)
+def _app(folder: Path, records: list[RecordModel]) -> App:
+    path = folder / APP_NAME
+    where = str(path)
+    if not path.is_file():
+        raise NotebookError(where, "the application's settings file is missing")
+    data = _read_toml(path)
+    _exact(where, data, APP_KEYS, APP_KEYS - {"display"})
+    application = _string(f"{where} application", data["application"], 40)
+    sessions = {r.session for r in records if r.application == application}
+    if not sessions:
+        raise NotebookError(f"{where} application", f"the records hold no session of {application!r}")
+    opened = _string(f"{where} open", data["open"], 40)
+    if opened not in sessions:
+        raise NotebookError(f"{where} open", f"names no record ({application}/{opened})")
+    order = data["order"]
+    if type(order) is not int or order < 1:
+        raise NotebookError(f"{where} order", "must be a whole number from 1")
+    theme = _string(f"{where} theme", data["theme"], 10)
+    if theme not in THEMES:
+        raise NotebookError(f"{where} theme", f"must be one of {', '.join(THEMES)}")
+    pen = _string(f"{where} pen", data["pen"], 10)
+    if pen not in PENS:
+        raise NotebookError(f"{where} pen", f"must be one of {', '.join(PENS)}")
+    decoration = _string(f"{where} decoration", data["decoration"], 12)
+    if decoration not in DECORATIONS:
+        raise NotebookError(f"{where} decoration", f"must be one of {', '.join(DECORATIONS)}")
+    display = None
+    if "display" in data:
+        display = folder / _string(f"{where} display", data["display"], 40)
+        if not display.is_dir():
+            raise NotebookError(f"{where} display", f"{display} is not a folder")
+    return App(
+        application=application,
+        order=order,
+        case=_string(f"{where} case", data["case"], 80),
+        door=_string(f"{where} door", data["door"], 40),
+        door_line=_string(f"{where} door_line", data["door_line"], 100),
+        about=_string(f"{where} about", data["about"], 400),
+        open=opened,
+        unit=_string(f"{where} unit", data["unit"], 20),
+        theme=theme,
+        pen=pen,
+        decoration=decoration,
+        display=display,
+        folder=folder,
+        source=where,
+    )
+
+
+def _choice_files(app: App, records: list[RecordModel]) -> dict[tuple[str, str], Choices]:
+    folder = app.folder / "choices"
     if not folder.is_dir():
         raise NotebookError(str(folder), "the choices folder is not a folder")
-    by_key = {(r.application, r.session): r for r in records}
+    mine = {r.session: r for r in records if r.application == app.application}
     found: dict[tuple[str, str], Choices] = {}
-    for entry in sorted(folder.iterdir(), key=lambda p: p.name):
-        if entry.name == COVER_NAME and entry.is_file():
-            continue
-        if not entry.is_dir():
-            raise NotebookError(str(entry), "not an application folder of choice files")
-        for path in sorted(entry.iterdir(), key=lambda p: p.name):
-            if not (path.is_file() and path.suffix == ".toml"):
-                raise NotebookError(str(path), "not a choice file (<session-id>.toml)")
-            key = (entry.name, path.stem)
-            if key not in by_key:
-                raise NotebookError(str(path), f"names no record ({entry.name}/{path.stem})")
-            found[key] = load_file(path, by_key[key])
-    for key in sorted(by_key):
-        if key not in found:
+    for path in sorted(folder.iterdir(), key=lambda p: p.name):
+        if not (path.is_file() and path.suffix == ".toml"):
+            raise NotebookError(str(path), "not a choice file (<session-id>.toml)")
+        if path.stem not in mine:
+            raise NotebookError(str(path), f"names no record ({app.application}/{path.stem})")
+        found[(app.application, path.stem)] = load_file(path, mine[path.stem])
+    for session in sorted(mine):
+        if (app.application, session) not in found:
             raise NotebookError(
-                str(folder / key[0] / f"{key[1]}.toml"), f"the record {by_key[key].name} has no choice file"
+                str(folder / f"{session}.toml"), f"the record {mine[session].name} has no choice file"
             )
     return found
 
 
-def load_cover(folder: Path, records: list[RecordModel]) -> Cover:
-    """Read and check `<folder>/cover.toml`: one `[[lab]]` per application of the records."""
-    path = Path(folder) / COVER_NAME
-    file = str(path)
-    if not path.is_file():
-        raise NotebookError(file, "the cover file is missing")
-    data = _read_toml(path)
-    _exact(file, data, COVER_KEYS, COVER_KEYS)
-    value = data["lab"]
-    if not (isinstance(value, list) and all(isinstance(t, dict) for t in value)):
-        raise NotebookError(f"{file} key lab", "must be an array of tables ([[lab]])")
-    sessions = {(r.application, r.session) for r in records}
-    labs: dict[str, Lab] = {}
-    for i, table in enumerate(value, start=1):
-        where = f"{file} key lab {i}"
-        _exact(where, table, LAB_KEYS, LAB_KEYS)
-        application = _string(f"{where} application", table["application"], 40)
-        if application in labs:
-            raise NotebookError(where, f"a second [[lab]] for {application}")
-        opened = _string(f"{where} open", table["open"], 40)
-        if (application, opened) not in sessions:
-            raise NotebookError(f"{where} open", f"names no record ({application}/{opened})")
-        labs[application] = Lab(
-            application,
-            _string(f"{where} case", table["case"], 80),
-            _string(f"{where} about", table["about"], 400),
-            opened,
-            _string(f"{where} unit", table["unit"], 20),
-            where,
-        )
+def load_apps(folders: list[Path], records: list[RecordModel]) -> Apps:
+    """Read and check every application's notebook folder. Every application of the records has exactly one;
+    the applications are in the order of their `order` key, and no two share one."""
+    apps = [_app(Path(f), records) for f in folders]
+    seen: dict[str, App] = {}
+    for app in apps:
+        if app.application in seen:
+            raise NotebookError(app.source, f"a second settings file for {app.application}")
+        seen[app.application] = app
     for application in sorted({r.application for r in records}):
-        if application not in labs:
-            raise NotebookError(f"{file} key lab", f"no [[lab]] for the application {application}")
-    return Cover(file, tuple(labs.values()))
+        if application not in seen:
+            raise NotebookError("apps", f"no notebook folder is given for the application {application}")
+    orders = [a.order for a in apps]
+    if len(set(orders)) != len(orders):
+        raise NotebookError("apps", "two applications have the same order")
+    chosen: dict[tuple[str, str], Choices] = {}
+    for app in apps:
+        chosen.update(_choice_files(app, records))
+    return Apps(tuple(sorted(apps, key=lambda a: a.order)), chosen)

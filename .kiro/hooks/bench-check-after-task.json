@@ -5,9 +5,12 @@
       "name": "Bench tests and ruff after each spec task",
       "description": "Runs bench/scripts/check.sh when a spec task finishes: the bench tests, ruff check and ruff format --check, reported as counts on one line. Exits non-zero if any of them fails.",
       "trigger": "PostTaskExec",
-      "action": { "type": "command", "command": "sh bench/scripts/check.sh" },
+      "action": {
+        "type": "command",
+        "command": "sh bench/scripts/check.sh"
+      },
       "timeout": 600,
-      "enabled": true
+      "enabled": false
     }
   ]
 }

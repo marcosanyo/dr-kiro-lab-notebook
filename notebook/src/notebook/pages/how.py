@@ -15,6 +15,7 @@ The commentary comes from `text.py`, quotes no builder spec and names or links n
 """
 
 from notebook import addresses, html, numbers, refusals
+from notebook.choices import App
 from notebook.errors import NotebookError
 from notebook.ink import Segment, pencil
 from notebook.pages import parts
@@ -164,8 +165,8 @@ def _session_refusals(record: RecordModel) -> list[Segment]:
     return html.element("section", {"class": "how-refusals"}, content)
 
 
-def page(records: list[RecordModel]) -> list[Segment]:
-    """`how.html` from every record, in code-point order of (application, session)."""
+def page(records: list[RecordModel], app: App) -> list[Segment]:
+    """`how.html` of one application from its records, in code-point order of session."""
     if not records:
         raise NotebookError("how.html", "the page needs at least one record")
     ordered = sorted(records, key=lambda r: (r.application, r.session))
@@ -216,4 +217,4 @@ def page(records: list[RecordModel]) -> list[Segment]:
             ],
         ),
     ]
-    return parts.page("HOW_TITLE", body)
+    return parts.page("HOW_TITLE", body, app=app)

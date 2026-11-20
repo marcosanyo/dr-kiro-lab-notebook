@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from bench.scan.levels import SIDECAR_SUFFIX, sidecar_pieces
 
-from fixtures.choices import CHOICE, COVER
+from fixtures.choices import write_app
 from fixtures.session import FAKE_SOURCES, STOP_LIST, Lab, accepted_session
 from notebook import addresses, build, cli, records, site, text
 from notebook.errors import NotebookError
@@ -31,16 +31,13 @@ WORDS = "# test fixture word list\nlimp\n"
 def fixture_inputs(tmp_path_factory) -> tuple[Path, Inputs]:
     root = tmp_path_factory.mktemp("fixture-build")
     made = accepted_session(root / "lab")
-    choices = root / "choices"
-    (choices / "fake").mkdir(parents=True)
-    (choices / "fake" / "s1.toml").write_text(CHOICE)
-    (choices / "cover.toml").write_text(COVER)
+    app = write_app(root / "app")
     (root / "layouts.toml").write_text(LAYOUTS)
     (root / "words.txt").write_text(WORDS)
     inputs = Inputs(
         sessions=made.sessions,
         requests=root / "requests",
-        choices=choices,
+        apps=(app,),
         layouts=root / "layouts.toml",
         words=root / "words.txt",
         scan_configs=(FAKE_SOURCES,),
@@ -71,22 +68,27 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
     (record,) = records.load(inputs.sessions, allow_fake=True)
     # Pictures shown: every trial's, in its experiment entry (Requirement 10.8), which includes the cover's
     # and the margin's.
-    pictures = {f"p/{hashlib.sha256(t.picture.data).hexdigest()}.png" for t in record.trials}
-    # No replay pages: the replay steps are not in this version (Decision 48).
+    pictures = {f"fake/p/{hashlib.sha256(t.picture.data).hexdigest()}.png" for t in record.trials}
+    # The front page at the root and the fake application's folder; each has its own `a/`.
     texts = {
         "index.html",
-        "legend.html",
-        "how.html",
-        "fake-s1.html",
         "a/notebook.css",
         "a/notebook.js",
+        "fake/index.html",
+        "fake/legend.html",
+        "fake/how.html",
+        "fake/s1.html",
+        "fake/a/notebook.css",
+        "fake/a/notebook.js",
     }
-    shipped = {addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES)}
+    shipped = {f"{scope}{addresses.FONT_LICENSE}" for scope in ("", "fake/")} | {
+        f"{scope}{addresses.ASSET_DIR}/{n}" for scope in ("", "fake/") for n in addresses.FONT_FILES
+    }
     expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures | shipped
     assert _all_files(built) == expected
     for path in pictures:
         data = (built / path).read_bytes()
-        assert path == f"p/{hashlib.sha256(data).hexdigest()}.png"
+        assert path == f"fake/p/{hashlib.sha256(data).hexdigest()}.png"
     assert not (built.parent / ".site.staging").exists()
 
 
@@ -106,7 +108,7 @@ def test_every_sidecar_is_compact_sorted_and_read_by_the_bench(built):
 
 
 def test_every_page_of_a_fixture_build_carries_the_banner(built):
-    for path in ("index.html", "legend.html", "how.html", "fake-s1.html"):
+    for path in ("index.html", "fake/index.html", "fake/legend.html", "fake/how.html", "fake/s1.html"):
         page = (built / path).read_text(encoding="utf-8")
         assert page.count(text.FIXTURE_BANNER) == 1
         assert page.index(text.FIXTURE_BANNER) > page.index("<body>")
@@ -117,7 +119,7 @@ def test_the_command_line_refuses_fake_records(fixture_inputs, tmp_path, capsys)
     argv = [
         "--sessions", str(inputs.sessions),
         "--requests", str(inputs.requests),
-        "--choices", str(inputs.choices),
+        "--app", str(inputs.apps[0]),
         "--layouts", str(inputs.layouts),
         "--words", str(inputs.words),
         "--scan-config", str(FAKE_SOURCES),

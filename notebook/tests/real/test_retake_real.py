@@ -38,7 +38,7 @@ def test_a_record_that_differs_from_the_rerun_stops_naming_the_trial_and_the_mea
 
 def test_the_committed_display_folder_holds_every_trial_of_both_body_sessions(loaded):
     table = layouts.load(ROOT / "notebook" / "layouts.toml")
-    found = display.load(ROOT / "notebook" / "display", list(loaded.values()), table)
+    found = display.load(ROOT / "body-lab" / "notebook" / "display", list(loaded.values()), table)
     expected = {("body-lab", r.session, t.id) for r in loaded.values() for t in r.trials}
     assert set(found) == expected and len(found) == 79
     sample = found[("body-lab", "body-2", "T12")]

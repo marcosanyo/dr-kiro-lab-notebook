@@ -18,14 +18,19 @@ ROOT = Path(__file__).resolve().parents[3]
 NOT_YET_WRITTEN: set[str] = set()
 PAGES = {
     "index.html",
-    "legend.html",
-    "how.html",
-    "body-lab-body-1.html",
-    "body-lab-body-2.html",
-    "wind-tunnel-wt-002.html",
-    "wind-tunnel-wt-003.html",
-    "wind-tunnel-wt-004.html",
+    "wind-tunnel/index.html",
+    "wind-tunnel/legend.html",
+    "wind-tunnel/how.html",
+    "wind-tunnel/wt-002.html",
+    "wind-tunnel/wt-003.html",
+    "wind-tunnel/wt-004.html",
+    "body-lab/index.html",
+    "body-lab/legend.html",
+    "body-lab/how.html",
+    "body-lab/body-1.html",
+    "body-lab/body-2.html",
 }
+SCOPES = ("", "wind-tunnel/", "body-lab/")
 # The file part of a link: the query and the fragment are not part of it.
 _HREF = re.compile(r'(?:href|src)="([^"#?]*)(?:[?#][^"]*)?"')
 
@@ -34,7 +39,8 @@ def _argv(out: Path) -> list[str]:
     return [
         "--sessions", str(ROOT / "sessions"),
         "--requests", str(ROOT / "build-from-spec" / "requests"),
-        "--choices", str(ROOT / "notebook" / "choices"),
+        "--app", str(ROOT / "wind-tunnel" / "notebook"),
+        "--app", str(ROOT / "body-lab" / "notebook"),
         "--layouts", str(ROOT / "notebook" / "layouts.toml"),
         "--words", str(ROOT / "notebook" / "commentary-words.txt"),
         "--scan-config", str(ROOT / "body-lab" / "adapter" / "scan_sources.toml"),
@@ -53,12 +59,14 @@ def site(tmp_path_factory) -> Path:
 
 def test_the_real_build_writes_every_page_written_so_far_with_sidecars(site):
     files = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()}
-    texts = PAGES | {"a/notebook.css", "a/notebook.js"}
-    shipped = {addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES)}
-    assert {f for f in files if not f.startswith("p/")} == texts | {
-        t + SIDECAR_SUFFIX for t in texts
-    } | shipped
-    assert all(re.fullmatch(r"p/[0-9a-f]{64}\.png", f) for f in files if f.startswith("p/"))
+    texts = PAGES | {f"{scope}a/{name}" for scope in SCOPES for name in ("notebook.css", "notebook.js")}
+    shipped = {
+        f"{scope}{path}"
+        for scope in SCOPES
+        for path in (addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES))
+    }
+    assert {f for f in files if "/p/" not in f} == texts | {t + SIDECAR_SUFFIX for t in texts} | shipped
+    assert all(re.fullmatch(r"(wind-tunnel|body-lab)/p/[0-9a-f]{64}\.png", f) for f in files if "/p/" in f)
     assert not (site.parent / ".site.staging").exists()
 
 
@@ -69,12 +77,18 @@ def test_the_real_build_has_no_replay_page_and_no_link_to_one(site):
         assert "replay" not in (site / page).read_text(encoding="utf-8")
 
 
-def test_every_link_of_the_real_build_names_a_file_of_the_site_or_a_page_still_to_come(site):
+def test_every_link_of_the_real_build_names_a_file_of_the_site(site):
+    """A relative link names a file next to its page; the only other links are to the front page and to
+    another application's folder."""
     files = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()}
-    targets: set[str] = set()
     for page in PAGES:
+        folder = page.rsplit("/", 1)[0] + "/" if "/" in page else ""
         for match in _HREF.finditer((site / page).read_text(encoding="utf-8")):
-            if match.group(1):
-                targets.add(match.group(1))
-    assert all(".." not in t and not t.startswith("/") for t in targets)
-    assert targets - files == NOT_YET_WRITTEN
+            target = match.group(1)
+            if not target:
+                continue
+            assert ".." not in target, (page, target)
+            if target.startswith("/"):
+                assert re.fullmatch(r"/|/(wind-tunnel|body-lab)/", target), (page, target)
+                continue
+            assert folder + target in files or target in files and folder == "", (page, target)

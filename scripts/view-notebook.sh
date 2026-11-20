@@ -32,13 +32,13 @@ out=$(mktemp -d "${TMPDIR:-/tmp}/lab-notebook.XXXXXX") || exit 2
 uv run --project notebook notebook-build \
     --sessions sessions \
     --requests build-from-spec/requests \
-    --choices notebook/choices \
+    --app wind-tunnel/notebook \
+    --app body-lab/notebook \
     --layouts notebook/layouts.toml \
     --words notebook/commentary-words.txt \
     --scan-config body-lab/adapter/scan_sources.toml \
     --scan-config wind-tunnel/adapter/scan_sources.toml \
     --stop-list .kiro/blind-scan/stop-list.txt \
-    --display notebook/display \
     --out "$out" || exit 1
 echo "view-notebook: built into $out"
 echo "view-notebook: open http://127.0.0.1:$port/  (Ctrl-C stops)"

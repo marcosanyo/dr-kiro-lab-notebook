@@ -15,7 +15,8 @@ def _argv(out: Path) -> list[str]:
     return [
         "--sessions", str(ROOT / "sessions"),
         "--requests", str(ROOT / "build-from-spec" / "requests"),
-        "--choices", str(ROOT / "notebook" / "choices"),
+        "--app", str(ROOT / "wind-tunnel" / "notebook"),
+        "--app", str(ROOT / "body-lab" / "notebook"),
         "--layouts", str(ROOT / "notebook" / "layouts.toml"),
         "--words", str(ROOT / "notebook" / "commentary-words.txt"),
         "--scan-config", str(ROOT / "body-lab" / "adapter" / "scan_sources.toml"),
@@ -53,7 +54,7 @@ def test_every_ended_table_is_in_the_html_without_script(site):
         table = tables.check_end(record)
         if table is None:
             continue
-        page = site_checks.parse(site, f"{record.application}-{record.session}.html")
+        page = site_checks.parse(site, f"{record.application}/{record.session}.html")
         assert page.row_ids == [row.id for row in table.rows], record.name
         shown = "".join(page.text)
         for row in table.rows:

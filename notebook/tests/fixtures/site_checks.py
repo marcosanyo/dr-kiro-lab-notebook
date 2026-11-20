@@ -117,17 +117,25 @@ def parse(site: Path, page: str) -> _Page:
 
 
 def layout_problems(site: Path) -> list[str]:
-    """Every page at the site root; only pictures in `p/` and assets in `a/` (3.2, N28)."""
+    """The root holds the front page and one folder per application; each has its pages, `a/` and `p/` and
+    nothing else (3.2, N28)."""
     out = []
     for f in files(site):
         base = f.removesuffix(SIDECAR_SUFFIX)
-        if "/" not in base:
-            if not base.endswith(".html"):
-                out.append(f"{f}: a file at the site root that is not a page")
-        elif base.startswith(f"{addresses.ASSET_DIR}/"):
-            if base not in ASSETS or base.count("/") != 1:
+        parts = base.split("/")
+        scope = (
+            parts[0] + "/"
+            if len(parts) > 1 and parts[0] not in (addresses.ASSET_DIR, addresses.PICTURE_DIR)
+            else ""
+        )
+        rest = base[len(scope) :]
+        if "/" not in rest:
+            if not rest.endswith(".html"):
+                out.append(f"{f}: a file that is not a page, at a page's place")
+        elif rest.startswith(f"{addresses.ASSET_DIR}/"):
+            if rest not in ASSETS or rest.count("/") != 1:
                 out.append(f"{f}: an asset that is not the stylesheet, the script, a typeface or the licence")
-        elif not re.fullmatch(r"p/[0-9a-f]{64}\.png", f):
+        elif not re.fullmatch(r"p/[0-9a-f]{64}\.png", rest) or f.endswith(SIDECAR_SUFFIX):
             out.append(f"{f}: a file in a subfolder that is not a picture or an asset")
     return out
 
@@ -155,12 +163,14 @@ def _link_problem(value: str) -> str | None:
         return "starts with //"
     if _SCHEME.match(value):
         return "names a scheme"
+    if re.fullmatch(r"/([a-z0-9-]+/)?", value):
+        return None  # to the front page or to another application (design, "Pages")
     if value.startswith("/") or value.startswith("\\"):
         return "is absolute"
     if ".." in value:
         return "contains .."
     if target and not (
-        re.fullmatch(r"[a-z0-9-]+\.html", target)
+        re.fullmatch(r"[a-z0-9-]+\.html|[a-z0-9-]+/index\.html", target)
         or target in (addresses.STYLESHEET, addresses.SCRIPT)
         or re.fullmatch(r"p/[0-9a-f]{64}\.png", target)
     ):
@@ -207,6 +217,8 @@ def page_problems(site: Path) -> list[str]:
             if b.get("type") != "button" or b.get("data-action") not in BUTTON_ACTIONS:
                 out.append(f"{page}: a button that is not a moving picture control: {b}")
         anchors = {v for tag, name, v in p.links if tag == "a" and name == "href"}
+        if page == addresses.COVER:
+            continue  # the front page has no footer links
         for target in (addresses.LEGEND, addresses.HOW):
             if target not in anchors:
                 out.append(f"{page}: no link to {target}")

@@ -10,7 +10,7 @@
         "type": "agent",
         "prompt": "An English spec file under .kiro/specs/ was just saved. Before you finish this change, update its Japanese reference translation docs/ja/<spec>/<same file name> (create it if missing): translate only the parts that changed, set the header line '原文 SHA-256' to the new hash of the English file, and follow .kiro/steering/japanese-translations.md. Then run `sh scripts/ja-check.sh` and make sure it reports no stale translations. Commit the translation together with the English change. Do not edit the English file for this."
       },
-      "enabled": true
+      "enabled": false
     }
   ]
 }

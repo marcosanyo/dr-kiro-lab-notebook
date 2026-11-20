@@ -1,0 +1,11 @@
+application = "wind-tunnel"
+order = 1
+case = "CASE 1 · THE WIND TUNNEL (OPENFOAM)"
+door = "The Wind Tunnel"
+door_line = "Rounded corners, splitters and drag, measured by daylight."
+about = """Air flows past a 2D body. Dr. Kiro turns four knobs (aspect, corner, splitter and angle) and reads drag, lift and whether the flow sheds vortices. 24 runs at most, and no description of the flow."""
+open = "wt-004"
+unit = "runs"
+theme = "day"
+pen = "blue"
+decoration = "none"
