@@ -593,5 +593,6 @@ ALL_INTRO = "Each card: what Dr. Kiro predicted before the run, and what happene
 READER_INTRO = "The test of the spec: another Kiro, who never saw the experiments, is given one task."
 PROGRESS_MARK_A = " The dashed line marks the first trial where "
 PROGRESS_MARK_B = "."
-OTHER_LAB = "the other lab: "
+OTHER_LAB = "Go to "
+LINK_SEPARATOR = " · "
 STOPPED_HEADING = "Sessions that stopped early, kept as they ended"
