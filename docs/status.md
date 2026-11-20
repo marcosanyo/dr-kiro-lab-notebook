@@ -5,6 +5,14 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
+## 2 つ目の体（ブランチ `feat/second-body`、main の 9488c40 から）
+- **済み:** spec（body-lab 要件 7、lab-bench 要件 23、コミット 2a4cb3e）。実装: bench の `variant` 設定（`bench-new-session --variant`、開始エントリーに記録）、reader の `bfs-run --variant`（ラッパーまで届く）、体 b（`body-lab/model/specimen_02.xml`、車輪のゴムだけ外し、軸は残す）。
+- **タスク 8（3 プローブ、body-1/2 の再実行はクレジット節約で省いた）:** 体 a は車輪のチャンネルで動く（+1 で x -0.230 m、heading 39.18°、-1 で x 0.113 m、heading -34.96°）。体 b はどのプローブでも動かない（x 約 2.5e-05 m）。タイヤがないと床を押せない。
+- **タスク 9:** リポジトリのラボの `bench-scan` は検出なし。`bench-new-session` は variant なしと `c` を拒否し、`b` で開始する。新しい記録の `bench-scan` も検出なし。
+- **未了（本番の後）:** 体 b の封印された記録と `bench-verify`、ノートのビルド。choices はまだ作っていない（ユーザーの指示）。
+- **次の一手:** 本番の Dr. Kiro を体 b で。開始は `body-lab/README.md` の「Two bodies」と「Running a session」（`--variant b`）。reader を体 b で走らせるのは、その後の実験。
+- **注意:** body-1 と body-2 は variant のない記録で、封印済み。再開は不要。新しいセッションは必ず `--variant a` か `--variant b` を付ける。`rm -rf` は許可設定で拒否される。検証用のフォルダーは `bench-run/body-lab-variant-check-2`（git の対象外）。
+
 ## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
 - ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
 - 人が書くもの: `notebook/choices/<app>/<session>.toml` と `notebook/choices/cover.toml`。`model` は body-2 と wt-004 が `claude-sonnet-5.5`。body-1、wt-002、wt-003 は `<fill in>` のまま（聞いていない）。`date` は各記録が git に入った日。body-2 の題は目隠しスキャンが `Backwards` を拒んだので `The Reversed Wave`。

@@ -383,7 +383,7 @@ Added for the `build-from-spec` spec (its task 2, Requirement 13.7). Design: "D2
 
 Added for the `body-lab` spec (its Requirement 7). Design: Part E.
 
-- [ ] 38. The `variant` setting
+- [x] 38. The `variant` setting
   - `SessionConfig.variant`, the optional config field and the factory call, the start check against the adapter's
     `variants`, the start entry and the reopening check, `bench-new-session --variant`; the tests of design E2;
     the `bench/README.md` lines for the setting. `sh bench/scripts/check.sh` passes.

@@ -7,6 +7,7 @@ stay relative to the lab, as in `SessionConfig`.
 """
 
 import importlib
+import inspect
 import os
 import tomllib
 from dataclasses import dataclass, fields
@@ -15,7 +16,8 @@ from pathlib import Path
 from bench.core.session import SessionConfig
 
 ENV_VAR = "BENCH_SESSION_CONFIG"
-FIELDS = tuple(f.name for f in fields(SessionConfig)) + ("resume",)
+FIELDS = tuple(f.name for f in fields(SessionConfig) if f.name != "variant") + ("resume",)
+OPTIONAL = ("variant",)  # optional: lab-bench 23.1
 _PATH_FIELDS = ("lab_dir", "state_dir", "sessions_dir", "stop_list")
 # The messages name the config without its path: they reach stderr, which the reader's Kiro log may show.
 WHERE = "session config"
@@ -31,7 +33,16 @@ class ServerConfig:
     resume: bool
 
 
-def _adapter(spec: object, where: str) -> object:
+def _variant(data: dict, where: str) -> str | None:
+    if "variant" not in data:
+        return None
+    value = data["variant"]
+    if not isinstance(value, str) or not value:
+        raise ConfigError(f"{where}: variant must be a non-empty string")
+    return value
+
+
+def _adapter(spec: object, where: str, variant: str | None) -> object:
     if not isinstance(spec, str) or spec.count(":") != 1:
         raise ConfigError(f"{where}: adapter must be 'module:factory'")
     module_name, attribute = spec.split(":")
@@ -42,7 +53,14 @@ def _adapter(spec: object, where: str) -> object:
     factory = getattr(module, attribute, None)
     if not callable(factory):
         raise ConfigError(f"{where}: {spec} is not callable")
-    return factory()
+    if variant is None:
+        return factory()
+    if "variant" not in inspect.signature(factory).parameters:
+        raise ConfigError(f"{where}: {spec} takes no variant; remove the variant setting")
+    try:
+        return factory(variant=variant)
+    except ValueError as error:
+        raise ConfigError(f"{where}: {error}") from error
 
 
 def load(path: Path) -> ServerConfig:
@@ -57,7 +75,7 @@ def load(path: Path) -> ServerConfig:
     missing = [name for name in FIELDS if name not in data]
     if missing:
         raise ConfigError(f"{where}: missing field(s) {', '.join(missing)}")
-    extra = sorted(set(data) - set(FIELDS))
+    extra = sorted(set(data) - set(FIELDS) - set(OPTIONAL))
     if extra:
         raise ConfigError(f"{where}: unknown field(s) {', '.join(extra)}")
     if not isinstance(data["resume"], bool):
@@ -79,10 +97,11 @@ def load(path: Path) -> ServerConfig:
             raise ConfigError(f"{where}: {name} must be a string")
     if isinstance(data["seed"], bool) or not isinstance(data["seed"], int):
         raise ConfigError(f"{where}: seed must be an integer")
+    variant = _variant(data, where)
     session = SessionConfig(
         session_id=data["session_id"],
         application=data["application"],
-        adapter=_adapter(data["adapter"], where),  # type: ignore[arg-type]
+        adapter=_adapter(data["adapter"], where, variant),  # type: ignore[arg-type]
         lab_dir=base / data["lab_dir"],
         spec_files=tuple(spec_files),  # type: ignore[arg-type]
         experiments_dir=data["experiments_dir"],
@@ -92,6 +111,7 @@ def load(path: Path) -> ServerConfig:
         scan_sources=tuple(base / s for s in sources),
         stop_list=base / data["stop_list"],
         discovered_table=data["discovered_table"],
+        variant=variant,
     )
     return ServerConfig(session, data["resume"])
 

@@ -8,6 +8,7 @@ Every argument is required. Nothing is changed before the checks pass.
 
 import argparse
 import importlib
+import inspect
 import json
 import os
 import shutil
@@ -31,7 +32,7 @@ class NewSessionError(Exception):
     """The session cannot be started. The message says why."""
 
 
-def _adapter(spec: str) -> object:
+def _adapter(spec: str, variant: str | None) -> object:
     module_name, sep, attribute = spec.partition(":")
     if not sep or not module_name or not attribute:
         raise NewSessionError(f"adapter must be 'module:factory', got {spec!r}")
@@ -39,7 +40,14 @@ def _adapter(spec: str) -> object:
         factory = getattr(importlib.import_module(module_name), attribute)
     except (ImportError, AttributeError) as error:
         raise NewSessionError(f"cannot load adapter {spec}: {error}") from error
-    return factory()
+    if variant is None:
+        return factory()
+    if "variant" not in inspect.signature(factory).parameters:
+        raise NewSessionError(f"adapter {spec} takes no variant; leave out --variant")
+    try:
+        return factory(variant=variant)
+    except ValueError as error:
+        raise NewSessionError(str(error)) from error
 
 
 def open_sessions(state: Path) -> list[str]:
@@ -89,7 +97,7 @@ def new_session(args: argparse.Namespace) -> Path:
         raise NewSessionError(f"{config_out} already exists; a session id is used once")
     if not config_out.parent.is_dir():
         raise NewSessionError(f"the folder of {config_out} does not exist")
-    adapter = _adapter(args.adapter)
+    adapter = _adapter(args.adapter, args.variant)
     # Reset Dr. Kiro's files and write the templates.
     _clear(lab / EXPERIMENTS)
     _clear(lab / PICTURES)
@@ -97,6 +105,8 @@ def new_session(args: argparse.Namespace) -> Path:
         path = lab / target
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes((FILES / source).read_bytes())
+    if args.variant is not None and not args.variant:
+        raise NewSessionError("--variant is empty")
     config = SessionConfig(
         session_id=args.session_id,
         application=args.application,
@@ -110,6 +120,7 @@ def new_session(args: argparse.Namespace) -> Path:
         scan_sources=(Path(args.scan_sources),),
         stop_list=Path(args.stop_list),
         discovered_table=DISCOVERED_TABLE,
+        variant=args.variant,
     )
     outcome = Session.start(config)
     if not isinstance(outcome, Ran):
@@ -131,6 +142,8 @@ def new_session(args: argparse.Namespace) -> Path:
         "discovered_table": DISCOVERED_TABLE,
         "resume": True,
     }
+    if args.variant is not None:
+        values["variant"] = args.variant
     config_out.write_text("".join(f"{k} = {json.dumps(v)}\n" for k, v in values.items()), encoding="utf-8")
     return config_out
 
@@ -149,6 +162,7 @@ def parser() -> argparse.ArgumentParser:
     ):
         p.add_argument(f"--{name}", required=True)
     p.add_argument("--seed", required=True, type=int)
+    p.add_argument("--variant", default=None, help="a named variant of the application, if it has any")
     p.add_argument("--config-out", required=True)
     return p
 

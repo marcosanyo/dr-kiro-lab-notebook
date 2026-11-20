@@ -311,6 +311,6 @@ import する唯一の場所です。
 
 `body-lab` spec（その要件 7）のために追加した。設計: 「改訂: 名前付きバリアント（要件 23）」。
 
-- **38. `variant` 設定** — 未着手
+- **38. `variant` 設定** — 完了
   - `SessionConfig.variant`、任意の設定フィールドとファクトリー呼び出し、アダプターの `variants` に対する開始時の検査、開始エントリーと再開時の検査、`bench-new-session --variant`。設計 E2 のテスト。`bench/README.md` の設定の行。`sh bench/scripts/check.sh` が通る。
   - _要件: 23.1-23.11_
