@@ -10,6 +10,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from bench.fake.adapter import FakeAdapter
 from bench.record.chain import verify
 
 from build_from_spec import wrap
@@ -17,7 +18,7 @@ from build_from_spec.apps import REHEARSAL_REQUESTS, REHEARSAL_ROOT, REQUESTS, A
 from build_from_spec.check import check_all
 from build_from_spec.request import Request, RequestError, check_request, print_request
 from build_from_spec.run import Arguments, RunRefused, run_script
-from build_from_spec.runfile import RUN_DATA, read_run_file
+from build_from_spec.runfile import RUN_DATA, RunFileError, check_run_data, read_run_data, read_run_file
 from build_from_spec.wrap import WrapError
 from run_support import (
     FAKE,
@@ -177,3 +178,59 @@ def test_a_rehearsal_run_with_a_different_reader_file_from_an_earlier_rehearsal_
     assert run_file == repo / RECORDS / FAKE / "probe-none-2.run.json"
     assert read_run_file(run_file)["files"][READER] != "0" * 64
     assert len(kiro.commands) == 1
+
+
+def variant_factory(variant: str | None = None) -> FakeAdapter:
+    """The fake body, taking the variant setting as body-lab does (test only; the fake has no variants)."""
+    # Without a variant the declaration only, as body-lab gives it (the body is not built).
+    if variant is not None and variant not in ("a", "b"):
+        raise ValueError(f"the variant setting must be one of a, b; got {variant!r}")
+    adapter = FakeAdapter()
+    adapter.variants = ("a", "b")
+    return adapter
+
+
+def test_a_variant_run_is_prepared_and_its_run_data_and_run_file_name_the_variant(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import fake_app
+
+    monkeypatch.setattr(fake_app, "fake_adapter", variant_factory)
+    kiro = FakeKiro(reader_ends)
+    run_file = run_script(replace(rehearsal_arguments(), variant="b"), repo, TEST_REHEARSAL_APPS, kiro)
+    assert read_run_data(repo / RUN_DATA / "probe-none-1.run-data.json")["variant"] == "b"
+    assert read_run_file(run_file)["variant"] == "b"
+    assert len(kiro.commands) == 1
+
+
+def test_a_variant_run_with_an_unknown_label_is_refused_before_the_reader_starts(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import fake_app
+
+    monkeypatch.setattr(fake_app, "fake_adapter", variant_factory)
+    kiro = FakeKiro(reader_ends)
+    with pytest.raises(RunRefused, match="one of a, b"):
+        run_script(replace(rehearsal_arguments(), variant="c"), repo, TEST_REHEARSAL_APPS, kiro)
+    assert kiro.commands == []
+
+
+def test_run_data_takes_an_empty_variant_as_an_error_and_none_as_absent() -> None:
+    base = {
+        "format": 1,
+        "run": "probe-none-1",
+        "setup": "none",
+        "request": {"id": "probe", "commit": "0" * 40, "sha256": "0" * 64},
+        "source": {"application": "body-lab", "session": "body-2", "seal": "0" * 64},
+        "seed": 7,
+        "adapter": "build_from_spec.wrap:reader/body-lab/probe/12",
+        "kiro": {"version": "v", "model": "m", "effort": "e"},
+        "files": {"request.md": "0" * 64},
+        "tools": {},
+        "given": {},
+        "prompts": [],
+    }
+    with pytest.raises(RunFileError, match="variant"):
+        check_run_data({**base, "variant": ""})
+    with pytest.raises(RunFileError, match="unexpected"):
+        check_run_data({**base, "other": 1})

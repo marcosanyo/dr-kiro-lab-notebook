@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import mujoco
 import numpy as np
 
-from body_lab.settings import MODEL_FILE, WIRING_FILE, Settings
+from body_lab.settings import BODIES, WIRING_FILE, Settings
 
 CAMERA = "overhead"
 
@@ -70,9 +70,9 @@ def _marker_geom(model: mujoco.MjModel, root: int) -> int:
     raise ValueError("the root body has no marker geom")
 
 
-def build(settings: Settings) -> Body:
+def build(settings: Settings, body: str) -> Body:
     wiring = load_wiring()
-    spec = mujoco.MjSpec.from_file(str(MODEL_FILE))
+    spec = mujoco.MjSpec.from_file(str(BODIES[body]))
     camera_pos = (0.0, 0.0, settings.camera_height_m)
     cam = spec.worldbody.add_camera()
     cam.name = CAMERA

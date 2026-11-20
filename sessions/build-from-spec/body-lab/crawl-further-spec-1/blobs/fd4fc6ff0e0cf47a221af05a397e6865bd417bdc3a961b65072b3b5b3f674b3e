@@ -1,0 +1,26 @@
+### H1: Weaker c1 at 2 Hz stroking lands x in the goal window
+
+WHEN c1 is held at a1 = -0.5 and c3 is a unit sine at f = 2 Hz with the other inputs 0, THE system SHALL reach x between 0.3 and 0.5 m with |heading| under 20 deg and |y| under 0.2 m.
+
+```prediction
+# relies on: R11, R9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.55]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-25, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+```

@@ -1,0 +1,31 @@
+# H3: Lag 185 at 2.2 Hz keeps x of 0.3 m with heading within 20 deg
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "phi", "a4", "phi4"]
+TRIALS = [
+    [2.2, 185, 0, 0],
+    [2.15, 190, 0, 0],
+    [2.2, 180, 0, 0],
+]
+
+
+def c0(t, f, phi, a4, phi4):
+    return 0
+
+
+def c1(t, f, phi, a4, phi4):
+    return 0
+
+
+def c2(t, f, phi, a4, phi4):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi, a4, phi4):
+    return math.sin(2 * math.pi * f * t - math.radians(phi))
+
+
+def c4(t, f, phi, a4, phi4):
+    return a4 * math.sin(2 * math.pi * f * t - math.radians(phi4))

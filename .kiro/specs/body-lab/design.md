@@ -1,6 +1,6 @@
 # Design: body-lab
 
-Covers Requirements 1-6. Settings come from `body-lab/model/README.md` and the wiring file, read at load time;
+Covers Requirements 1-7. Settings come from `body-lab/model/README.md` and the wiring file, read at load time;
 nothing is copied by hand.
 
 ## 1. Layout
@@ -24,8 +24,8 @@ body-lab/
 
 ## 2. Simulation (Req 1)
 
-- `sim.py` loads `specimen_01.xml` with `mujoco.MjSpec`, adds the camera in code (position above the view centre,
-  looking straight down, vertical field of view and image size from `settings.py`), and compiles. The model file is
+- `sim.py` loads the body's model file (section 10) with `mujoco.MjSpec`, adds the camera in code (position above
+  the view centre, looking straight down, vertical field of view and image size from `settings.py`), and compiles. The model file is
   not changed.
 - Start pose: the body's free joint placed 0.45 m behind the view centre along x, facing +x
   (`body-lab/model/README.md`).
@@ -106,6 +106,31 @@ the sealed folder, the dr-kiro task 5 checks.
 - The model has no body or site that can stand for the tracked point without editing the model file.
 - The servo rate limit cannot be applied without changing the model's actuators.
 
+## 10. Second body (Req 7)
+
+- `settings.py`: `BODIES = {"a": "specimen_01.xml", "b": "specimen_02.xml"}`; `WIRING_FILE` stays
+  `specimen_01.wiring.json`. `sim.build(settings, body)` loads `MODEL_DIR / BODIES[body]`.
+- `BodyAdapter(settings=None, measurer=None, variant=None)` with class attribute `variants = ("a", "b")`. The bench
+  checks the label at start (`lab-bench` design, amendment 23). Constructed without a variant, the adapter gives its
+  declaration (which does not depend on the body) and no simulation; `run_trial` then raises. An unknown label raises
+  `ValueError`. There is no default body.
+- `specimen_02.xml` is `specimen_01.xml` with the wheel's `<geom type="cylinder" ... material="rubber">` replaced by
+  one axle geom: a capsule along the wheel's axis (y), `fromto="0 -0.008 0 0 0.008 0"`, `size="0.004"`,
+  `mass="0.002"`, `material="metal"`, `contype="0" conaffinity="0"`. The joint (damping 0.002), the actuator and the
+  wheel body's position are unchanged. A joint needs mass, which is why the axle has some. Its lowest point is
+  z = 0.066 m with the torso at 0.07 m; the floor is z = 0.
+- `scan_sources.toml` gets a second `[[source]]` with `extractor = "mjcf"`. Test: every `*.xml` and `*.json` in
+  `body-lab/model/` is named in it (paths resolved against the file).
+- Tests (`tests/test_bodies.py`): the wiring's actuators exist in both models; the told text of the two adapters is
+  byte-identical (compare `declaration_text`); a start without `variant` is refused and so is an unknown label; the
+  axle geom has contact off and its lowest point is above the floor; a trial on body `b` meets `check_result` and
+  `check_picture`; the same inputs twice give equal results.
+- Comparison (task 8): a builder script, not in the product, runs on both bodies 3 probes (all channels 0; the
+  wheel's channel at 1; the wheel's channel at -1, the wheel's channel being the one the wiring gives as channel 1)
+  and the computed inputs of every trial of the sealed sessions `body-1` and `body-2` (read as `notebook-retake` reads
+  them), and prints the difference in `x`, `y` and `heading` per trial. The script's output is the source of the
+  numbers written in `tasks.md`.
+
 ## Decisions
 
 1. Goal: maximise `x`; declared as `goal` (user).
@@ -119,3 +144,9 @@ the sealed folder, the dr-kiro task 5 checks.
 9. A second session, body-2, because body-1's record holds no discovered spec table (user, after the final-spec
    copies of `dr-kiro` Requirement 8). body-1 is kept. body-2 runs with the workflow sentence on `rejected` rows
    (`dr-kiro` Decision 8), which body-1 did not have, and with seed 2.
+10. A second body, `b`, without the wheel's tire (user). Shared wiring file, so channels and signs are unchanged
+    (user). The choice is the bench's generic `variant` setting (`lab-bench` Requirement 23); a missing or unknown
+    value stops the start, never a default body (user). Labels `a` and `b` are neutral: a model name would be a
+    forbidden term in records (builder). The axle's mass is small, 0.002 kg, because only the tire is removed
+    (user). Showing the change in the notebook is left for a later request (user). The earlier sessions' choices
+    files are not changed now (builder, because the notebook part is left out).

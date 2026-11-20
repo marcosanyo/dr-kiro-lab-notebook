@@ -1,0 +1,16 @@
+### H4: A quarter-cycle phase offset between c3 and c4 produces forward crawl
+
+WHEN c3 is a 1 Hz sine and c4 leads it by 90 degrees with c0, c1 and c2 at zero, THE system SHALL end with x between 0.1 and 0.6 m and heading within 30 degrees of zero.
+
+```prediction
+# relies on: E2
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+amp = 1.0
+phase = 90
+freq = 1.0
+```

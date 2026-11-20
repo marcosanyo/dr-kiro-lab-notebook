@@ -1,0 +1,8 @@
+# Tasks
+
+- [x] E1 c1 = -0.5 plus c3 sine at 1.5, 2 Hz
+- [x] E2 c1 = -1 plus c3 sine at 2 Hz, cut at 3 and 3.5 s
+- [x] E3 wave f 1.5 and 3 (ph 1), c1 = +1 alone
+- [x] E4 wave phase lag 0, 2, -1
+- [x] E5 quadrature pairs (c2,c3) and (c3,c4) at 2 Hz
+- [ ] Open: longer or stronger (c3,c4) stroke, other frequencies, amplitude. No budget left.

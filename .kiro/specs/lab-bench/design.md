@@ -1151,3 +1151,51 @@ def _records(sessions: Path) -> list[Path]:
   start entry has no `discovered_table`. The builder stops and reports it.
 - An existing sealed record fails `bench-verify` or `final_spec` after the change. Not expected: the code does not read
   the key on those paths.
+
+# Amendment: a named variant (Requirement 23)
+
+Added for the `body-lab` spec (its Requirement 7).
+
+## E1. Rules (23.1-23.11)
+
+- `SessionConfig` gets `variant: str | None = None`; it is the only field with a default, because it is optional by
+  23.1. `frontend/config.py` allows `variant` as an optional field (not in `FIELDS`), requires a non-empty string
+  when present, and builds the adapter as `factory(variant=...)` or `factory()`. A `TypeError` from a factory that
+  does not take the argument becomes a `ConfigError` saying the adapter takes no variant.
+- `Session._check_config` (the start check, next to `discovered_table`): `accepted = getattr(adapter, "variants",
+  None)`. If `accepted is None` and `variant` is set, refuse "cannot start: this application has no variants; remove
+  the variant setting". If `accepted` is a tuple and `variant` is not set or not in it, refuse "cannot start: the
+  variant setting must be one of <labels>". The text is builder side (the start runs before Dr. Kiro's session).
+- Start entry: `"variant": config.variant` only when set. `Session.open` compares it the other way too: with no
+  `variant` in the config, a start entry that has the key is refused.
+- `bench-new-session --variant <label>` fills `SessionConfig.variant` and the config file's `variant` line.
+- `describe.py` and `server.py` do not read `variant`. A test builds the descriptions with and without it and
+  compares them byte for byte.
+
+## E2. Tests
+
+| Test | Req |
+|---|---|
+| Start with a fake adapter that has `variants = ("x", "y")`: no `variant`, an unknown one and a known one give refused, refused, ran. | 23.3 |
+| A config with `variant` and an adapter with no `variants` is refused. | 23.4 |
+| The start entry has `variant` when set and no key otherwise; `Session.open` accepts the same config and refuses a different or missing value. | 23.6, 23.7 |
+| A record sealed without the key passes `bench-verify` and `final_spec`. | 23.8 |
+| `factory(variant=...)` is called when the config has it; a factory without the argument is a `ConfigError`. | 23.5 |
+| `bench-new-session --variant` writes the line and starts the session with it; without it, no line. | 23.9 |
+| The tool descriptions are byte-identical with and without `variant`. | 23.10 |
+
+## E3. Decisions (taken by the builder, on the user's decision)
+
+1. **Optional in the config, required by the adapter.** A required setting would force a meaningless value on
+   wind-tunnel and the fake application. The adapter says whether it needs one (`variants`), so the stop is
+   explicit and not a default.
+2. **The bench does not know what a variant is.** It checks the label against the adapter's list and records it.
+3. **Old records are not migrated.** Their start entries keep no key.
+
+## E4. What would make me stop and ask
+
+- A session is open in `bench-run/` when this lands. Not affected: such a config has no `variant` and its adapter
+  gets `variants` only in the `body-lab` change, which refuses the old config at start. The builder reports it.
+- A caller of an adapter factory other than the config loader (the blind scan's term list, `bench-new-session`,
+  `build-from-spec`, the notebook) cannot work without a variant. They only need the declaration, which does not
+  depend on the variant (`body-lab` Requirement 7.5). The builder stops and asks if one of them needs the body itself.

@@ -1,0 +1,8 @@
+# Design
+
+## Beliefs
+
+- The given c1 rules (R9, R11, R13) do not describe this body. c1 held at -0.5, -1 or +1 had no visible effect (E1, E2, E3). A unit c3 sine at 1.5 and 2 Hz with c1 = -0.5 or -1 gave x between -0.06 and -0.02 (E1, E2).
+- A five-channel travelling wave (ph 0, 1, 2, -1; f 1.5 and 3) spins the body by 60 to 215 deg with |x| < 0.09 m (E3, E4).
+- A quarter-cycle stroke on (c3, c4) at 2 Hz keeps heading near 0 and drifts the body x +0.07 m, y +0.10 m in 5 s (E5). This is the best trial, and it is below the 0.3 to 0.5 m target.
+- Budget is used up (12 of 12). The target was not reached.

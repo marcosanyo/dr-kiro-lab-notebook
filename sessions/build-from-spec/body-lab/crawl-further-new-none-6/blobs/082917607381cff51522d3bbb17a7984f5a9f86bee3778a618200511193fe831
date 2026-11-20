@@ -1,0 +1,8 @@
+# Design
+
+Findings from 12 trials:
+- c0 and c1 are inert (E1, E4).
+- Constant drive does not move the body (E1).
+- Only c2, c3, c4 drive motion. A 10 Hz sine wave on them with 2*pi/3 phase steps crawls forward at about 0.04 m/s with little turning (E6: x 0.19 m, y 0.04 m, heading 7.4 deg).
+- Five-channel waves and in-phase drive turn the body (E2, E3). Two-channel drives give almost no motion (E4, E5).
+- Not tested: a longer-lasting speed-up (frequency between 10 and 25 Hz, other phase steps). The goal's 0.3 m was not reached.

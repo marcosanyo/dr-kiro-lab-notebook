@@ -41,7 +41,7 @@ def zero_inputs(adapter: BodyAdapter) -> dict[str, tuple[float, ...]]:
 
 @needs_gl
 def test_trial_result_meets_the_contract() -> None:
-    adapter = BodyAdapter()
+    adapter = BodyAdapter(variant="a")
     result = adapter.run_trial(zero_inputs(adapter), seed=0)
     assert isinstance(result, TrialResult)
     check_result(adapter.declaration(), result)
@@ -50,22 +50,22 @@ def test_trial_result_meets_the_contract() -> None:
 
 @needs_gl
 def test_same_inputs_give_the_same_result() -> None:
-    adapter = BodyAdapter()
+    adapter = BodyAdapter(variant="a")
     inputs = zero_inputs(adapter)
     inputs["c1"] = tuple(0.5 for _ in adapter.sample_times)
-    assert adapter.run_trial(inputs, seed=1) == BodyAdapter().run_trial(inputs, seed=2)
+    assert adapter.run_trial(inputs, seed=1) == BodyAdapter(variant="a").run_trial(inputs, seed=2)
 
 
 def test_turned_over_body_is_lost() -> None:
     settings = Settings(start_roll_deg=180.0)
-    adapter = BodyAdapter(settings)  # the declaration and simulation need no renderer
+    adapter = BodyAdapter(settings, variant="a")  # the declaration and simulation need no renderer
     poses = sim.run(adapter.body, settings, zero_inputs(adapter), adapter.series_times, (), lambda d: None)
     values = PoseMeasurer(settings).measure(poses)
     assert all(isinstance(v, NotMeasured) and v.outcome == "lost" for v in values.values())
 
 
 def test_declaration_is_blind() -> None:
-    decl = BodyAdapter().declaration()
+    decl = BodyAdapter(variant="a").declaration()
     check_declaration(decl)
     assert [k.name for k in decl.knobs] == [f"c{i}" for i in range(sim.channel_count())]
     assert decl.budget == 40 and decl.fake is False
@@ -83,7 +83,7 @@ def test_declaration_matches_golden_files() -> None:
     from bench.record.canonical import canonical_json
 
     golden = Path(__file__).resolve().parent / "golden"
-    decl = BodyAdapter().declaration()
+    decl = BodyAdapter(variant="a").declaration()
     assert declaration_text(decl).encode("utf-8") == (golden / "told_text.txt").read_bytes()
     assert canonical_json(declaration_record(decl)) == (golden / "declaration_record.json").read_bytes()
 
@@ -94,11 +94,11 @@ def test_goldens_were_changed_only_to_drop_the_engine() -> None:
     from bench.frontend.describe import declaration_text
     from bench.record.canonical import canonical_json
 
-    decl = BodyAdapter().declaration()
+    decl = BodyAdapter(variant="a").declaration()
     for text in (declaration_text(decl), canonical_json(declaration_record(decl)).decode("utf-8")):
         assert "mujoco" not in text.lower()
         assert mujoco.__version__ not in text
 
 
 def test_builder_versions_name_the_engine_version() -> None:
-    assert BodyAdapter().builder_versions() == {"mujoco": mujoco.__version__}
+    assert BodyAdapter(variant="a").builder_versions() == {"mujoco": mujoco.__version__}

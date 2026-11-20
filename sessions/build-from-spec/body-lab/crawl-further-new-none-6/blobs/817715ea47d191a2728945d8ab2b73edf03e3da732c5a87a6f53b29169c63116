@@ -1,0 +1,9 @@
+# Tasks
+
+- [x] E1 constant drive on c0, c1, c2
+- [x] E2 five-channel wave at 1 Hz
+- [x] E3 five-channel wave at 3, 6, 10 Hz
+- [x] E4 c0 and c1 quadrature
+- [x] E5 c2 and c3 quadrature
+- [x] E6 c2 to c4 three-phase wave (best: x 0.19 m)
+- [ ] Budget exhausted. No further trials.

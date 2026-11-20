@@ -1,0 +1,55 @@
+# H4: Combined sines drive the strong turn seen with all channels in phase
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["set"]
+SWEEP = ["set"]
+TRIALS = [
+    [1],
+    [2],
+    [3],
+    [4],
+    [5],
+    [6],
+]
+
+
+def on(k, set):
+    if set == 1:
+        return k == 0 or k == 1
+    if set == 2:
+        return k == 2 or k == 3
+    if set == 3:
+        return k == 2 or k == 4
+    if set == 4:
+        return k == 3 or k == 4
+    if set == 5:
+        return k >= 2
+    return k <= 2
+
+
+def drive(t, k, set):
+    if on(k, set):
+        return math.sin(2 * math.pi * t)
+    return 0
+
+
+def c0(t, set):
+    return drive(t, 0, set)
+
+
+def c1(t, set):
+    return drive(t, 1, set)
+
+
+def c2(t, set):
+    return drive(t, 2, set)
+
+
+def c3(t, set):
+    return drive(t, 3, set)
+
+
+def c4(t, set):
+    return drive(t, 4, set)

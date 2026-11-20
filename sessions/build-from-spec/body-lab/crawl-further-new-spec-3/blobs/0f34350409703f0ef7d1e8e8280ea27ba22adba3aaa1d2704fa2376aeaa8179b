@@ -1,0 +1,92 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Lags below 225 deg at 2.1 Hz give more forward travel
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 200 deg and c0, c1, c4 are 0, THE system SHALL reach x of at least 0.27 m while heading stays within 20 deg of the start.
+
+```prediction
+# relies on: R8, R7
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.27, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+c4a = 0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+c4a = 0
+```
+
+Notes: three trials: lag 200 deg, lag 180 deg, and lag 225 deg with c4 in phase with c2 at amplitude 0.5 (c4a).
+
+Result of H1 (E1): 2.1 Hz lag 200, c4 off gave x 0.294 m, y 0.113 m, heading 10.6 deg. Lag 180 gave x 0.320, heading 41.8. Lag 225 with c4 in phase at 0.5 gave x 0.312, heading 24.9. Verdict partly.
+
+### H2: Anti-phase c4 holds heading down while lag 200 to 210 keeps x near 0.3 m
+
+WHEN c2 and c3 carry 2.1 Hz sines with c3 lagging by 200 deg and c4 carries the c2 sine at amplitude -0.3, THE system SHALL reach x of at least 0.3 m with heading within 20 deg of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+c4a = -0.3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+c4a = -0.3
+```
+
+Notes: three trials: (2.1, 200, -0.3), (2.1, 210, -0.3) and (2.2, 200, 0). In E1 c4 in phase with c2 added x and left turn, so the opposite sign is expected to cut the turn.
+
+Result of H2 (E2): anti-phase c4 at -0.3 cut x to 0.149 (lag 200) and 0.133 (lag 210). 2.2 Hz lag 200 with c4 off gave x 0.275, y 0.070, heading -19.3. Verdict rejected.
+
+### H3: A small in-phase c4 at 2.2 Hz lifts x past 0.3 m and brings heading back near 0
+
+WHEN c2 and c3 carry 2.2 Hz sines with c3 lagging by 200 deg and c4 carries the c2 sine at amplitude 0.3, THE system SHALL reach x of at least 0.3 m with heading within 20 deg of the start and y within 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 200
+c4a = 0.3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 200
+c4a = 0.3
+```
+
+Notes: three trials: (2.2, 200, 0.3), (2.2, 200, 0.4) and (2.15, 200, 0.2). Estimate from E1 T3: c4a 0.5 added about +0.046 m and +33 deg.

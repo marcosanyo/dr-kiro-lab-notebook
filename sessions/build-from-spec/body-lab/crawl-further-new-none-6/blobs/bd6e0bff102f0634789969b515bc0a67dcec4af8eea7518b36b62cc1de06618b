@@ -1,0 +1,17 @@
+### H5: c2 and c3 in quadrature at 10 Hz crawl forward
+
+WHEN only c2 and c3 carry a 10 Hz sine of amplitude 1 with c3 lagging c2 by pi/2 and the other channels are zero, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 10.0
+ph = 1.5708
+amp = 1.0
+mode = 2
+```

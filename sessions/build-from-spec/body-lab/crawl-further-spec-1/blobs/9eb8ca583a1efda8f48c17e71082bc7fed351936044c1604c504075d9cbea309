@@ -1,0 +1,31 @@
+# H1: Weaker c1 at 2 Hz stroking lands x in the goal window
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f"]
+TRIALS = [
+    [-0.5, 1, 2],
+    [-0.75, 1, 2],
+    [-1, 0.6, 2],
+]
+
+
+def c0(t, a1, s3, f):
+    return 0
+
+
+def c1(t, a1, s3, f):
+    return a1
+
+
+def c2(t, a1, s3, f):
+    return 0
+
+
+def c3(t, a1, s3, f):
+    return s3 * math.sin(2 * math.pi * f * t)
+
+
+def c4(t, a1, s3, f):
+    return 0

@@ -1,0 +1,16 @@
+### H3: Higher frequency travelling wave moves further
+
+WHEN the five channels carry a travelling-wave sine of amplitude 1, phase step 1.2566 rad and frequency 3 Hz, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 3.0
+ph = 1.2566
+amp = 1.0
+```

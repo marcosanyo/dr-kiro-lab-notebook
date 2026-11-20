@@ -1,0 +1,13 @@
+# Design
+
+## Notes
+
+- Starting point from given/: c2, c3 sines with c3 lagging, c0 = c1 = 0 (R2, R8). Best given was 2.1 Hz, lag 225 deg: x 0.266 m.
+- Lowering the lag at 2.1 Hz raises x and turns the body left: lag 200 gives x 0.294, heading 10.6; lag 180 gives x 0.320, heading 41.8 (E1).
+- c4 in phase with c2 adds x and left turn. c4 anti-phase (-0.3) cuts x to about 0.14 (E1, E2).
+- Heading depends strongly on frequency: at lag 200 and c4 off it is +10.6 deg at 2.1 Hz and -19.3 deg at 2.2 Hz (E1, E2).
+- c4a 0.4 at 2.2 Hz overturns the body (21.7 deg) and loses x (E3).
+
+## Best point (answer)
+
+c2 = sin(2 pi 2.15 t), c3 = sin(2 pi 2.15 t - 201 deg), c4 = 0.2 sin(2 pi 2.15 t), c0 = c1 = 0: x 0.345 m, y 0.161 m, heading 0.2 deg (E4). Nearby, lag 200: x 0.375, y 0.129, heading -2.2 (E3). The y margin to 0.2 m is the thinnest.

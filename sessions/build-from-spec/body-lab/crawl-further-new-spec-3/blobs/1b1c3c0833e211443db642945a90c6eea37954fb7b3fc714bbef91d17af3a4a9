@@ -1,0 +1,31 @@
+# H3: A small in-phase c4 at 2.2 Hz lifts x past 0.3 m and brings heading back near 0
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "phi", "c4a"]
+TRIALS = [
+    [2.2, 200, 0.3],
+    [2.2, 200, 0.4],
+    [2.15, 200, 0.2],
+]
+
+
+def c0(t, f, phi, c4a):
+    return 0
+
+
+def c1(t, f, phi, c4a):
+    return 0
+
+
+def c2(t, f, phi, c4a):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi, c4a):
+    return math.sin(2 * math.pi * f * t - phi * math.pi / 180)
+
+
+def c4(t, f, phi, c4a):
+    return c4a * math.sin(2 * math.pi * f * t)

@@ -36,6 +36,21 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 - `rm -rf` はユーザーの設定で拒否される（ユーザーの許可なしに別の方法で消さない）。空でないフォルダーは `mv` で脇へ寄せた。
 - ビルドは新しい空のフォルダーに出す（`mktemp -d`）。`scripts/view-notebook.sh` がそれをしてローカルで配信する（ポートは `--port`）。
 - `body-lab/notebook/display/` は 20MB ある。今の `display.py` は、全項目を手でチェックする（ハッシュ、元の記録の絵のハッシュ、測った値）。
+## 2 つ目の体（ブランチ `feat/second-body`、main の 9488c40 から）
+- **済み:** spec（body-lab 要件 7、lab-bench 要件 23、コミット 2a4cb3e）。実装: bench の `variant` 設定（`bench-new-session --variant`、開始エントリーに記録）、reader の `bfs-run --variant`（ラッパーまで届く）、体 b（`body-lab/model/specimen_02.xml`、車輪のゴムだけ外し、軸は残す）。
+- **タスク 8（3 プローブ、body-1/2 の再実行はクレジット節約で省いた）:** 体 a は車輪のチャンネルで動く（+1 で x -0.230 m、heading 39.18°、-1 で x 0.113 m、heading -34.96°）。体 b はどのプローブでも動かない（x 約 2.5e-05 m）。タイヤがないと床を押せない。
+- **タスク 9:** リポジトリのラボの `bench-scan` は検出なし。`bench-new-session` は variant なしと `c` を拒否し、`b` で開始する。新しい記録の `bench-scan` も検出なし。
+- **未了（本番の後）:** 体 b の封印された記録と `bench-verify`、ノートのビルド。choices はまだ作っていない（ユーザーの指示）。
+- **次の一手:** 本番の Dr. Kiro を体 b で。開始は `body-lab/README.md` の「Two bodies」と「Running a session」（`--variant b`）。reader を体 b で走らせるのは、その後の実験。
+- **注意:** body-1 と body-2 は variant のない記録で、封印済み。再開は不要。新しいセッションは必ず `--variant a` か `--variant b` を付ける。`rm -rf` は許可設定で拒否される。検証用のフォルダーは `bench-run/body-lab-variant-check-2`（git の対象外）。
+
+## ノートの棚（ブランチ `feat/notebook-shelf`、2026-11-19、ローカル）
+- ノートの見せ方を作り直した。1 セッション = 1 冊のノート。夜が初期で、ボタンで昼。仕様は `.kiro/specs/notebook-shelf/`（訳つき）。
+- 人が書くもの: `notebook/choices/<app>/<session>.toml` と `notebook/choices/cover.toml`。`model` は body-2 と wt-004 が `claude-sonnet-5.5`。body-1、wt-002、wt-003 は `<fill in>` のまま（聞いていない）。`date` は各記録が git に入った日。body-2 の題は目隠しスキャンが `Backwards` を拒んだので `The Reversed Wave`。
+- **ロボットの絵の撮り直し（済み）:** `uv run notebook-retake --sessions sessions --out notebook/display --session body-1 --session body-2`。記録の入力から全 79 試行を走らせ直し、x、y、heading、track 3 本が記録と厳密に一致した。体を追う上からのカメラで 0.2 秒ごと 25 コマ、1 コマ 320px（床 50cm 幅）。シートは `notebook/display/`（20MB、色の下位 3 ビットを落としてある）、`manifest.toml` にハッシュと元の記録の絵のハッシュ。`notebook-build --display notebook/display` で表示。`scripts/view-notebook.sh` は付けてある。アダプターは変えていない（自由カメラで足りた）。
+- **風洞の絵:** 走らせ直していない。大きい絵にはソルバーのサンプリングを変える必要があり、`wind-tunnel` の spec の変更になるため。代わりに記録のコマから体と渦のまわりを切り抜いて出す（`zoom.py`）。走らせ直すなら相談したい。
+- 見た目: 数字は短く（`+3.9 cm`、`0.75 m`、`cd 0.993`）、見どころは写真 2 枚（一緒に再生、つまみ、「t = 3.0 s forward 38 cm」）、付箋 3 枚、枠つきのグラフで 1 画面、全部の実験は 2 列のカード、計画は 1 行で押すと全文、発見した spec は条件と根拠を閉じた。
+- 見ていないもの: 実機の 360px の全体、昼の画面の細部（script 抜きと iframe で確認）。`notebook` のテストと ruff は通る。
 ## ダークモード（夜の実験室）（ブランチ `feat/notebook-dark-mode`）
 - **済み（2026-11-19）:** システムの `prefers-color-scheme: dark` のときだけ、夜の配色になる。CSS だけで、切り替えボタンもスクリプトも保存もない。設定がなければ昼の紙のまま。
   - 見た目: 反転ではなく、ランプの下の暗い机に置いた同じノート。方眼の線、綴じ穴、余白の赤線、付箋（暗い黄色）、カード、タブはそのまま、色だけ夜の値。インクは明るい青（Dr. Kiro）、明るい鉛筆、温かい白（コメンタリー）。

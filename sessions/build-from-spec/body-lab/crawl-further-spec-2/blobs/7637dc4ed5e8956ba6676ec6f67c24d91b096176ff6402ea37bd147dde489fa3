@@ -1,0 +1,35 @@
+# H4: Wave phase lag sets whether the body travels or spins
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "a", "f", "ph"]
+TRIALS = [
+    [0, 1, 1.5, 0],
+    [0, 1, 1.5, 2],
+    [0, 1, 1.5, -1],
+]
+
+
+def wave(t, k, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * k)
+
+
+def c0(t, a1, a, f, ph):
+    return wave(t, 0, a, f, ph)
+
+
+def c1(t, a1, a, f, ph):
+    return a1 + wave(t, 1, a, f, ph)
+
+
+def c2(t, a1, a, f, ph):
+    return wave(t, 2, a, f, ph)
+
+
+def c3(t, a1, a, f, ph):
+    return wave(t, 3, a, f, ph)
+
+
+def c4(t, a1, a, f, ph):
+    return wave(t, 4, a, f, ph)

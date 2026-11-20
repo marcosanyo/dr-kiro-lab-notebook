@@ -1,0 +1,27 @@
+### H3: A travelling wave across all channels moves the body forward, and a constant c1 = 1 does not
+
+WHEN c0..c4 are unit sines at f = 1.5 Hz with phase lag ph = 1 per channel index, THE system SHALL end at x between 0.1 and 0.35 m; and WHEN c1 is held at +1 with the rest 0, THE system SHALL end with |x| below 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.35]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "new-combination"
+[prediction.when]
+a1 = 1
+a = 0
+f = 1
+ph = 0
+```

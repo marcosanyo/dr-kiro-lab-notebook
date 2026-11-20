@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `633ca20f08a386981a4da2b5bcfb02986995804f55742bfacd18f2ef2c8db2a7`
+> 原文 SHA-256: `0c18815913fb2927fd0163bfa19bc13026be3ff8c761ebfcb620fbf9e3c28ac0`
 
 # 設計: lab-bench（コア）
 
@@ -847,3 +847,38 @@ def _records(sessions: Path) -> list[Path]:
 
 - 改訂のマージ時に `bench-run/` にセッションが開いている。`Session.open` は、開始エントリーに `discovered_table` がないためその記録を拒否する。ビルダーは止めて報告する。
 - 変更後に、既存の封印済み記録が `bench-verify` または `final_spec` で失敗する。想定していない。この経路ではコードがそのキーを読まないからである。
+
+# 改訂: 名前付きバリアント（要件 23）
+
+`body-lab` spec（その要件 7）のために追加した。
+
+## E1. ルール（23.1-23.11）
+
+- `SessionConfig` に `variant: str | None = None` を足す。23.1 で任意なので、既定値を持つ唯一のフィールドである。`frontend/config.py` は `variant` を任意のフィールド（`FIELDS` には入れない）として許し、あるときは空でない文字列を求め、アダプターを `factory(variant=...)` または `factory()` で作る。引数を受け取らないファクトリーが出す `TypeError` は、アダプターがバリアントを受け取らないと言う `ConfigError` にする。
+- `Session._check_config`（開始時の検査。`discovered_table` の隣）: `accepted = getattr(adapter, "variants", None)`。`accepted is None` で `variant` があれば、「cannot start: this application has no variants; remove the variant setting」と拒否する。`accepted` がタプルで `variant` がないか、その中にないときは、「cannot start: the variant setting must be one of <labels>」と拒否する。文はビルダー側（開始は Dr. Kiro のセッションより前に走る）。
+- 開始エントリー: `"variant": config.variant` を、あるときだけ書く。`Session.open` は逆方向も比べる: 設定に `variant` がないのに開始エントリーにそのキーがあれば拒否する。
+- `bench-new-session --variant <label>` は `SessionConfig.variant` と設定ファイルの `variant` の行を埋める。
+- `describe.py` と `server.py` は `variant` を読まない。テストは、`variant` がある場合とない場合で説明を作り、バイト単位で比べる。
+
+## E2. テスト
+
+| テスト | 要件 |
+|---|---|
+| `variants = ("x", "y")` を持つ偽のアダプターで開始する: `variant` なし、未知の値、既知の値は、それぞれ拒否、拒否、実行となる。 | 23.3 |
+| `variant` のある設定と `variants` のないアダプターは拒否される。 | 23.4 |
+| 開始エントリーは、設定にあるときだけ `variant` を持つ。`Session.open` は同じ設定を受け入れ、違う値や無い値を拒否する。 | 23.6, 23.7 |
+| キーのないまま封印された記録は `bench-verify` と `final_spec` を通る。 | 23.8 |
+| 設定に `variant` があれば `factory(variant=...)` が呼ばれる。引数のないファクトリーは `ConfigError`。 | 23.5 |
+| `bench-new-session --variant` は行を書き、その値でセッションを開始する。指定がなければ行はない。 | 23.9 |
+| ツールの説明は `variant` の有無でバイト単位で同一。 | 23.10 |
+
+## E3. 決定事項（ビルダーが、ユーザーの決定に基づいて行った）
+
+1. **設定では任意、アダプターが必要とする。** 必須の設定にすると、wind-tunnel と偽のアプリケーションに意味のない値を強いることになる。バリアントが要るかどうかはアダプター（`variants`）が言うので、停止は明示的で、既定値にはならない。
+2. **ベンチはバリアントが何かを知らない。** ラベルをアダプターの一覧と照らして記録するだけである。
+3. **古い記録は移行しない。** 開始エントリーにキーは残らない。
+
+## E4. 止めて確認すること
+
+- これが入るとき、`bench-run/` で開いているセッションがある。影響しない: その設定には `variant` がなく、アダプターが `variants` を持つのは `body-lab` の変更のときだけで、その変更は古い設定を開始時に拒否する。ビルダーが報告する。
+- 設定ローダー以外のアダプターファクトリーの呼び出し元（ブラインドスキャンの用語リスト、`bench-new-session`、`build-from-spec`、ノート）は、バリアントなしでは動かない。呼び出し元が必要とするのは宣言だけで、宣言はバリアントに依存しない（`body-lab` 要件 7.5）。呼び出し元がボディそのものを必要とするなら、ビルダーは止めて確認する。

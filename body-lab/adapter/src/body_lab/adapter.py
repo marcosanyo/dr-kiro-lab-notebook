@@ -24,10 +24,20 @@ GOAL = "Move the body as far as possible in the direction it faces at the start:
 
 
 class BodyAdapter:
-    def __init__(self, settings: Settings | None = None, measurer: Measurer | None = None) -> None:
+    # The bodies the bench may start on (lab-bench Requirement 23, body-lab Requirement 7).
+    variants = ("a", "b")
+
+    def __init__(
+        self, settings: Settings | None = None, measurer: Measurer | None = None, variant: str | None = None
+    ) -> None:
         self.settings = settings or Settings()
         self.measurer = measurer or PoseMeasurer(self.settings)
-        self.body = sim.build(self.settings)
+        # Without a variant the body is not built: the declaration does not depend on it, and no trial runs.
+        if variant is not None and variant not in self.variants:
+            raise ValueError(
+                f"the variant setting must be one of {', '.join(self.variants)}; got {variant!r}"
+            )
+        self.body = None if variant is None else sim.build(self.settings, variant)
         wiring = sim.load_wiring()
         steps = round(wiring.trial_seconds * wiring.control_hz)
         self.sample_times = tuple(k / wiring.control_hz for k in range(steps))
@@ -55,6 +65,8 @@ class BodyAdapter:
         return {"mujoco": mujoco.__version__}
 
     def run_trial(self, inputs: ComputedInputs, seed: int) -> TrialResult | TrialFailure:
+        if self.body is None:
+            raise RuntimeError("no body: the adapter was made without a variant")
         commands = {}
         for knob in self._declaration.knobs:
             value = inputs[knob.name]

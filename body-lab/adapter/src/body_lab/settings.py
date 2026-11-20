@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 MODEL_DIR = Path(__file__).resolve().parents[3] / "model"
-MODEL_FILE = MODEL_DIR / "specimen_01.xml"
+# The bodies by label (body-lab Requirement 7). Only the labels are ever shown outside the builder.
+BODIES = {"a": MODEL_DIR / "specimen_01.xml", "b": MODEL_DIR / "specimen_02.xml"}
 WIRING_FILE = MODEL_DIR / "specimen_01.wiring.json"
 
 

@@ -1,0 +1,140 @@
+# Requirements
+
+### H1: Half-strength c1 with a c3 sine gives a straight crawl of 0.3 to 0.5 m
+
+WHEN c1 is held at -0.5 and c3 is a unit sine at 1.5 or 2 Hz, THE system SHALL end at x between 0.3 and 0.5 m with heading within 20 deg of zero.
+
+```prediction
+# relies on: R9, R11, R13
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 1.5
+```
+
+Result (E1): all missed low for x. a1=-0.5, f=2: x -0.055, heading -7.7. f=1.5: x -0.023, heading -1.2. The body barely moved, so a1=-0.5 does not stroke forward at f 1.5-2.
+
+### H2: Cutting the a1=-1, f=2 drive early stops the crawl inside 0.3 to 0.5 m
+
+WHEN c1 = -1 and c3 is a unit sine at 2 Hz, and both are switched to 0 after T seconds, THE system SHALL end at x between 0.3 and 0.5 m with heading within 20 deg of zero for T = 3 and T = 3.5.
+
+```prediction
+# relies on: R11, R13
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 3
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.3, 0.55]
+label = "new-combination"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+T = 3.5
+```
+
+Result (E2): all missed low. T=3: x -0.034, heading -5.2. T=3.5: x -0.038, heading -5.1. No travel. Trajectories match E1 early on, so c1 (-0.5 or -1) does nothing visible. The given c1 rules do not hold for this body.
+
+### H3: A travelling wave across all channels moves the body forward, and a constant c1 = 1 does not
+
+WHEN c0..c4 are unit sines at f = 1.5 Hz with phase lag ph = 1 per channel index, THE system SHALL end at x between 0.1 and 0.35 m; and WHEN c1 is held at +1 with the rest 0, THE system SHALL end with |x| below 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.35]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "new-combination"
+[prediction.when]
+a1 = 1
+a = 0
+f = 1
+ph = 0
+```
+
+Result (E3): P1 missed (x -0.080, heading -146, spinning). P2 hit (x 2.5e-5). f=3, ph=1 wave: x -0.050, heading +113. The wave rotates the body, no travel.
+
+### H4: Wave phase lag sets whether the body travels or spins
+
+WHEN all five inputs are unit sines at 1.5 Hz with phase lag ph per channel index, THE system SHALL end with heading within 30 deg for ph = 0, and x between 0.3 and 0.5 m for ph = 2.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30, 30]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = 0
+a = 1
+f = 1.5
+ph = 2
+```

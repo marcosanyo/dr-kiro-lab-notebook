@@ -111,6 +111,7 @@ class Arguments:
     model: str
     effort: str
     sessions: str  # the records folder of the run, relative to the repository root (no default, 11.1)
+    variant: str | None = None  # the named variant of the application, when the session config names one
 
 
 @dataclass(frozen=True)
@@ -184,6 +185,9 @@ def parse_arguments(argv: list[str] | None) -> Arguments:
     }
     for name in ("request", "setup", "source", "seed", "run", "model", "effort", "sessions"):
         parser.add_argument(f"--{name}", required=True, type=str, help=helps[name])
+    parser.add_argument(
+        "--variant", default=None, type=str, help="a named variant of the application, if it has any"
+    )
     raw = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if raw.setup not in SETUPS:
         raise RunRefused(f"--setup {raw.setup!r} is not one of {', '.join(SETUPS)}")
@@ -193,10 +197,20 @@ def parse_arguments(argv: list[str] | None) -> Arguments:
         raise RunRefused(f"--run {raw.run!r} is not an integer of at least 1")
     if not raw.model.strip():
         raise RunRefused("--model is empty; a model name is required")
+    if raw.variant is not None and not raw.variant.strip():
+        raise RunRefused("--variant is empty; leave it out, or name one of the variants")
     if not raw.effort.strip():
         raise RunRefused("--effort is empty; an effort value is required")
     return Arguments(
-        raw.request, raw.setup, raw.source, int(raw.seed), int(raw.run), raw.model, raw.effort, raw.sessions
+        raw.request,
+        raw.setup,
+        raw.source,
+        int(raw.seed),
+        int(raw.run),
+        raw.model,
+        raw.effort,
+        raw.sessions,
+        raw.variant,
     )
 
 
@@ -364,7 +378,7 @@ def check(arguments: Arguments, root: Path, apps: Mapping[str, App], kiro: Kiro)
             raise RunRefused(f"run id {run_id} is already used: {', '.join(map(str, used))}")
         version = kiro.version()
         name = f"reader/{app.name}/{request.id}/{app.budget}"
-        adapter = build(name, apps, root)
+        adapter = build(name, apps, root, arguments.variant)
         state = _run_dir(root) / STATE
         if state.is_dir():
             still_open = open_sessions(state)
@@ -449,6 +463,8 @@ def _config_text(root: Path, config: Path, checked: Checked, arguments: Argument
         "discovered_table": DISCOVERED_TABLE,
         "resume": True,
     }
+    if arguments.variant is not None:
+        values["variant"] = arguments.variant
     return "".join(f"{key} = {json.dumps(value)}\n" for key, value in values.items())
 
 
@@ -484,6 +500,8 @@ def prepare(arguments: Arguments, checked: Checked, root: Path) -> Path:
         "given": _given_json(arguments.setup, given),
         "prompts": [],
     }
+    if arguments.variant is not None:
+        data["variant"] = arguments.variant
     lines: list[str] = []
     for name, earlier in checked.earlier:
         lines += differences("this run", data, name, earlier)

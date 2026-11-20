@@ -1,0 +1,107 @@
+# Requirements (hypotheses)
+
+### H1: Lag 200 deg or an added c4 raises x above 0.266 m at 2.1 Hz
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 200 deg and c0, c1, c4 are 0, THE system SHALL reach x of at least 0.27 m.
+
+```prediction
+# relies on: R8, R7, R5
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0
+phi4 = 0
+```
+
+Notes: Three variants in one compare: lag 200 with no c4; lag 225 with c4 in phase with c2; lag 225 with c4 lagging c2 by 90 deg.
+
+Result (E1): lag 200 gave x = 0.294 m, y = 0.113 m, heading +10.6 deg. c4 variants were worse (x = 0.100 with heading +72 deg; x = 0.207).
+
+### H2: Lag near 180 to 190 deg at 2.1 Hz gives x of at least 0.3 m
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 185 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.5 m with heading within 20 deg of the start.
+
+```prediction
+# relies on: R8
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 185
+a4 = 0
+phi4 = 0
+```
+
+Notes: compare of lag 185 and lag 170 at 2.1 Hz, and lag 200 at 2.2 Hz.
+
+Result (E2): lag 185 at 2.1 Hz x = 0.318 m but heading +34 deg; lag 170 x = 0.278, heading +55; lag 200 at 2.2 Hz x = 0.275, heading -19.
+
+### H3: Lag 185 at 2.2 Hz keeps x of 0.3 m with heading within 20 deg
+
+WHEN c2 and c3 carry sines at 2.2 Hz with c3 lagging c2 by 185 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.5 m, y within 0.2 m and heading within 20 deg of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-20.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 185
+a4 = 0
+phi4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 185
+a4 = 0
+phi4 = 0
+```
+
+Notes: compare of (2.2, 185), (2.15, 190), (2.2, 180).
+
+Result (E3): (2.2, 185) x 0.303, heading +5.6; (2.15, 190) x 0.328, y 0.126, heading +4.1; (2.2, 180) x 0.324, y 0.169, heading +11.8. All meet the goal.
+
+### H4: Lag 192 at 2.15 Hz stays inside the goal
+
+WHEN c2 and c3 carry sines at 2.15 Hz with c3 lagging c2 by 192 deg and c0, c1, c4 are 0, THE system SHALL reach x between 0.3 and 0.4 m with heading within 15 deg of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.4]
+label = "inside"
+[prediction.when]
+f = 2.15
+phi = 192
+a4 = 0
+phi4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-15.0, 15.0]
+label = "inside"
+[prediction.when]
+f = 2.15
+phi = 192
+a4 = 0
+phi4 = 0
+```
+
+Notes: final trial, a small step from the best point of E3 (2.15 Hz, lag 190).

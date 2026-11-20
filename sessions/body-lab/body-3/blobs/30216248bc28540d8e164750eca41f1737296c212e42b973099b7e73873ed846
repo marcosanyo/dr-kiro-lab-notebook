@@ -1,0 +1,35 @@
+# H5: Phase offset between c2 and c3 changes turning and forward motion
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["phi"]
+SWEEP = ["phi"]
+TRIALS = [
+    [45],
+    [90],
+    [135],
+    [180],
+    [225],
+    [270],
+]
+
+
+def c0(t, phi):
+    return 0
+
+
+def c1(t, phi):
+    return 0
+
+
+def c2(t, phi):
+    return math.sin(2 * math.pi * t)
+
+
+def c3(t, phi):
+    return math.sin(2 * math.pi * t - phi * math.pi / 180)
+
+
+def c4(t, phi):
+    return 0

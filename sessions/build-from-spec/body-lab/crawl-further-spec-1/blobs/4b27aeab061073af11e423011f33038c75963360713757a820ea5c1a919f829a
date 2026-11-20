@@ -1,0 +1,26 @@
+### H2: The given E9 point reproduces on this bench
+
+WHEN c1 is held at -1 and c3 is a unit sine at f = 2 Hz with the other inputs 0, THE system SHALL reach x near 0.62 m with heading near 0 deg.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.5, 0.75]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+```

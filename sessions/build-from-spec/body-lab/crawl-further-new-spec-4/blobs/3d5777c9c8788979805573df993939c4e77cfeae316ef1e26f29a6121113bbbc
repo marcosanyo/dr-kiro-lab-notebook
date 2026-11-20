@@ -1,0 +1,17 @@
+### H1: Lag 200 deg or an added c4 raises x above 0.266 m at 2.1 Hz
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 200 deg and c0, c1, c4 are 0, THE system SHALL reach x of at least 0.27 m.
+
+```prediction
+# relies on: R8, R7, R5
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0
+phi4 = 0
+```

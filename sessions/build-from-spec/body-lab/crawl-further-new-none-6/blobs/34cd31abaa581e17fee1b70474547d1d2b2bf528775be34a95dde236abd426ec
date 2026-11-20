@@ -1,0 +1,17 @@
+### H6: A three-channel wave on c2 to c4 crawls forward
+
+WHEN only c2, c3 and c4 carry a 10 Hz sine of amplitude 1 with a phase step of 2*pi/3 between neighbours and c0, c1 are zero, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 10.0
+ph = 2.0944
+amp = 1.0
+mode = 3
+```

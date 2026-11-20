@@ -1,0 +1,10 @@
+# Design
+
+## Notes
+
+- Inputs c0..c4, 5 s, 12-trial budget. `given/` was empty.
+- E1: c0 and c1 sine alone give no motion. c2 alone gives a 0.03 m wiggle and a 23 deg heading drift.
+- E2: c3 or c4 alone give wiggles under 0.03 m. c3+c4 in phase turn the body about 68 deg.
+- E3: in-phase sines on c2,c3,c4 spin the body about 120 deg. Constants on c0/c1 changed little.
+- E4: c3/c4 with a 90 deg offset keep heading within 15 deg but x stays under 0.04 m.
+- No forward crawl of 0.3 to 0.5 m was found. Budget is exhausted. Untested: other frequencies, amplitudes, and phases of c2 with c3/c4.

@@ -1,0 +1,41 @@
+# H2: A 1 Hz sine on one channel can move the body
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["ch", "f"]
+SWEEP = ["ch"]
+TRIALS = [
+    [0, 1.0],
+    [1, 1.0],
+    [2, 1.0],
+    [3, 1.0],
+    [4, 1.0],
+    [5, 1.0],
+]
+
+
+def drive(t, k, ch, f):
+    if ch == k or ch == 5:
+        return math.sin(2 * math.pi * f * t)
+    return 0
+
+
+def c0(t, ch, f):
+    return drive(t, 0, ch, f)
+
+
+def c1(t, ch, f):
+    return drive(t, 1, ch, f)
+
+
+def c2(t, ch, f):
+    return drive(t, 2, ch, f)
+
+
+def c3(t, ch, f):
+    return drive(t, 3, ch, f)
+
+
+def c4(t, ch, f):
+    return drive(t, 4, ch, f)

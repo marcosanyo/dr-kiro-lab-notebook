@@ -1,0 +1,10 @@
+# Design
+
+## Beliefs
+
+Nothing known yet. System: 5 inputs c0..c4 (functions of time, [-1,1]), 5 s trials, measures x, y, heading and tracks. Goal: maximise x.
+
+## Discovered spec
+
+| id | rule | scope | experiments | predictions | status | replaced by |
+|---|---|---|---|---|---|---|

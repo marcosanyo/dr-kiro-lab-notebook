@@ -1,0 +1,29 @@
+# H5: A quadrature stroke on c1 and c3 gives forward travel
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "f", "lag"]
+TRIALS = [
+    [1, 2, 0.25],
+]
+
+
+def c0(t, amp, f, lag):
+    return 0
+
+
+def c1(t, amp, f, lag):
+    return amp * math.sin(2 * math.pi * f * t)
+
+
+def c2(t, amp, f, lag):
+    return 0
+
+
+def c3(t, amp, f, lag):
+    return amp * math.sin(2 * math.pi * f * (t - lag / f))
+
+
+def c4(t, amp, f, lag):
+    return 0

@@ -1,0 +1,17 @@
+### H4: Two channels in quadrature give straighter, faster crawl
+
+WHEN only c0 and c1 carry a 10 Hz sine of amplitude 1 with c1 lagging c0 by pi/2 and c2 to c4 are zero, THE system SHALL end the trial with x above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 10.0
+ph = 1.5708
+amp = 1.0
+mode = 1
+```

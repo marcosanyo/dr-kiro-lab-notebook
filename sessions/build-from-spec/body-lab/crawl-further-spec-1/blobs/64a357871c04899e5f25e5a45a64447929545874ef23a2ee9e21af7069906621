@@ -1,0 +1,121 @@
+# Requirements
+
+Parameters: a1 is the constant level of c1, s3 the amplitude of the c3 sine, f its frequency in Hz.
+
+### H1: Weaker c1 at 2 Hz stroking lands x in the goal window
+
+WHEN c1 is held at a1 = -0.5 and c3 is a unit sine at f = 2 Hz with the other inputs 0, THE system SHALL reach x between 0.3 and 0.5 m with |heading| under 20 deg and |y| under 0.2 m.
+
+```prediction
+# relies on: R11, R9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.55]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-25, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 2
+```
+
+### H2: The given E9 point reproduces on this bench
+
+WHEN c1 is held at -1 and c3 is a unit sine at f = 2 Hz with the other inputs 0, THE system SHALL reach x near 0.62 m with heading near 0 deg.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.5, 0.75]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 2
+```
+
+Notes: H1 showed x of about -0.05 for a1 = -0.5 and -0.75 at f = 2, so this checks whether the given beliefs apply at all.
+
+### H3: A travelling wave across c0..c4 moves this body, with direction set by the sign of the phase lag
+
+WHEN all five inputs are 1 Hz unit sines with phase lag ph = 1 rad per channel index, THE system SHALL reach |x| above 0.1 m, and the sign of x SHALL flip when ph = -1.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 1.5]
+label = "new-combination"
+[prediction.when]
+amp = 1
+f = 1
+ph = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-1.5, -0.1]
+label = "new-combination"
+[prediction.when]
+amp = 1
+f = 1
+ph = -1
+```
+
+Notes: H1 and H2 showed c1 constant plus c3 sine gives x of about -0.05 only. This is a first probe of the other channels.
+
+### H4: Constant c1 at +1 moves the body in x on this bench
+
+WHEN c1 is held at +1 with the other inputs 0, THE system SHALL end with |x| above 0.1 m, and WHEN all five inputs are held at +1 or all at -1, THE system SHALL end with |x| above 0.1 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.4, -0.1]
+label = "new-combination"
+[prediction.when]
+a0 = 0
+a1 = 1
+a2 = 0
+a3 = 0
+a4 = 0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-1.5, -0.1]
+label = "new-combination"
+[prediction.when]
+a0 = 1
+a1 = 1
+a2 = 1
+a3 = 1
+a4 = 1
+```
+
+Notes: P1 follows the given R9 sign (positive a1 backs up). Tests whether c1 works at all on the positive side.

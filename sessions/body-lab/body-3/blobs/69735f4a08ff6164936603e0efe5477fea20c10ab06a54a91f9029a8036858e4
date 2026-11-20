@@ -1,0 +1,45 @@
+# H1: Each channel held constant, alone
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["ch", "lvl"]
+SWEEP = ["ch"]
+TRIALS = [
+    [0, 1],
+    [1, 1],
+    [2, 1],
+    [3, 1],
+    [4, 1],
+    [5, 1],
+]
+
+
+def c0(t, ch, lvl):
+    if ch == 0:
+        return lvl
+    return 0
+
+
+def c1(t, ch, lvl):
+    if ch == 1:
+        return lvl
+    return 0
+
+
+def c2(t, ch, lvl):
+    if ch == 2:
+        return lvl
+    return 0
+
+
+def c3(t, ch, lvl):
+    if ch == 3:
+        return lvl
+    return 0
+
+
+def c4(t, ch, lvl):
+    if ch == 4:
+        return lvl
+    return 0

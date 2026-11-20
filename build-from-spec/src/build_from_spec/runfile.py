@@ -87,6 +87,9 @@ RUN_DATA_FIELDS = (
     "given",
     "prompts",
 )
+# The named variant the run was made on (lab-bench Requirement 23, body-lab Requirement 7). Present only
+# when the run named one, so run data and run files written without a variant stay valid.
+VARIANT_FIELD = "variant"
 RUN_FILE_FIELDS = (
     "format",
     "run",
@@ -116,6 +119,12 @@ class RunFileError(Exception):
 def dump_text(data: Mapping[str, Any]) -> str:
     """The one serialisation of both files: `indent=2`, sorted keys, characters as written, final newline."""
     return json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def _optional_fields(value: object, names: tuple[str, ...], where: str) -> dict[str, Any]:
+    """Like `_fields`, and also the optional variant field when the object has it."""
+    present = names + ((VARIANT_FIELD,) if isinstance(value, dict) and VARIANT_FIELD in value else ())
+    return _fields(value, present, where)
 
 
 def _fields(value: object, names: tuple[str, ...], where: str) -> dict[str, Any]:
@@ -245,9 +254,11 @@ def _check_common(data: dict[str, Any], where: str) -> str:
 
 def check_run_data(data: object, where: str = "run data file") -> dict[str, Any]:
     """Check a run data file (design 4.3). Return it unchanged when it is valid."""
-    checked = _fields(data, RUN_DATA_FIELDS, where)
+    checked = _optional_fields(data, RUN_DATA_FIELDS, where)
     _check_common(checked, where)
     _text(checked["adapter"], f"{where}.adapter")
+    if VARIANT_FIELD in checked:
+        _text(checked[VARIANT_FIELD], f"{where}.{VARIANT_FIELD}")
     _check_prompts(checked["prompts"], f"{where}.prompts")
     return checked
 
@@ -269,8 +280,10 @@ def _check_relied(value: object, where: str) -> None:
 
 def check_run_file(data: object, where: str = "run file") -> dict[str, Any]:
     """Check a run file (design 4.4). Return it unchanged when it is valid."""
-    checked = _fields(data, RUN_FILE_FIELDS, where)
+    checked = _optional_fields(data, RUN_FILE_FIELDS, where)
     _check_common(checked, where)
+    if VARIANT_FIELD in checked:
+        _text(checked[VARIANT_FIELD], f"{where}.{VARIANT_FIELD}")
     record = _fields(checked["record"], RECORD_FIELDS, f"{where}.record")
     _sha(record["seal"], f"{where}.record.seal")
     _one_of(record["end"], ENDS, f"{where}.record.end")
@@ -495,6 +508,8 @@ def write_run_file(
         "continue_lines": sum(1 for prompt in prompts if prompt["kind"] == "continue"),
         "limits": limits_for(data["setup"]),
     }
+    if VARIANT_FIELD in data:
+        run_file_data[VARIANT_FIELD] = data[VARIANT_FIELD]
     text, sidecar_text = run_file_texts(run_file_data)
     scanner = Scanner.from_config([root / app.scan_sources for app in apps.values()], stop_list)
 

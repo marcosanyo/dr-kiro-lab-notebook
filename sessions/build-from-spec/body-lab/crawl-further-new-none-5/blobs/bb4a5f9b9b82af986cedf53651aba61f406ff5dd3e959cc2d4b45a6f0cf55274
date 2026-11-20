@@ -1,0 +1,31 @@
+# H4: A quarter-cycle phase offset between c3 and c4 produces forward crawl
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["amp", "phase", "freq"]
+TRIALS = [
+    [1.0, 90, 1.0],
+    [1.0, -90, 1.0],
+    [1.0, 180, 1.0],
+]
+
+
+def c0(t, amp, phase, freq):
+    return 0
+
+
+def c1(t, amp, phase, freq):
+    return 0
+
+
+def c2(t, amp, phase, freq):
+    return 0
+
+
+def c3(t, amp, phase, freq):
+    return amp * math.sin(2 * math.pi * freq * t)
+
+
+def c4(t, amp, phase, freq):
+    return amp * math.sin(2 * math.pi * freq * t + phase * math.pi / 180)

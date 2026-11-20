@@ -1,0 +1,34 @@
+# H2: Cutting the a1=-1, f=2 drive early stops the crawl inside 0.3 to 0.5 m
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a1", "s3", "f", "T"]
+TRIALS = [
+    [-1, 1, 2, 3],
+    [-1, 1, 2, 3.5],
+]
+
+
+def c0(t):
+    return 0
+
+
+def c1(t, a1, T):
+    if t < T:
+        return a1
+    return 0
+
+
+def c2(t):
+    return 0
+
+
+def c3(t, s3, f, T):
+    if t < T:
+        return s3 * math.sin(2 * math.pi * f * t)
+    return 0
+
+
+def c4(t):
+    return 0
