@@ -89,12 +89,15 @@ def test_each_application_opens_in_its_own_theme_and_only_the_robot_has_decorati
 
 
 def test_an_application_page_has_no_switch_and_no_tabs_only_two_small_links(site):
-    for name, other in (("body-lab/body-2.html", "/wind-tunnel/"), ("wind-tunnel/wt-004.html", "/body-lab/")):
+    for name, other in (
+        ("body-lab/body-2.html", "/wind-tunnel/index.html"),
+        ("wind-tunnel/wt-004.html", "/body-lab/index.html"),
+    ):
         page, found = _page(site, name)
         assert found.classes["mode-toggle"] == 0 and found.classes["case-tab"] == 0
         assert "notebook-mode" not in (site / name.split("/")[0] / "a" / "notebook.js").read_text()
-        assert found.classes["lab-links"] == 1 and "/" in found.links and other in found.links
-        assert page.count('href="/"') >= 1
+        assert found.classes["lab-links"] == 1 and "/index.html" in found.links and other in found.links
+        assert page.count('href="/index.html"') >= 1
     page, found = _page(site, "wind-tunnel/wt-004.html")
     assert 'data-mode="day"' in page and "CASE 2" not in page
 
@@ -309,7 +312,8 @@ def test_the_story_of_the_wind_tunnel_does_not_claim_a_reader_that_was_not_run(s
     assert "Another Kiro" not in story and found.classes["tile"] == 0
     assert "4 rows are validated and can be trusted; 2 are only partly tested or observed" in story
     assert "No second Kiro has been run on this spec yet." in story
-    assert "1 missed, and no rule had to be struck out." in story
+    # The miss did not strike a rule out; the story names the row it kept from being validated.
+    assert "1 missed. No rule was struck out, but the miss kept R5 at partly instead of validated." in story
 
 
 def test_the_stopped_sessions_tell_what_they_can(site):

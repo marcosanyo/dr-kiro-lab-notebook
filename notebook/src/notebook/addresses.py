@@ -2,7 +2,8 @@
 The site root holds the front page and one folder per application. A folder is flat: its pages are in it, and
 its only folders are `p/` (pictures) and `a/` (the stylesheet, the script and the typefaces); the root has its
 own `a/`. So every link is relative and none contains `..`, except the two forms that go from an application
-to the front page or to another application: `/` and `/<application>/` (the site is served at its root).
+to the front page or to another application: `/index.html` and `/<application>/index.html` (the site is
+served at its root).
 Application and session ids are put into page names only when they match `SITE_ID`, lower case only, so two
 addresses cannot differ by case. Ids put in a fragment are checked against the bench's id patterns
 (`html.check_id`). `Site` refuses two files with the same path.
@@ -63,10 +64,11 @@ def door(application: str, source: str) -> str:
 def apps_link(application: str, source: str) -> str:
     """The link from inside one application to another, or to the front page when `application` is empty.
     The applications are folders of the site root, so these two forms are the only links that are not
-    relative (design, "Pages"): `/` and `/<application>/`."""
+    relative (design, "Pages"): `/index.html` and `/<application>/index.html`. The page is named in full
+    so the site opens from a plain file store (S3 behind CloudFront) that adds no `index.html` to a folder."""
     if not application:
-        return "/"
-    return f"/{site_id('application', application, source)}/"
+        return f"/{COVER}"
+    return f"/{site_id('application', application, source)}/{COVER}"
 
 
 def picture(digest: str, source: str) -> str:

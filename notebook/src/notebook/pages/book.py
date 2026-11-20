@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from bench.specfiles.discovered import Row, Table
 
-from notebook import addresses, html, numbers, progress, readerrequest, readerruns, tables, text
+from notebook import addresses, html, numbers, progress, readerrequest, readerruns, refusals, tables, text
 from notebook.choices import App, Choices, Note, Polaroid
 from notebook.display import Retake, Retakes
 from notebook.errors import NotebookError
@@ -183,15 +183,29 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
         second = _sentence(source, str(counts.miss), "@STORY_MISSED_NO_TABLE")
     else:
         rejected = progress.status_counts(table)["rejected"]
-        second = _sentence(
-            source,
-            str(counts.miss),
-            *(
-                ("@STORY_MISSED", str(rejected), "@STORY_STRUCK")
-                if rejected
-                else ("@STORY_MISSED_NONE_STRUCK",)
-            ),
-        )
+        missed = {o.prediction for o in record.outcomes if o.outcome == "miss"}
+        # Rows that cite a missed prediction and are not validated: what the misses changed, when no rule
+        # had to be struck out.
+        left = [
+            (r.id, r.status)
+            for r in table.rows
+            if r.status in ("partly", "observed") and missed & set(r.predictions)
+        ]
+        if rejected:
+            second = _sentence(source, str(counts.miss), "@STORY_MISSED", str(rejected), "@STORY_STRUCK")
+        elif left:
+            pieces: list[str] = [
+                str(counts.miss),
+                "@STORY_MISSED_LEFT" if counts.miss == 1 else "@STORY_MISSES_LEFT",
+            ]
+            for n, (row_id, status) in enumerate(left):
+                if n:
+                    pieces.append("@LIST_SEPARATOR")
+                pieces += [row_id, "@STORY_LEFT_AS", status]
+            pieces.append("@STORY_LEFT_END")
+            second = _sentence(source, *pieces)
+        else:
+            second = _sentence(source, str(counts.miss), "@STORY_MISSED_NONE_STRUCK")
     mine = [
         r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
     ]
@@ -369,12 +383,12 @@ def _pencil_line(corners: list[tuple[float, float]], seed: str) -> str:
     k = 0
     for (x0, y0), (x1, y1) in zip(corners, corners[1:], strict=False):
         length = math.hypot(x1 - x0, y1 - y0) or 1.0
-        pieces = max(2, int(length / 11))
+        pieces = max(2, int(length / 9))
         for j in range(1, pieces + 1):
             px, py = x0 + (x1 - x0) * j / pieces, y0 + (y1 - y0) * j / pieces
             if j < pieces:
                 k += 1
-                wobble = _jitter(seed, k) * 1.2
+                wobble = _jitter(seed, k) * 2.4
                 px += -(y1 - y0) / length * wobble
                 py += (x1 - x0) / length * wobble
             out += f"L{px:.1f} {py:.1f}"
@@ -429,8 +443,12 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         elif not corners:
             corners.append((x(i), y(p.best)))
     corners.append((x(n - 1), corners[-1][1]))
+    # A soft glow under the line, the line itself, and a second fainter pass of the pencil beside it.
+    line = _pencil_line(corners, record.name)
+    marks += html.element("path", {"class": "ch-glow", "d": line, "fill": "none"}, [])
+    marks += html.element("path", {"class": "ch-line", "d": line, "fill": "none"}, [])
     marks += html.element(
-        "path", {"class": "ch-line", "d": _pencil_line(corners, record.name), "fill": "none"}, []
+        "path", {"class": "ch-pass", "d": _pencil_line(corners, f"{record.name}:second"), "fill": "none"}, []
     )
     if found.mark_index is not None:
         m = found.mark_index
@@ -632,6 +650,25 @@ def _rule(
         )
     elif rv.note is not None:
         body += _el("p", "rule-rewrite", [*say_text("REWRITTEN_NOWHERE"), *html.text(pencil(rv.note, src))])
+    refused = refusals.refused_end_note(row.id, record.refusals)
+    if refused is not None:
+        said: list[Segment] = []
+        for m in refused.messages:
+            said += _el("p", "rule-refused-message", list(m.parts))
+        said += _el("p", "rule-refused-quote", [refused.messages[0].note] if refused.messages[0].note else [])
+        body += _el(
+            "section",
+            "rule-refused",
+            [
+                *_el("p", "rule-refused-head", list(refused.heading)),
+                *_el("p", "rule-refused-sealed", [refused.sealed]),
+                *_el(
+                    "details",
+                    "refused-more",
+                    [*html.element("summary", None, say_text("REFUSED_END_SHOW")), *said],
+                ),
+            ],
+        )
     more = _el("p", "rule-scope", html.text(_cell(snapshot, row, row.scope)))
     evidence: list[Segment] = []
     if row.experiments:
@@ -958,8 +995,41 @@ def _experiments(
 # The reader
 
 
+def _run_line(run: readerruns.Run, source: str, rows: set[str], known: set[str]) -> list[Segment]:
+    """One run: its name and result, the trial at which it was first in range (or that it never was) and its
+    last trial, and the ids it said it relied on, linked where the page holds them."""
+    out = [*html.text(pencil(run.name, source)), markup(" "), *html.text(pencil(run.result, source))]
+    if run.first_in_range is None:
+        out += [*say_text("READER_RUN_NEVER"), *html.text(pencil(run.last_trial, source))]
+    else:
+        out += [
+            *say_text("READER_RUN_FIRST"),
+            *html.text(pencil(run.first_in_range, source)),
+            *say_text("READER_RUN_LAST"),
+            *html.text(pencil(run.last_trial, source)),
+        ]
+    cited = [i for i in run.relied_ids if i != "none"]
+    if not cited:
+        return [*out, *say_text("READER_RUN_CITED_NONE")]
+    out += say_text("READER_RUN_CITED")
+    for n, item in enumerate(cited):
+        if n:
+            out += say_text("LIST_SEPARATOR")
+        piece = html.text(pencil(item, source))
+        if item in rows:
+            out += link(addresses.here(addresses.row(item, source)), piece)
+        elif item in known:
+            out += link(addresses.here(item), piece)
+        else:
+            out += piece
+    return out
+
+
 def _reader(
-    record: RecordModel, runs: list[readerruns.Run], requests: dict[str, readerrequest.Request]
+    record: RecordModel,
+    runs: list[readerruns.Run],
+    requests: dict[str, readerrequest.Request],
+    table: Table | None,
 ) -> list[Segment]:
     mine = [
         r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
@@ -972,14 +1042,19 @@ def _reader(
     request = requests[ids[0]]
     source = f"{readerruns.FOLDER}: the runs of {ids[0]}"
     tiles: list[Segment] = []
+    rows = {r.id for r in table.rows} if table is not None else set()
+    known = _anchors(record) | {h.id for h in record.hypotheses}
     for setup, passes, total, _other in readerruns.tally(mine, ids[0]):
         runs_of = [r for r in mine if r.setup == setup]
         chips: list[Segment] = []
         for run in runs_of:
             chips += html.element(
-                "li",
-                {"class": f"run run-{run.result}"},
-                [*html.text(pencil(run.name, source)), markup(" "), *html.text(pencil(run.result, source))],
+                "li", {"class": f"run run-{run.result}"}, _run_line(run, source, rows, known)
+            )
+        limits = sorted({limit for run in runs_of for limit in run.limits})
+        for limit in limits:
+            chips += _el(
+                "li", "run-limit", [*say_text("READER_RUN_LIMIT"), *html.text(pencil(limit, source))]
             )
         tiles += _el(
             "section",
@@ -1032,7 +1107,7 @@ def body(
         *_story(record, table, runs),
         *_chips(record, chosen, lab, table),
         *_highlight(record, layout, chosen, table, lab, shown),
-        *_reader(record, runs, requests),
+        *_reader(record, runs, requests, table),
         *_spec(record, table, checked),
         *_plan(record),
         *_experiments(record, layout, chosen, table, shown),

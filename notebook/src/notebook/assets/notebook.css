@@ -38,32 +38,33 @@
 }
 :root {
   color-scheme: dark;
-  --paper: #020104;
-  --grid-line: rgba(150, 110, 220, 0.07);
-  --lamp: rgba(122, 78, 200, 0.26);
-  --vignette: rgba(0, 0, 0, 0.85);
-  --page: rgba(8, 5, 14, 0.94);
-  --page-edge: #33264a;
-  --hole: #0e0916;
-  --ink-drkiro: #82e6a4;
-  --ink-pencil: #d3cbe0;
-  --ink-commentary: #ffa24d;
-  --title: #f6eed8;
-  --text: #e9e2f2;
-  --muted: #a99bc0;
-  --frame-green: #4fd37f;
-  --chip: #140d1e;
-  --chip-edge: #33264d;
-  --card: #0f0818;
-  --card-edge: #30234a;
-  --miss-red: #ff8f86;
-  --stamp-validated: #7fe0a4;
-  --stamp-partly: #f4c75d;
-  --stamp-observed: #a9c1dd;
-  --stamp-rejected: #d9a6f2;
-  --rule-bg: #120b1d;
-  --rewrite-bg: #33223f;
-  --deco: #b9a4e0;
+  --paper: #050304;
+  --grid-line: rgba(255, 150, 60, 0.05);
+  --lamp: rgba(255, 128, 24, 0.2);
+  --brew: rgba(140, 255, 60, 0.09);
+  --vignette: rgba(0, 0, 0, 0.88);
+  --page: rgba(12, 8, 6, 0.94);
+  --page-edge: #3d2a1a;
+  --hole: #140d08;
+  --ink-drkiro: #a8f04c;
+  --ink-pencil: #ddd5c8;
+  --ink-commentary: #ff9f3a;
+  --title: #ffb24d;
+  --text: #eee6da;
+  --muted: #ab9f8f;
+  --frame-green: #8fe03a;
+  --chip: #130d09;
+  --chip-edge: #45301e;
+  --card: #0f0a07;
+  --card-edge: #55391f;
+  --miss-red: #ff5f55;
+  --stamp-validated: #a8f04c;
+  --stamp-partly: #ffc24a;
+  --stamp-observed: #b8b0a4;
+  --stamp-rejected: #ff4a42;
+  --rule-bg: #120c09;
+  --rewrite-bg: #2b110d;
+  --deco: #bdae98;
   --moon: #f6efc7;
   --moon-pit: #d9cf9d;
   --pk: #f08a24;
@@ -77,6 +78,7 @@
   --line: 1.5;
 }
 html[data-mode="day"] {
+  --brew: transparent;
   color-scheme: light;
   --lamp: transparent;
   --vignette: transparent;
@@ -121,7 +123,8 @@ body {
   background-color: var(--paper);
   /* Graph paper: a line along the bottom and one along the right edge of each 1.5rem tile. */
   background-image:
-    radial-gradient(ellipse 70% 55% at 50% 30%, var(--lamp), transparent 72%),
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--lamp), transparent 72%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, var(--brew), transparent 75%),
     radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%),
     conic-gradient(
       at 0 calc(100% - 1px),
@@ -135,8 +138,8 @@ body {
       var(--grid-line) 90deg 180deg,
       transparent 180deg 360deg
     );
-  background-size: 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
-  background-attachment: fixed, fixed, scroll, scroll;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-attachment: fixed, fixed, fixed, scroll, scroll;
   font-family: var(--font-sans);
   line-height: var(--line);
   overflow-x: hidden;
@@ -698,8 +701,22 @@ section[data-sync] .photo-controls button[data-action="step"] {
 }
 .ch-line {
   stroke: var(--ink-drkiro);
-  stroke-width: 3;
+  stroke-width: 4;
   stroke-linejoin: round;
+}
+.ch-glow {
+  stroke: var(--ink-drkiro);
+  stroke-width: 12;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.22;
+}
+.ch-pass {
+  stroke: var(--ink-drkiro);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;
 }
 .ch-best {
   fill: var(--page);
@@ -1463,6 +1480,7 @@ section[data-sync] .photo-controls button[data-action="step"] {
 /* The wind tunnel opens by day: a bright graph paper, a blue pen, a plain research notebook. Its night is a
    dark blue desk with the same pen. It has no decoration in its pages. */
 html[data-app="wind-tunnel"] {
+  --brew: transparent;
   --paper: #0c1420;
   --grid-line: rgba(120, 160, 230, 0.1);
   --lamp: transparent;
@@ -1791,4 +1809,94 @@ html[data-app="front"] {
 }
 .page {
   padding-top: 1.2rem;
+}
+/* The night lab: pumpkin light for titles and our notes, a poison green for Dr. Kiro, blood red for what the
+   experiment struck out. Seams in the cards like the stitched body. Only the night pages. */
+html[data-mode="night"] .big-title .ink-c,
+html[data-mode="night"] .book-title .ink-c {
+  text-shadow: 0 0 18px rgba(255, 140, 30, 0.45);
+}
+html[data-mode="night"] .card,
+html[data-mode="night"] .hyp {
+  border-style: dashed;
+}
+html[data-mode="night"] .card {
+  border-left-style: solid;
+}
+html[data-mode="night"] .rule {
+  border-top-style: dashed;
+  border-right-style: dashed;
+  border-bottom-style: dashed;
+}
+html[data-mode="night"] .rule-text.struck .ink-k {
+  text-decoration: line-through 2px var(--stamp-rejected);
+  opacity: 0.85;
+}
+html[data-mode="night"] .rule-rejected {
+  box-shadow: 0 0 14px rgba(255, 60, 50, 0.22);
+}
+html[data-mode="night"] .rule-rewrite {
+  border-left-color: var(--stamp-rejected);
+}
+html[data-mode="night"] .stamp-rejected {
+  text-shadow: 0 0 8px rgba(255, 70, 60, 0.6);
+}
+/* A rule the bench would not let the session end on, and the reader's runs line by line. */
+.rule-refused {
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px dashed var(--stamp-rejected);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.rule-refused-head {
+  margin: 0;
+  color: var(--stamp-rejected);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.rule-refused-head .ink-c {
+  color: var(--stamp-rejected);
+}
+.rule-refused-sealed {
+  margin: 0.15rem 0 0;
+}
+.rule-refused-message {
+  margin: 0.3rem 0 0;
+  word-break: break-word;
+}
+.rule-refused-quote {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+.runs .run {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+.runs .run-limit {
+  margin-top: 0.3rem;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  list-style: none;
+}
+.symbols {
+  max-width: 50rem;
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.symbols .ink-c {
+  color: var(--muted);
+}
+.refused-more {
+  margin-top: 0.3rem;
+}
+.refused-more summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.refused-more summary .ink-c {
+  color: var(--muted);
 }
