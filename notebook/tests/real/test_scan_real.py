@@ -85,6 +85,7 @@ def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_si
     assert sorted(pages) == [
         "body-lab/body-1.html",
         "body-lab/body-2.html",
+        "body-lab/body-3.html",
         "body-lab/how.html",
         "body-lab/index.html",
         "body-lab/legend.html",

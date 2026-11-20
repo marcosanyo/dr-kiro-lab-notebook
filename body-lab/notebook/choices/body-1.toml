@@ -5,6 +5,7 @@ line = "Four rejected ideas, then a wave that walks 0.66 m."
 model = "claude-sonnet-5.5"
 date = "2026-11-13"
 color = "amber"
+body = "a"
 
 [progress]
 measurement = "x"

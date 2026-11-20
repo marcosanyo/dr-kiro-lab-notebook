@@ -2024,3 +2024,16 @@ html[data-mode="night"] .stamp {
   opacity: 0.9;
   letter-spacing: 0.04em;
 }
+.tile-borrowed {
+  border-color: var(--muted);
+}
+html[data-mode="night"] .tile-borrowed {
+  border-top-color: var(--muted);
+}
+.borrowed-rules {
+  margin: 0.3rem 0 0;
+  padding-left: 1rem;
+}
+.borrowed-rules li {
+  margin-bottom: 0.25rem;
+}

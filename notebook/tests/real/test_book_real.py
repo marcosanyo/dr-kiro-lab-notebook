@@ -109,7 +109,7 @@ def test_the_cards_of_an_application_and_its_stopped_sessions_below_them_small(s
     assert page.index('class="shelf"') < page.index('class="shelf-stopped"') < page.index('id="book"')
     assert "wt-002.html" in found.links and "wt-003.html" in found.links
     body, body_found = _page(site, "body-lab/body-2.html")
-    assert body_found.classes["card"] == 2 and body_found.classes["card-stopped"] == 0
+    assert body_found.classes["card"] == 3 and body_found.classes["card-stopped"] == 0
     assert "body-1.html" in body_found.links
 
 
@@ -370,3 +370,29 @@ def test_each_retaken_picture_has_a_corner_map_with_one_dot_per_cell(site):
         # Only the last travelled line and the last dot show without the script.
         assert one.count('hidden="hidden"') == 48
         assert 'class="map-route"' in one and "10 cm" in one
+
+
+def test_the_changed_body_shows_the_earlier_spec_beside_its_own_on_the_same_request(site):
+    page, found = _page(site, "body-lab/body-3.html")
+    story = _text_of(page, 'id="story"', 'class="chips"')
+    assert "Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2." in story
+    assert "Given the spec of body-2, written before the body changed, 0 of 2." in story
+    reader = _text_of(page, 'id="reader"', 'id="spec"')
+    # Three columns: body-2's spec tried on this body, this session's spec, nothing.
+    assert found.classes["tile-borrowed"] == 1 and found.classes["tile"] == 3
+    assert reader.index("Spec of an earlier session") < reader.index("Spec only") < reader.index("Nothing")
+    # The earlier spec's rules it relied on link to body-2's page, and are quoted from body-2's table.
+    assert "body-2.html#row-R11" in found.links and "body-2.html#row-R9" in found.links
+    assert "Constant c1 gives x" in reader
+    # body-2's own page still shows only its own request, on its own body.
+    other, _ = _page(site, "body-lab/body-2.html")
+    own = _text_of(other, 'id="reader"', 'id="spec"')
+    assert "Move ahead by about 0.45 m" in own and "Crawl ahead" not in own
+
+
+def test_the_body_chip_comes_from_the_record_or_from_a_person(site):
+    page, _ = _page(site, "body-lab/body-3.html")
+    chips = _text_of(page, 'class="chips"', "</ul>")
+    assert "body" in chips and ">b<" in page[page.index('class="chips"') :]
+    old, _ = _page(site, "body-lab/body-2.html")
+    assert 'class="ink-c">a<' in old[old.index('class="chips"') :]

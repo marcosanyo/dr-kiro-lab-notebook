@@ -29,6 +29,7 @@ PAGES = {
     "body-lab/how.html",
     "body-lab/body-1.html",
     "body-lab/body-2.html",
+    "body-lab/body-3.html",
 }
 SCOPES = ("", "wind-tunnel/", "body-lab/")
 # The file part of a link: the query and the fragment are not part of it.

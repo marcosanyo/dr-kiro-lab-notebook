@@ -125,6 +125,12 @@ def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) 
         [*html.text(pencil(str(len(record.trials)), source)), markup(" "), *_human(lab.unit, lab.source)],
         [*say_text("CHIP_DATE"), *_human(chosen.date, f"{chosen.file} key date")],
     ]
+    if record.variant is not None:
+        chips.append(
+            [*say_text("CHIP_BODY"), *html.text(pencil(record.variant, f"{record.name}: start entry"))]
+        )
+    elif chosen.body is not None:
+        chips.append([*say_text("CHIP_BODY"), *_human(chosen.body, f"{chosen.file} key body")])
     if table is None:
         chips.append(say_text("CHIP_NO_TABLE"))
     else:
@@ -162,6 +168,31 @@ def _sentence(source: str, *pieces: str) -> list[Segment]:
     for piece in pieces:
         out += say_text(piece[1:]) if piece.startswith("@") else html.text(pencil(piece, source))
     return out
+
+
+def _own(record: RecordModel, runs: list[readerruns.Run]) -> list[readerruns.Run]:
+    """The reader's runs made from this session's record, on the body this session ran on."""
+    return [
+        r
+        for r in runs
+        if (r.source_application, r.source_session) == (record.application, record.session)
+        and r.variant == record.variant
+    ]
+
+
+def _borrowed(record: RecordModel, runs: list[readerruns.Run]) -> list[readerruns.Run]:
+    """The reader's runs on this session's body that were given another session's spec: an earlier spec tried
+    on a body that has changed since. Only a record with a body label has them."""
+    if record.variant is None:
+        return []
+    return [
+        r
+        for r in runs
+        if r.source_application == record.application
+        and r.source_session != record.session
+        and r.variant == record.variant
+        and r.setup == "spec"
+    ]
 
 
 def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run]) -> list[Segment]:
@@ -206,9 +237,7 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
             second = _sentence(source, *pieces)
         else:
             second = _sentence(source, str(counts.miss), "@STORY_MISSED_NONE_STRUCK")
-    mine = [
-        r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
-    ]
+    mine = _own(record, runs)
     if mine:
         tally = {
             setup: (passes, total) for setup, passes, total, _ in readerruns.tally(mine, mine[0].request_id)
@@ -226,6 +255,18 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
             str(none[1]),
             "@STORY_END",
         )
+        for session in sorted({r.source_session for r in _borrowed(record, runs)}):
+            theirs = [r for r in _borrowed(record, runs) if r.source_session == session]
+            third += _sentence(
+                source,
+                "@STORY_BORROWED_A",
+                session,
+                "@STORY_BORROWED_B",
+                str(sum(1 for r in theirs if r.result == "pass")),
+                "@OF",
+                str(len(theirs)),
+                "@STORY_END",
+            )
     elif table is not None:
         by = progress.status_counts(table)
         third = _sentence(
@@ -994,7 +1035,9 @@ def _experiments(
 # The reader
 
 
-def _run_line(run: readerruns.Run, source: str, rows: set[str], known: set[str]) -> list[Segment]:
+def _run_line(
+    run: readerruns.Run, source: str, rows: set[str], known: set[str], page: str | None = None
+) -> list[Segment]:
     """One run: its name and result, the trial at which it was first in range (or that it never was) and its
     last trial, and the ids it said it relied on, linked where the page holds them."""
     out = [*html.text(pencil(run.name, source)), markup(" "), *html.text(pencil(run.result, source))]
@@ -1016,8 +1059,9 @@ def _run_line(run: readerruns.Run, source: str, rows: set[str], known: set[str])
             out += say_text("LIST_SEPARATOR")
         piece = html.text(pencil(item, source))
         if item in rows:
-            out += link(addresses.here(addresses.row(item, source)), piece)
-        elif item in known:
+            anchor = addresses.row(item, source)
+            out += link(addresses.on_page(page, anchor) if page else addresses.here(anchor), piece)
+        elif item in known and page is None:
             out += link(addresses.here(item), piece)
         else:
             out += piece
@@ -1029,10 +1073,9 @@ def _reader(
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
     table: Table | None,
+    others: dict[str, RecordModel],
 ) -> list[Segment]:
-    mine = [
-        r for r in runs if (r.source_application, r.source_session) == (record.application, record.session)
-    ]
+    mine = _own(record, runs)
     if not mine:
         return []
     ids = sorted({r.request_id for r in mine})
@@ -1041,6 +1084,60 @@ def _reader(
     request = requests[ids[0]]
     source = f"{readerruns.FOLDER}: the runs of {ids[0]}"
     tiles: list[Segment] = []
+    for session in sorted({r.source_session for r in _borrowed(record, runs)}):
+        theirs = [r for r in _borrowed(record, runs) if r.source_session == session]
+        for r in theirs:
+            if requests[r.request_id].words != request.words:
+                raise NotebookError(
+                    record.name, f"{r.name} asked {r.request_id!r}, whose words differ from {ids[0]!r}"
+                )
+        other = others.get(session)
+        if other is None:
+            raise NotebookError(
+                record.name, f"{theirs[0].name} names source {session!r}, which has no record"
+            )
+        other_table, _ = progress.table_of(other)
+        other_rows = {r.id for r in other_table.rows} if other_table is not None else set()
+        page = addresses.session(other.application, other.session, other.name)
+        chips: list[Segment] = []
+        for run in theirs:
+            chips += html.element(
+                "li",
+                {"class": f"run run-{run.result}"},
+                _run_line(run, source, other_rows, set(), page),
+            )
+        relied = sorted(
+            {i for r in theirs for i in r.relied_ids if i in other_rows}, key=lambda i: int(i[1:])
+        )
+        snapshot = tables.end_snapshot(other) or (other.snapshots[-1] if other.snapshots else None)
+        if relied and snapshot is not None and other_table is not None:
+            by_id = {r.id: r for r in other_table.rows}
+            said: list[Segment] = []
+            for rid in relied:
+                row = by_id[rid]
+                said += html.element(
+                    "li",
+                    None,
+                    [
+                        *html.text(pencil(rid, source)),
+                        markup(" "),
+                        *html.text(_cell(snapshot, row, row.rule)),
+                    ],
+                )
+            chips += _el(
+                "li", "run-limit", [*say_text("READER_BORROWED_RULES"), *_el("ul", "borrowed-rules", said)]
+            )
+        passes = sum(1 for r in theirs if r.result == "pass")
+        tiles += _el(
+            "section",
+            "tile tile-borrowed",
+            [
+                *_el("p", "cap", [*say_text("READER_SETUP_BORROWED"), *html.text(pencil(session, source))]),
+                *_el("p", "tile-big", html.text(pencil(f"{passes}/{len(theirs)}", source))),
+                *_el("p", "tile-about", say_text("READER_PASSED")),
+                *_el("ul", "runs", chips),
+            ],
+        )
     rows = {r.id for r in table.rows} if table is not None else set()
     known = _anchors(record) | {h.id for h in record.hypotheses}
     for setup, passes, total, _other in readerruns.tally(mine, ids[0]):
@@ -1090,8 +1187,10 @@ def body(
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
     retakes: Retakes,
+    others: dict[str, RecordModel] | None = None,
 ) -> tuple[list[Segment], list[photo.PictureFile]]:
     """The opened notebook of one session, and the picture files it shows."""
+    others = others or {}
     if chosen.record != record.name:
         raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
     shown = Shown([], retakes)
@@ -1106,7 +1205,7 @@ def body(
         *_story(record, table, runs),
         *_chips(record, chosen, lab, table),
         *_highlight(record, layout, chosen, table, lab, shown),
-        *_reader(record, runs, requests, table),
+        *_reader(record, runs, requests, table, others),
         *_spec(record, table, checked),
         *_plan(record),
         *_experiments(record, layout, chosen, table, shown),

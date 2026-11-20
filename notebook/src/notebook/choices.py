@@ -29,7 +29,7 @@ COLORS = ("violet", "green", "amber", "rose", "blue", "teal")
 BETTER = ("higher", "lower")
 POLAROIDS = 2
 BOOK_KEYS = frozenset(
-    {"title", "subtitle", "summary", "line", "model", "date", "color", "progress", "polaroid", "note"}
+    {"title", "subtitle", "summary", "line", "model", "date", "color", "progress", "polaroid", "note", "body"}
 )
 NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
 NOTE_KEYS = frozenset({"kind", "prediction"})
@@ -108,6 +108,7 @@ class Choices:
     progress: Progress | None  # None only when the record holds no trial
     polaroids: tuple[Polaroid, ...]
     notes: tuple[Note, ...]  # three when the record holds a trial, else none
+    body: str | None = None  # a person's word on the body, for a record without a label
 
 
 @dataclass(frozen=True)
@@ -253,7 +254,12 @@ def load_file(path: Path, record: RecordModel) -> Choices:
     """Read and check one choice file against its record."""
     file = str(path)
     data = _read_toml(path)
-    _exact(file, data, BOOK_KEYS, BOOK_KEYS - {"progress", "polaroid", "note"})
+    _exact(file, data, BOOK_KEYS, BOOK_KEYS - {"progress", "polaroid", "note", "body"})
+    # `body` is a person's word on which body a session ran on, for a record made before bodies had labels. A
+    # record that names its body is not contradicted.
+    body = _string(f"{file} key body", data["body"], 10) if "body" in data else None
+    if body is not None and record.variant is not None and body != record.variant:
+        raise NotebookError(f"{file} key body", f"says {body!r}; the record says {record.variant!r}")
     color = _string(f"{file} key color", data["color"], 10)
     if color not in COLORS:
         raise NotebookError(f"{file} key color", f"must be one of {', '.join(COLORS)}")
@@ -301,6 +307,7 @@ def load_file(path: Path, record: RecordModel) -> Choices:
         progress=progress,
         polaroids=polaroids,
         notes=notes,
+        body=body,
     )
 
 

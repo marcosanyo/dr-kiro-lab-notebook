@@ -5,6 +5,7 @@ line = "A wave that went the wrong way, and the rewrite that found 0.75 m."
 model = "claude-sonnet-5.5"
 date = "2026-11-16"
 color = "violet"
+body = "a"
 
 [progress]
 measurement = "x"

@@ -75,7 +75,7 @@ def test_both_applications_budgets_and_declarations_come_from_the_records(loaded
     groups = how.declarations(loaded)
     # The shown parts of the declaration are the same across each application's committed records.
     assert [(a, [r.session for r in g]) for a, g in groups] == [
-        ("body-lab", ["body-1", "body-2"]),
+        ("body-lab", ["body-1", "body-2", "body-3"]),
         ("wind-tunnel", ["wt-002", "wt-003", "wt-004"]),
     ]
     shown = "".join(_parse(written).text)

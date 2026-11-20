@@ -3,6 +3,13 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## 体が変わった実験とノート（ブランチ `feat/notebook-body-changed`、2026-11-21）
+- main に、ノートの棚の残り（PR #40 の後の 7 コミット）、ノートの見た目の直し、2 つ目の体（`feat/second-body`）をまとめた。
+- 記録：`body-3`（体 b、40 試行）と reader 6 回（頼み `crawl-further` と `crawl-further-new`。文と範囲は同じで、source が違う）。体 b で、body-2 の spec 0/2、body-3 の spec 2/2、何も無し 0/2。
+- ノート：記録の開始の `variant` と run file の `variant` を読む（無ければそのまま。補わない）。セッションのページは、自分の体で自分の記録から作った run だけを reader の節に出す。体にラベルがあるページには、別のセッションの spec をその体で試した run を「Spec of an earlier session」の欄として先頭に足し、頼った行を元の表の文で引く。チップに体（記録から。古い 2 つは choices の `body = "a"`）。
+- 写真：`notebook-retake` は記録の体で走らせ直す（ラベルの無い記録は `--unlabelled-body` が要る）。body-3 の 40 枚を `body-lab/notebook/display/` に足した。
+- 未反映：`.kiro/specs/notebook-shelf/` の文（見た目の直し、variant、新しい欄）。次に spec を触るときにそろえる。
+
 最終更新: Kiro Web、2026-11-19、ダークモード（夜の実験室）の後（ブランチ `feat/notebook-dark-mode`、main の 06c344e から）。
 
 ## ノートの棚（ブランチ `feat/notebook-shelf`、PR #40、2026-11-20、ローカル）

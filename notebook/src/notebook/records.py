@@ -276,6 +276,9 @@ class RecordModel:
     seed: int
     budget: int
     step_bound: int
+    variant: (
+        str | None
+    )  # the body (or other variant) the session ran on; absent in records made before labels
     entries: tuple[dict[str, Any], ...]  # raw entries in record order, for `bench.core.state.apply`
     declaration: Declaration
     hypotheses: tuple[Hypothesis, ...]
@@ -432,7 +435,7 @@ class _Reader:
             parts[kind].append(reader(entry["seq"], entry["body"]))
         if start is None:
             raise NotebookError(self.name, "the record has no start entry")
-        session, application, seed, budget, step_bound, declaration = start
+        session, application, seed, budget, step_bound, declaration, variant = start
         self.where = f"{self.name}/{LOG_NAME} line 1"
         expected = tuple(self.name.split("/")[-2:])
         if (application, session) != expected:
@@ -456,6 +459,7 @@ class _Reader:
             seed=seed,
             budget=budget,
             step_bound=step_bound,
+            variant=variant,
             entries=tuple(self.entries),
             declaration=declaration,
             hypotheses=tuple(parts["register"]),
@@ -470,13 +474,19 @@ class _Reader:
             seal=parts["seal"][0],
         )
 
-    def _start(self, body: Any) -> tuple[str, str, int, int, int, Declaration]:
+    def _start(self, body: Any) -> tuple[str, str, int, int, int, Declaration, str | None]:
         # `discovered_table` is in the start entry of a record made after the bench began to write it.
         # A record made before has no such key and is read as it is; any other value than the two fails.
         if isinstance(body, dict) and "discovered_table" in body:
             if body["discovered_table"] not in DISCOVERED_TABLE_VALUES:
                 raise self.fail(f"discovered_table {body['discovered_table']!r} is not a known setting")
             body = {k: v for k, v in body.items() if k != "discovered_table"}
+        # `variant` is in the start entry of a session started with a named variant (lab-bench Req. 23).
+        # A record without it is read as it is; nothing is filled in.
+        variant = None
+        if isinstance(body, dict) and "variant" in body:
+            variant = self.string(body["variant"], "variant")
+            body = {k: v for k, v in body.items() if k != "variant"}
         body = self.keys(body, _BODY_KEYS["start"], "start entry")
         self.keys(body["spec_files"], SPEC_KEYS, "spec_files")
         self.string(body["experiments_dir"], "experiments_dir")
@@ -488,6 +498,7 @@ class _Reader:
             self.integer(body["budget"], "budget"),
             self.integer(body["step_bound"], "step_bound"),
             declaration,
+            variant,
         )
 
     def _declaration(self, value: Any) -> Declaration:

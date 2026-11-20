@@ -143,7 +143,8 @@ def _page(
 ) -> Page:
     chosen = choices[(record.application, record.session)]
     layout = layouts.layout_for(table, record.application, record.name)
-    inside, files = book.body(record, layout, chosen, app, runs, requests, retakes)
+    others = {r.session: r for r in records if r.application == record.application}
+    inside, files = book.body(record, layout, chosen, app, runs, requests, retakes, others)
     top = [
         *_lab_links(app, apps),
         *_masthead(app),
