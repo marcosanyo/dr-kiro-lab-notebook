@@ -1110,6 +1110,11 @@ section[data-sync] .photo-controls button[data-action="step"] {
 .request .ink-c {
   font-family: var(--font-script);
 }
+.reader-limits {
+  margin: -0.4rem 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
 .tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

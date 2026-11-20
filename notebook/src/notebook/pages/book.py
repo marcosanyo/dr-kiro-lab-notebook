@@ -1068,6 +1068,48 @@ def _run_line(
     return out
 
 
+def _limits(runs: list[readerruns.Run], request: readerrequest.Request, source: str) -> list[Segment]:
+    """The budget of each run and the pass ranges, one line under the request sentence. A run whose budget
+    or units differ from the others, or a pass measurement no run declares, fails the build.
+    Nothing is filled in."""
+    budgets = {r.budget for r in runs}
+    if len(budgets) != 1:
+        raise NotebookError(source, f"the runs of {request.id!r} hold {len(budgets)} different budgets")
+    units = dict(runs[0].units)
+    for run in runs:
+        if dict(run.units) != units:
+            raise NotebookError(run.where, "its declared units differ from the other runs of this request")
+    if not request.passes:
+        raise NotebookError(request.where, "the request holds no pass range")
+    ranges: list[Segment] = []
+    for i, item in enumerate(request.passes):
+        if item.measurement not in units:
+            raise NotebookError(
+                request.where, f"pass {i + 1} names {item.measurement!r}, which the runs do not declare"
+            )
+        unit = units[item.measurement]
+        if i:
+            ranges += say_text("LIST_SEPARATOR")
+        ranges += html.text(pencil(f"{item.measurement} {item.low:g}", source))
+        ranges += say_text("READER_LIMIT_TO")
+        ranges += html.text(pencil(f"{item.high:g} {unit}", source))
+    budget = budgets.pop()
+    return [
+        *_el(
+            "p",
+            "reader-limits",
+            [
+                *say_text("READER_LIMIT_BUDGET"),
+                *html.text(pencil(str(budget), source)),
+                *say_text("READER_LIMIT_TRIALS"),
+                *say_text("LINK_SEPARATOR"),
+                *say_text("READER_LIMIT_PASS"),
+                *ranges,
+            ],
+        )
+    ]
+
+
 def _reader(
     record: RecordModel,
     runs: list[readerruns.Run],
@@ -1170,6 +1212,7 @@ def _reader(
             *_el("p", "intro", say_text("READER_INTRO")),
             *_el("p", None, say_text("READER_ABOUT")),
             *_el("blockquote", "request", html.text(commentary(request.words, request.where))),
+            *_limits(mine, request, source),
             *_el("section", "tiles", tiles),
         ],
         id="reader",

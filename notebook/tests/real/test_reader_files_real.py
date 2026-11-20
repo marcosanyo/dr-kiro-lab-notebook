@@ -93,3 +93,23 @@ def test_a_run_file_with_another_seal_is_refused(tmp_path: Path) -> None:
 
 def test_the_folder_of_the_runs_is_optional_for_a_build_of_records_alone(tmp_path: Path) -> None:
     assert readerruns.load(tmp_path) == []
+
+
+def test_every_committed_run_holds_its_budget_and_the_units_it_declares(runs) -> None:
+    # The budget and the units come from each run's sealed start entry, not from the request file.
+    assert {r.budget for r in runs} == {12}
+    for run in runs:
+        assert dict(run.units) == {
+            "x": "m",
+            "y": "m",
+            "heading": "deg",
+            "track_x": "m",
+            "track_y": "m",
+            "track_heading": "deg",
+        }
+
+
+def test_a_start_entry_without_a_budget_fails_the_notebook() -> None:
+    start = {"kind": "start", "body": {"declaration": {"measurements": []}}}
+    with pytest.raises(NotebookError):
+        readerruns._start_limits(start, "run")

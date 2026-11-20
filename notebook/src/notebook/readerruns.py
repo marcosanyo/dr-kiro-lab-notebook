@@ -68,6 +68,33 @@ class Run:
     relied_problem: str | None
     limits: tuple[str, ...]
     variant: str | None  # the body the reader ran on, when the run named one
+    budget: int  # the trials the run was allowed, from its sealed start entry
+    units: tuple[tuple[str, str], ...]  # (measurement name, unit) as the start entry declares them
+
+
+def _start_limits(start: dict[str, Any], where: str) -> tuple[int, tuple[tuple[str, str], ...]]:
+    """The trial budget and the measurement units of a run, from its sealed start entry (the bench's record of
+    the declaration it ran with). Nothing is filled in: a start entry without them fails the notebook."""
+    if not isinstance(start, dict) or start.get("kind") != "start":
+        raise _fail(where, "the record's first entry is not a start entry")
+    body = start["body"]
+    budget = body.get("budget") if isinstance(body, dict) else None
+    if type(budget) is not int or budget < 1:
+        raise _fail(where, "the start entry holds no trial budget")
+    declaration = body.get("declaration")
+    measured = declaration.get("measurements") if isinstance(declaration, dict) else None
+    if not isinstance(measured, list):
+        raise _fail(where, "the start entry declares no measurements")
+    units = []
+    for item in measured:
+        if (
+            not isinstance(item, dict)
+            or not isinstance(item.get("name"), str)
+            or not isinstance(item.get("unit"), str)
+        ):
+            raise _fail(where, "a declared measurement has no name or unit")
+        units.append((item["name"], item["unit"]))
+    return budget, tuple(units)
 
 
 def _fail(where: str, problem: str) -> NotebookError:
@@ -134,7 +161,10 @@ def _read(folder: Path, file: Path, where: str) -> Run:
     seal = _string(record["seal"], where, "record.seal")
     if sealed[-1]["hash"] != seal:
         raise _fail(where, f"the record's seal is {sealed[-1]['hash']}, the run file has {seal}")
+    budget, units = _start_limits(sealed[0], where)
     return Run(
+        budget=budget,
+        units=units,
         name=folder.name,
         application=folder.parent.name,
         where=where,

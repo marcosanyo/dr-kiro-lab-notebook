@@ -509,6 +509,12 @@ READER_ABOUT = (
     "A second Kiro, the reader, never saw the experiments. It answered this request three ways. "
     "Pass or fail is decided by the bench against ranges written before the runs."
 )
+# The line under the request sentence: the trial budget of each run and the pass ranges that decide it. The
+# numbers come from the sealed start entry (budget, units) and from the request file (ranges).
+READER_LIMIT_BUDGET = "each run: up to "
+READER_LIMIT_TRIALS = " trials"
+READER_LIMIT_PASS = "pass: "
+READER_LIMIT_TO = " to "
 READER_SETUP_SPEC = "Spec only"
 READER_SETUP_RECORD = "Raw record only"
 READER_SETUP_NONE = "Nothing"
