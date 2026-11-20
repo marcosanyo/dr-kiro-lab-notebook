@@ -1,0 +1,29 @@
+# H8: Best point near 2.1 Hz with c3 lagging c2 by 225 deg
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "phi"]
+TRIALS = [
+    [2.1, 225],
+]
+
+
+def c0(t, f, phi):
+    return 0
+
+
+def c1(t, f, phi):
+    return 0
+
+
+def c2(t, f, phi):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi):
+    return math.sin(2 * math.pi * f * t - phi * math.pi / 180)
+
+
+def c4(t, f, phi):
+    return 0

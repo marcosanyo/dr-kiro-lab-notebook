@@ -1,0 +1,23 @@
+### H6: Forward displacement grows with drive frequency
+
+WHEN c2 and c3 carry sines with c3 lagging c2 by 270 deg and the frequency rises from 1 Hz to 2 Hz or 4 Hz, THE system SHALL travel farther in x, with x over 0.08 m at 2 Hz and over 0.15 m at 4 Hz.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.08, 1.0]
+label = "new-combination"
+[prediction.when]
+f = 2.0
+phi = 270
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.15, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 4.0
+phi = 270
+```

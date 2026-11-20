@@ -1,0 +1,188 @@
+# Requirements (hypotheses)
+
+### H1: Each channel held constant, alone
+
+WHEN one channel is held at +1 for the whole trial and the other four are 0, THE system SHALL move the body by a distance that depends on the channel, and with all channels at 0 THE system SHALL stay near the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "new-combination"
+[prediction.when]
+ch = 5
+lvl = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-2.0, 2.0]
+label = "new-combination"
+[prediction.when]
+ch = 0
+lvl = 1
+```
+
+Notes: first look, wide ranges because nothing is known. P1 is the no-drive baseline (ch = 5 means no channel driven).
+
+### H2: A 1 Hz sine on one channel can move the body
+
+WHEN channel c1 alone carries a 1 Hz sine of amplitude 1, THE system SHALL move the body forward by more than 0.05 m, and WHEN all five channels carry the same in-phase sine THE system SHALL stay within 0.02 m of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+ch = 1
+f = 1.0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-0.02, 0.02]
+label = "new-combination"
+[prediction.when]
+ch = 5
+f = 1.0
+```
+
+Notes: ch = 0..4 drives one channel; ch = 5 drives all five with the same sine. Guess based on E1, where constants did not translate the body.
+
+### H3: A constant on c0 amplifies the response to a sine on another channel
+
+WHEN c0 is held at +1 and c2 carries a 1 Hz sine, THE system SHALL turn by more than 40 deg, and WHEN c1 is held at +1 instead THE system SHALL turn by less than 40 deg.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [40.0, 180.0]
+label = "new-combination"
+[prediction.when]
+ch = 2
+g = 1
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-40.0, 40.0]
+label = "new-combination"
+[prediction.when]
+ch = 2
+g = 2
+```
+
+Notes: ch in {2,3,4} picks the sine channel (1 Hz, amplitude 1). g = 1 holds c0 at +1 and c1 at 0. g = 2 holds c1 at +1 and c0 at 0. Motivation: in E2, all channels in phase turned the body 117 deg, far more than the single-channel sum, while c0 and c1 alone did nothing.
+
+### H4: Combined sines drive the strong turn seen with all channels in phase
+
+WHEN c2, c3 and c4 carry the same in-phase 1 Hz sine and c0, c1 are 0, THE system SHALL turn by more than 60 deg, and WHEN only c0 and c1 carry the sine THE system SHALL stay within 5 deg of the start heading.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [60.0, 180.0]
+label = "new-combination"
+[prediction.when]
+set = 5
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-5.0, 5.0]
+label = "new-combination"
+[prediction.when]
+set = 1
+```
+
+Notes: set picks which channels carry sin(2 pi t): 1 = c0,c1; 2 = c2,c3; 3 = c2,c4; 4 = c3,c4; 5 = c2,c3,c4; 6 = c0,c1,c2.
+
+### H5: Phase offset between c2 and c3 changes turning and forward motion
+
+WHEN c2 carries sin(2 pi t) and c3 carries the same sine delayed by 180 deg, THE system SHALL turn by less than 30 deg in magnitude, and WHEN the delay is 90 deg THE system SHALL move forward by more than 0.05 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-30.0, 30.0]
+label = "new-combination"
+[prediction.when]
+phi = 180
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.05, 1.0]
+label = "new-combination"
+[prediction.when]
+phi = 90
+```
+
+Notes: phi is the phase lag of c3 behind c2 in degrees. c4, c0, c1 are 0. Frequency 1 Hz. In-phase (phi = 0) gave 73.5 deg and x = -0.0096 m in E4.
+
+### H6: Forward displacement grows with drive frequency
+
+WHEN c2 and c3 carry sines with c3 lagging c2 by 270 deg and the frequency rises from 1 Hz to 2 Hz or 4 Hz, THE system SHALL travel farther in x, with x over 0.08 m at 2 Hz and over 0.15 m at 4 Hz.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.08, 1.0]
+label = "new-combination"
+[prediction.when]
+f = 2.0
+phi = 270
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.15, 1.5]
+label = "new-combination"
+[prediction.when]
+f = 4.0
+phi = 270
+```
+
+Notes: sweep f over 0.5, 2, 3, 4, 6, 8 Hz with phi = 270, c4, c0, c1 = 0. At 1 Hz this setting gave x = 0.042 m (E5).
+
+### H7: x peaks near 2 Hz and the phase optimum at 1 Hz carries over
+
+WHEN c2 and c3 carry sines at 1.5 Hz or 2.5 Hz with c3 lagging by 270 deg, THE system SHALL give x below the 2 Hz value of 0.144 m, and WHEN the frequency is 2 Hz with lag 225 deg THE system SHALL give x of at least 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.03, 0.14]
+label = "new-combination"
+[prediction.when]
+f = 1.5
+phi = 270
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.03, 0.14]
+label = "new-combination"
+[prediction.when]
+f = 2.5
+phi = 270
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.0
+phi = 225
+```
+
+Notes: c0, c1, c4 are 0. Three trials, leaving one trial for the best point.

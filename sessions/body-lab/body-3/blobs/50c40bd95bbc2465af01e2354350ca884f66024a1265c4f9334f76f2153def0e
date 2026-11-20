@@ -1,0 +1,31 @@
+# H7: x peaks near 2 Hz and the phase optimum at 1 Hz carries over
+import math
+
+PHASE = "test"
+MODE = "compare"
+PARAMS = ["f", "phi"]
+TRIALS = [
+    [1.5, 270],
+    [2.5, 270],
+    [2.0, 225],
+]
+
+
+def c0(t, f, phi):
+    return 0
+
+
+def c1(t, f, phi):
+    return 0
+
+
+def c2(t, f, phi):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi):
+    return math.sin(2 * math.pi * f * t - phi * math.pi / 180)
+
+
+def c4(t, f, phi):
+    return 0

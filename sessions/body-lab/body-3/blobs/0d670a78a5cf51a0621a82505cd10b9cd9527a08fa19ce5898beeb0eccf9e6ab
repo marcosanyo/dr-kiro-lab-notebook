@@ -1,0 +1,32 @@
+### H7: x peaks near 2 Hz and the phase optimum at 1 Hz carries over
+
+WHEN c2 and c3 carry sines at 1.5 Hz or 2.5 Hz with c3 lagging by 270 deg, THE system SHALL give x below the 2 Hz value of 0.144 m, and WHEN the frequency is 2 Hz with lag 225 deg THE system SHALL give x of at least 0.1 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.03, 0.14]
+label = "new-combination"
+[prediction.when]
+f = 1.5
+phi = 270
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.03, 0.14]
+label = "new-combination"
+[prediction.when]
+f = 2.5
+phi = 270
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.0
+phi = 225
+```

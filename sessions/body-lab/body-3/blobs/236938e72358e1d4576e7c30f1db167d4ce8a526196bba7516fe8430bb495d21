@@ -1,0 +1,7 @@
+# Tasks
+
+- [x] E1 / H1: each channel alone at +1, plus all-zero baseline (6 trials). Result: no translation from constants.
+- [ ] E2 / H2: sine on each channel alone (1 Hz) plus all channels together
+- [ ] Map: frequency dependence, amplitude dependence
+- [ ] Map: pairs of channels (phase relations, e.g. travelling wave)
+- [ ] Rules, test, best phases

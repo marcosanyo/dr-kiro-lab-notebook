@@ -1,0 +1,14 @@
+### H8: Best point near 2.1 Hz with c3 lagging c2 by 225 deg
+
+WHEN c2 and c3 carry sines at 2.1 Hz with c3 lagging c2 by 225 deg and c0, c1, c4 are 0, THE system SHALL reach x of at least 0.15 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.15, 0.5]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 225
+```

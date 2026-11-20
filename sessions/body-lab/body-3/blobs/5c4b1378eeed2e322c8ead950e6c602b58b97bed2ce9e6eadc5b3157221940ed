@@ -1,0 +1,53 @@
+# Requirements (hypotheses)
+
+### H1: Each channel held constant, alone
+
+WHEN one channel is held at +1 for the whole trial and the other four are 0, THE system SHALL move the body by a distance that depends on the channel, and with all channels at 0 THE system SHALL stay near the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.1, 0.1]
+label = "new-combination"
+[prediction.when]
+ch = 5
+lvl = 1
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-2.0, 2.0]
+label = "new-combination"
+[prediction.when]
+ch = 0
+lvl = 1
+```
+
+Notes: first look, wide ranges because nothing is known. P1 is the no-drive baseline (ch = 5 means no channel driven).
+
+### H2: A 1 Hz sine on one channel can move the body
+
+WHEN channel c1 alone carries a 1 Hz sine of amplitude 1, THE system SHALL move the body forward by more than 0.05 m, and WHEN all five channels carry the same in-phase sine THE system SHALL stay within 0.02 m of the start.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 3.0]
+label = "new-combination"
+[prediction.when]
+ch = 1
+f = 1.0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [-0.02, 0.02]
+label = "new-combination"
+[prediction.when]
+ch = 5
+f = 1.0
+```
+
+Notes: ch = 0..4 drives one channel; ch = 5 drives all five with the same sine. Guess based on E1, where constants did not translate the body.

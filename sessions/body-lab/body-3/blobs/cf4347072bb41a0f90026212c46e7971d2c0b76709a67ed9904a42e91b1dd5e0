@@ -1,0 +1,23 @@
+### H3: A constant on c0 amplifies the response to a sine on another channel
+
+WHEN c0 is held at +1 and c2 carries a 1 Hz sine, THE system SHALL turn by more than 40 deg, and WHEN c1 is held at +1 instead THE system SHALL turn by less than 40 deg.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [40.0, 180.0]
+label = "new-combination"
+[prediction.when]
+ch = 2
+g = 1
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-40.0, 40.0]
+label = "new-combination"
+[prediction.when]
+ch = 2
+g = 2
+```

@@ -1,0 +1,35 @@
+# H6: Forward displacement grows with drive frequency
+import math
+
+PHASE = "map"
+MODE = "sweep"
+PARAMS = ["f", "phi"]
+SWEEP = ["f"]
+TRIALS = [
+    [0.5, 270],
+    [2.0, 270],
+    [3.0, 270],
+    [4.0, 270],
+    [6.0, 270],
+    [8.0, 270],
+]
+
+
+def c0(t, f, phi):
+    return 0
+
+
+def c1(t, f, phi):
+    return 0
+
+
+def c2(t, f, phi):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi):
+    return math.sin(2 * math.pi * f * t - phi * math.pi / 180)
+
+
+def c4(t, f, phi):
+    return 0
