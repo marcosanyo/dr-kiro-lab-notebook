@@ -286,19 +286,28 @@ def _corner_map(trial: Trial, retake: "Retake", source: str) -> list[Segment]:
     def at(i: int) -> tuple[float, float]:
         return MAP_SIZE / 2 + (xs[i] - cx) * scale, MAP_SIZE / 2 - (ys[i] - cy) * scale
 
-    line = "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in (at(i) for i in range(len(xs))))
+    def path(upto: int) -> str:
+        return "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in (at(i) for i in range(upto + 1)))
+
     sx, sy = at(0)
+    # The whole route, faint; over it, the part already travelled at the cell on view, and the dot.
     marks = [
-        *html.element("path", {"class": "map-line", "d": line, "fill": "none"}, []),
+        *html.element("path", {"class": "map-route", "d": path(len(xs) - 1), "fill": "none"}, []),
         *html.shape("circle", {"class": "map-start", "cx": f"{sx:.1f}", "cy": f"{sy:.1f}", "r": "3.2"}),
     ]
     last = frames - 1
     for k in range(frames):
-        dx, dy = at(step * (k + 1))
-        attrs = {"class": "map-dot", "cx": f"{dx:.1f}", "cy": f"{dy:.1f}", "r": "4.2", "data-frame": str(k)}
+        upto = step * (k + 1)
+        line = {"class": "map-line", "d": path(upto), "fill": "none", "data-frame": str(k)}
         if k != last:
-            attrs["hidden"] = "hidden"
-        marks += html.shape("circle", attrs)
+            line["hidden"] = "hidden"
+        marks += html.element("path", line, [])
+    for k in range(frames):
+        dx, dy = at(step * (k + 1))
+        dot = {"class": "map-dot", "cx": f"{dx:.1f}", "cy": f"{dy:.1f}", "r": "6", "data-frame": str(k)}
+        if k != last:
+            dot["hidden"] = "hidden"
+        marks += html.shape("circle", dot)
     # A bar of 10 cm, so the size of the track can be read.
     bar = 0.1 * scale
     marks += html.shape(

@@ -32,7 +32,12 @@
     if (element === undefined) {
       return;
     }
-    element.hidden = !on;
+    // An SVG element has no `hidden` property, so the attribute itself is set or removed.
+    if (on) {
+      element.removeAttribute("hidden");
+    } else {
+      element.setAttribute("hidden", "hidden");
+    }
     element.style.display = on ? "" : "none";
   }
   // One moving picture. It returns the little interface the group controls use: `seek(fraction)` shows the

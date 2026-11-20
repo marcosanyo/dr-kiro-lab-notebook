@@ -365,6 +365,8 @@ def test_each_retaken_picture_has_a_corner_map_with_one_dot_per_cell(site):
     for one in maps:
         dots = re.findall(r'class="map-dot"[^>]*data-frame="(\d+)"', one)
         assert dots == [str(k) for k in range(25)]
-        # Only the last dot shows without the script.
-        assert one.count('hidden="hidden"') == 24
-        assert 'class="map-line"' in one and "10 cm" in one
+        lines = re.findall(r'class="map-line"[^>]*data-frame="(\d+)"', one)
+        assert lines == [str(k) for k in range(25)]
+        # Only the last travelled line and the last dot show without the script.
+        assert one.count('hidden="hidden"') == 48
+        assert 'class="map-route"' in one and "10 cm" in one

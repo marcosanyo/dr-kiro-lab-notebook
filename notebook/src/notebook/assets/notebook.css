@@ -1878,11 +1878,21 @@ html[data-app="front"] {
   transform: rotate(-1.5deg);
   pointer-events: none;
 }
+.map-route {
+  stroke: #3d3126;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 3;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
 .map-line {
   stroke: #3d3126;
-  stroke-width: 1.8;
+  stroke-width: 2.2;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+.map-line[hidden] {
+  display: none;
 }
 .map-start {
   fill: none;
@@ -1890,9 +1900,9 @@ html[data-app="front"] {
   stroke-width: 1.4;
 }
 .map-dot {
-  fill: #c4560a;
-  stroke: #fff8e6;
-  stroke-width: 1;
+  fill: #d4600c;
+  stroke: #3d3126;
+  stroke-width: 1.4;
 }
 .map-dot[hidden] {
   display: none;
