@@ -79,7 +79,7 @@ def test_the_real_build_has_no_replay_page_and_no_link_to_one(site):
 
 def test_every_link_of_the_real_build_names_a_file_of_the_site(site):
     """A relative link names a file next to its page; the only other links are to the front page and to
-    another application's folder."""
+    another application's first page."""
     files = {p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file()}
     for page in PAGES:
         folder = page.rsplit("/", 1)[0] + "/" if "/" in page else ""
@@ -89,6 +89,9 @@ def test_every_link_of_the_real_build_names_a_file_of_the_site(site):
                 continue
             assert ".." not in target, (page, target)
             if target.startswith("/"):
-                assert re.fullmatch(r"/|/(wind-tunnel|body-lab)/", target), (page, target)
+                assert re.fullmatch(r"/index\.html|/(wind-tunnel|body-lab)/index\.html", target), (
+                    page,
+                    target,
+                )
                 continue
             assert folder + target in files or target in files and folder == "", (page, target)

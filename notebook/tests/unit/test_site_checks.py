@@ -81,7 +81,7 @@ def test_the_table_and_its_text_are_in_the_html_without_script(fixture_site):
         "https://example.org/x.css",
         "http:x",
         "//example.org/x.png",
-        "/index.html",
+        "/other.html",
         "../index.html",
         "q/x.html",
         "data:image/png;base64,AA",

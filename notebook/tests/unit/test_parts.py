@@ -20,7 +20,7 @@ def test_footer_links_the_legend_and_how_the_lab_works_inside_the_folder_and_the
     page = _html(parts.footer())
     assert page.startswith('<footer class="footer"><a href="legend.html">')
     hrefs = [part.split('"', 1)[0] for part in page.split('href="')[1:]]
-    assert hrefs == ["legend.html", "how.html", "/"]
+    assert hrefs == ["legend.html", "how.html", "/index.html"]
     assert text.HOW_LINK in page
     assert ".." not in page and all("/" not in href for href in hrefs[:2])
     assert parts.footer(links=False)[0].text == '<footer class="footer">'  # the front page has none

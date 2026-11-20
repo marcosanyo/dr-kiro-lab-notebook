@@ -50,6 +50,7 @@ APP_KEYS = frozenset(
         "pen",
         "decoration",
         "display",
+        "symbols",
     }
 )
 SUMMARY_MAX = 700
@@ -125,6 +126,7 @@ class App:
     pen: str  # "blue" or "orange": the colour of the pen of our notes
     decoration: str  # "none" or "halloween"
     display: Path | None  # the folder of retaken pictures, when the application has one
+    symbols: str | None  # one line on the names a reader meets on the pages (cd, x, ...), written by a person
     folder: Path
     source: str  # the file, for messages
 
@@ -308,7 +310,7 @@ def _app(folder: Path, records: list[RecordModel]) -> App:
     if not path.is_file():
         raise NotebookError(where, "the application's settings file is missing")
     data = _read_toml(path)
-    _exact(where, data, APP_KEYS, APP_KEYS - {"display"})
+    _exact(where, data, APP_KEYS, APP_KEYS - {"display", "symbols"})
     application = _string(f"{where} application", data["application"], 40)
     sessions = {r.session for r in records if r.application == application}
     if not sessions:
@@ -346,6 +348,7 @@ def _app(folder: Path, records: list[RecordModel]) -> App:
         pen=pen,
         decoration=decoration,
         display=display,
+        symbols=_string(f"{where} symbols", data["symbols"], 400) if "symbols" in data else None,
         folder=folder,
         source=where,
     )

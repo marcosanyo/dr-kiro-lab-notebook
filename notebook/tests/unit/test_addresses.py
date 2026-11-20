@@ -11,7 +11,8 @@ DIGEST = "0" * 63 + "a"
 def test_pages_are_at_the_site_root() -> None:
     assert addresses.session("wind-tunnel", "wt-004", "s") == "wt-004.html"
     assert addresses.door("body-lab", "s") == "body-lab/index.html"
-    assert addresses.apps_link("", "s") == "/" and addresses.apps_link("body-lab", "s") == "/body-lab/"
+    assert addresses.apps_link("", "s") == "/index.html"
+    assert addresses.apps_link("body-lab", "s") == "/body-lab/index.html"
     assert addresses.picture(DIGEST, "s") == f"p/{DIGEST}.png"
     assert (addresses.COVER, addresses.LEGEND, addresses.STYLESHEET) == (
         "index.html",

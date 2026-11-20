@@ -149,7 +149,7 @@ def _applications(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile,
             )
         )
         out[f"{app.slug}/{addresses.LEGEND}"] = (legend.legend(app), ())
-        out[f"{app.slug}/{addresses.HOW}"] = (how.page(mine, app), ())
+        out[f"{app.slug}/{addresses.HOW}"] = (how.page(mine, app, list(checked.records)), ())
     return out
 
 

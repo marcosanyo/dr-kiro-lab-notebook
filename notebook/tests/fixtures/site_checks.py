@@ -163,7 +163,7 @@ def _link_problem(value: str) -> str | None:
         return "starts with //"
     if _SCHEME.match(value):
         return "names a scheme"
-    if re.fullmatch(r"/([a-z0-9-]+/)?", value):
+    if re.fullmatch(r"/([a-z0-9-]+/)?index\.html", value):
         return None  # to the front page or to another application (design, "Pages")
     if value.startswith("/") or value.startswith("\\"):
         return "is absolute"

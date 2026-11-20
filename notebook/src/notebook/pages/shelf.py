@@ -42,6 +42,11 @@ def _masthead(app: App) -> list[Segment]:
             *_el("h1", "big-title", say_text("MASTHEAD_TITLE")),
             *_el("p", "lab-about", html.text(commentary(app.about, app.source))),
             *_el("p", "ink-key", legend),
+            *(
+                _el("p", "symbols", html.text(commentary(app.symbols, f"{app.source} symbols")))
+                if app.symbols
+                else []
+            ),
         ],
     )
 

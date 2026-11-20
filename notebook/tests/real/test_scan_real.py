@@ -52,9 +52,13 @@ def _links_stay_in_the_site(name: str, written: str) -> None:
     parser.close()
     assert parser.links, name
     for link in parser.links:
-        # Relative links, except `/` and `/<application>/` (to the front page and to another application).
+        # Relative links, except `/index.html` and `/<application>/index.html` (the front page, another
+        # application).
         assert ".." not in link and ":" not in link, (name, link)
-        assert not link.startswith("/") or re.fullmatch(r"/|/[a-z0-9-]+/", link), (name, link)
+        assert not link.startswith("/") or re.fullmatch(r"/index\.html|/[a-z0-9-]+/index\.html", link), (
+            name,
+            link,
+        )
 
 
 def test_every_page_of_the_site_passes_both_scan_passes_and_links_stay_in_the_site(scanner) -> None:
