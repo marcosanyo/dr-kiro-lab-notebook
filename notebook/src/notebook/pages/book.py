@@ -1366,7 +1366,7 @@ def body(
     holes = _el(
         "span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}
     )
-    web = parts.web("book-web") if lab.decoration != "none" else []
+    web = [*parts.web("book-web"), *parts.page_marks()] if lab.decoration != "none" else []
     if chosen is None:
         table, _ = progress.table_of(record)
         out = [

@@ -108,8 +108,7 @@ def web(cls: str) -> list[Segment]:
 
 def decoration(kind: str) -> list[Segment]:
     """The pieces of an application's decoration. `none` has none (the page holds no drawing at all);
-    `halloween` is the moon, cobweb, hanging spider and bats of the night lab, and the mad scientist's bench
-    at the bottom of the room: a flask that bubbles green and a coil that sparks."""
+    `halloween` is the moon, cobweb, hanging spider and bats of the night lab."""
     if kind == "none":
         return []
     if kind != "halloween":
@@ -140,47 +139,6 @@ def decoration(kind: str) -> list[Segment]:
         *html.shape("circle", {"class": "spider-head", "cx": "24", "cy": "84", "r": "6"}),
     ]
     bats = [s for d in _BAT for s in html.element("path", {"d": d, "fill": "currentColor"}, [])]
-    flask = [
-        *html.element(
-            "path",
-            {"class": "flask-brew", "d": "M13 64 H47 L54 77 Q57 86 48 87 H12 Q3 86 6 77 Z"},
-            [],
-        ),
-        *html.element(
-            "path",
-            {
-                "class": "flask-glass",
-                "d": "M24 4 H36 V30 L54 74 Q59 87 47 88 H13 Q1 87 6 74 L24 30 Z",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "2",
-            },
-            [],
-        ),
-        *html.shape("circle", {"class": "bubble bubble-one", "cx": "24", "cy": "76", "r": "2.6"}),
-        *html.shape("circle", {"class": "bubble bubble-two", "cx": "34", "cy": "80", "r": "1.8"}),
-        *html.shape("circle", {"class": "bubble bubble-three", "cx": "40", "cy": "74", "r": "2.2"}),
-    ]
-    coil = [
-        *html.element(
-            "path",
-            {"class": "coil-arc", "d": "M30 14 L22 4 L27 2 L16 -8 M30 14 L40 6 L36 2 L46 -6", "fill": "none"},
-            [],
-        ),
-        *html.shape("circle", {"class": "coil-top", "cx": "30", "cy": "20", "r": "10"}),
-        *html.element(
-            "path",
-            {
-                "class": "coil-wire",
-                "d": "M22 34 H38 M21 42 H39 M20 50 H40 M19 58 H41 M18 66 H42 M17 74 H43 M16 82 H44",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "3",
-            },
-            [],
-        ),
-        *html.element("path", {"class": "coil-base", "d": "M6 90 H54 V100 H6 Z", "fill": "currentColor"}, []),
-    ]
     return [
         *web(""),
         *_svg("deco-moon", "0 0 88 88", 140, 140, moon),
@@ -189,8 +147,81 @@ def decoration(kind: str) -> list[Segment]:
         *_svg("deco-bat deco-bat-two", "0 88 64 24", 42, 16, bats),
         *_svg("deco-bat deco-bat-three", "0 88 64 24", 52, 20, bats),
         *_svg("deco-bat deco-bat-four", "0 88 64 24", 34, 13, bats),
-        *_svg("deco-flask", "0 0 60 90", 72, 108, flask),
-        *_svg("deco-coil", "0 -10 60 112", 64, 120, coil),
+    ]
+
+
+def page_marks() -> list[Segment]:
+    """The mad scientist's traces on the night lab's notebook page itself: a pencil sketch of a stitched
+    machine struck by a bolt, green drips from the top edge, and a burn at the bottom corner (in the
+    stylesheet). Paths only, no words, hidden from assistive technology, under the writing (design N28)."""
+    sketch = [
+        *html.element(
+            "path",
+            {
+                "d": "M30 60 H110 V112 H30 Z M30 86 H110 M44 60 V112 M96 60 V112",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "1.6",
+                "stroke-dasharray": "5 3",
+            },
+            [],
+        ),
+        *html.element(
+            "path",
+            {
+                "d": "M38 86 l4 -4 m-4 0 l4 4 M54 86 l4 -4 m-4 0 l4 4 M70 86 l4 -4 m-4 0 l4 4 "
+                "M86 86 l4 -4 m-4 0 l4 4 M102 86 l4 -4 m-4 0 l4 4",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "1.2",
+            },
+            [],
+        ),
+        *html.shape("circle", {"cx": "30", "cy": "66", "r": "4", "fill": "none", "stroke": "currentColor"}),
+        *html.shape("circle", {"cx": "110", "cy": "66", "r": "4", "fill": "none", "stroke": "currentColor"}),
+        *html.element(
+            "path",
+            {
+                "d": "M50 112 C46 128 38 136 26 140 M62 112 C62 130 58 140 52 150 "
+                "M74 112 C78 128 80 140 86 150 M86 112 C92 124 100 132 112 136 "
+                "M98 112 C108 118 118 120 128 118",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "1.4",
+            },
+            [],
+        ),
+        *html.element(
+            "path",
+            {"class": "mark-bolt", "d": "M84 4 L66 30 H80 L62 56 L94 24 H78 L94 4 Z"},
+            [],
+        ),
+        *html.element(
+            "path",
+            {
+                "d": "M14 20 C40 6 120 4 136 30 C150 56 136 150 70 156 C20 160 4 120 8 90 C12 50 30 30 60 26",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "1",
+                "opacity": "0.6",
+            },
+            [],
+        ),
+    ]
+    drips = [
+        *html.element(
+            "path",
+            {
+                "d": "M0 0 H70 C66 8 64 18 64 34 C64 40 58 40 58 34 C58 22 54 14 48 12 "
+                "C44 24 44 52 44 62 C44 70 36 70 36 62 C36 40 32 20 26 12 "
+                "C22 18 22 26 22 30 C22 36 16 36 16 30 C16 18 8 8 0 6 Z",
+            },
+            [],
+        ),
+    ]
+    return [
+        *_svg("mark mark-sketch", "0 0 150 162", 150, 162, sketch),
+        *_svg("mark mark-drips", "0 0 70 70", 70, 70, drips),
     ]
 
 
