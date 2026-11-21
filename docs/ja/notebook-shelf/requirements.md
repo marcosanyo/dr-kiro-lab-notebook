@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/requirements.md`](../../../.kiro/specs/notebook-shelf/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `988d5a4c8fe82e831e9af5cbd0b7c1df242c78f7632ca7f9e190cd86a6209609`
+> 原文 SHA-256: `55452e3c49d8f62dbfd7df14d4a074631c20f0b110fbebf88c0e54ee335fa2cb`
 # Requirements Document
 Spec: `notebook-shelf`。
 ## Introduction
@@ -9,7 +9,7 @@ Spec: `notebook-shelf`。
 そのまま適用する規則: `rules.md` の 1（目隠し）、2（早く止める）、4（正直）、5（言語）。状態の語はベンチの 4 つ。記録か choices のファイルにない数字は出さない。サイトは外へ通信しない。
 ## Requirements
 ### Requirement 1: 1 つの骨格に 2 つのアプリ
-1. サイトの入口は短い表のページ。題の下の最初の行は英語のまま次の文: "An MCP bench makes a blind Kiro agent register predictions first, keeps its wrong rules struck through, and a second Kiro builds from that spec alone."（審査員が読むため、サイトは英語だけで書く。）続けて、2 つのアプリが 1 つの骨格（実験装置とノート）の上に乗っていることを言い、2 つの扉を横に並べる: 昼に開く風洞（CASE 1）と、夜に開くロボット（CASE 2）。各扉はそのアプリのフォルダーへのリンク。
+1. サイトの入口は短い表のページ。題の下の最初の行は英語のまま次の文: "Normally the spec judges the code. Here, the experiment judges the spec."（審査員が読むため、サイトは英語だけで書く。）題の下には、これ以外の標語を置かない。続けて、2 つのアプリが 1 つの骨格（実験装置とノート）の上に乗っていることを言い、2 つの扉を横に並べる: 昼に開く風洞（CASE 1）と、夜に開くロボット（CASE 2）。各扉はそのアプリのフォルダーへのリンク。
 1A. 入口はそれ自身のパレットを持たない。紙とインクはノートのもの（既定の夜のロウソクの紙）。各扉はそのラボのパレットをとる: 風洞は昼の紙、ロボットは夜の紙。
 2. 各アプリはサイトのフォルダー `/wind-tunnel/` と `/body-lab/` で、自分のページ、絵、スタイルシート、スクリプトを持つ。その `index.html` は、設定が指すセッションのノート。アプリから表のページや別のアプリへのリンクは `/` と `/<application>/`。ほかのリンクはすべて相対で、`..` を含まない。
 3. ノートを作るプログラムは 1 つ。アプリに属するものは、そのアプリ自身のフォルダー `<application>/notebook/` に置く: `app.toml`（順番、札と扉の文、説明、最初に開くセッション、1 回分の単位の語、開くテーマ、私たちのメモのペン、飾り）、choices のファイル、撮り直した絵のフォルダー。

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/design.md`](../../../.kiro/specs/notebook-shelf/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `fa3b3ee0a214e8b31c4b5e42061a207a6347eed5a57d25738ec8a167c00ffda5`
+> 原文 SHA-256: `9405dac1acca1094893c6631605fb114477c8dedec7d03623689dd045d109fb2`
 # Design: notebook-shelf
 この設計は `notebook-shelf` の要件 1〜7 を対象とします。`lab-notebook` のページの層を変え、その下はそのまま残します。
 どの Kiro か: すべて **ビルダー** が作って動かし、**訪問者** が読みます。
@@ -8,7 +8,7 @@
 ## Pages
 - ルートには表のページ（`index.html`）と `a/` がある。各アプリはフォルダー `<application>/` で、セッションごとに 1 ページ（`<session>.html`）、`index.html`（`app.toml` が指すセッションのページと同じバイト列）、`legend.html`、`how.html`、`p/`、`a/` を持つ。どのフォルダーも、スタイルシート、スクリプト、フォントを自分用に持つので、フォルダー 1 つがそれだけで 1 冊のノートになる。書き込みの段階でフォルダーを作る。パスは、アプリ、そのあと `a/`、`p/` またはページ。
 - アプリのどのページも、上に英語の小さなリンク 2 つ（「All labs」は `/`、「Go to」に続けて他方の扉の題を置いたリンクは `/<other application>/`。`pages/shelf.py` の `_lab_links`）、見出し、アプリのカード（リンク。止まったセッションは別の行の小さなカード）、開いたノート（`article.book`）を持つ。アプリのページのフッターには表のページ `/` へのリンクがある。
-- ページの `<html>` 要素は `data-app`（アプリ、または `front`）、`data-mode`（開くテーマ）、`data-pen` を持つ。テーマの切り替えはなく、スクリプトは何も保存しない: アプリのテーマは `app.toml` で決まる。入口のページは `data-app="front"` と `data-mode="night"` を持ち、スタイルシートに独自のパレットを持たない（`pages/front.py`、`parts.page`）。
+- ページの `<html>` 要素は `data-app`（アプリ、または `front`）、`data-mode`（開くテーマ）、`data-pen` を持つ。テーマの切り替えはなく、スクリプトは何も保存しない: アプリのテーマは `app.toml` で決まる。入口のページは `data-app="front"` と `data-mode="night"` を持ち、スタイルシートに独自のパレットを持たない（`pages/front.py`、`parts.page`）。題の下には `text.py` の `FRONT_CLAIM` の 1 行を出し、そのあとに導入の段落が続く。ほかの標語は出さない。
 - `/` と `/<application>/` のリンクだけが相対でない。目隠しのスキャンは、ほかのすべてのリンクと同じように読み、サイトの外のフォルダーを指さないことを確かめる。
 - ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開く（`notebook.js`）。
 ## 設定と choice のファイル（要件 2.3）
