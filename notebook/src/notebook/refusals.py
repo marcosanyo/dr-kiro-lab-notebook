@@ -65,6 +65,22 @@ def _quotes_exactly(refusal: Refusal, row_id: str) -> bool:
     return any(part.is_quote and part.text.text == row_id for part in refusal.message)
 
 
+def sealed_note() -> Segment:
+    """The one line that says the sealed row's status is the one shown in the table."""
+    return _commentary("REFUSED_END_SEALED")
+
+
+def end_heading(count: int, source: str) -> tuple[Segment, ...]:
+    """The heading of the session's end refusals: "the bench refused to end this session N time(s)". The count
+    is the number of `end` refusals the record holds; the word is "time" for one and "times" for more."""
+    after = "REFUSED_END_AFTER_ONE" if count == 1 else "REFUSED_END_AFTER_COUNT"
+    return (
+        _commentary("REFUSED_END_BEFORE_COUNT"),
+        pencil(str(count), source),
+        _commentary(after),
+    )
+
+
 def refused_end_note(row_id: str, refusals: Sequence[Refusal]) -> RefusedEndNote | None:
     """The note for the row `row_id`, or None when no `end` refusal quotes that id exactly."""
     matching = tuple(r for r in refusals if r.action == "end" and _quotes_exactly(r, row_id))
@@ -78,11 +94,7 @@ def refused_end_note(row_id: str, refusals: Sequence[Refusal]) -> RefusedEndNote
         row_id=row_id,
         refusals=matching,
         messages=tuple(message(r) for r in matching),
-        heading=(
-            _commentary("REFUSED_END_BEFORE_COUNT"),
-            pencil(str(len(matching)), f"count of {count_source}"),
-            _commentary("REFUSED_END_AFTER_COUNT"),
-        ),
+        heading=end_heading(len(matching), f"count of {count_source}"),
         sealed=_commentary("REFUSED_END_SEALED"),
         no_copy=_commentary("REFUSED_END_NO_COPY"),
     )

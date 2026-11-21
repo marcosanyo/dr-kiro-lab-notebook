@@ -105,8 +105,9 @@ def test_an_application_page_has_no_switch_and_no_tabs_only_two_small_links(site
 def test_the_cards_of_an_application_and_its_stopped_sessions_below_them_small(site):
     page, found = _page(site, "wind-tunnel/wt-004.html")
     assert found.classes["card"] == 3 and found.classes["card-stopped"] == 2 and found.classes["is-open"] == 1
-    assert found.classes["shelf-stopped"] == 1
-    assert page.index('class="shelf"') < page.index('class="shelf-stopped"') < page.index('id="book"')
+    # The stopped sessions sit in the same row as the ended ones, so the first screen holds the pictures.
+    assert found.classes["shelf-stopped"] == 0
+    assert page.index('class="shelf"') < page.index('id="book"')
     assert "wt-002.html" in found.links and "wt-003.html" in found.links
     body, body_found = _page(site, "body-lab/body-2.html")
     assert body_found.classes["card"] == 3 and body_found.classes["card-stopped"] == 0
@@ -378,9 +379,12 @@ def test_the_changed_body_shows_the_earlier_spec_beside_its_own_on_the_same_requ
     assert "Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2." in story
     assert "Given the spec of body-2, written before the body changed, 0 of 2." in story
     reader = _text_of(page, 'id="reader"', 'id="spec"')
-    # Three columns: body-2's spec tried on this body, this session's spec, nothing.
+    # Three columns: the old spec (body-2) tried on this body, the new spec (this session), no spec.
     assert found.classes["tile-borrowed"] == 1 and found.classes["tile"] == 3
-    assert reader.index("Spec of an earlier session") < reader.index("Spec only") < reader.index("Nothing")
+    assert reader.index("Old spec, before the body changed") < reader.index(
+        "New spec, after the body changed"
+    )
+    assert reader.index("New spec, after the body changed") < reader.index("No spec")
     # The earlier spec's rules it relied on link to body-2's page, and are quoted from body-2's table.
     assert "body-2.html#row-R11" in found.links and "body-2.html#row-R9" in found.links
     assert "Constant c1 gives x" in reader
@@ -396,3 +400,14 @@ def test_the_body_chip_comes_from_the_record_or_from_a_person(site):
     assert "body" in chips and ">b<" in page[page.index('class="chips"') :]
     old, _ = _page(site, "body-lab/body-2.html")
     assert 'class="ink-c">a<' in old[old.index('class="chips"') :]
+
+
+def test_end_refusals_are_written_once_above_the_table_and_named_cards_get_only_an_amber_mark(site, loaded):
+    page, found = _page(site, "body-lab/body-3.html")
+    # One block for the session's end refusals, above the table; no red box on any card.
+    assert found.classes["end-refusals"] == 1
+    assert found.classes.get("rule-refused", 0) == 0
+    assert "the bench refused to end this session 2 times" in page
+    assert page.index('class="end-refusals"') < page.index('class="rules"')
+    # The cards the refusals name carry the amber mark.
+    assert found.classes["refused-mark"] >= 1

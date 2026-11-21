@@ -690,25 +690,9 @@ def _rule(
         )
     elif rv.note is not None:
         body += _el("p", "rule-rewrite", [*say_text("REWRITTEN_NOWHERE"), *html.text(pencil(rv.note, src))])
-    refused = refusals.refused_end_note(row.id, record.refusals)
-    if refused is not None:
-        said: list[Segment] = []
-        for m in refused.messages:
-            said += _el("p", "rule-refused-message", list(m.parts))
-        said += _el("p", "rule-refused-quote", [refused.messages[0].note] if refused.messages[0].note else [])
-        body += _el(
-            "section",
-            "rule-refused",
-            [
-                *_el("p", "rule-refused-head", list(refused.heading)),
-                *_el("p", "rule-refused-sealed", [refused.sealed]),
-                *_el(
-                    "details",
-                    "refused-more",
-                    [*html.element("summary", None, say_text("REFUSED_END_SHOW")), *said],
-                ),
-            ],
-        )
+    if refusals.refused_end_note(row.id, record.refusals) is not None:
+        # The end refusals are shown once above the table (`_end_refusals`); a row they name gets this mark.
+        body += _el("span", "refused-mark", [], **{"aria-hidden": "true"})
     more = _el("p", "rule-scope", html.text(_cell(snapshot, row, row.scope)))
     evidence: list[Segment] = []
     if row.experiments:
@@ -731,7 +715,30 @@ def _spec(record: RecordModel, table: Table | None, checked: bool) -> list[Segme
     known = _anchors(record)
     items = [s for i in range(len(view.rows)) for s in _rule(record, snapshot, view, i, checked, known)]
     note = [] if checked else _el("p", "spec-note", say_text("SPEC_UNCHECKED"))
-    return _el("section", "spec", [*head, *note, *_el("ul", "rules", items)], id="spec")
+    ended = _end_refusals(record)
+    return _el("section", "spec", [*head, *note, *ended, *_el("ul", "rules", items)], id="spec")
+
+
+def _end_refusals(record: RecordModel) -> list[Segment]:
+    """The session's `end` refusals, once above the table: the heading with the count, each message as the
+    bench recorded it, and the quote note once. Nothing is added to what the messages say."""
+    ends = [r for r in record.refusals if r.action == "end"]
+    if not ends:
+        return []
+    source = f"{record.name}/log.jsonl: end refusals"
+    messages = [refusals.message(r) for r in ends]
+    items = [_el("li", None, list(m.parts)) for m in messages]
+    quote = _el("p", "rule-refused-quote", [messages[0].note]) if messages[0].note is not None else []
+    return _el(
+        "section",
+        "end-refusals",
+        [
+            *_el("p", "end-refusals-head", list(refusals.end_heading(len(ends), source))),
+            *_el("p", "rule-refused-sealed", [refusals.sealed_note()]),
+            *_el("ul", "end-refusals-list", [s for item in items for s in item]),
+            *quote,
+        ],
+    )
 
 
 # Dr. Kiro's plan
@@ -1110,6 +1117,14 @@ def _limits(runs: list[readerruns.Run], request: readerrequest.Request, source: 
     ]
 
 
+def setup_caption(setup: str, session: str, source: str, has_old_spec: bool) -> list[Segment]:
+    """The heading of one column of the reader's test. With an old spec beside it, the spec column is the new
+    spec, so the three columns read old spec, new spec, no spec."""
+    if setup == "spec" and has_old_spec:
+        return [*say_text("READER_SETUP_NEW"), *html.text(pencil(session, source))]
+    return say_text(f"READER_SETUP_{setup.upper()}")
+
+
 def _reader(
     record: RecordModel,
     runs: list[readerruns.Run],
@@ -1198,7 +1213,7 @@ def _reader(
             "section",
             f"tile tile-{setup}",
             [
-                *_el("p", "cap", say_text(f"READER_SETUP_{setup.upper()}")),
+                *_el("p", "cap", setup_caption(setup, record.name, source, bool(_borrowed(record, runs)))),
                 *_el("p", "tile-big", html.text(pencil(f"{passes}/{total}", source))),
                 *_el("p", "tile-about", say_text("READER_PASSED")),
                 *_el("ul", "runs", chips),
@@ -1238,12 +1253,19 @@ def body(
         raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
     shown = Shown([], retakes)
     table, checked = progress.table_of(record)
-    title = f"{chosen.title} — {chosen.subtitle}"
     start = f"{chosen.file} key title"
     out = [
         *(parts.web("book-web") if lab.decoration != "none" else []),
         *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
-        *_el("h2", "book-title", [*_human(title, start), *_ours()]),
+        *_el(
+            "h2",
+            "book-title",
+            [
+                *_human(chosen.title, start),
+                *_el("span", "book-sub", _human(f" — {chosen.subtitle}", start)),
+                *_ours(),
+            ],
+        ),
         *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
         *_story(record, table, runs),
         *_chips(record, chosen, lab, table),

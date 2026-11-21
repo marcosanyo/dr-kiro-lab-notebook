@@ -79,6 +79,11 @@ def _card(
                 *html.text(pencil(f"{found.spec.measurement} {best}", source)),
                 *say_text("LIST_SEPARATOR"),
             ]
+    if compact:
+        small += [*say_text("CARD_STOPPED"), *say_text("LIST_SEPARATOR")]
+    if record.variant is not None:
+        # A record whose start entry names a body (a variant) is a session on a changed body.
+        small += [*say_text("CARD_CHANGED_BODY"), *say_text("LIST_SEPARATOR")]
     counts = progress.predictions(record)
     small += [
         *html.text(pencil(str(counts.hit), source)),
@@ -117,17 +122,8 @@ def _shelf(
 
     ended = [r for r in records if r.seal.end == "ended"]
     stopped = [r for r in records if r.seal.end != "ended"]
-    out = _el("section", "shelf", cards(ended, False))
-    if stopped:
-        out += _el(
-            "section",
-            "shelf-stopped",
-            [
-                *_el("p", "cap", say_text("STOPPED_HEADING")),
-                *_el("section", "shelf-small", cards(stopped, True)),
-            ],
-        )
-    return out
+    # One row: the ended sessions, then the stopped ones as small cards, so the first screen has the pictures.
+    return _el("section", "shelf", [*cards(ended, False), *cards(stopped, True)])
 
 
 def _page(

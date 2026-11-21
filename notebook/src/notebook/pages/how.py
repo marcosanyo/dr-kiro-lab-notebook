@@ -135,8 +135,6 @@ def _refusal(record: RecordModel, refusal: Refusal) -> list[Segment]:
             *(s for part in shown.parts for s in html.text(part)),
         ],
     )
-    if shown.note is not None:
-        body += html.element("p", {"class": "quote-note"}, html.text(shown.note))
     return html.element("li", {"class": "refusal"}, body)
 
 
@@ -221,8 +219,13 @@ def page(records: list[RecordModel], app: App, every: list[RecordModel] | None =
             [
                 *html.element("h2", None, say_text("HOW_REFUSALS_HEADING")),
                 *html.element("p", None, say_text("HOW_REFUSALS_INTRO")),
+                *(
+                    html.element("p", {"class": "quote-note"}, say_text("REFUSAL_QUOTE_NOTE"))
+                    if any(refusals.message(x).note is not None for r in ordered for x in r.refusals)
+                    else []
+                ),
                 *(s for r in ordered for s in _session_refusals(r)),
             ],
         ),
     ]
-    return parts.page("HOW_TITLE", body, app=app)
+    return parts.page("HOW_TITLE", parts.framed(body), app=app)
