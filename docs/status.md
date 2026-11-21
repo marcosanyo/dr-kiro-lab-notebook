@@ -3,6 +3,11 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## ノートのページの見直し（ブランチ `fix/notebook-body-page-review`、main の 583a1ff から）
+- 済み: 要約を 40 語以内にし、ビルドで確かめる（`choices._summary`）。5 つの要約を差し替えた（wt-003 は今のまま）。セッションの終わりの拒否は表の上に 1 回のブロック（「1 time」と「N times」）、名前が出た行は小さい琥珀色の点。読み取り 3 列は「Old spec, before the body changed」「New spec, after the body changed」「No spec」。legend と how は紙の上に入る。止まったセッションは終わったセッションと同じ行。
+- 未決（ユーザーの判断待ち）: body-3 の最初の画面に写真が入らない。写真の上端は約 y=1120 px、画面は 900 px。「What happened here」を写真の下に動かすかを決める。動かすと写真の上端は約 820 px になる見込み。
+- 仕様: `notebook-shelf`、`lab-notebook` の要件 6・10.11 と Decision 33・52、`notebook-visual.md` を今のノートに合わせた。訳もそろえ、`scripts/ja-check.sh` は通る。
+
 ## 入口とノートの直し（ブランチ `feat/notebook-front-and-spec`、main の 05ecda3 から）
 - 済み: 入口をノートの紙とインクにそろえ、題の下に英語の一言「Normally the spec judges the code. Here, the experiment judges the spec.」を置き、古い標語（The experiment gets the final edit.）は入口から消した。長い文の置き場所は、PR で提案中。上のリンクは「All labs」「Go to <扉の題>」。body-lab は `open = "body-3"` で開く。reader の欄に「each run: up to N trials · pass: …」の 1 行。N と単位は各実行の封印された開始エントリーから、範囲は依頼のファイルから。値がなければビルドが止まる。
 - 済み: `.kiro/specs/notebook-shelf/` を今のノートに合わせて書き直し、訳（`docs/ja/notebook-shelf/`）も合わせた。`scripts/ja-check.sh` は通る。
