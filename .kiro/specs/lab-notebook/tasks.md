@@ -402,7 +402,7 @@ writes nothing into a `lab/` folder.
     - **Property 14: The prediction chart scale and marks**
     - **Validates: Requirements 5.4, 17.2, 17.3**
 
-- [x] 18. Replay
+- [x] 18. Replay (code kept; not built in this version, On hold, Decision 48)
   - [x] 18.1 Write the replay steps and pages
     - `views.steps(record)`: one step per `verdict` snapshot plus the `end` snapshot; `<app>-<session>-replay-<n>.html`
       rendered from `view(record, step.seq)` with the same code as the session page; "replay of a sealed record";
@@ -512,8 +512,8 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.6, 20.1, 20.2, 7.3_
 
-- [ ] 26. Watch: the loopback server and the refresh
-  - [x] 26.1 **Stop and ask**: the server exception of Open question 3
+- [x] 26. Watch: the loopback server and the refresh
+  - [ ] 26.1 **Stop and ask**: the server exception of Open question 3 (answer not recorded yet)
     - Report to the user in Japanese, and wait. The question: `notebook/` bans `http` and `socket` (N1), and the watch
       needs a loopback HTTP server. The proposed exception is `notebook/src/notebook/watch/serve.py` only, with the
       standard `http.server` bound to 127.0.0.1; the build modules keep the ban, and a test checks that no build module
@@ -521,7 +521,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the user's answer is recorded in `docs/status.md`.
     - _Requirements: 23.3_
 
-  - [x] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes)
+  - [ ] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes; code exists on branch `feat/lab-notebook-watch`, not merged)
     - Note: this task may import the standard `http.server` only in `notebook/src/notebook/watch/serve.py`, because the
       user's answer to Open question 3 allows it. No other file may import `http`, `socket` or `urllib`, and the build
       modules keep every ban.
@@ -539,7 +539,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 3.2_
 
-  - [x] 26.3 Write `watch.js` and its static checks
+  - [ ] 26.3 Write `watch.js` and its static checks (after 26.2; code exists on branch `feat/lab-notebook-watch`, not merged)
     - `notebook/src/notebook/watch/assets/watch.js` (served by the watch only): polls `/version` every 1000 ms; when the
       number changes it fetches the page at the current address (same origin), saves `scrollY` and the open state of every
       `<details>` by id, replaces the content of `main`, restores the scroll position and the open states, shows the stop
@@ -551,7 +551,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.4, 3.2_
 
-  - [ ] 26.4 **[local Mac] Checkpoint — Stop and ask**
+  - [x] 26.4 **[local Mac] Checkpoint — Stop and ask**
     - Run `notebook-watch` on a copy of a fixture record that is fed line by line; never on the real bench state folder.
       At 600 px and at 360 px in a browser, check that a new line appears within 2 seconds, that the scroll position and
       the open entries are kept, that the "at the bench" label and the waiting words show, that the sealed statement
@@ -561,6 +561,8 @@ after milestone 3 and before "Built from the spec".
     - _Requirements: 23.4, 23.11, 3.5_
 
 ### Then
+
+Tasks 29-31 wait for a `build-from-spec` run record (user decision): they do not start until that record exists.
 
 - [ ] 29. Built from the spec
   - [ ] 29.1 Write `built.html` with "there are no runs yet"
