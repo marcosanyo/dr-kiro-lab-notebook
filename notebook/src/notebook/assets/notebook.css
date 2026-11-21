@@ -2301,14 +2301,9 @@ html[data-mode="night"] .book {
   background-image:
     radial-gradient(circle 0.55rem at 1.4rem 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
     radial-gradient(circle 0.55rem at calc(100% - 1.4rem) 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
-    radial-gradient(circle at 93% 96%, transparent 2.9rem, rgba(90, 170, 60, 0.28) 3rem, rgba(90, 170, 60, 0.12) 3.3rem, transparent 3.45rem),
-    radial-gradient(circle 0.3rem at 88% 91%, rgba(90, 170, 60, 0.35) 90%, transparent 100%),
-    radial-gradient(circle 0.18rem at 90.5% 88%, rgba(90, 170, 60, 0.3) 90%, transparent 100%),
-    radial-gradient(ellipse 0.9rem 0.6rem at 22% 0, rgba(196, 150, 80, 0.4) 95%, transparent 100%),
-    radial-gradient(ellipse 0.35rem 0.8rem at 22.6% 0.5rem, rgba(196, 150, 80, 0.36) 95%, transparent 100%),
     conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
     conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-size: 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
 }
 /* The binding of the night lab's notebook is sewn: a dark thread down the margin with cross stitches. */
 html[data-mode="night"] .book::before {
@@ -2354,10 +2349,11 @@ html[data-mode="night"] .book {
 }
 .mark-drips {
   top: 0;
-  left: 38%;
-  width: 4.4rem;
+  left: 42%;
+  width: 5.5rem;
   height: auto;
-  fill: rgba(70, 160, 50, 0.38);
+  fill: rgba(60, 140, 45, 0.3);
+  filter: blur(0.6px);
 }
 html[data-mode="night"] .book::after {
   content: "";
@@ -2377,4 +2373,28 @@ html[data-mode="night"] .book::after {
   .mark-sketch {
     display: none;
   }
+}
+/* Red ink for the titles of the night lab (2026-11-22): the masthead in a bright red on the dark desk, the
+   session's title in a dark red on the white page. The headings stay orange, as the ink legend says. */
+html[data-mode="night"] .big-title .ink-c,
+html[data-mode="night"] .big-title {
+  color: #d8392f;
+}
+html[data-mode="night"] .book {
+  --title: #8a1a12;
+}
+/* Observed and rejected read apart at a glance: a rejected stamp is filled (the word in white on its colour), an
+   observed stamp has a dashed edge, the weaker claim. Neither is red: red stays the miss and the rewrite. */
+.stamp-rejected {
+  background: var(--stamp-rejected);
+}
+.stamp-rejected,
+.stamp-rejected .ink-s {
+  color: #ffffff;
+}
+.stamp-observed {
+  border-style: dashed;
+}
+.stamp-rejected {
+  border-color: var(--stamp-rejected);
 }
