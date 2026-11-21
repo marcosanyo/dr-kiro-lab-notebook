@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `0c18815913fb2927fd0163bfa19bc13026be3ff8c761ebfcb620fbf9e3c28ac0`
+> 原文 SHA-256: `d80a7b5f6cfddf59201c2c5f4947b2038a495b1c4c7c1d9112b8d3266ee0770e`
 
 # 設計: lab-bench（コア）
 
@@ -542,7 +542,7 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 | パスを受け取る | `read_file` (`path`), `list_directory` (`path`), `fs_write` (`path`), `fs_append` (`path`), `str_replace` (`path`) |
 | パスなし、許可 | `file_search`, `grep_search`, `tool_load`, `mcp_bench_register_hypothesis`, `mcp_bench_run_experiment`, `mcp_bench_record_verdict`, `mcp_bench_end_session` |
 
-17.10 の前提条件: Dr. Kiro は Kiro CLI でのみ、ラボを作業フォルダーとして起動して実行されます (17.12)。そのため、検索ツールが見るワークスペースはラボです。Dr. Kiro の実行に IDE が使われることはありません。
+17.10 の前提条件: Dr. Kiro は、ラボを作業フォルダーとして、Kiro CLI の中か、ラボフォルダーだけを開いた Kiro IDE の中で実行されます (17.12)。そのため、検索ツールが見るワークスペースはラボです。
 
 フックの文はビルダーの文言であり、`lab/.kiro/` の他の部分とともにコアのスキャンを通ります (Requirement 15)。パスは含みません: スクリプトは親フォルダーとホームフォルダーの確認を `pathlib` の部品から組み立て、`..` セグメントや `~/` 接頭辞のようなリテラル文字列は決して使いません。スキャンはそれらをパスとして検出するからです。`bench-lab-hooks` が生成したラボに対して `bench-scan` を実行するテストがあります。
 
@@ -590,7 +590,7 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 - **D1. 実行時依存。** セクション 1 と 14 には、ベンチは標準ライブラリ以外の実行時依存を持たず、それが必要になったら作業を止めて相談する、とあります。MCP サーバーには `mcp` パッケージが必要です。承認された内容: `mcp==2.3.0`（スパイクで使ったバージョン）を任意の依存グループ `frontend` に固定し、コアとそのテストは標準ライブラリだけで済むようにします。
 - **D2. フックログとセッション設定の置き場所。** どちらもラボの外にあり、環境変数（`BENCH_HOOK_LOG`、`BENCH_SESSION_CONFIG`）で指定されます。承認された内容: リポジトリのルートに `bench-run/` フォルダーを置き、git の管理対象外とし、`structure.md` に記載します。
 - **D3. 長い呼び出し。** 必要ありません。スパイクで 900 s の呼び出しが通ったので、並行試行による代替策は用意しません。
-- **D4. Dr. Kiro は Kiro CLI でのみ実行し**、ラボフォルダーで起動します (Requirement 17.12)。IDE はビルダーのためのものです。
+- **D4. Dr. Kiro の実行場所。** Kiro CLI か、ラボフォルダーだけを開いた Kiro IDE で実行します (Requirement 17.12)。封印されるセッションは Kiro CLI でだけ実行します。IDE の確認はフェイクアプリケーション（`bench-run/fake-ide/`）で行い、パス `.`（ラボの最上位）で拒否される不具合が 1 つ見つかりました。フックが IndexError を出していたもので、直してテストを足しました（`bench/tests/frontend/test_hooks.py`）。
 
 コアを構築した後、task 17-21 のレビューで承認された内容:
 

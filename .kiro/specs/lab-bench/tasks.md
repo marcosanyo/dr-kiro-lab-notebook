@@ -190,7 +190,7 @@ one place where the MCP SDK is imported.
 
 - [x] 21. Check by hand in Kiro CLI — **Stop and ask**
   - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
-    report each result as observed or not observed. Kiro CLI only; the IDE is never used to run Dr. Kiro.
+    report each result as observed or not observed. Kiro CLI only, because the check seals a session (Requirement 17.12).
   - With the fake application's lab, started in the lab folder, and the agent definition of design F10:
     - the agent lists the four tools and calls each one;
     - `BENCH_SESSION_CONFIG` reaches the server (`${BENCH_SESSION_CONFIG}` in `env`), and `BENCH_HOOK_LOG` reaches

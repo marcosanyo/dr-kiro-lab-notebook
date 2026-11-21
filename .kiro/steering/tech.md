@@ -29,7 +29,7 @@ Decided in the `lab-bench` spec (Requirement 17), after the MCP spike (`spikes/m
 MCP server over stdio, and Dr. Kiro has no shell. Dr. Kiro's tools are file read and write, limited to its lab by a
 pre-tool hook, and the four bench tools. Pictures are returned as files in the lab. Parallel calls are queued.
 
-Dr. Kiro runs only in Kiro CLI, started in its lab folder. The Kiro IDE is for the builder and for showing the specs.
+Dr. Kiro runs in Kiro CLI, or in the Kiro IDE with only its lab folder open. A sealed session runs in Kiro CLI only.
 
 The MCP SDK (`mcp==2.3.0`) is the one runtime dependency outside the standard library. It is allowed only in the
 bench front end, in the optional dependency group `frontend` (`lab-bench` design, F12, approved by the user).

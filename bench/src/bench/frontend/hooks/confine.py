@@ -71,7 +71,9 @@ def decide(event: object, lab: Path) -> str | None:
     if not isinstance(value, str) or not value:
         return UNKNOWN
     # A leading tilde is refused: the hook cannot know whether the tool expands it to a home folder.
-    if Path(value).parts[0].startswith("~"):
+    # "." has no parts; it names the lab folder itself and is allowed by the check below.
+    parts = Path(value).parts
+    if parts and parts[0].startswith("~"):
         return OUTSIDE
     # Joined to the lab, so a relative path means "inside the lab"; resolve() follows parent-folder parts and
     # symbolic links before the comparison.

@@ -549,8 +549,9 @@ the front end writes or returns. Nothing in the core depends on this requirement
 11. A second hook SHALL record the name and input of every tool call, before and after it runs. THE log SHALL be
     kept outside the lab, for the builder, and SHALL NOT be part of the sealed session record. This includes the
     hook's own refusals.
-12. Dr. Kiro SHALL run only in Kiro CLI, started with the lab folder as the working folder. The Kiro IDE is for the
-    builder and for showing the specs, and is never used to run Dr. Kiro.
+12. THE working folder of Dr. Kiro SHALL be the lab folder. Dr. Kiro SHALL run either in Kiro CLI started with the lab
+    folder as the working folder, or in the Kiro IDE with only the lab folder open. A session whose record is sealed
+    (Requirement 13) SHALL run in Kiro CLI only.
 
 *Pictures*
 
