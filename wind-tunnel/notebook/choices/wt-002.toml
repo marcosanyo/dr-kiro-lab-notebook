@@ -1,6 +1,6 @@
 title = "Three Runs"
 subtitle = "the session stopped before Dr. Kiro could finish its second hypothesis"
-summary = """Dr. Kiro ran the square body three times and its first hypothesis held: the flow sheds and the drag is high. The second hypothesis never got a verdict, because the bench process ended unexpectedly. No run had the flow steady, so none counts toward the goal of the lowest drag without shedding."""
+summary = """Dr. Kiro ran the square body three times, and its first hypothesis held: the flow sheds and the drag is high. The bench process then ended unexpectedly, before the second got a verdict. No run had steady flow."""
 line = "Stopped after 3 runs: the bench process ended."
 model = "claude-sonnet-5.5"
 date = "2026-11-16"

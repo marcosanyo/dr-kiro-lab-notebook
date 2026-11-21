@@ -1,6 +1,6 @@
 title = "The Reversed Wave"
 subtitle = "a wave meant to walk forward went 0.20 m back"
-summary = """Dr. Kiro predicted that a travelling wave over all five channels would carry the body more than 0.2 m forward. The experiment said otherwise: the body ended 0.20 m behind where it started, and turned. Over 39 trials, 13 of 24 predictions missed and 8 of the 14 rules in the table were struck out and rewritten. What held was simpler: one channel kept at a steady level while another was driven by a fast sine moved the body 0.75 m forward, the best of the session."""
+summary = """Dr. Kiro predicted a five-channel travelling wave would carry the body forward. It went 0.20 m back. 8 of 14 rules were rewritten. The best was simpler: one channel steady, another on a fast sine, 0.75 m forward."""
 line = "A wave that went the wrong way, and the rewrite that found 0.75 m."
 model = "claude-sonnet-5.5"
 date = "2026-11-16"

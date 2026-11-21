@@ -1,6 +1,6 @@
 title = "The Silent Channel"
 subtitle = "the body changed, and the channel the old spec relied on did nothing"
-summary = """We changed the body before this session and did not tell Dr. Kiro, who started from a blank notebook as always. Its first guesses, that a sine on one channel would move the body, missed: c0 and c1 now did nothing at all. What moved it was two channels driven together, c3 lagging c2 by 225 degrees at about 2 Hz: 0.27 m, the best of the session. Then the test. Another Kiro given body-2's spec, written before the change, relied on its c1 rules and never got there. Given this session's spec, it crawled past 0.30 m in both tries."""
+summary = """We changed the body without telling Dr. Kiro. Channels c0 and c1 did nothing; c2 and c3 together moved it 0.27 m. A Kiro given body-2's spec never got that far; given this session's spec, it passed 0.30 m twice."""
 line = "The body changed. The old spec's channel went silent; two others learned to crawl."
 model = "claude-sonnet-5.5"
 date = "2026-11-20"
