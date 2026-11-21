@@ -289,6 +289,13 @@ Written after the body-3 page review. These rules hold where they differ from th
 
 ## Night lab (Requirement 6.2)
 
+**White page on the night desk (user, 2026-11-22).** In the night lab the notebook page (`article.book`, which the
+plain pages share) is white paper: inside `.book` every colour custom property takes its day value, and
+`color-scheme` is light. The desk (the body), the masthead with the moon, the bats and the spider, and the session
+cards above the notebook keep the night values below. Marks drawn pale for dark paper are drawn darker on the white
+page: the stitches of a spec card, the candle wax at the top edge, the tape. The night values below are those of the
+desk and the cards.
+
 The night palette is the default `:root` of the stylesheet, and each page without a day mode uses it. It is the same notebook on a dark desk under a lamp: warm
 near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim
 yellow. It is not an inversion. The stylesheet has `color-scheme: light dark` on `:root` (so the buttons and the
