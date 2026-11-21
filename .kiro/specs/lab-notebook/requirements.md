@@ -891,11 +891,13 @@ exception to a rule.
     user's reading of the brief's "the row that replaced it stands beside it", and it supersedes a literal reading
     of it. body-2 needs it: R11 and R13 each replace several rows, and R1 comes before R2, which it replaces
     (Requirement 8.3, 8.4, 8.10-8.12).
-33. **Refused ends are shown** (user). A sticky note in the bench's stamp style, "the bench refused to end this
-    session N times", is attached to the row whose id equals exactly the text of a quote in the refusal message
-    (body-2 R13). Each message is shown as recorded, each part in its recorded author's ink, with the note that the
-    sealed row's status is the one in the table and the commentary "the record holds no copy of the table that was
-    refused". The notebook never infers what changed between refusals and reads no other meaning from the message.
+33. **Refused ends are shown** (user; revised 2026-11-21). The session's `end` refusals are shown once, above
+    the spec table, as one block: the heading "the bench refused to end this session N time" for one refusal or
+    "N times" for more, then each message as recorded, each part in its recorded author's ink, and the note that the
+    sealed row's status is the one in the table. A row whose id equals exactly the text of a quote in a refusal
+    message (body-2 R13) carries only a small amber mark (Requirement 6.7); no card gets a red box, and no text
+    beside a card is added. The quote note appears once in the block. The notebook never infers what changed between
+    refusals and reads no other meaning from the message.
     In the replay, refusals are events of the step whose entries they precede (body-2: between the E11 verdict step
     and the `end` step). The refusal counts of Requirement 18.4 stay (Requirements 10.11, 10.12, 16.12).
 34. **Quotes composed by the bench** (user). The quote "H11.P3: hit/not-comparable" is shown as recorded, in Dr.
@@ -1022,9 +1024,10 @@ exception to a rule.
     Caveat as files of the site, with their licence; this fetches nothing from another host (3.2). The word
     "spacing", a setting of the wind tunnel like "ahead", is on the stop list, and small headings are letter-spaced.
     The steering file `notebook-visual.md` holds the details.
-52. **Night lab** (user, 2026-11-19). The notebook has a dark palette, the night lab: the same paper notebook on a
-    dark desk under a lamp, not an inversion. It follows `prefers-color-scheme: dark` in CSS only; there is no switch
-    and no script, and without a stated preference the page is the day paper (6.2). Only colours change: every
+52. **Night lab** (user, 2026-11-19; revised 2026-11-21). The notebook has a dark palette, the night lab: the same paper notebook on a
+    dark desk under a lamp, not an inversion. It is fixed for each application by its settings file, not chosen by the
+    visitor's system: the wind tunnel is the day paper, the stitched body and the front page the night paper; there is
+    no switch and no script (6.2; notebook-shelf Requirement 1.4). Only colours change: every
     custom property of the night lab overrides one of the day, and the layout, the wording and the motion
     (including `prefers-reduced-motion`) are the same. The recorded pictures are never filtered or inverted; the
     photo frame is a dark neutral with a thin edge. The SVG tracks follow the ink in `currentColor`. The miss red,
