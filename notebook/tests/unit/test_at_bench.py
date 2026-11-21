@@ -120,7 +120,10 @@ def test_no_link_leaves_the_page_the_watch_serves(made, index):
     hrefs = [part.split('"')[0] for part in page.split('href="')[1:]]
     assert hrefs, "the footer links the legend and the stylesheet"
     assert all(h.startswith("#") or h.endswith(("legend.html", ".css", ".png")) for h in hrefs), hrefs
-    assert 'class="shelf"' not in page and 'class="lab-links"' not in page
+    assert 'class="lab-links"' not in page
+    # the shelf at the bench holds one card, this session's, and it is not a link (23.13)
+    assert page.count('class="card ') == 1 and 'class="card card-bench is-open"' in page
+    assert '<a class="card' not in page
 
 
 def test_the_sealed_page_keeps_its_title_labels_and_links(made):
@@ -161,3 +164,38 @@ def test_one_trial_is_counted_in_the_singular(made):
     page = _page(made, _seq(full, "trial"))
     chips = page.split('class="chips"')[1].split("</ul>")[0]
     assert f"{made[2].unit_one}<" in chips and f"{made[2].unit}<" not in chips
+
+
+def test_the_bench_card_shows_the_budget_used_and_the_hits_so_far(made):
+    full = made[1]
+    upto = _seq(full, "trial")
+    record = _cut(made, upto)
+    page = _page(made, upto)
+    card = page.split('class="card card-bench is-open"')[1].split("</section>")[0]
+    assert f">{len(record.trials)}<" in card and f">{record.budget}<" in card
+    assert text.AT_BENCH in card and text.CARD_BUDGET_USED in card
+
+
+def test_a_replay_is_labelled_as_a_replay_of_a_sealed_record(made):
+    _, _, app, table = made
+    segments, _ = shelf.at_bench_page(_cut(made, 3), app, table, {}, replay=True)
+    page = "".join(s.text for s in segments)
+    head = page.split('class="at-bench-label"')[1].split("</span></span>")[0]
+    assert text.REPLAY_LABEL in head and text.AT_BENCH not in head
+    card = page.split('class="card card-bench is-open"')[1].split("</section>")[0]
+    assert text.REPLAY_LABEL in card
+
+
+def test_the_finished_page_is_linked_only_after_the_seal(made):
+    _, full, app, table = made
+    link = "/site/fake/s1.html"
+    before, _ = shelf.at_bench_page(_cut(made, _cuts(made)[1]), app, table, {}, finished=link)
+    after, _ = shelf.at_bench_page(_cut(made, len(full.entries)), app, table, {}, finished=link)
+    assert link not in "".join(s.text for s in before)
+    assert f'href="{link}"' in "".join(s.text for s in after)
+
+
+def test_after_a_verdict_its_predictions_without_an_outcome_are_not_run_and_the_chip_says_no_table_yet(made):
+    page = _page(made, _cuts(made)[1])
+    assert text.CHIP_NO_TABLE_YET in page or text.NOT_YET_CHECKED in page
+    assert text.CHIP_NO_TABLE not in page

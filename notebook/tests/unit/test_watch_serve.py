@@ -243,3 +243,34 @@ def test_no_build_module_imports_the_watch_and_only_serve_imports_http():
             http_users.append(path.name)
         assert not {n for n in names if n.split(".")[0] in ("socket", "urllib", "socketserver")}, path
     assert http_users == ["serve.py"]
+
+
+class _Quiet:
+    """A watch that has made no version: enough to ask the server for its routes."""
+
+    entries: list = []
+
+    def poll(self):
+        from notebook.watch.versions import Version
+
+        return Version(0, b"", (), None)
+
+
+def test_the_built_site_is_served_under_site_only_from_inside_it(tmp_path):
+    site = tmp_path / "site"
+    (site / "fake").mkdir(parents=True)
+    (site / "index.html").write_text("front")
+    (site / "fake" / "s1.html").write_text("finished")
+    (tmp_path / "secret.html").write_text("outside")
+    server = serve.Server(_Quiet(), {}, 0, site)
+    try:
+        assert server.route("/site/fake/s1.html") == (b"finished", serve.HTML)
+        assert server.route("/site/../secret.html") is None
+        assert server.route("/site/fake/none.html") is None
+    finally:
+        server.close()
+    plain = serve.Server(_Quiet(), {}, 0)
+    try:
+        assert plain.route("/site/fake/s1.html") is None
+    finally:
+        plain.close()

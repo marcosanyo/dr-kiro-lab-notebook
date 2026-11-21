@@ -545,16 +545,19 @@ NOTE_MISSED = " missed: "
 NOTE_EXPECTED = " was expected in "
 NOTE_TRIALS_USED = " used, of the whole budget"
 FRONT_LINK = "All labs"
+READING_KEY = "How to read this notebook: the inks and the names"
 KEY_NOTES_BLUE = "blue pen: our notes"
 KEY_NOTES_ORANGE = "orange label: our notes"
 FRONT_KICKER = "a laboratory · two cases"
 FRONT_CLAIM = "Normally the spec judges the code. Here, the experiment judges the spec."
 FRONT_LEAD = (
     "Dr. Kiro, a Kiro agent, studies a system it has no description of and writes down the spec it finds. "
-    "Two applications stand on one skeleton. Choose a door."
+    "Two labs stand on one skeleton, and each keeps its own notebook. Open one below."
 )
-DOOR_DAY = "opens by day"
-DOOR_NIGHT = "opens at night"
+DOOR_OPENS_ON = "It opens on "
+DOOR_OPEN = "Open the notebook"
+DOOR_SESSION = " session"
+DOOR_SESSIONS = " sessions"
 SKELETON_HEADING = "The skeleton under both"
 SKELETON_NOTEBOOK = (
     "The notebook: one page maker for both. It reads the sealed records and tells each session as a story."
@@ -593,7 +596,6 @@ STORY_TRUST_B_ONE = (
     "No second Kiro has been run on this spec yet."
 )
 STORY_NO_SPEC = "This record has no final spec, so there is nothing yet for a next Kiro to read."
-HIGHLIGHT_INTRO = "The two moments that tell the story, three numbers, and how the best result grew."
 SPEC_INTRO = (
     "What Dr. Kiro now believes about this system. A struck line was believed, tested, and proved wrong; "
     "the line under it replaced it."
@@ -636,3 +638,7 @@ STORY_AT_BENCH = (
     "The bench checks the spec at the seal, and a next Kiro reads it after that."
 )
 NOT_RUN_YET = "not run yet"
+CHIP_NO_TABLE_YET = "no spec table yet"
+CARD_BUDGET_USED = " used"
+FINISHED_PAGE = "Open the finished page."
+WATCH_NOT_RUN_COUNT = "the flag's not-run count differs from the predictions without an outcome"

@@ -12,6 +12,8 @@ from bench.record.chain import BLOB_DIR, LOG_NAME, entry_hash
 from fixtures.choices import write_app
 from fixtures.session import accepted_session
 from notebook import choices, layouts, records, scan, text
+from notebook.errors import NotebookError
+from notebook.watch.reader import ReplayReader
 from notebook.watch.versions import Watch
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -163,3 +165,54 @@ def test_a_record_that_does_not_make_a_page_stops_the_watch_at_the_newest_entry(
     stopped = watch.poll()
     assert stopped.number == good.number and stopped.page == good.page
     assert (stopped.stop.line, stopped.stop.problem) == (seq, text.WATCH_NO_PAGE)
+
+
+def _with_flag(entries, not_run):
+    """The fixture record with a flag entry after its first verdict (the fixture has none), renumbered."""
+    out = [json.loads(json.dumps(e)) for e in entries]
+    at = next(i for i, e in enumerate(out) if e["kind"] == "verdict")
+    verdict = out[at]["body"]
+    counts = {"hit": 0, "miss": 0, "not-checkable": 0, "not-run": not_run}
+    out.insert(
+        at + 1,
+        {
+            "kind": "flag",
+            "body": {"experiment": verdict["experiment"], "verdict": verdict["verdict"], "counts": counts},
+        },
+    )
+    for n, entry in enumerate(out, start=1):
+        entry["seq"] = n
+    return _rechain(out), at + 2
+
+
+@pytest.mark.parametrize("wrong", [False, True])
+def test_a_flag_whose_not_run_count_differs_stops_the_watch_at_the_flag(made, tmp_path, wrong):
+    entries = made[3]
+    verdict = next(e for e in entries if e["kind"] == "verdict")
+    hypothesis = next(e for e in entries if e["kind"] == "register" and e["seq"] < verdict["seq"])
+    done = {e["body"]["prediction"] for e in entries if e["kind"] == "outcome" and e["seq"] < verdict["seq"]}
+    waiting = sum(1 for p in hypothesis["body"]["predictions"] if p["id"] not in done)
+    flagged, seq = _with_flag(entries, waiting + (1 if wrong else 0))
+    folder, lines = _state(made, tmp_path, flagged)
+    watch = _watch(made, folder)
+    _feed(folder, lines, seq)
+    version = watch.poll()
+    if wrong:
+        assert (version.stop.line, version.stop.problem) == (seq, text.WATCH_NOT_RUN_COUNT)
+    else:
+        assert version.stop is None
+
+
+def test_a_replay_releases_one_entry_per_interval_and_needs_a_seal(made, tmp_path):
+    folder, lines = _state(made, tmp_path, made[3])
+    _feed(folder, lines, len(lines))
+    now = [100.0]
+    replay = ReplayReader(folder, 2.0, clock=lambda: now[0])
+    assert len(replay.poll()) == 1
+    now[0] += 4.0
+    assert [e["seq"] for e in replay.poll()] == [2, 3]
+    now[0] += 1000.0
+    assert len(replay.poll()) == len(lines) - 3 and replay.poll() == []
+    _feed(folder, lines, len(lines) - 1)  # no seal entry
+    with pytest.raises(NotebookError, match="seal"):
+        ReplayReader(folder, 2.0)

@@ -4,6 +4,8 @@ This is the only module of the notebook that may import `http` (Open question 3,
 `pyproject.toml` has a per-file exception for this file alone). It binds 127.0.0.1 only and answers GET
 only, on fixed routes: the session page at `/` and at `/<app>-<session>.html`, `/version`, the files in
 `static` (the legend and the assets) and `/p/<sha256>.png` for each picture the current version names.
+When the watch was given a built site (`--site`), `/site/<path>` answers with that file of the site, read
+when asked and only from inside that folder, so the link to the session's finished page works (23.14).
 Every other path gets 404 and every other method 405. It writes no file; the assets were read at start and
 the latest version is held in memory. `Server.run` polls the watch every 500 ms in the calling thread.
 """
@@ -29,7 +31,10 @@ _TYPES = {
     ".woff2": "font/woff2",
     ".txt": "text/plain; charset=utf-8",
     ".png": "image/png",
+    ".html": HTML,
+    ".json": "application/json",
 }
+SITE = "/site/"
 Static = Mapping[str, tuple[bytes, str]]
 
 
@@ -100,9 +105,10 @@ class _Http(ThreadingHTTPServer):
 class Server:
     """The server and its poll loop. `static` maps a path to (bytes, type)."""
 
-    def __init__(self, watch: Watch, static: Static, port: int) -> None:
+    def __init__(self, watch: Watch, static: Static, port: int, site: Path | None = None) -> None:
         self.watch = watch
         self.static = dict(static)
+        self.site = None if site is None else site.resolve()
         self.version = watch.poll()  # the first pass, before anything is served
         self._page_path = ""
         self._index(self.version)
@@ -131,6 +137,10 @@ class Server:
         data = {"/" + p.path: p.data for p in version.pictures}.get(path)
         if data is not None:
             return data, content_type(path)
+        if self.site is not None and path.startswith(SITE):
+            wanted = (self.site / path[len(SITE) :]).resolve()
+            if wanted.is_relative_to(self.site) and wanted.is_file() and wanted.suffix in _TYPES:
+                return wanted.read_bytes(), content_type(wanted.name)
         return None
 
     def start(self) -> None:

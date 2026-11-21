@@ -7,10 +7,15 @@
    up the moving pictures again on the new content.
    When /version carries a stop text, the text is shown with textContent in #watch-stop and the page keeps
    the last content that passed. A request that fails is shown there too, and is not tried another way.
+   The entry of the hypothesis being run is open and carries the "at the bench" mark. When a new version
+   shows that entry without the mark (its verdict came), the entry stays open with its stamp for CLOSE_AFTER
+   ms and then closes to its one-line summary, as every finished entry (Requirement 23.9). An entry that was
+   already finished when the page was opened is shown closed, as the watch sends it.
    Every request goes to the same origin, by a relative address. */
 (function () {
   "use strict";
   var INTERVAL = 1000;
+  var CLOSE_AFTER = 2000;
   var known = null;
   var busy = false;
   function banner() {
@@ -52,6 +57,28 @@
     });
     return states;
   }
+  function running() {
+    var ids = [];
+    document.querySelectorAll("li.hyp").forEach(function (entry) {
+      if (entry.querySelector(".at-bench-mark") !== null) {
+        ids.push(entry.id);
+      }
+    });
+    return ids;
+  }
+  function closeFinished(ids) {
+    ids.forEach(function (id) {
+      var entry = document.getElementById(id);
+      if (entry === null || entry.querySelector(".at-bench-mark") !== null) {
+        return;
+      }
+      var detail = entry.querySelector("details");
+      detail.open = true;
+      setTimeout(function () {
+        detail.open = false;
+      }, CLOSE_AFTER);
+    });
+  }
   function replaceMain(text) {
     var fetched = new DOMParser().parseFromString(text, "text/html").querySelector("main");
     if (fetched === null) {
@@ -67,6 +94,7 @@
   function refresh() {
     var left = scrollY;
     var states = opened();
+    var wasRunning = running();
     return get(location.pathname)
       .then(function (reply) {
         return reply.text();
@@ -78,6 +106,7 @@
             note.open = states[note.id];
           }
         });
+        closeFinished(wasRunning);
         scrollTo(0, left);
         document.dispatchEvent(new CustomEvent("notebook:refresh"));
       });

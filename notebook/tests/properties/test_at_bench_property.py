@@ -108,10 +108,13 @@ def test_the_page_at_the_bench_shows_the_data_of_the_sealed_page(synth):
             shown = _data(at_bench)
             other = _data(sealed)
             if prefix.seal is None:
-                # The named difference (Requirement 23.8): a prediction with no outcome entry shows "waiting"
-                # at the bench and the pencil word "not run" on the sealed page. Same data, same count.
-                assert _waiting(at_bench) == other.count(NOT_RUN), f"waiting, prefix of {upto} entries"
+                # The named difference (Requirement 23.8, 23.10): a prediction with no outcome entry
+                # whose hypothesis has no verdict yet shows "waiting" at the bench and the pencil word
+                # "not run" on the sealed page; after the verdict both say "not run". Same data, same count.
+                waiting = other.count(NOT_RUN) - shown.count(NOT_RUN)
+                assert _waiting(at_bench) == waiting, f"waiting, prefix of {upto} entries"
                 other = [d for d in other if d != NOT_RUN]
+                shown = [d for d in shown if d != NOT_RUN]
             else:
                 assert _waiting(at_bench) == 0
             assert shown == other, f"prefix of {upto} entries"

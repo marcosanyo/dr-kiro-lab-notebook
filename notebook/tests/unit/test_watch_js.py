@@ -111,3 +111,10 @@ def test_only_the_page_at_the_bench_links_the_script(tmp_path):
     page = "".join(s.text for s in segments)
     assert page.count('<script src="a/watch.js" defer="defer"></script>') == 1
     assert page.index("a/notebook.js") < page.index("a/watch.js")
+
+
+def test_a_finished_entry_closes_about_2_seconds_after_its_verdict(source):
+    """Requirement 23.9: the entry that carried the "at the bench" mark stays open for 2000 ms and closes."""
+    assert re.search(r"var CLOSE_AFTER = 2000;", source)
+    assert re.search(r"setTimeout\(function \(\) \{\s*detail\.open = false;\s*\}, CLOSE_AFTER\)", source)
+    assert "at-bench-mark" in source

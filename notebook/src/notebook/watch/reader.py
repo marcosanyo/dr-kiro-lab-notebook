@@ -8,6 +8,7 @@ or repaired.
 """
 
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -135,3 +136,38 @@ class _Refused(Exception):
     def __init__(self, problem: str) -> None:
         super().__init__(problem)
         self.problem = problem
+
+
+class ReplayReader:
+    """A sealed record released one entry every `interval` seconds, for checking the watch and for recording
+    (Requirement 23.15, 16.7). It reads and checks the whole record once with `Reader`, so a broken line stops
+    it as the live reader would; a record that does not end with a seal entry is refused before anything is
+    shown. `clock` gives the time in seconds; the tests pass their own."""
+
+    def __init__(self, folder: Path, interval: float, clock=time.monotonic) -> None:
+        if interval <= 0:
+            raise NotebookError("--replay", f"the interval must be above 0 seconds, not {interval}")
+        self.inner = Reader(folder)
+        self.folder = self.inner.folder
+        self.entries = self.inner.poll()
+        if self.inner.stop is None and (not self.entries or self.entries[-1]["kind"] != "seal"):
+            raise NotebookError("--replay", f"{self.folder / LOG_NAME} does not end with a seal entry")
+        self.interval = interval
+        self.clock = clock
+        self.started = clock()
+        self.released = 0
+
+    @property
+    def stop(self) -> Stop | None:
+        return self.inner.stop if self.released >= len(self.entries) else None
+
+    @property
+    def last_seq(self) -> int:
+        return self.released
+
+    def poll(self) -> list[dict[str, Any]]:
+        """The entries whose time has come since the last pass, in record order."""
+        due = min(len(self.entries), 1 + int((self.clock() - self.started) / self.interval))
+        new = self.entries[self.released : due]
+        self.released = max(self.released, due)
+        return new

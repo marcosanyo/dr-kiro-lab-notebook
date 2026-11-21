@@ -1515,7 +1515,7 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   --muted: #5a6b86;
   --shadow: rgba(30, 50, 90, 0.2);
 }
-/* The front page: two doors on one skeleton. It has no palette of its own. It always opens on the night candle
+/* The front page: two lab cards ("doors" in the code) on one skeleton. It has no palette of its own. It always opens on the night candle
    paper, the page's default (the front page has no mode attribute, and no palette follows the visitor's system). */
 .front-head {
   max-width: 46rem;
@@ -1542,28 +1542,85 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   margin-top: 1rem;
 }
 .door {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  min-height: 21rem;
-  padding: 6rem 2.4rem 1.8rem;
-  border: 3px solid var(--edge);
-  border-radius: 12rem 12rem 0.6rem 0.6rem;
+  gap: 0.55rem;
+  padding: 1.2rem 1.4rem 1.3rem;
+  border: 2px solid var(--edge);
+  border-radius: 10px;
   background: var(--face);
   color: var(--ink);
-  text-decoration: none;
   box-shadow: 0 6px 18px var(--shadow);
 }
-.door::after {
-  content: "";
-  position: absolute;
-  top: 55%;
-  right: 1.6rem;
-  width: 0.9rem;
-  height: 0.9rem;
-  border-radius: 50%;
-  background: var(--knob);
+.door > .photo {
+  margin: 0 0 0.4rem;
+  max-width: 100%;
+  transform: none;
+}
+/* Both cards show their picture at one height, so the two labs stand level; the canvas keeps its aspect and is
+   cut to fit. The picture's own controls and trial id are on the notebook's pages, not on the front page. */
+.door > .photo canvas {
+  width: 100%;
+  height: 14rem;
+  object-fit: cover;
+}
+.door > .photo figcaption {
+  display: none;
+}
+.door-title {
+  margin: 0;
+}
+.door-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.door-title a:hover,
+.door-title a:focus-visible {
+  text-decoration: underline;
+}
+.door-about {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.door-found {
+  margin: 0;
+  padding-left: 0.7rem;
+  border-left: 3px solid var(--accent);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+.door-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  margin: auto 0 0;
+  padding-top: 0.5rem;
+}
+.door-open {
+  display: inline-block;
+  padding: 0.45rem 0.9rem;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.door-open:hover,
+.door-open:focus-visible {
+  background: var(--accent);
+  color: var(--face);
+}
+.door-open .ink-c {
+  color: inherit;
+}
+.door-count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
 }
 /* Each door takes the paper and the inks of its lab's notebook: the day paper for the wind tunnel, the night
    candle paper for the body lab. The values are the day and night palettes above, copied here because a door
@@ -1572,14 +1629,12 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   --edge: #e3d9bf;
   --face: #fffaf0;
   --ink: #2b2118;
-  --knob: #1b7a45;
   --accent: #1b7a45;
 }
 .door-night {
   --edge: #45382a;
   --face: #2a2219;
   --ink: #ebe2d2;
-  --knob: #9ccf7f;
   --accent: #9ccf7f;
 }
 .door .ink-c {
@@ -1596,21 +1651,8 @@ html[data-app="wind-tunnel"][data-mode="day"] {
 }
 .door-title {
   font-family: var(--font-script);
-  font-size: 2.8rem;
+  font-size: 2.6rem;
   line-height: 1;
-}
-.door-line {
-  max-width: 18rem;
-  font-size: 0.95rem;
-}
-.door-open {
-  margin-top: auto;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-}
-.door-open .ink-c {
-  color: var(--accent);
 }
 .skeleton {
   margin-top: 1.6rem;
@@ -1635,7 +1677,7 @@ html[data-app="wind-tunnel"][data-mode="day"] {
     grid-template-columns: minmax(0, 1fr);
   }
   .door {
-    min-height: 16rem;
+    padding: 1rem;
   }
 }
 .book-title .ours .ink-c,
@@ -2041,11 +2083,21 @@ html[data-mode="night"] .tile-borrowed {
 .masthead .big-title {
   font-size: 2.6rem;
 }
+/* The subtitle stands on its own line under the title, and the "our notes" mark sits beside the title, so the
+   mark never wraps onto a line of its own. */
 .book-sub {
+  display: block;
+  margin-top: 0.45rem;
   font-family: var(--font-serif);
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.35;
+}
+.book-sub .ink-c {
+  font-family: var(--font-serif);
+}
+.book-title .ours {
+  vertical-align: middle;
 }
 .hyp-title {
   font-family: var(--font-serif);
@@ -2134,4 +2186,51 @@ details[open] > summary::before {
   border-radius: 4px;
   background: var(--card);
   font-size: 0.95rem;
+}
+.door-count .ink-p {
+  color: inherit;
+}
+/* The first screen of a notebook page (review pass, 2026-11-21): the masthead and the shelf are compact, so the
+   two photos of the highlight start inside a 1280 x 900 screen. Cards grow to share the row; the description and
+   the symbols run wider. */
+.lab-about {
+  max-width: 64rem;
+}
+.symbols {
+  max-width: 64rem;
+}
+.shelf .card {
+  flex: 1 1 15rem;
+  max-width: 22rem;
+}
+.book {
+  padding-top: 1.6rem;
+}
+/* The key to the inks and the names is folded under the description, one line until it is opened. */
+.reading-key {
+  margin-top: 0.5rem;
+}
+.reading-key > summary {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.reading-key > summary .ink-c {
+  color: var(--muted);
+}
+.reading-key[open] > summary {
+  margin-bottom: 0.4rem;
+}
+.book-summary {
+  margin-top: 0.7rem;
+}
+/* The one card of the shelf at the bench (Requirement 23.13): not a link, in the green of the open card. */
+.card-bench {
+  --band: var(--ink-drkiro);
+  max-width: 22rem;
+  cursor: default;
+}
+.sealed-banner a {
+  margin-left: 0.3rem;
 }

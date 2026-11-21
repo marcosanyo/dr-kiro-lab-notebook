@@ -20,7 +20,7 @@ from notebook.choices import App
 from notebook.errors import NotebookError
 from notebook.pages import shelf
 from notebook.pages.photo import PictureFile
-from notebook.watch.reader import Reader, Stop
+from notebook.watch.reader import Reader, ReplayReader, Stop
 
 _FINDING_TEXT = {
     "term": text.WATCH_FOUND_TERM,
@@ -51,8 +51,13 @@ class Watch:
         scanner: Scanner,
         *,
         allow_fake: bool = False,
+        replay: float | None = None,
+        finished: str | None = None,
     ) -> None:
-        self.reader = Reader(folder)
+        self.reader: Reader | ReplayReader = (
+            Reader(folder) if replay is None else ReplayReader(folder, replay)
+        )
+        self.replay, self.finished = replay is not None, finished
         self.app, self.table, self.scanner, self.allow_fake = app, table, scanner, allow_fake
         self.entries: list[dict[str, Any]] = []
         self.version = Version(0, b"", (), None)
@@ -83,6 +88,16 @@ class Watch:
         except NotebookError:
             self._stop(newest, text.WATCH_NO_PAGE)
             return
+        # The bench's flag counts the predictions it did not run (23.10): at the flag, the hypothesis must
+        # have exactly that many predictions with no outcome entry before it.
+        for flag in record.flags:
+            hypothesis = next(e.hypothesis for e in record.experiments if e.id == flag.experiment)
+            owner = next(h for h in record.hypotheses if h.id == hypothesis)
+            done = {o.prediction for o in record.outcomes if o.seq < flag.seq}
+            waiting = sum(1 for p in owner.predictions if p.id not in done)
+            if waiting != dict(flag.counts)["not-run"]:
+                self._stop(flag.seq, text.WATCH_NOT_RUN_COUNT)
+                return
         for trial in record.trials:
             try:
                 layouts.check_sheet(layout, record.name, trial.id, trial.picture.media, trial.picture.data)
@@ -90,7 +105,10 @@ class Watch:
                 self._stop(trial.seq, text.WATCH_FOUND_PICTURE)
                 return
         try:
-            segments, pictures = shelf.at_bench_page(record, self.app, self.table, {})
+            finished = self.finished if record.seal is not None else None
+            segments, pictures = shelf.at_bench_page(
+                record, self.app, self.table, {}, replay=self.replay, finished=finished
+            )
         except NotebookError:
             self._stop(newest, text.WATCH_NO_PAGE)
             return

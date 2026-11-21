@@ -1,8 +1,10 @@
 """The command line `notebook-watch` (Requirement 23; design "Command line of the watch", N33).
 
-Every option is required and has no default; `--scan-config` and `--app` are given at least once (`--app`
-names an application's notebook folder, as for the build). There is no `--out`, no `--choices` and no host
-option: the watch writes nothing and binds 127.0.0.1 only. Usage errors exit 2 before
+Every option is required and has no default, except the two that turn on a part: `--replay SECONDS` shows a
+sealed record one entry at a time (23.17) and `--site` names a built site whose page of this session is linked
+after the seal (23.16). `--scan-config` and `--app` are given at least once (`--app` names an application's
+notebook folder, as for the build). There is no `--out`, no `--choices` and no host option: the watch writes
+nothing and binds 127.0.0.1 only. Usage errors exit 2 before
 anything is read; a failed check prints `notebook-watch: <where>: <problem>` and exits 1.
 """
 
@@ -48,6 +50,8 @@ class WatchInputs:
     stop_list: Path
     port: int
     apps: tuple[Path, ...]
+    replay: float | None = None  # seconds between entries of a sealed record (23.15); None: the live record
+    site: Path | None = None  # a built site that may hold the session's finished page (23.14)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -74,6 +78,14 @@ def _parser() -> argparse.ArgumentParser:
         dest="apps",
         help="an application's notebook folder (holding app.toml), as for the build; one per application",
     )
+    parser.add_argument(
+        "--replay",
+        type=float,
+        help="show a sealed record one entry every SECONDS, labelled as a replay (optional)",
+    )
+    parser.add_argument(
+        "--site", type=Path, help="a built site (notebook-build --out); links the finished page (optional)"
+    )
     return parser
 
 
@@ -91,6 +103,8 @@ def parse(argv: list[str]) -> WatchInputs:
         args.stop_list,
         args.port,
         tuple(args.apps),
+        args.replay,
+        args.site,
     )
 
 
@@ -141,8 +155,18 @@ def prepare(inputs: WatchInputs, *, allow_fake: bool = False) -> serve.Server:
     page = scan.check(scanner, {"legend.html": legend.legend(app)})["legend.html"][0]
     static = serve.load_assets(ASSETS)
     static["/legend.html"] = (page.encode("utf-8"), serve.HTML)
-    watch = Watch(inputs.record, app, table, scanner, allow_fake=allow_fake)
-    return serve.Server(watch, static, inputs.port)
+    finished = None
+    if inputs.site is not None:
+        if not (inputs.site / "index.html").is_file():
+            raise NotebookError(
+                "--site", f"{inputs.site} has no index.html; give the folder notebook-build wrote"
+            )
+        if (inputs.site / app.slug / f"{inputs.record.name}.html").is_file():
+            finished = f"{serve.SITE}{app.slug}/{inputs.record.name}.html"
+    watch = Watch(
+        inputs.record, app, table, scanner, allow_fake=allow_fake, replay=inputs.replay, finished=finished
+    )
+    return serve.Server(watch, static, inputs.port, inputs.site)
 
 
 def main(argv: list[str] | None = None) -> int:
