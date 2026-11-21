@@ -92,6 +92,7 @@ def test_the_page_at_the_bench_shows_the_data_of_the_sealed_page(synth):
             "none",
             None,
             None,
+            None,
             root,
             "app",
         )

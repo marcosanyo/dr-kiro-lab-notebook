@@ -433,3 +433,62 @@ def test_end_refusals_are_written_once_above_the_table_and_named_cards_get_only_
     assert page.index('class="end-refusals"') < page.index('class="rules"')
     # The cards the refusals name carry the amber mark.
     assert found.classes["refused-mark"] >= 1
+
+
+def _sketch_page(record: records.RecordModel) -> str:
+    from notebook import layouts
+    from notebook.choices import read_app
+    from notebook.ink import join
+    from notebook.pages import shelf
+
+    table = layouts.load(ROOT / "notebook" / "layouts.toml")
+    segments, _ = shelf.at_bench_page(record, read_app(ROOT / "body-lab" / "notebook"), table, {})
+    return join(segments)[0]
+
+
+def test_a_card_without_a_retaken_picture_draws_the_recorded_track_from_above(site, loaded_all):
+    # Requirement 10.10: at the bench there are no retaken pictures, so every body-lab card gets the sketch,
+    # drawn from track_x and track_y only. The sealed site's body-lab cards are all retaken and keep the
+    # corner map instead (the test above), so they get no sketch.
+    record = loaded_all["body-3"]
+    page = _sketch_page(record)
+    sketches = re.findall(r'<svg class="track-sketch".*?</svg>', page, re.S)
+    assert len(sketches) == len(record.trials) == page.count('class="trial-card with-track"')
+    last = record.trials[-1]
+    xs, ys = (dict(last.measurements)[n] for n in ("track_x", "track_y"))
+    route = re.search(r'class="sketch-line" d="M([^"]*)"', sketches[-1]).group(1)
+    points = [tuple(float(v) for v in p.split()) for p in route.split(" L")]
+    assert len(points) == len(xs) == len(ys)
+    # One scale on both axes, along to the right and across upward.
+    i, j = max(range(len(xs)), key=lambda k: xs[k]), min(range(len(xs)), key=lambda k: xs[k])
+    if xs[i] != xs[j]:
+        assert points[i][0] > points[j][0]
+    k, m = max(range(len(ys)), key=lambda q: ys[q]), min(range(len(ys)), key=lambda q: ys[q])
+    if ys[k] != ys[m]:
+        assert points[k][1] < points[m][1]
+    assert "10 cm" in sketches[-1] and 'class="map-start"' in sketches[-1]
+    for name in (
+        "body-lab/body-1.html",
+        "body-lab/body-2.html",
+        "body-lab/body-3.html",
+        "wind-tunnel/wt-004.html",
+    ):
+        assert "track-sketch" not in _page(site, name)[0], name
+
+
+def test_a_not_measured_track_draws_nothing_and_says_so(loaded_all):
+    from dataclasses import replace
+
+    from notebook import text
+    from notebook.records import NotMeasuredValue
+
+    record = loaded_all["body-3"]
+    first = record.trials[0]
+    gone = tuple(
+        (n, NotMeasuredValue("lost", None) if n == "track_x" else v)  # type: ignore[arg-type]
+        for n, v in first.measurements
+    )
+    changed = replace(record, trials=(replace(first, measurements=gone), *record.trials[1:]))
+    page = _sketch_page(changed)
+    assert page.count('<svg class="track-sketch"') == len(record.trials) - 1
+    assert text.TRACK_NOT_MEASURED.strip() in page
