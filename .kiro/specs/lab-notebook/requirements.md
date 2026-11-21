@@ -1096,7 +1096,9 @@ exception to a rule.
     photo frame is a dark neutral with a thin edge. The SVG tracks follow the ink in `currentColor`. The miss red,
     the rewrite red and the stamps are lightened and keep their roles (6.4, Decision 51). Every pair of the
     contrast list reaches 4.5:1 with the night values too (4.6). The steering file `notebook-visual.md` holds the
-    values (section "Night lab").
+    values (section "Night lab"). Revised 2026-11-22 (user): in the night lab the notebook page itself (`.book`,
+    also the plain pages) is white paper with the day palette; only the desk, the masthead and the cards around the
+    notebook keep the night palette.
 53. **The session at the bench** (user, 2026-11-21). The user wants to watch a session's page fill in while Dr. Kiro
     works, beside Kiro. It is the session page in an "at the bench" state, not a separate screen. The watch makes
     the page with the build's own code from the record so far, and the page loads each new version by itself, so

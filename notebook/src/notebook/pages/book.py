@@ -1280,7 +1280,7 @@ def _reader(
             "section",
             f"tile tile-{setup}",
             [
-                *_el("p", "cap", setup_caption(setup, record.name, source, bool(_borrowed(record, runs)))),
+                *_el("p", "cap", setup_caption(setup, record.session, source, bool(_borrowed(record, runs)))),
                 *_el("p", "tile-big", html.text(pencil(f"{passes}/{total}", source))),
                 *_el("p", "tile-about", say_text("READER_PASSED")),
                 *_el("ul", "runs", chips),
@@ -1366,7 +1366,7 @@ def body(
     holes = _el(
         "span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}
     )
-    web = parts.web("book-web") if lab.decoration != "none" else []
+    web = [*parts.web("book-web"), *parts.page_marks()] if lab.decoration != "none" else []
     if chosen is None:
         table, _ = progress.table_of(record)
         out = [

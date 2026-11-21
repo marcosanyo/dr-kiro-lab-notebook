@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `46bc95d82aeb76e089c315f46120844d1776f0533abb28d8594c0a8684138d67`
+> 原文 SHA-256: `12d0f2e1bcb812cbf1c6f17c6b44ecdd11d9da783832d05497cc633d676fd8b9`
 
 # Design: lab-notebook
 
@@ -641,7 +641,7 @@ unit = "trials"
 | Commentary ink | 色 `#2b2118`。`system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`。0.95em |
 | Miss red | `#b3261e`。外れた予測とその計測値にだけ使い、必ず "miss" の語とともに使う（カバーの判子は "missed" と書く）（6.4） |
 | Rewrite red | `#fbe8e4` の上の `#a3302a`。`rejected` の行とカードに使う（帯、カバーのカードの取り消し線、点線の replaced-by の行）。外れには決して使わない（Decision 51） |
-| Bench stamp | 大文字の等幅書体、セミボールド、角の丸い 2px の枠、-2deg 回転。語ごとの色: validated `#1d5e3a`、partly `#7a4b00`、observed `#3a4a5c`、rejected `#5b2a6e`（決して赤にしない）。ラベル（"checked by the bench"）は、下に小さな解説の書体で |
+| Bench stamp | 大文字の等幅書体、セミボールド、角の丸い 2px の枠、-2deg 回転。語ごとの色: validated `#1d5e3a`、partly `#7a4b00`、observed `#3a4a5c`（枠は破線）、rejected `#5b2a6e`（色で塗りつぶし、文字は白。2026-11-22 に、2 つを見分けやすくするため改訂）（決して赤にしない）。ラベル（"checked by the bench"）は、下に小さな解説の書体で |
 | Instant photo | 白い枠（左右 8px、下 28px）、やわらかい影、試行番号から決まる固定の規則で ±1.5deg の範囲で回転、上に真鍮色のピン `#b08d3c`。キャプションは下 |
 | Sticky note | 背景 `#fff1a8`、解説のインク、1deg 回転、影。拒否された終了の注記は、付箋の上にスタンプの枠を使う |
 | Strike-through | 表の行では 2px の黒鉛色の `line-through`、カバーのカードでは書き直し用の赤。文字は十分なコントラストのまま。"replaced by" の行は、カードの最後の点線の行 |

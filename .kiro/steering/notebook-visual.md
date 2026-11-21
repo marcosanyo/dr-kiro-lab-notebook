@@ -91,7 +91,8 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Uppercase monospace, weight 600, 2px border in the stamp colour, rounded corners, rotated -2deg. The stamp itself
   is not letter-spaced; the small headings are.
 - Colours: validated `--stamp-validated` `#1d5e3a`, partly `--stamp-partly` `#7a4b00`, observed `--stamp-observed`
-  `#3a4a5c`, rejected `--stamp-rejected` `#5b2a6e`. A status cell that is not one of the four words uses the
+  `#3a4a5c` with a dashed border, rejected `--stamp-rejected` `#5b2a6e` filled with the word in white (2026-11-22, so
+  observed and rejected read apart at a glance). A status cell that is not one of the four words uses the
   pencil colour (`.stamp` alone). The word is always written out; colour only adds to it.
 - The label ("checked by the bench", "not checked by the bench", "not yet checked by the bench") sits below the
   stamp in small commentary type (`.stamp-label`).
@@ -288,6 +289,27 @@ Written after the body-3 page review. These rules hold where they differ from th
   on the night paper.
 
 ## Night lab (Requirement 6.2)
+
+**White page on the night desk (user, 2026-11-22).** In the night lab the notebook page (`article.book`, which the
+plain pages share) is white paper: inside `.book` every colour custom property takes its day value, and
+`color-scheme` is light. The desk (the body), the masthead with the moon, the bats and the spider, and the session
+cards above the notebook keep the night values below. Marks drawn pale for dark paper are drawn darker on the white
+page: the stitches of a spec card, the candle wax at the top edge, the tape. The night values below are those of the
+desk and the cards.
+
+**One paper, two rooms (user, 2026-11-22).** Every lab's notebook page is the same white graph paper (`.book`,
+`--page-grid`); the desk behind a day notebook is plain (no grid). The night lab's madness is on the page itself,
+never icons around it (`parts.page_marks`, paths only): one soft green drip from the top edge (`mark-drips`), burns
+along the page's edges (radial gradients in the `.book` background) and at the bottom right corner (`.book::after`).
+The titles are red ink: the masthead `#d8392f` on the desk, the session's title `--title` `#8a1a12` on the page.
+
+**Three pens (user, 2026-11-22), in every lab.** Green `--ink-drkiro` for Dr. Kiro; blue for our notes (both
+applications' `pen` is `blue`; the body lab's commentary is `#1f4fa3` on the page and `#8fb4ff` on the desk); red
+`--red-pen` `#c4271c` for the section headings (`.book .cap`), the reader's request (`.request`) and the experiment's
+corrections: the line through a struck rule, the line a rewrite hangs from, a wavy line under a missed prediction.
+No red margin rule. They lie under the writing (`.book` is its own
+stacking context, the marks are at `z-index: -1`) and never move. The sewn binding is a thin, faint thread with cross
+stitches at 3rem, clear of the writing. Only the spider and the bats move.
 
 The night palette is the default `:root` of the stylesheet, and each page without a day mode uses it. It is the same notebook on a dark desk under a lamp: warm
 near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim

@@ -981,7 +981,7 @@ fetched from another host (3.2). The steering file holds the stacks and the cove
 | Commentary ink | colour `#2b2118`; `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`; 0.95em |
 | Miss red | `#b3261e`, only on missed predictions and their measured values, always with the word "miss" (the cover's stamp says "missed") (6.4) |
 | Rewrite red | `#a3302a` on `#fbe8e4`, for rejected rows and cards (band, strike on cover cards, dotted replaced-by line); never on a miss (Decision 51) |
-| Bench stamp | uppercase monospace, semibold, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c`, rejected `#5b2a6e` (never red); the label ("checked by the bench") below in small commentary type |
+| Bench stamp | uppercase monospace, semibold, 2px border with rounded corners, rotated -2deg; colour per word: validated `#1d5e3a`, partly `#7a4b00`, observed `#3a4a5c` with a dashed border, rejected `#5b2a6e` filled with the word in white (never red; revised 2026-11-22 so the two read apart); the label ("checked by the bench") below in small commentary type |
 | Instant photo | white frame (8px sides, 28px bottom), soft shadow, rotated within +-1.5deg by a fixed rule from the trial number, a brass pin `#b08d3c` at the top; caption below |
 | Sticky note | background `#fff1a8`, commentary ink, rotated 1deg, shadow; the refused-end note uses the stamp border on a sticky note |
 | Strike-through | `line-through` 2px graphite in a table row, rewrite red on a cover card; text stays at full contrast; the "replaced by" line is the dotted last line of the card |

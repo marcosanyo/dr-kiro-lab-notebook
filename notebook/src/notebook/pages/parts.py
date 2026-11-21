@@ -150,6 +150,27 @@ def decoration(kind: str) -> list[Segment]:
     ]
 
 
+def page_marks() -> list[Segment]:
+    """The mad scientist's traces on the night lab's notebook page itself: green drips from the top edge (the
+    burns along the edges are in the stylesheet). Paths only, no words, hidden from assistive technology,
+    under the writing (design N28)."""
+    drips = [
+        *html.element(
+            "path",
+            {
+                "d": "M0 0 H88 C86 5 83 9 82 16 C81 24 83 31 80 34 C77 37 74 33 75 26 C76 18 73 11 67 9 "
+                "C62 13 63 22 62 34 C61 46 63 58 59 61 C55 64 52 59 53 50 C54 38 51 22 45 13 "
+                "C41 17 40 22 39 27 C38 31 34 31 34 27 C34 20 30 12 24 9 C21 14 22 21 20 25 "
+                "C18 29 14 27 15 22 C16 14 10 7 0 5 Z",
+            },
+            [],
+        ),
+    ]
+    return [
+        *_svg("mark mark-drips", "0 0 88 64", 88, 64, drips),
+    ]
+
+
 def footer(*, links: bool = True, at_bench: bool = False) -> list[Segment]:
     """The page footer: the links to the ink legend (Requirement 4.5) and to how the lab works, relative
     inside the application's folder, and a link to the front page. The front page has no footer links. At the
