@@ -117,7 +117,7 @@ notebook/
       cli.py              argument parsing for notebook-watch
       reader.py           incremental reader of the record: complete lines, chain, stop rules
       versions.py         one version per pass: views, page in at_bench mode, scan, picture check, in memory
-      serve.py            loopback server, GET only (Open question 3: needs the user's answer)
+      serve.py            loopback server, GET only (Open question 3: answered yes)
       assets/watch.js     the refresh script, served by the watch only (23.4)
   tests/                  unit, properties, real (see Testing Strategy)
 ```
@@ -174,10 +174,14 @@ uv run --project notebook notebook-watch \
   --record <bench state folder>/<session-id> --state <bench state folder> \
   --layouts notebook/layouts.toml --words notebook/commentary-words.txt \
   --scan-config body-lab/adapter/scan_sources.toml --scan-config wind-tunnel/adapter/scan_sources.toml \
-  --stop-list .kiro/blind-scan/stop-list.txt --port <port>
+  --stop-list .kiro/blind-scan/stop-list.txt --port <port> \
+  --app wind-tunnel/notebook --app body-lab/notebook
 ```
 
-Every option is required and none has a default; `--scan-config` at least once. A missing option is named and the
+Every option is required and none has a default; `--scan-config` and `--app` at least once. `--app` names an
+application's notebook folder, as for the build; the watch uses the one whose `app.toml` names the application of
+the record's start entry, and fails when there is not exactly one. It never looks for a settings file beside another
+input. A missing option is named and the
 watch exits 2 before it reads anything. There is no `--out` (the watch writes no site), no `--choices` (the parts after
 the seal are not read, 23.7) and no host option (the watch binds 127.0.0.1 only, 23.3). `--record` must lie under
 `--state`. Usage errors exit 2 and check failures exit 1, as for the build, and messages have the same form.
@@ -496,7 +500,7 @@ complete line it accepted.
 
 **Stop texts.** Every stop shows a fixed problem text from `text.py`, such as "not JSON", "not in the record's
 format", "out of sequence", "prev does not follow the entry before", "hash does not match", "refers to a blob that
-is not in the record" and "does not replay". It never shows the bad text and never the bench's error text (N37).
+is not in the record" and "the record so far does not make a session page". It never shows the bad text and never the bench's error text (N37).
 
 **Blind scan and picture check (23.6).** Each version (below) passes the two scan passes of Component 11 and the
 picture check of 7.3 for every picture it uses. A pass 1 finding stops the watch at the entry of its source line. A
@@ -514,10 +518,21 @@ shows the entry number and the kind of finding (term, path, credential or pictur
 - a prediction with no outcome entry shows "waiting" (23.8);
 - the entry of the hypothesis that is registered with no verdict yet is open and marked "at the bench" (23.9);
 - on the seal entry the page says that the session is sealed and that the build makes its finished page (23.10);
-- links to pages the watch does not serve (`how.html`, the cover, the lab pages and the replay pages) are left out.
+- links to pages the watch does not serve (`how.html`, the cover, the lab pages and the replay pages) are left out;
+- "What happened here", while the record has no seal entry, says the misses so far and that the bench checks the spec
+  at the seal and a next Kiro reads it after that (`STORY_MISSED_SO_FAR`, `STORY_AT_BENCH`); it never says "final"
+  of a record that is still being written (23.7);
+- a hypothesis with no trial yet, while the record has no seal entry, shows "not run yet" in place of "never run".
 
-**Versions (23.1, 23.4; N36).** A pass that accepts at least one new complete entry builds a version from
-`views.view` of the record so far, in `at_bench` mode, then runs both scan passes and the picture check on it. The
+The session page is `pages/book.py` `body` (the parts) and `pages/shelf.py` (the page around them); the watch calls
+`shelf.at_bench_page`. The page's counts take the singular when the count is one ("1 row is validated", "1 trial",
+"1 rule was struck out"); the word for one budgeted step comes from `unit_one` in `app.toml` (notebook-shelf design),
+not from cutting a letter off `unit`.
+
+**Versions (23.1, 23.4; N36).** A pass that accepts at least one new complete entry builds a version from the
+record so far (`records.from_entries`), checks every trial's picture sheet, makes the page in `at_bench` mode
+(`shelf.at_bench_page`) and runs both scan passes on it. When the reader stops in the same pass after accepting
+entries, the version of the accepted entries is made first and the stop is recorded after it. The
 version is held in memory. Its number grows by one, and `/version` returns it. A version is served only after it has
 passed completely.
 
@@ -528,9 +543,11 @@ that passed stays on the page. `/version` also gives the stop text, and `watch.j
 **Serving (23.3; Open question 3).** The watch answers only on 127.0.0.1, only for GET, with these fixed routes: the
 session page at `/<app>-<session>.html` and at `/`; `/version` (JSON: the version number and the stop text or `null`);
 `/legend.html`; `/a/notebook.css`, `/a/notebook.js` and `/a/watch.js`; and `/p/<sha256>.png` for each picture the page
-names. Any other path gets 404. The assets are read from the package when the watch starts. Pictures come from the
-record's blobs or from the version in memory. The watch writes no file. Whether the server may use the standard
-`http.server` at all is Open question 3; no server code is written before its answer.
+names. The fonts and the font licence that `notebook.css` refers to (`/a/*.woff2`, `/a/fonts-license.txt`) are
+served too. Any other path gets 404. The assets are read from the package when the watch starts. Pictures come from the
+record's blobs or from the version in memory. The watch writes no file. The server uses the standard `http.server`
+under the exception the user approved (Open question 3, answered yes). `serve.py` also holds `fetch()`, a small
+`http.client` call that the tests use to read the routes, because the tests keep the ban on `http` and `socket`.
 
 **Refresh (23.4; `a/watch.js`).** `watch.js` is served by the watch only, and the build does not link it. Every 1000
 ms it reads `/version`. When the number changes it fetches the page at the current address (same origin); saves
@@ -1128,9 +1145,10 @@ changes `bench/`.
   site; no `--choices`, because the parts after the seal are not read (23.7); and no host option, because it binds
   127.0.0.1 only (23.3). `--record` must lie under `--state`. The start entry's session must equal the record folder's
   name. The state folder has no application folder (`bench` design 9.1), so the application is not checked against a
-  folder name; the report asks the user about this. Not chosen: a build flag (it would share the output-folder rules
+  folder name. Not chosen: a build flag (it would share the output-folder rules
   and the site writer, and the watch writes no site); a second page code (23.1).
-- **N34 One session page, two modes (Decision 53).** `pages/session.py` takes `mode` as `sealed` or `at_bench`. The
+- **N34 One session page, two modes (Decision 53).** `pages/book.py` `body` and `pages/shelf.py` take `mode` as
+  `sealed` or `at_bench`. The
   build passes `sealed` and the watch passes `at_bench`. The differences are exactly those listed in Component 13, and
   every other part is the same code, so Property 19 can compare them. The banner and the "at the bench" label use
   commentary ink and the stamp style; their classes are added to `notebook.css` with words that N28 allows. Not
@@ -1144,8 +1162,9 @@ changes `bench/`.
     cannot use it on a growing file, so it applies the same checks as `chain.read_entries` line by line: canonical
     form, seq, prev, hash by `entry_hash` (with `GENESIS`), and the shape of each blob reference (`check_blob_ref`).
   - `Store.open` takes the `.lock` file. The watch never calls it and never opens `.lock`.
-  - `views.view` replays the accepted prefix through `bench.core.state.apply`. A failure there stops the watch at that
-    entry with the fixed text "does not replay", without a fallback.
+  - The record so far is made into a model by `records.from_entries` and a page by `shelf.at_bench_page`. When
+    either fails, the watch stops at the newest entry of the pass with the fixed text "the record so far does not
+    make a session page" (`WATCH_NO_PAGE`); the error's own words are not shown, as they may quote the record.
   Not chosen: an incremental `verify` in the bench (a `bench/` change, which this spec may not make).
 - **N36 Versions are held in memory (Decision 53).** A version is a complete set of files held in memory: the page,
   the legend, the pictures the page names, and the derived magnified pictures (Component 10). The build's functions
@@ -1153,7 +1172,7 @@ changes `bench/`.
   page at most about 1.5 s after it is written, before rendering, within the 2 seconds of 23.4. The 500 ms is the
   builder's choice; it is not a requirement. Not chosen: writing versions to a folder (23.2 forbids writing anywhere).
 - **N37 A stop keeps the last good version (Decision 53; 23.5, 23.6).** A stop is decided at the first line that
-  fails a check, at the first scan or picture finding, or at the first entry that does not replay. The stop makes no
+  fails a check, at the first scan or picture finding, or at the first pass whose record does not make a page. The stop makes no
   version. The last version that passed stays served, `/version` gives the stop text, and no further line is read.
   The process keeps serving until the user stops it. The stop text gives the line number, which is the entry number
   (seq equals the line number), and a fixed problem text. A finding gives the entry number and the kind of finding,
@@ -1161,15 +1180,15 @@ changes `bench/`.
 
 ## Open questions
 
-Open question 3 is new and needs the user's answer; tasks 26.1 and 26.2 wait for it. The former Open question 1
+Open question 3 was answered yes by the user (2026-11-21): the exception below is in `pyproject.toml`. The former Open question 1
 (adapters for the scan) was decided by the user as N23, the former Open question 2 (unreadable middle-step table) as
 N26, the former Open question 3 as N24, and the former Open question 4 as N25. The new Open question 3 is a different
 question with the same number.
 
-### 3. Serving the watch on loopback (needs the user's answer)
+### 3. Serving the watch on loopback (answered: yes)
 
 Requirement 23.3 needs an HTTP server that answers on the loopback address. Ruff bans `http` and `socket` in
-`notebook/` (N1), so the server cannot be written without an exception. This design does not decide it.
+`notebook/` (N1), so the server cannot be written without an exception. The user decided it (below).
 
 The proposed exception: a per-file exception in `notebook/src/notebook/watch/serve.py` only, allowing the standard
 `http.server`, bound to 127.0.0.1. The build modules keep the ban, and a test checks that no build module imports the
@@ -1177,5 +1196,5 @@ watch.
 
 Options for the user:
 
-- (a) Yes: the exception as written above.
+- (a) Yes: the exception as written above. **Chosen by the user (2026-11-21).**
 - (b) No: another way to serve loopback, to be proposed. Until one is chosen, the watch cannot be built as designed.

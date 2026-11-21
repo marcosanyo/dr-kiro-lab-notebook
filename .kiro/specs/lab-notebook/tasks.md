@@ -42,8 +42,8 @@ writes nothing into a `lab/` folder.
   assets, choice reasons). A scan finding in builder text is fixed by rewording, never by the stop list.
 - **No invented numbers.** Every number on the site comes from a record field or a computation the design names.
 - **The watch.** Tasks 25 and 26 (Requirement 23, design Component 13, N33-N37) write no file, never take the bench's
-  `.lock` file, and read only the one record folder given by `--record`. Task 26.1 is a question to the user about
-  Open question 3 of the design; no server code is written before the answer.
+  `.lock` file, and read only the one record folder given by `--record`. Task 26.1 asked the user about Open question 3
+  of the design; the answer was yes (2026-11-21).
 - **Commits.** Commit only the files the task changed, each added by name, with no co-author line.
 
 ## Tasks
@@ -485,7 +485,7 @@ after milestone 3 and before "Built from the spec".
 
   - [x] 25.3 Write the `at_bench` mode of the session page and the view of the record so far
     - `records.py`: a model built from accepted entries of a prefix, without the whole-file `verify`, since the reader
-      has checked each line (N35). `views.py`: `view(record, upto)` on the prefix. `pages/session.py`: the `mode`
+      has checked each line (N35). `views.py`: `view(record, upto)` on the prefix. `pages/book.py` and `pages/shelf.py`: the `mode`
       parameter (`sealed` or `at_bench`, N34), with exactly the differences listed in design Component 13: the header
       "at the bench" with the session id in place of the title; the headings "written after the seal" or "runs after
       the seal" in commentary ink; "not yet checked by the bench" on every table status and no end check; "waiting" for
@@ -513,7 +513,7 @@ after milestone 3 and before "Built from the spec".
     - _Requirements: 23.6, 20.1, 20.2, 7.3_
 
 - [x] 26. Watch: the loopback server and the refresh
-  - [ ] 26.1 **Stop and ask**: the server exception of Open question 3 (answer not recorded yet)
+  - [x] 26.1 **Stop and ask**: the server exception of Open question 3 (answered yes, 2026-11-21)
     - Report to the user in Japanese, and wait. The question: `notebook/` bans `http` and `socket` (N1), and the watch
       needs a loopback HTTP server. The proposed exception is `notebook/src/notebook/watch/serve.py` only, with the
       standard `http.server` bound to 127.0.0.1; the build modules keep the ban, and a test checks that no build module
@@ -521,12 +521,12 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the user's answer is recorded in `docs/status.md`.
     - _Requirements: 23.3_
 
-  - [ ] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes; code exists on branch `feat/lab-notebook-watch`, not merged)
+  - [x] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes)
     - Note: this task may import the standard `http.server` only in `notebook/src/notebook/watch/serve.py`, because the
       user's answer to Open question 3 allows it. No other file may import `http`, `socket` or `urllib`, and the build
       modules keep every ban.
     - `notebook/src/notebook/watch/cli.py` (console script `notebook-watch`): every option of design "Command line of the
-      watch" required, no default, `--scan-config` at least once; no `--out`, no `--choices`, no host option; a record
+      watch" required, no default, `--scan-config` and `--app` at least once; no `--out`, no `--choices`, no host option; a record
       folder outside `--state` is refused; a start entry whose session differs from the folder name is refused. Usage
       errors exit 2, check failures exit 1. `serve.py`: binds 127.0.0.1 only; answers GET only; the fixed routes of
       design Component 13 (the session page at its address and at `/`, `/version`, `/legend.html`, `/a/notebook.css`,
@@ -539,7 +539,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 3.2_
 
-  - [ ] 26.3 Write `watch.js` and its static checks (after 26.2; code exists on branch `feat/lab-notebook-watch`, not merged)
+  - [x] 26.3 Write `watch.js` and its static checks (after 26.2)
     - `notebook/src/notebook/watch/assets/watch.js` (served by the watch only): polls `/version` every 1000 ms; when the
       number changes it fetches the page at the current address (same origin), saves `scrollY` and the open state of every
       `<details>` by id, replaces the content of `main`, restores the scroll position and the open states, shows the stop
@@ -559,6 +559,15 @@ after milestone 3 and before "Built from the spec".
       the user.
     - Verified by: the user's answer is recorded in `docs/status.md`.
     - _Requirements: 23.4, 23.11, 3.5_
+  - [x] 26.5 Fix what the browser check found
+    - "What happened here" before the seal says the misses so far and when the spec is checked and read, never
+      "final"; a hypothesis with no trial yet shows "not run yet"; counts of one take the singular, with `unit_one` in
+      `app.toml`. `notebook-watch` takes `--app` like the build instead of looking beside `--scan-config`. A record
+      so far that does not make a page stops the watch at the newest entry with `WATCH_NO_PAGE` (N37).
+    - Unit tests: the story and "not run yet" before and after the seal, the singular trial chip, the stop on a second
+      start entry; Property 19 leaves out the story section as it leaves out the title.
+    - Verified by: the checks.
+    - _Requirements: 23.5, 23.7, 23.9_
 
 ### Then
 

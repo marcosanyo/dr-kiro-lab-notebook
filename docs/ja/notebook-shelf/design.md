@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/design.md`](../../../.kiro/specs/notebook-shelf/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `5868190a533019c89510d3d54ebb695f8aaae56319432cbfb0f6ffe41e3d30e4`
+> 原文 SHA-256: `c63bfad225124b33147aa34ef32a0976d72022478623fe2b8738a12641c2b3d1`
 # Design: notebook-shelf
 この設計は `notebook-shelf` の要件 1〜7 を対象とします。`lab-notebook` のページの層を変え、その下はそのまま残します。
 どの Kiro か: すべて **ビルダー** が作って動かし、**訪問者** が読みます。
@@ -12,7 +12,7 @@
 - `/` と `/<application>/` のリンクだけが相対でない。目隠しのスキャンは、ほかのすべてのリンクと同じように読み、サイトの外のフォルダーを指さないことを確かめる。
 - ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開く（`notebook.js`）。
 ## 設定と choice のファイル（要件 2.3）
-`<application>/notebook/app.toml`: `application`、`order`、`case`、`door`、`door_line`、`about`、`open`（最初に開くセッション。ロボットは `body-3`、風洞は `wt-004`）、`unit`、`theme`（`day` か `night`）、`pen`（`blue` か `orange`）、`decoration`（`none` か `halloween`）、撮り直した絵があるアプリでは `display`（フォルダーの名前）。`<application>/notebook/choices/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`body`（任意。記録にボディのラベルがあれば一致しなければならない）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も付箋も要りません。どの文にも長さの上限があります。要約はさらに 40 語以内（`choices._summary`）で、超えるとビルドが失敗します。`model` と `date` は記録にないので、人が書きます。`notebook-build` はアプリごとに `--app <application>/notebook` を 1 つ受け取り、記録にあるのに指定のないアプリ、記録のない指定はビルドの失敗です。
+`<application>/notebook/app.toml`: `application`、`order`、`case`、`door`、`door_line`、`about`、`open`（最初に開くセッション。ロボットは `body-3`、風洞は `wt-004`）、`unit`（`trials` か `runs`）、`unit_one`（1 のときの同じ語: `trial` か `run`）、`theme`（`day` か `night`）、`pen`（`blue` か `orange`）、`decoration`（`none` か `halloween`）、撮り直した絵があるアプリでは `display`（フォルダーの名前）。`<application>/notebook/choices/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`body`（任意。記録にボディのラベルがあれば一致しなければならない）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も付箋も要りません。どの文にも長さの上限があります。要約はさらに 40 語以内（`choices._summary`）で、超えるとビルドが失敗します。`model` と `date` は記録にないので、人が書きます。`notebook-build` はアプリごとに `--app <application>/notebook` を 1 つ受け取り、記録にあるのに指定のないアプリ、記録のない指定はビルドの失敗です。
 ## 「ここまでの一番」（要件 3.3）
 `progress.series` は試行を順に見ます。測定が数で、`require` があれば 2 つ目の測定が `equals` に等しいとき、その試行は数えられます。数えられた値がそれまでの一番より良ければ一番が動きます。最初に数えられた試行が線を始め、「new best」にはなりません。段は、変化が一番低い値と高い値の幅の 4% 以上のときに名前がつきます。グラフはインライン SVG で、文字は鉛筆のセグメントと手書き風のラベルです。記録にない数字はありません。
 ## 仮説の開いたメモ
