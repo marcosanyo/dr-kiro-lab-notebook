@@ -58,7 +58,7 @@ def _lab_links(current: App, apps: tuple[App, ...]) -> list[Segment]:
         if app is current:
             continue
         links += [
-            *say_text("LIST_SEPARATOR"),
+            *say_text("LINK_SEPARATOR"),
             *say_text("OTHER_LAB"),
             *link(addresses.apps_link(app.slug, app.source), html.text(commentary(app.door, app.source))),
         ]

@@ -150,7 +150,6 @@ BANDS_OPEN_HIGH = ")"
 # stamp labels of the cited rows (8.2) within the limit, the cover's photos show the trial id without the word
 # "trial" and the track has a one-word caption (user, checkpoint 11).
 SITE_TITLE = "Dr. Kiro's Lab Notebook"
-TAGLINE = "The experiment gets the final edit."
 COVER_MISS_NONE = "This session has no missed prediction."
 COVER_NO_ROW = "No row cites it."
 COVER_DETAILS = "details"
@@ -509,6 +508,12 @@ READER_ABOUT = (
     "A second Kiro, the reader, never saw the experiments. It answered this request three ways. "
     "Pass or fail is decided by the bench against ranges written before the runs."
 )
+# The line under the request sentence: the trial budget of each run and the pass ranges that decide it. The
+# numbers come from the sealed start entry (budget, units) and from the request file (ranges).
+READER_LIMIT_BUDGET = "each run: up to "
+READER_LIMIT_TRIALS = " trials"
+READER_LIMIT_PASS = "pass: "
+READER_LIMIT_TO = " to "
 READER_SETUP_SPEC = "Spec only"
 READER_SETUP_RECORD = "Raw record only"
 READER_SETUP_NONE = "Nothing"
@@ -537,11 +542,11 @@ PREDICTION_IN = " in "
 NOTE_MISSED = " missed: "
 NOTE_EXPECTED = " was expected in "
 NOTE_TRIALS_USED = " used, of the whole budget"
-FRONT_LINK = "both labs"
+FRONT_LINK = "All labs"
 KEY_NOTES_BLUE = "blue pen: our notes"
 KEY_NOTES_ORANGE = "orange label: our notes"
 FRONT_KICKER = "a laboratory · two cases"
-FRONT_TAGLINE = "The experiment gets the final edit."
+FRONT_CLAIM = "Normally the spec judges the code. Here, the experiment judges the spec."
 FRONT_LEAD = (
     "Dr. Kiro, a Kiro agent, studies a system it has no description of and writes down the spec it finds. "
     "Two applications stand on one skeleton. Choose a door."
@@ -589,5 +594,6 @@ ALL_INTRO = "Each card: what Dr. Kiro predicted before the run, and what happene
 READER_INTRO = "The test of the spec: another Kiro, who never saw the experiments, is given one task."
 PROGRESS_MARK_A = " The dashed line marks the first trial where "
 PROGRESS_MARK_B = "."
-OTHER_LAB = "the other lab: "
+OTHER_LAB = "Go to "
+LINK_SEPARATOR = " · "
 STOPPED_HEADING = "Sessions that stopped early, kept as they ended"

@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/design.md`](../../../.kiro/specs/notebook-shelf/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `55d02ce035e898af12c83c295d040311488b61acd483a4c73ab2b00b1a2a9de0`
+> 原文 SHA-256: `9405dac1acca1094893c6631605fb114477c8dedec7d03623689dd045d109fb2`
 # Design: notebook-shelf
 この設計は `notebook-shelf` の要件 1〜7 を対象とします。`lab-notebook` のページの層を変え、その下はそのまま残します。
 どの Kiro か: すべて **ビルダー** が作って動かし、**訪問者** が読みます。
@@ -7,12 +7,12 @@
 ビルドの 4 つの段階は変えません。段階 1 は記録、choices のファイル（`choices.py`）、cover のファイル、`--display` が与えられたときは表示用のマニフェスト（`display.py`）を読みます。段階 3 は 3 種類のページを作ります: 棚のページ（`pages/shelf.py` と `pages/book.py`）、インクの凡例（`pages/legend.py`）、「ラボのしくみ」（`pages/how.py`）。なくしたもの: 表紙、ラボ、セッション、リプレイ、バンドのページと、`chart.py`、`bands.py`、`plots.py`。
 ## Pages
 - ルートには表のページ（`index.html`）と `a/` がある。各アプリはフォルダー `<application>/` で、セッションごとに 1 ページ（`<session>.html`）、`index.html`（`app.toml` が指すセッションのページと同じバイト列）、`legend.html`、`how.html`、`p/`、`a/` を持つ。どのフォルダーも、スタイルシート、スクリプト、フォントを自分用に持つので、フォルダー 1 つがそれだけで 1 冊のノートになる。書き込みの段階でフォルダーを作る。パスは、アプリ、そのあと `a/`、`p/` またはページ。
-- アプリのどのページも、上に小さなリンク 2 つ（`/` と `/<other application>/`）、見出し、アプリのカード（リンク。止まったセッションは別の行の小さなカード）、開いたノート（`article.book`）を持つ。アプリのページのフッターには表のページ `/` へのリンクがある。
-- ページの `<html>` 要素は `data-app`（アプリ、または `front`）、`data-mode`（開くテーマ）、`data-pen` を持つ。テーマの切り替えはなく、スクリプトは何も保存しない: アプリのテーマは `app.toml` で決まる。
+- アプリのどのページも、上に英語の小さなリンク 2 つ（「All labs」は `/`、「Go to」に続けて他方の扉の題を置いたリンクは `/<other application>/`。`pages/shelf.py` の `_lab_links`）、見出し、アプリのカード（リンク。止まったセッションは別の行の小さなカード）、開いたノート（`article.book`）を持つ。アプリのページのフッターには表のページ `/` へのリンクがある。
+- ページの `<html>` 要素は `data-app`（アプリ、または `front`）、`data-mode`（開くテーマ）、`data-pen` を持つ。テーマの切り替えはなく、スクリプトは何も保存しない: アプリのテーマは `app.toml` で決まる。入口のページは `data-app="front"` と `data-mode="night"` を持ち、スタイルシートに独自のパレットを持たない（`pages/front.py`、`parts.page`）。題の下には `text.py` の `FRONT_CLAIM` の 1 行を出し、そのあとに導入の段落が続く。ほかの標語は出さない。
 - `/` と `/<application>/` のリンクだけが相対でない。目隠しのスキャンは、ほかのすべてのリンクと同じように読み、サイトの外のフォルダーを指さないことを確かめる。
 - ページ内の id: 規則のカードに `row-<id>`、仮説の行に `H<n>`、実験に `E<n>`、試行のカードに `E<n>-T<n>`、予測に `H<n>.P<n>`。閉じたメモの中の id へのリンクは、そのメモを開く（`notebook.js`）。
 ## 設定と choice のファイル（要件 2.3）
-`<application>/notebook/app.toml`: `application`、`order`、`case`、`door`、`door_line`、`about`、`open`、`unit`、`theme`（`day` か `night`）、`pen`（`blue` か `orange`）、`decoration`（`none` か `halloween`）、撮り直した絵があるアプリでは `display`（フォルダーの名前）。`<application>/notebook/choices/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も付箋も要りません。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`notebook-build` はアプリごとに `--app <application>/notebook` を 1 つ受け取り、記録にあるのに指定のないアプリ、記録のない指定はビルドの失敗です。
+`<application>/notebook/app.toml`: `application`、`order`、`case`、`door`、`door_line`、`about`、`open`（最初に開くセッション。ロボットは `body-3`、風洞は `wt-004`）、`unit`、`theme`（`day` か `night`）、`pen`（`blue` か `orange`）、`decoration`（`none` か `halloween`）、撮り直した絵があるアプリでは `display`（フォルダーの名前）。`<application>/notebook/choices/<session>.toml`: `title`、`subtitle`、`summary`、`line`、`model`、`date`（YYYY-MM-DD）、`body`（任意。記録にボディのラベルがあれば一致しなければならない）、`color`（6 つの帯の色のどれか）、`[progress]`（`measurement`、`better`、任意で `equals` つきの `require`）、`[[polaroid]]` を 2 つ（`heading`、`trial`、`words`、任意で `star`）、`[[note]]` を 3 つ（`kind` は `best`、`hits`、`rejected`、`trials`、`miss` のどれか。`miss` は `prediction` を名指しし、それは値のある外れた予測でなければならない。3 つは互いに違う）。試行が 1 つのセッションは写真 1 枚、0 のセッションは写真も `[progress]` も付箋も要りません。どの文にも長さの上限があります。`model` と `date` は記録にないので、人が書きます。`notebook-build` はアプリごとに `--app <application>/notebook` を 1 つ受け取り、記録にあるのに指定のないアプリ、記録のない指定はビルドの失敗です。
 ## 「ここまでの一番」（要件 3.3）
 `progress.series` は試行を順に見ます。測定が数で、`require` があれば 2 つ目の測定が `equals` に等しいとき、その試行は数えられます。数えられた値がそれまでの一番より良ければ一番が動きます。最初に数えられた試行が線を始め、「new best」にはなりません。段は、変化が一番低い値と高い値の幅の 4% 以上のときに名前がつきます。グラフはインライン SVG で、文字は鉛筆のセグメントと手書き風のラベルです。記録にない数字はありません。
 ## 仮説の開いたメモ
@@ -26,7 +26,9 @@ Dr. Kiro の仮説の文は読める形で出す: `###` の行は見出しに、
 ## 表と計画
 `progress.table_of` は、受理された `end` スナップショットの表（確認済み）、なければ行のある最後のスナップショットの表（未確認）、それもなければ表なしを採ります。計画の行は、そのスナップショットの `tasks.md` の `- [x]`/`- [ ]` の行で、記録どおりの書き手がつきます。状態の数は、ベンチの 4 つの語だけを数えます。
 ## 夜と昼
-初期の色は夜の実験室です。`html[data-mode="day"]` がカスタムプロパティを置き換えます。スクリプトがその属性を設定し、`localStorage` に 1 つの値 `notebook-mode` を保存します。保存がブロックされていれば、選択はそのページの間だけです。付箋、写真、開いたメモは、どちらのモードでも紙の色を保ち、自分のインクの色を設定します。
+既定の色は夜の実験室（`:root` のカスタムプロパティ）です。`html[data-mode="day"]` がそれを置き換えます。各ページは `app.toml` の `theme` で決まるモードで開きます: 風洞は昼、ロボットと入口は夜。切り替えも、スクリプトの設定も、保存される値もありません。入口の扉は例外で、`.door-day` と `.door-night` が昼と夜のパレットの値を写しています（入口は自分のモードを持たないため）。付箋、写真、開いたメモは、どちらのモードでも紙の色を保ち、自分のインクの色を設定します。
+## リーダーの予算と範囲（要件 5.2）
+`readerruns._read` は、予算と測定の単位を各実行自身の封印された開始エントリー（`_start_limits`: `budget`、`declaration.measurements`）から取ります。ノートは依頼が求めるものではなく、ベンチが許した予算と宣言した単位を示します。`readerrequest.load` は依頼のファイルから合格の範囲を取り、実行ファイルの SHA-256 と照合します。`pages/book.py` の `_limits` が、依頼の文の下に `<p class="reader-limits">` を 1 つ書きます: 予算（鉛筆）、そのあと各合格を `<測定> <下限>` と `<上限> <単位>` を `to` でつないで並べます。同じ依頼の実行で予算か単位が違うとき、または合格が実行の宣言にない測定を指すときは例外を出します。`text.py` の文字列は `READER_LIMIT_*` です。
 ## 撮り直した表示用の絵（要件 6）
 フォルダーには `manifest.toml` と PNG のシートがあります。各 `[[retake]]` は `application`、`session`、`trial`、`file`、`sha256`、`source_picture`、`columns`、`rows`、`interval`、`frame_seconds`、`track`、`track_step`、`measured` を持ちます。次のどれかが満たされないと、ビルドはその項目を拒みます: ファイルの SHA-256 が `sha256` と同じ、`source_picture` がその試行の記録の絵のハッシュ、シートが `columns` と `rows` に隙間 0 で割り切れる、`measured` が空でなく、すべての値がその名前の記録の値と有効数字 4 桁で等しい、`track` が `track_step * columns * rows + 1` 個のサンプルを持つ記録のメートルの系列。絵は `p/<sha256>.png` としてコピーされ、拡大した絵の代わりに出ます。記録の全体のシートは「whole picture」のボタンで見られます。
 ### 絵の撮り方（`notebook-retake`、Mac で）
@@ -44,3 +46,5 @@ Dr. Kiro の仮説の文は読める形で出す: `###` の行は見出しに、
 2. 最初に数えられた試行は、前に何もないので、「ここまでの一番」でも仮説の行でも「new best」にしない。
 3. モデル名は記録にない。choices のファイルの必須のキーで、人が書く。
 4. 日付は、人が言うセッションの封印の日。記録に時刻はない。最初の日付は、各記録が git に入った日。
+5. リーダーの予算と単位は、リーダーの実行の封印された開始エントリーから取る。依頼のファイルやビルダーのアプリの表からは取らない。依頼のファイルは文と範囲だけを持つ。記録が述べていない予算は、ビルドを失敗させる（要件 5.2）。
+6. 入口のページは自分のパレットを持たず、モードのないページが使う夜の紙を使う。各扉はそのラボのパレットの値を写す。パレットを変えるときは、2 つの扉のブロックも同じに変える。

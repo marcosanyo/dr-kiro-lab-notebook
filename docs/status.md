@@ -3,6 +3,11 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## 入口とノートの直し（ブランチ `feat/notebook-front-and-spec`、main の 05ecda3 から）
+- 済み: 入口をノートの紙とインクにそろえ、題の下に英語の一言「Normally the spec judges the code. Here, the experiment judges the spec.」を置き、古い標語（The experiment gets the final edit.）は入口から消した。長い文の置き場所は、PR で提案中。上のリンクは「All labs」「Go to <扉の題>」。body-lab は `open = "body-3"` で開く。reader の欄に「each run: up to N trials · pass: …」の 1 行。N と単位は各実行の封印された開始エントリーから、範囲は依頼のファイルから。値がなければビルドが止まる。
+- 済み: `.kiro/specs/notebook-shelf/` を今のノートに合わせて書き直し、訳（`docs/ja/notebook-shelf/`）も合わせた。`scripts/ja-check.sh` は通る。
+- 次: PR を開いて、ユーザーが見て、マージする。見た目（入口の扉、夜の紙）は実機で確かめていない。
+
 ## 体が変わった実験とノート（ブランチ `feat/notebook-body-changed`、2026-11-21）
 - main に、ノートの棚の残り（PR #40 の後の 7 コミット）、ノートの見た目の直し、2 つ目の体（`feat/second-body`）をまとめた。
 - 記録：`body-3`（体 b、40 試行）と reader 6 回（頼み `crawl-further` と `crawl-further-new`。文と範囲は同じで、source が違う）。体 b で、body-2 の spec 0/2、body-3 の spec 2/2、何も無し 0/2。
