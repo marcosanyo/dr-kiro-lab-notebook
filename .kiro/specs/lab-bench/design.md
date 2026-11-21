@@ -1213,3 +1213,22 @@ Added for the `body-lab` spec (its Requirement 7).
 - A caller of an adapter factory other than the config loader (the blind scan's term list, `bench-new-session`,
   `build-from-spec`, the notebook) cannot work without a variant. They only need the declaration, which does not
   depend on the variant (`body-lab` Requirement 7.5). The builder stops and asks if one of them needs the body itself.
+
+# Amendment: one prediction block per hypothesis (Requirement 24)
+
+## G1. Rules (24.1-24.4)
+
+- `specfiles/hypotheses.py` finds the first `prediction` fence after the first block's closing fence, inside the
+  hypothesis block, outside any other fence (`_second_prediction`). `parse_hypothesis` refuses with that line (24.1).
+- `second_prediction_line(text, id)` gives the same line for a registered hypothesis. `Session._check_frozen` calls
+  it after `frozen_status` passes, so a changed frozen part is still reported first, and refuses with the hypothesis
+  and the line (24.2). The frozen part and `frozen_parts` do not change (6.7).
+- Nothing reads sealed records differently (24.4). The `discovered/` copies of the sealed sessions hold one block per
+  hypothesis (checked on 2026-11-22).
+
+## G2. Tests
+
+`bench/tests/unit/test_hypotheses.py`: refusal at registration with the line; a later block found while the frozen
+part is unchanged; a block quoted in another fence and the next hypothesis's block are not counted.
+`bench/tests/unit/test_session.py`: a block added after registration refuses `run_experiment`, and the run passes
+once it is removed.

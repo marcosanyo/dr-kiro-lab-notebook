@@ -839,3 +839,26 @@ and to find the choice in the sealed record, so that records made on different v
 **Generic, and a stop on a missing or unknown value.** The user chose a generic setting, and that a missing or unknown
 value stops the session instead of choosing a default body. The checks in 23.3 and 23.4 are the stop. Details are in
 design section E1.
+
+### Requirement 24: One prediction block per hypothesis (amendment)
+
+**Amendment.** Added on 2026-11-22, implemented as `lab-bench` task 40. Requirement 6.7 is narrowed: appended text is
+free, except a second `prediction` block. No other requirement is reworded.
+
+**User Story:** As Dr. Kiro, I want to be told when a prediction I wrote is not read, so that I do not judge a
+hypothesis by a prediction the bench never registered.
+
+**Concerns:** Dr. Kiro. Before this amendment, a second `prediction` block in a hypothesis was free text: the bench
+registered only the first block and gave no sign that the second was not read (`rules.md` 2, no silent fallback).
+
+#### Acceptance criteria
+
+1. IF a hypothesis block holds a second `prediction` block after its first one, THEN THE bench SHALL refuse the
+   registration, naming the line of the second block and saying that every prediction goes in the first block or in
+   a new hypothesis.
+2. WHILE a registered hypothesis holds a second `prediction` block after its frozen part, THE bench SHALL refuse
+   every bench action except stop session, naming the hypothesis and the line, until Dr. Kiro removes it. The frozen
+   part itself is unchanged by it (6.7).
+3. A `prediction` block quoted inside another code fence SHALL NOT count as a second block.
+4. Records sealed before this amendment SHALL stay valid for `bench-verify` and `final_spec`: the check runs only on
+   bench actions, never on a sealed record.

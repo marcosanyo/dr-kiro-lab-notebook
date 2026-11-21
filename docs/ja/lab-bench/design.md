@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `de47f0a1b0665c0824f5fcc739edd6d6cd428d52b9470e85d94089c7db2ffa2e`
+> 原文 SHA-256: `01f80b1f66a53215cdd56b1b051166871af1087370f5d306dca133a6d9c58b13`
 
 # 設計: lab-bench（コア）
 
@@ -882,3 +882,15 @@ def _records(sessions: Path) -> list[Path]:
 
 - これが入るとき、`bench-run/` で開いているセッションがある。影響しない: その設定には `variant` がなく、アダプターが `variants` を持つのは `body-lab` の変更のときだけで、その変更は古い設定を開始時に拒否する。ビルダーが報告する。
 - 設定ローダー以外のアダプターファクトリーの呼び出し元（ブラインドスキャンの用語リスト、`bench-new-session`、`build-from-spec`、ノート）は、バリアントなしでは動かない。呼び出し元が必要とするのは宣言だけで、宣言はバリアントに依存しない（`body-lab` 要件 7.5）。呼び出し元がボディそのものを必要とするなら、ビルダーは止めて確認する。
+
+# 改訂: 1 つの仮説に 1 つの予測ブロック（要件 24）
+
+## G1. ルール（24.1-24.4）
+
+- `specfiles/hypotheses.py` は、仮説ブロックの中で、最初のブロックの閉じるフェンスの後、ほかのフェンスの外にある最初の `prediction` フェンスを探す（`_second_prediction`）。`parse_hypothesis` はその行を示して拒否する（24.1）。
+- `second_prediction_line(text, id)` は、登録済みの仮説について同じ行を返す。`Session._check_frozen` は `frozen_status` が通った後にこれを呼ぶので、凍結部分の変更が先に報告される。そのうえで仮説と行を示して拒否する（24.2）。凍結部分と `frozen_parts` は変わらない（6.7）。
+- 封印された記録の読み方は何も変わらない（24.4）。封印されたセッションの `discovered/` の写しは、どれも 1 つの仮説に 1 つのブロックである（2026-11-22 に確認）。
+
+## G2. テスト
+
+`bench/tests/unit/test_hypotheses.py`: 登録時に行を示して拒否する。凍結部分が変わらないまま後のブロックを見つける。別のフェンスに引用されたブロックと、次の仮説のブロックは数えない。`bench/tests/unit/test_session.py`: 登録後に足したブロックは `run_experiment` を拒否させ、取り除くと実行が通る。

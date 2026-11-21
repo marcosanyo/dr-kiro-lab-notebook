@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `6efbc00f62ce79771267d5448c22c8e31d6b1b4f5d964fd4b3449b3e33a465ab`
+> 原文 SHA-256: `b354bf94101cd694d0667d4dcc51bfe61163e6891e522b553d763b3cd59cf0b9`
 
 # タスク: lab-bench
 
@@ -322,3 +322,11 @@ import する唯一の場所です。
 - **39. `bench-mcp` とログ記録フックが `<lab>.bench-session.json` からセッションを見つける** — 完了
   - `frontend/pointer.py` がセッションファイルを書き、読む。`bench-new-session` と `bfs-run` がそれを書く。`config.for_lab` が作業フォルダーについてそれを読み、`lab_dir` を確かめる。`calllog.py` はフックログをそこから読む。`dr-kiro.json` から `env` 項目を除き、`BENCH_SESSION_CONFIG` と `BENCH_HOOK_LOG` はもう読まない。コミット済みのラボに新しいフックを入れる。サーバー、ランチャー、フック、`bench-new-session` のテスト。`sh bench/scripts/check.sh` が通る。
   - _要件: 17.5, 17.11, 17.12_
+
+## 改訂: 1 つの仮説に 1 つの予測ブロック（要件 24）
+
+設計: 「改訂: 1 つの仮説に 1 つの予測ブロック（要件 24）」。
+
+- **40. 2 つ目の `prediction` ブロックを拒否する** — 完了
+  - `specfiles/hypotheses.py` の `_second_prediction` と `second_prediction_line`。`parse_hypothesis` での拒否。`Session._check_frozen` での検査。設計 G2 のテスト。`sh bench/scripts/check.sh` が通る。
+  - _要件: 24.1-24.4_

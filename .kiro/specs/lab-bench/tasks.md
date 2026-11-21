@@ -401,3 +401,13 @@ Design: "D2. Where the hook log and session config live" (changed 2026-11-22), F
     the committed labs get the new hooks; the tests of the server, the launcher, the hooks and `bench-new-session`.
     `sh bench/scripts/check.sh` passes.
   - _Requirements: 17.5, 17.11, 17.12_
+
+## Amendment: one prediction block per hypothesis (Requirement 24)
+
+Design: "Amendment: one prediction block per hypothesis (Requirement 24)".
+
+- [x] 40. Refuse a second `prediction` block
+  - `_second_prediction` and `second_prediction_line` in `specfiles/hypotheses.py`; the refusal in
+    `parse_hypothesis`; the check in `Session._check_frozen`; the tests of design G2. `sh bench/scripts/check.sh`
+    passes.
+  - _Requirements: 24.1-24.4_
