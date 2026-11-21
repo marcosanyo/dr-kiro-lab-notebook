@@ -1,7 +1,8 @@
 """The command line `notebook-watch` (Requirement 23; design "Command line of the watch", N33).
 
-Every option is required and has no default; `--scan-config` is given at least once. There is no `--out`, no
-`--choices` and no host option: the watch writes nothing and binds 127.0.0.1 only. Usage errors exit 2 before
+Every option is required and has no default; `--scan-config` and `--app` are given at least once (`--app`
+names an application's notebook folder, as for the build). There is no `--out`, no `--choices` and no host
+option: the watch writes nothing and binds 127.0.0.1 only. Usage errors exit 2 before
 anything is read; a failed check prints `notebook-watch: <where>: <problem>` and exits 1.
 """
 
@@ -46,6 +47,7 @@ class WatchInputs:
     scan_configs: tuple[Path, ...]
     stop_list: Path
     port: int
+    apps: tuple[Path, ...]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -64,6 +66,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--stop-list", required=True, type=Path, help="the reviewed stop list")
     parser.add_argument("--port", required=True, type=int, help="the port on 127.0.0.1")
+    parser.add_argument(
+        "--app",
+        required=True,
+        action="append",
+        type=Path,
+        dest="apps",
+        help="an application's notebook folder (holding app.toml), as for the build; one per application",
+    )
     return parser
 
 
@@ -73,7 +83,14 @@ def parse(argv: list[str]) -> WatchInputs:
     if not 0 <= args.port <= PORT_MAX:
         _parser().error(f"--port must be from 0 to {PORT_MAX}")
     return WatchInputs(
-        args.record, args.state, args.layouts, args.words, tuple(args.scan_configs), args.stop_list, args.port
+        args.record,
+        args.state,
+        args.layouts,
+        args.words,
+        tuple(args.scan_configs),
+        args.stop_list,
+        args.port,
+        tuple(args.apps),
     )
 
 
@@ -104,20 +121,14 @@ def check_record(inputs: WatchInputs) -> tuple[str, str]:
     return application, session
 
 
-def app_folders(scan_configs: Sequence[Path]) -> list[Path]:
-    """Each application's notebook folder sits beside its adapter: `<app>/adapter/scan_sources.toml` and
-    `<app>/notebook/app.toml`."""
-    return [Path(c).resolve().parent.parent / "notebook" for c in scan_configs]
-
-
 def pick_app(folders: Sequence[Path], application: str) -> App:
     found = [app for app in (read_app(f) for f in folders) if app.application == application]
     if len(found) != 1:
-        raise NotebookError("--scan-config", f"no single settings file for the application {application!r}")
+        raise NotebookError("--app", f"no single settings file for the application {application!r}")
     return found[0]
 
 
-def prepare(inputs: WatchInputs, folders: Sequence[Path], *, allow_fake: bool = False) -> serve.Server:
+def prepare(inputs: WatchInputs, *, allow_fake: bool = False) -> serve.Server:
     """Check every input, make the watch and the server (the first pass is done, nothing is served yet).
     The command line passes `allow_fake=False`; only the Python API of the tests may pass True."""
     application, _ = check_record(inputs)
@@ -126,7 +137,7 @@ def prepare(inputs: WatchInputs, folders: Sequence[Path], *, allow_fake: bool = 
     word_list = words.load(inputs.words)
     for source, value in commentary_strings():
         word_list.check(value, source)
-    app = pick_app(folders, application)
+    app = pick_app(inputs.apps, application)
     page = scan.check(scanner, {"legend.html": legend.legend(app)})["legend.html"][0]
     static = serve.load_assets(ASSETS)
     static["/legend.html"] = (page.encode("utf-8"), serve.HTML)
@@ -137,7 +148,7 @@ def prepare(inputs: WatchInputs, folders: Sequence[Path], *, allow_fake: bool = 
 def main(argv: list[str] | None = None) -> int:
     inputs = parse(sys.argv[1:] if argv is None else argv)
     try:
-        server = prepare(inputs, app_folders(inputs.scan_configs))
+        server = prepare(inputs)
         print(f"{PROG}: http://{serve.HOST}:{server.port}/", file=sys.stderr)
         try:
             server.run()

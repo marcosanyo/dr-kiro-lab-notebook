@@ -128,7 +128,11 @@ def _chips(record: RecordModel, chosen: Choices | None, lab: App, table: Table |
     if chosen is not None:
         chips.append([*say_text("CHIP_MODEL"), *_human(chosen.model, f"{chosen.file} key model")])
     chips.append(
-        [*html.text(pencil(str(len(record.trials)), source)), markup(" "), *_human(lab.unit, lab.source)]
+        [
+            *html.text(pencil(str(len(record.trials)), source)),
+            markup(" "),
+            *_human(lab.unit_one if len(record.trials) == 1 else lab.unit, lab.source),
+        ]
     )
     if chosen is not None:
         chips.append([*say_text("CHIP_DATE"), *_human(chosen.date, f"{chosen.file} key date")])
@@ -202,9 +206,13 @@ def _borrowed(record: RecordModel, runs: list[readerruns.Run]) -> list[readerrun
     ]
 
 
-def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run]) -> list[Segment]:
+def _story(
+    record: RecordModel, table: Table | None, runs: list[readerruns.Run], mode: str = SEALED
+) -> list[Segment]:
     """What happened in this session, in three steps joined by arrows. Every number is counted from the
-    record, the table or the reader's runs; the words are plain English."""
+    record, the table or the reader's runs; the words are plain English. At the bench before the seal the
+    second and third steps say what is so far and when the rest comes (Requirement 23.7), never 'final'."""
+    running = mode == AT_BENCH and record.seal is None
     source = f"{record.name}: what happened"
     counts = progress.predictions(record)
     registered = sum(len(h.predictions) for h in record.hypotheses)
@@ -213,10 +221,17 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
     ]
     if registered == 0:
         return _el("section", "story", [*head, *_el("p", "story-none", say_text("STORY_NONE"))], id="story")
-    first = _sentence(source, "@STORY_WROTE_BEFORE", str(registered), "@STORY_WROTE_AFTER")
+    first = _sentence(
+        source,
+        "@STORY_WROTE_BEFORE",
+        str(registered),
+        "@STORY_WROTE_AFTER_ONE" if registered == 1 else "@STORY_WROTE_AFTER",
+    )
     stopped = record.seal is not None and record.seal.end == "stopped"
     if stopped:
         second = _sentence(source, str(counts.hit), "@OF", str(counts.total), "@STORY_CHECKED_STOPPED")
+    elif running:
+        second = _sentence(source, str(counts.miss), "@STORY_MISSED_SO_FAR")
     elif table is None:
         second = _sentence(source, str(counts.miss), "@STORY_MISSED_NO_TABLE")
     else:
@@ -230,7 +245,13 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
             if r.status in ("partly", "observed") and missed & set(r.predictions)
         ]
         if rejected:
-            second = _sentence(source, str(counts.miss), "@STORY_MISSED", str(rejected), "@STORY_STRUCK")
+            second = _sentence(
+                source,
+                str(counts.miss),
+                "@STORY_MISSED",
+                str(rejected),
+                "@STORY_STRUCK_ONE" if rejected == 1 else "@STORY_STRUCK",
+            )
         elif left:
             pieces: list[str] = [
                 str(counts.miss),
@@ -245,7 +266,9 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
         else:
             second = _sentence(source, str(counts.miss), "@STORY_MISSED_NONE_STRUCK")
     mine = _own(record, runs)
-    if mine:
+    if running:
+        third = say_text("STORY_AT_BENCH")
+    elif mine:
         tally = {
             setup: (passes, total) for setup, passes, total, _ in readerruns.tally(mine, mine[0].request_id)
         }
@@ -276,12 +299,13 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
             )
     elif table is not None:
         by = progress.status_counts(table)
+        rest = by["partly"] + by["observed"]
         third = _sentence(
             source,
             str(by["validated"]),
-            "@STORY_TRUST_A",
-            str(by["partly"] + by["observed"]),
-            "@STORY_TRUST_B",
+            "@STORY_TRUST_A_ONE" if by["validated"] == 1 else "@STORY_TRUST_A",
+            str(rest),
+            "@STORY_TRUST_B_ONE" if rest == 1 else "@STORY_TRUST_B",
         )
     else:
         third = say_text("STORY_NO_SPEC")
@@ -990,7 +1014,8 @@ def _hypothesis_row(
         shown.files += files
         pic = figure
     else:
-        pic = _el("p", "never-run", say_text("NEVER_RUN"))
+        not_yet = mode == AT_BENCH and record.seal is None
+        pic = _el("p", "never-run", say_text("NOT_RUN_YET" if not_yet else "NEVER_RUN"))
     verdict = next((v for v in record.verdicts if v.hypothesis == hypothesis.id), None)
     summary = [
         *_el("span", "hnum", html.text(pencil(hid, source))),
@@ -1333,7 +1358,7 @@ def body(
             *web,
             *holes,
             *_at_bench_head(record),
-            *_story(record, table, []),
+            *_story(record, table, [], mode),
             *_chips(record, None, lab, table),
             *_after_seal("HIGHLIGHT_HEADING", "WRITTEN_AFTER_SEAL", "highlight", id="highlight"),
             *_after_seal("READER_HEADING", "RUNS_AFTER_SEAL", "reader", id="reader"),

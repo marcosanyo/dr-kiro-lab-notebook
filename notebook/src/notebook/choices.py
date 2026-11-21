@@ -46,6 +46,7 @@ APP_KEYS = frozenset(
         "about",
         "open",
         "unit",
+        "unit_one",
         "theme",
         "pen",
         "decoration",
@@ -125,7 +126,8 @@ class App:
     door_line: str
     about: str
     open: str  # the session id the application's first page opens
-    unit: str  # the word for one budgeted step, "trials" or "runs"
+    unit: str  # the word for budgeted steps, "trials" or "runs"
+    unit_one: str  # the same word for one step, "trial" or "run"
     theme: str  # "day" or "night": the theme its notebook opens in
     pen: str  # "blue" or "orange": the colour of the pen of our notes
     decoration: str  # "none" or "halloween"
@@ -371,6 +373,7 @@ def read_app(folder: Path) -> App:
         about=_string(f"{where} about", data["about"], 400),
         open=opened,
         unit=_string(f"{where} unit", data["unit"], 20),
+        unit_one=_string(f"{where} unit_one", data["unit_one"], 20),
         theme=theme,
         pen=pen,
         decoration=decoration,

@@ -30,13 +30,14 @@ ONE = (
     "[fake]\nframes = 1\nrows = 1\ncolumns = 1\ngap = 0\ninterval = 200\n"
     'source = "test fixture: one 8 x 8 picture"\n'
 )
-OPTIONS = ["--record", "--state", "--layouts", "--words", "--scan-config", "--stop-list", "--port"]
+OPTIONS = ["--record", "--state", "--layouts", "--words", "--scan-config", "--stop-list", "--port", "--app"]
 
 
 def _argv(record, state, port="0"):
     return [
         "--record", str(record), "--state", str(state), "--layouts", str(LAYOUTS), "--words", str(WORDS),
         "--scan-config", str(CONFIGS[0]), "--stop-list", str(STOP_LIST), "--port", port,
+        "--app", str(Path(state) / "app"),
     ]  # fmt: skip
 
 
@@ -53,8 +54,8 @@ def state(tmp_path_factory):
 
 
 def _inputs(state, port=0):
-    folder, record, _, layouts = state
-    return cli.WatchInputs(record, folder, layouts, WORDS, tuple(CONFIGS), STOP_LIST, port)
+    folder, record, app, layouts = state
+    return cli.WatchInputs(record, folder, layouts, WORDS, tuple(CONFIGS), STOP_LIST, port, (app,))
 
 
 def _snapshot(folder: Path):
@@ -90,14 +91,18 @@ def test_a_record_outside_state_is_refused(state, tmp_path):
     other = tmp_path / "other"
     other.mkdir()
     with pytest.raises(NotebookError, match="--record"):
-        cli.check_record(cli.WatchInputs(record, other, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0))
+        cli.check_record(
+            cli.WatchInputs(record, other, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0, (state[2],))
+        )
 
 
 def test_a_start_entry_whose_session_differs_from_the_folder_name_is_refused(state, tmp_path):
     record = state[1]
     renamed = tmp_path / "state" / "other-name"
     shutil.copytree(record, renamed)
-    inputs = cli.WatchInputs(renamed, renamed.parent, state[3], WORDS, tuple(CONFIGS), STOP_LIST, 0)
+    inputs = cli.WatchInputs(
+        renamed, renamed.parent, state[3], WORDS, tuple(CONFIGS), STOP_LIST, 0, (state[2],)
+    )
     with pytest.raises(NotebookError, match="folder name"):
         cli.check_record(inputs)
 
@@ -113,7 +118,7 @@ def test_the_exit_code_of_a_failed_check_is_1(capsys, tmp_path):
 
 @pytest.fixture
 def running(state):
-    server = cli.prepare(_inputs(state), [state[2]], allow_fake=True)
+    server = cli.prepare(_inputs(state), allow_fake=True)
     thread = threading.Thread(target=server.run)
     thread.start()
     try:
@@ -182,8 +187,8 @@ def test_a_stop_is_in_version(state, tmp_path):
     lines = log.read_bytes().split(b"\n")
     lines[2] = b"{"  # the third line is not JSON
     log.write_bytes(b"\n".join(lines))
-    inputs = cli.WatchInputs(broken, broken.parent, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0)
-    server = cli.prepare(inputs, [app], allow_fake=True)
+    inputs = cli.WatchInputs(broken, broken.parent, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0, (app,))
+    server = cli.prepare(inputs, allow_fake=True)
     try:
         server.start()
         _, _, body = serve.fetch(server.port, "/version")
@@ -198,8 +203,8 @@ def test_the_watch_changes_nothing_on_disk(state, tmp_path):
     copy = tmp_path / "state"
     shutil.copytree(folder, copy)
     before = _snapshot(copy)
-    inputs = cli.WatchInputs(copy / record.name, copy, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0)
-    server = cli.prepare(inputs, [app], allow_fake=True)
+    inputs = cli.WatchInputs(copy / record.name, copy, layouts, WORDS, tuple(CONFIGS), STOP_LIST, 0, (app,))
+    server = cli.prepare(inputs, allow_fake=True)
     thread = threading.Thread(target=server.run)
     thread.start()
     try:

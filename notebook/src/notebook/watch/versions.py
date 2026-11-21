@@ -75,15 +75,25 @@ class Watch:
     def _make(self) -> None:
         newest = self.entries[-1]["seq"]
         folder = self.reader.folder
-        record = records.from_entries(folder, folder.name, list(self.entries), allow_fake=self.allow_fake)
-        layout = layouts.layout_for(self.table, record.application, record.name)
+        # A record so far that does not replay into a page stops the watch at the newest entry with a fixed
+        # text (design N37); the error's own words may quote the record, so they are not shown.
+        try:
+            record = records.from_entries(folder, folder.name, list(self.entries), allow_fake=self.allow_fake)
+            layout = layouts.layout_for(self.table, record.application, record.name)
+        except NotebookError:
+            self._stop(newest, text.WATCH_NO_PAGE)
+            return
         for trial in record.trials:
             try:
                 layouts.check_sheet(layout, record.name, trial.id, trial.picture.media, trial.picture.data)
             except NotebookError:
                 self._stop(trial.seq, text.WATCH_FOUND_PICTURE)
                 return
-        segments, pictures = shelf.at_bench_page(record, self.app, self.table, {})
+        try:
+            segments, pictures = shelf.at_bench_page(record, self.app, self.table, {})
+        except NotebookError:
+            self._stop(newest, text.WATCH_NO_PAGE)
+            return
         path = f"{self.app.slug}-{record.session}.html"
         try:
             joined = scan.check(self.scanner, {path: segments}, scan.drkiro_word_segments([record]))

@@ -147,3 +147,19 @@ def test_a_reader_stop_keeps_the_last_version(made, tmp_path):
     stopped = watch.poll()
     assert stopped.number == good.number and stopped.page == good.page
     assert (stopped.stop.line, stopped.stop.problem) == (4, text.WATCH_NOT_JSON)
+
+
+def test_a_record_that_does_not_make_a_page_stops_the_watch_at_the_newest_entry(made, tmp_path):
+    entries = [json.loads(json.dumps(e)) for e in made[3]]
+    seq = next(e["seq"] for e in entries if e["kind"] == "verdict")
+    # a second start entry: well formed and chained, but the record cannot replay with it
+    entries[seq - 1] = {**entries[seq - 1], "kind": "start", "body": entries[0]["body"]}
+    folder, lines = _state(made, tmp_path, _rechain(entries))
+    watch = _watch(made, folder)
+    _feed(folder, lines, seq - 1)
+    good = watch.poll()
+    assert good.stop is None
+    _feed(folder, lines, seq)
+    stopped = watch.poll()
+    assert stopped.number == good.number and stopped.page == good.page
+    assert (stopped.stop.line, stopped.stop.problem) == (seq, text.WATCH_NO_PAGE)

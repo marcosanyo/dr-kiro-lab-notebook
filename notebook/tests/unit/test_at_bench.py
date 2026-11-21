@@ -141,3 +141,23 @@ def test_a_mode_must_be_one_of_the_two_and_match_the_choice_file(made):
     layout = layouts.layout_for(table, full.application, full.name)
     with pytest.raises(NotebookError, match="no choice file"):
         book.body(full, layout, None, app, [], {}, {}, None, book.SEALED)
+
+
+def test_before_the_seal_the_story_says_what_is_so_far(made):
+    for upto in _cuts(made)[:2]:
+        page = _page(made, upto)
+        assert text.STORY_AT_BENCH in page and text.STORY_MISSED_SO_FAR in page
+        assert text.STORY_NO_SPEC not in page and text.STORY_MISSED_NO_TABLE not in page
+    assert text.STORY_AT_BENCH not in _page(made, _cuts(made)[2])
+
+
+def test_a_hypothesis_not_run_yet_is_not_called_never_run_at_the_bench(made):
+    page = _page(made, _cuts(made)[0])
+    assert f">{text.NOT_RUN_YET}<" in page and f">{text.NEVER_RUN}<" not in page
+
+
+def test_one_trial_is_counted_in_the_singular(made):
+    full = made[1]
+    page = _page(made, _seq(full, "trial"))
+    chips = page.split('class="chips"')[1].split("</ul>")[0]
+    assert f"{made[2].unit_one}<" in chips and f"{made[2].unit}<" not in chips

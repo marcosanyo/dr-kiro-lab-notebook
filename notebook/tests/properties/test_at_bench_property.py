@@ -6,8 +6,10 @@ each segment only the ink and the text are kept, and only the two inks that carr
 (hypotheses, rules, refusal text quoted from Dr. Kiro) and the pencil (trial values, outcome names, ids,
 bench refusal text, rows and their statuses). The commentary ink and the markup are the wording and the
 structure, which differ on purpose (labels, headings, the open entry, "waiting"), so they are not compared.
-The one pencil segment that is not data of the record, the session id in the page head of the page at the
-bench, is dropped by cutting the page's `book-title` element from both lists. This is the stable interface
+Two elements are cut from both lists: the page head's `book-title` element (the session id at the bench is
+not data of the record) and the `story` section ("What happened here"), whose sentences at the bench before
+the seal say what is so far instead of the sealed counts (Requirement 23.7; the unit tests of the page at the
+bench check its words). This is the stable interface
 because both modes build the segments from the same model: a difference in a value, an outcome, a refusal or
 a table row shows in them, and a change of wording does not.
 For each prefix (from the start entry alone to every entry) the at-bench body (`AT_BENCH`, no choice file) is
@@ -38,16 +40,19 @@ LAYOUTS = (
 DATA_INKS = (Ink.PENCIL, Ink.DRKIRO)
 
 
+CUT = (('class="book-title"', "</h2>"), ('class="story"', "</section>"))
+
+
 def _data(segments: list[Segment]) -> list[tuple[str, str]]:
-    """(ink, text) of the data segments, without the page head's title element."""
+    """(ink, text) of the data segments, without the page head's title element and the story section."""
     out = []
-    inside = False
+    inside: str | None = None
     for s in segments:
         if s.ink is Ink.MARKUP:
-            if 'class="book-title"' in s.text:
-                inside = True
-            if inside and "</h2>" in s.text:
-                inside = False
+            if inside is None:
+                inside = next((end for start, end in CUT if start in s.text), None)
+            if inside is not None and inside in s.text:
+                inside = None
             continue
         if not inside and s.ink in DATA_INKS:
             out.append((s.ink.value, s.text))
@@ -81,6 +86,7 @@ def test_the_page_at_the_bench_shows_the_data_of_the_sealed_page(synth):
             "about",
             "s1",
             "runs",
+            "run",
             "day",
             "blue",
             "none",
