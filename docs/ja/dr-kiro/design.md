@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/dr-kiro/design.md`](../../../.kiro/specs/dr-kiro/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `6c5aed0d16ba87765257f0303780bc6aed145288fd68f86c47a6e84c83e5c7db`
+> 原文 SHA-256: `2c8d66f07191247dfcdf258e64fe2d798cd7204f2bec87e501310ddd7a58e976`
 
 # 設計: dr-kiro
 
@@ -140,12 +140,12 @@ bench-new-session --application <name> --adapter <module:factory> --scan-sources
 
 ```sh
 bench-make-lab body-lab/lab                       # once, and after builder files change
-bench-new-session ... --config-out bench-run/body-lab/<id>.toml
-export BENCH_SESSION_CONFIG="$PWD/bench-run/body-lab/<id>.toml"
-export BENCH_HOOK_LOG="$PWD/bench-run/body-lab/<id>.hook-log.jsonl"
+bench-new-session ... --config-out bench-run/body-lab/<id>.toml   # also writes body-lab/lab.bench-session.json
 cd body-lab/lab
 kiro-cli chat --agent dr-kiro                     # then type the start line
 ```
+
+`bench-new-session` は、ラボの隣にラボのセッションファイルを書きます（lab-bench 設計 D2）。`bench-mcp` とフックはこれを通してセッションを見つけるので、何も export せず、ラボを開いた Kiro IDE も同じセッションを見つけます。
 
 - 開始の一文: `Begin the session.` 再開の一文: `Continue the session.`
 - 対話なしの場合（ビルダーが `KIRO_API_KEY` を持つとき）:

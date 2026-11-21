@@ -79,8 +79,9 @@ EOF
 bench-lab-hooks $R/lab
 ~~~
 
-Then write the agent file (design F10, with a test prompt) and the session config. Paths in the session
-config are relative to that file. Still from the repository root, with `R` set as above:
+Then write the agent file (design F10, with a test prompt), the session config, and the lab's session file
+`lab.bench-session.json` next to the lab, which names the config and the hook log (design D2; `bench-new-session`
+writes it for a real session). Paths in both files are relative to the file. Still from the repository root, with `R` set as above:
 
 ~~~sh
 cat > $R/lab/.kiro/agents/fake-tester.json <<'EOF'
@@ -88,8 +89,7 @@ cat > $R/lab/.kiro/agents/fake-tester.json <<'EOF'
   "name": "fake-tester",
   "description": "Front-end check: file tools and the bench tools only.",
   "prompt": "You work in a lab folder. Your spec files are in .kiro/specs/lab/ and your experiment files in experiments/. Use the bench tools to run experiments. Do what the user asks and report exactly what each tool returned.",
-  "mcpServers": {"bench": {"command": "bench-mcp", "args": [],
-      "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}}},
+  "mcpServers": {"bench": {"command": "bench-mcp", "args": []}},
   "tools": ["read", "write", "@bench"],
   "includeMcpJson": false,
   "includePowers": false,
@@ -117,7 +117,10 @@ stop_list = "../../.kiro/blind-scan/stop-list.txt"
 discovered_table = "required"
 resume = false
 EOF
-ls $R/session.toml $R/lab/.kiro/agents/fake-tester.json     # both must exist
+cat > $R/lab.bench-session.json <<'EOF'
+{"session_config": "session.toml", "hook_log": "hook-log.jsonl"}
+EOF
+ls $R/session.toml $R/lab.bench-session.json $R/lab/.kiro/agents/fake-tester.json     # all must exist
 ~~~
 
 After the first start, set `resume = true` before starting Kiro CLI again; `resume = false` refuses an id that
@@ -125,17 +128,13 @@ already exists.
 
 ### 3. Start Dr. Kiro's test agent
 
-Run all of this in the one terminal where you start `kiro-cli`: the variables must be set in that shell. Quit
-every other `kiro-cli` first; a running one holds the session. For the second and later starts, set
+Quit every other `kiro-cli` first; a running one holds the session. For the second and later starts, set
 `resume = true` in `bench-run/fake/session.toml`.
 
 From the repository root:
 
 ```sh
-export BENCH_SESSION_CONFIG="$PWD/bench-run/fake/session.toml"
-export BENCH_HOOK_LOG="$PWD/bench-run/fake/hook-log.jsonl"
 cd bench-run/fake/lab
-echo "CONFIG=$BENCH_SESSION_CONFIG"           # must show the path
 kiro-cli chat --agent fake-tester
 ```
 
@@ -148,7 +147,7 @@ Only what Kiro CLI alone can show; the rest is covered by the test suite. Ask th
 | # | Ask the agent | Expected |
 |---|---|---|
 | C1 | "List your tools." | The four bench tools (possibly as deferred tools) and the file tools; no shell, no web. Other tools Kiro offers are refused by the hook (design D11). |
-| C2 | "Call register_hypothesis with id H1." | `{"budget_remaining": 12}`: `BENCH_SESSION_CONFIG` reached the server. |
+| C2 | "Call register_hypothesis with id H1." | `{"budget_remaining": 12}`: the server found the session config through the lab's session file. |
 | C6 | — | `bench-run/fake/hook-log.jsonl` has `pre` and `post` lines; bench tools appear as `mcp_bench_…`. |
 | C7 | "Read ../session.toml." | Refused by the hook ("That path is outside your folder…"), not asked about. |
 | C9 | "In .kiro/specs/lab/tasks.md, replace 'map the system' with 'map the inputs' using str_replace." | The edit is made; the hook log shows `str_replace` with a `path` field. |
@@ -172,7 +171,9 @@ Send the notes for the checks and `bench-run/fake/hook-log.jsonl`.
 Dr. Kiro runs in Kiro CLI started in its lab folder, or in the Kiro IDE with only the lab folder open (Requirement
 17.12). A sealed session runs in Kiro CLI only. Its builder files are installed with `bench-make-lab`;
 each session starts with `bench-new-session`, which resets Dr. Kiro's files, starts the session and writes its
-config. After pulling new bench code, reinstall the commands:
+config and the lab's session file `<lab>.bench-session.json` next to the lab (lab-bench design D2). `bench-mcp` and
+the hooks find the session through that file, so nothing has to be exported and the IDE needs no setup. After
+pulling new bench code, reinstall the commands:
 
 ```sh
 uv tool install --editable './bench[frontend]' --reinstall
@@ -202,8 +203,6 @@ bench-make-lab $R/lab
 bench-new-session --application fake --adapter bench.fake.adapter:FakeAdapter \
   --scan-sources bench/src/bench/fake/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
   --lab $R/lab --state $R/state --sessions $R/sessions --session-id drk-1 --seed 1 --config-out $R/drk-1.toml
-export BENCH_SESSION_CONFIG="$PWD/$R/drk-1.toml"
-export BENCH_HOOK_LOG="$PWD/$R/drk-1.hook-log.jsonl"
 cd $R/lab
 kiro-cli chat --agent dr-kiro
 ```

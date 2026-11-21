@@ -389,3 +389,15 @@ Added for the `body-lab` spec (its Requirement 7). Design: Part E.
     `variants`, the start entry and the reopening check, `bench-new-session --variant`; the tests of design E2;
     the `bench/README.md` lines for the setting. `sh bench/scripts/check.sh` passes.
   - _Requirements: 23.1-23.11_
+
+## Amendment: the lab's session file (Requirement 17.12)
+
+Design: "D2. Where the hook log and session config live" (changed 2026-11-22), F7, F9, F10.
+
+- [x] 39. `bench-mcp` and the logging hook find the session through `<lab>.bench-session.json`
+  - `frontend/pointer.py` writes and reads the session file; `bench-new-session` and `bfs-run` write it;
+    `config.for_lab` reads it for the working folder and checks `lab_dir`; `calllog.py` reads its hook log from it;
+    the `env` entry leaves `dr-kiro.json` and `BENCH_SESSION_CONFIG` and `BENCH_HOOK_LOG` are no longer read;
+    the committed labs get the new hooks; the tests of the server, the launcher, the hooks and `bench-new-session`.
+    `sh bench/scripts/check.sh` passes.
+  - _Requirements: 17.5, 17.11, 17.12_

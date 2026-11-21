@@ -26,9 +26,10 @@ The working folder, the state folder and the other files of a run are not under 
 repository root, `run.py` writes them directly in `bench-run/build-from-spec/` (`RUN_DATA`):
 ```
 bench-run/build-from-spec/
-  <run-id>.session.toml                  session config, named by BENCH_SESSION_CONFIG
+  <run-id>.bench-session.json            the folder's session file: names the config and the hook log
+  <run-id>.session.toml                  session config
   <run-id>.run-data.json                 run data file (before the run file exists)
-  <run-id>.hook-log.jsonl                hook log, named by BENCH_HOOK_LOG
+  <run-id>.hook-log.jsonl                hook log
   <run-id>.turn-<k>.log                  Kiro CLI output of turn k
   <run-id>.mcp-startup.log               bench-mcp startup failures (only if a start failed)
   <run-id>/                              working folder of the run (the reader's folder)

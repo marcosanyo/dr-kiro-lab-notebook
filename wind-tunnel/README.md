@@ -242,8 +242,6 @@ bench-new-session --application wind-tunnel --adapter wind_tunnel.adapter:WindAd
   --scan-sources wind-tunnel/adapter/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
   --lab wind-tunnel/lab --state $R/state --sessions sessions --session-id <session-id> --seed <seed> \
   --config-out $R/<session-id>.toml
-export BENCH_SESSION_CONFIG="$PWD/$R/<session-id>.toml"
-export BENCH_HOOK_LOG="$PWD/$R/<session-id>.hook-log.jsonl"
 cd wind-tunnel/lab
 kiro-cli chat --agent dr-kiro
 ```

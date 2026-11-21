@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/tasks.md`](../../../.kiro/specs/lab-bench/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `1d6455677ca1e16719e06a26572a97cc6d670ff5249f76b2aaf3f60d7ec9b3d4`
+> 原文 SHA-256: `6efbc00f62ce79771267d5448c22c8e31d6b1b4f5d964fd4b3449b3e33a465ab`
 
 # タスク: lab-bench
 
@@ -314,3 +314,11 @@ import する唯一の場所です。
 - **38. `variant` 設定** — 完了
   - `SessionConfig.variant`、任意の設定フィールドとファクトリー呼び出し、アダプターの `variants` に対する開始時の検査、開始エントリーと再開時の検査、`bench-new-session --variant`。設計 E2 のテスト。`bench/README.md` の設定の行。`sh bench/scripts/check.sh` が通る。
   - _要件: 23.1-23.11_
+
+## 改訂: ラボのセッションファイル（要件 17.12）
+
+設計: 「D2. フックログとセッション設定の置き場所」（2026-11-22 に変更）、F7、F9、F10。
+
+- **39. `bench-mcp` とログ記録フックが `<lab>.bench-session.json` からセッションを見つける** — 完了
+  - `frontend/pointer.py` がセッションファイルを書き、読む。`bench-new-session` と `bfs-run` がそれを書く。`config.for_lab` が作業フォルダーについてそれを読み、`lab_dir` を確かめる。`calllog.py` はフックログをそこから読む。`dr-kiro.json` から `env` 項目を除き、`BENCH_SESSION_CONFIG` と `BENCH_HOOK_LOG` はもう読まない。コミット済みのラボに新しいフックを入れる。サーバー、ランチャー、フック、`bench-new-session` のテスト。`sh bench/scripts/check.sh` が通る。
+  - _要件: 17.5, 17.11, 17.12_

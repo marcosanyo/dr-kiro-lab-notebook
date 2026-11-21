@@ -235,8 +235,8 @@ that no run sees anything left from another.
    author, and everything else the run script put in the folder at the builder level. The reader's own spec files
    and experiment files SHALL be scanned at the Dr. Kiro level.
 7. THE files the run script puts in the working folder outside `given/` SHALL contain no run id, setup name, source
-   session id or per-run path. THE session config SHALL be named by the `BENCH_SESSION_CONFIG` environment
-   variable and kept outside the working folder.
+   session id or per-run path. THE session config SHALL be kept outside the working folder and SHALL be named by
+   the folder's session file, which lies beside the working folder (lab-bench design D2).
 8. IF a run record of the same request in `sessions/build-from-spec/<application>/` has no run file, THEN THE run
    script SHALL refuse, naming the run record.
 
@@ -651,7 +651,7 @@ exactly as recorded.
   takes the allowed ids from the source record, never from the working folder, so edits there cannot change the
   result. (Requirements 7, 10.5)
 - **K17 No per-run text in the folder.** Nothing outside `given/` names the run, setup or source; the session
-  config is found through `BENCH_SESSION_CONFIG`. (Requirement 7.7)
+  config is found through the session file beside the folder. (Requirement 7.7)
 - **K18 Continue line.** Sent by the run script, only when the reader's turn ended without `end_session` and the
   record is not sealed; counted in the run file; no maximum. (Requirement 9.6, Decision 15)
 - **K19 Relied-on syntax and order.** Comma-separated distinct ids or `none`; H1 must be registered before the first
