@@ -175,10 +175,13 @@ uv run --project notebook notebook-watch \
   --layouts notebook/layouts.toml --words notebook/commentary-words.txt \
   --scan-config body-lab/adapter/scan_sources.toml --scan-config wind-tunnel/adapter/scan_sources.toml \
   --stop-list .kiro/blind-scan/stop-list.txt --port <port> \
-  --app wind-tunnel/notebook --app body-lab/notebook
+  --app wind-tunnel/notebook --app body-lab/notebook \
+  [--replay <seconds>] [--site <built site>]
 ```
 
-Every option is required and none has a default; `--scan-config` and `--app` at least once. `--app` names an
+Every option is required and none has a default, except the two that turn on a part: `--replay` shows a sealed
+record one entry every that many seconds (23.17), and `--site` names a built site whose page of this session is
+linked after the seal (23.16). `--scan-config` and `--app` at least once. `--app` names an
 application's notebook folder, as for the build; the watch uses the one whose `app.toml` names the application of
 the record's start entry, and fails when there is not exactly one. It never looks for a settings file beside another
 input. A missing option is named and the
@@ -522,7 +525,13 @@ shows the entry number and the kind of finding (term, path, credential or pictur
 - "What happened here", while the record has no seal entry, says the misses so far and that the bench checks the spec
   at the seal and a next Kiro reads it after that (`STORY_MISSED_SO_FAR`, `STORY_AT_BENCH`); it never says "final"
   of a record that is still being written (23.7);
-- a hypothesis with no trial yet, while the record has no seal entry, shows "not run yet" in place of "never run".
+- a hypothesis with no trial yet, while the record has no seal entry, shows "not run yet" in place of "never run";
+- a prediction with no outcome entry is "waiting" until its hypothesis has a verdict and "not run" after it (23.8);
+  until a table exists, the chips say "no spec table yet" (`CHIP_NO_TABLE_YET`);
+- the shelf holds one card, `card-bench`, that is not a link: the session id, "at the bench" (or the replay label),
+  the budget used so far and the predictions that came true so far (23.15);
+- the head says "replay of a sealed record" in place of "at the bench" when the watch replays (23.17); after the seal
+  entry the sealed statement links "Open the finished page." when `--site` holds the page (23.16).
 
 The session page is `pages/book.py` `body` (the parts) and `pages/shelf.py` (the page around them); the watch calls
 `shelf.at_bench_page`. The page's counts take the singular when the count is one ("1 row is validated", "1 trial",
@@ -532,7 +541,11 @@ not from cutting a letter off `unit`.
 **Versions (23.1, 23.4; N36).** A pass that accepts at least one new complete entry builds a version from the
 record so far (`records.from_entries`), checks every trial's picture sheet, makes the page in `at_bench` mode
 (`shelf.at_bench_page`) and runs both scan passes on it. When the reader stops in the same pass after accepting
-entries, the version of the accepted entries is made first and the stop is recorded after it. The
+entries, the version of the accepted entries is made first and the stop is recorded after it. Before the page is
+made, each flag entry is checked: its `not-run` count must equal the predictions of its hypothesis with no outcome
+entry before the flag, or the watch stops at the flag with `WATCH_NOT_RUN_COUNT` (23.14). With `--replay`, the
+reader is `ReplayReader`: it reads and checks the whole sealed record once, refuses one without a seal entry, and
+releases one more entry every interval. The
 version is held in memory. Its number grows by one, and `/version` returns it. A version is served only after it has
 passed completely.
 
@@ -548,12 +561,16 @@ served too. Any other path gets 404. The assets are read from the package when t
 record's blobs or from the version in memory. The watch writes no file. The server uses the standard `http.server`
 under the exception the user approved (Open question 3, answered yes). `serve.py` also holds `fetch()`, a small
 `http.client` call that the tests use to read the routes, because the tests keep the ban on `http` and `socket`.
+With `--site`, `/site/<path>` answers with that file of the built site, read when asked, only from inside that folder
+and only for the site's own file types (23.16).
 
 **Refresh (23.4; `a/watch.js`).** `watch.js` is served by the watch only, and the build does not link it. Every 1000
 ms it reads `/version`. When the number changes it fetches the page at the current address (same origin); saves
 `scrollY` and the open state of every `<details>` by its id; replaces the content of `main`; restores the scroll
 position and the open states; shows the stop text with `textContent` in `#watch-stop`; and dispatches the event
-`notebook:refresh` on `document`. `notebook.js` listens for that event and sets up the moving pictures again on the
+`notebook:refresh` on `document`. An entry that carried the "at the bench" mark before the refresh and has lost it
+after (its verdict came) is kept open for 2000 ms (`CLOSE_AFTER`) and then closed (23.13); an entry already
+finished when the page opens comes closed from the watch. `notebook.js` listens for that event and sets up the moving pictures again on the
 new content, so the script needs no global name. Requests are same-origin only. Node is not used (`tech.md`), so the
 tests of the script are static Python checks (26.3). The script reads `scrollY` without the `window.` prefix, as N28
 requires.

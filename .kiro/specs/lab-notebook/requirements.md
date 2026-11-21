@@ -832,8 +832,9 @@ notebook will publish.
    heading and one line in commentary ink saying when they come: "written after the seal" or "runs after the
    seal". In place of the title, THE page SHALL show the session id.
 8. Dr. Kiro's plan (10.6) and the discovered spec table (Requirement 8) SHALL come from the latest snapshot, with
-   the status words labelled "not yet checked by the bench" (16.3) until the `end` snapshot. EACH prediction
-   without an outcome entry SHALL show "waiting".
+   the status words labelled "not yet checked by the bench" (16.3) until the `end` snapshot; until a table exists,
+   the chips SHALL say "no spec table yet". EACH prediction without an outcome entry SHALL show "waiting" until its
+   hypothesis has a verdict, and "not run" after it.
 9. THE entry of the hypothesis being run (registered, with no verdict yet) SHALL be open and marked "at the bench".
 10. THE page SHALL be labelled "at the bench" with the session id, and SHALL NOT be presented as a sealed record.
     WHEN the seal entry arrives, THE page SHALL say that the session is sealed and that the build makes its
@@ -843,6 +844,18 @@ notebook will publish.
 12. A test SHALL feed a fixture record to the watch one line at a time, including a half-written last line, and
     SHALL check 23.4, 23.5, 23.8 and 23.9. A test SHALL show that a term planted in bench-written text of a fixture
     record stops the watch (23.6).
+13. WHEN the verdict of the hypothesis being run is recorded, THE entry SHALL show the verdict stamp and, after a
+    pause of about 2 seconds, close to its one-line summary, as every closed entry of the session page. WHEN the
+    page is opened while a session runs, THE finished entries SHALL be shown closed, without playing each close.
+14. WHEN a flag entry counts predictions as not run, THE watch SHALL check that the hypothesis has exactly that many
+    predictions with no outcome entry before the flag. IF the numbers differ, THEN THE watch SHALL stop as in 23.5.
+15. THE shelf on the page SHALL show one card, this session's, marked "at the bench", with the budget used so far
+    and the predictions that came true so far. It SHALL NOT be a link: the watch serves no other session.
+16. IF the watch is given a built site that holds this session's page, THEN after the seal entry THE page SHALL
+    link to that page, which the watch serves read-only from the built site.
+17. THE watch SHALL also show a sealed record the same way, releasing one entry every interval given as an
+    argument, labelled "replay of a sealed record" (16.7) in place of "at the bench", for checking the watch and
+    for recording. A record that does not end with a seal entry SHALL be refused before anything is shown.
 
 ---
 
@@ -1089,7 +1102,9 @@ exception to a rule.
     the page with the build's own code from the record so far, and the page loads each new version by itself, so
     there is one way of drawing a session and the blind scan and picture check are the build's. The watch runs only
     on the user's computer and is never published; the published site stays a static site built from sealed
-    records (Requirement 23).
+    records (Requirement 23). The first version (23.1-23.12) was kept small; the user then asked for the rest
+    (23.13-23.17): the close after a verdict, the not-run check, the card on the shelf, the link to the finished
+    page and the replay of a sealed record.
 
 ## Open questions
 

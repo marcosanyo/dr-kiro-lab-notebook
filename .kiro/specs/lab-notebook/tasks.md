@@ -568,6 +568,17 @@ after milestone 3 and before "Built from the spec".
       start entry; Property 19 leaves out the story section as it leaves out the title.
     - Verified by: the checks.
     - _Requirements: 23.5, 23.7, 23.9_
+  - [x] 26.6 The rest of the watch (Requirement 23.13-23.17)
+    - `watch.js` closes a finished entry 2000 ms after its verdict; a prediction without an outcome is "not run"
+      after its hypothesis's verdict; each flag's not-run count is checked (`WATCH_NOT_RUN_COUNT`); the shelf holds
+      one `card-bench`; `--site` links the finished page and serves the built site under `/site/`; `--replay`
+      releases a sealed record one entry per interval (`ReplayReader`), labelled "replay of a sealed record"; the
+      chips say "no spec table yet" until a table exists.
+    - Unit tests: the close in `watch.js`; a flag with a wrong and a right not-run count; the replay timing and its
+      refusal of a record without a seal; the bench card; the replay label; the finished link only after the seal;
+      `/site/` serves only files inside the site.
+    - Verified by: the checks, and a replay of body-3 at 1280 px in a browser.
+    - _Requirements: 23.8, 23.13, 23.14, 23.15, 23.16, 23.17_
 
 ### Then
 
