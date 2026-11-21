@@ -325,6 +325,18 @@ def load_file(path: Path, record: RecordModel) -> Choices:
 
 
 def _app(folder: Path, records: list[RecordModel]) -> App:
+    app = read_app(folder)
+    where = app.source
+    sessions = {r.session for r in records if r.application == app.application}
+    if not sessions:
+        raise NotebookError(f"{where} application", f"the records hold no session of {app.application!r}")
+    if app.open not in sessions:
+        raise NotebookError(f"{where} open", f"names no record ({app.application}/{app.open})")
+    return app
+
+
+def read_app(folder: Path) -> App:
+    """One application's settings file, checked on its own (the watch has no record of the whole book)."""
     path = folder / APP_NAME
     where = str(path)
     if not path.is_file():
@@ -332,12 +344,7 @@ def _app(folder: Path, records: list[RecordModel]) -> App:
     data = _read_toml(path)
     _exact(where, data, APP_KEYS, APP_KEYS - {"display", "symbols"})
     application = _string(f"{where} application", data["application"], 40)
-    sessions = {r.session for r in records if r.application == application}
-    if not sessions:
-        raise NotebookError(f"{where} application", f"the records hold no session of {application!r}")
     opened = _string(f"{where} open", data["open"], 40)
-    if opened not in sessions:
-        raise NotebookError(f"{where} open", f"names no record ({application}/{opened})")
     order = data["order"]
     if type(order) is not int or order < 1:
         raise NotebookError(f"{where} order", "must be a whole number from 1")

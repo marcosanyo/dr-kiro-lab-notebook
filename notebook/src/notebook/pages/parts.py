@@ -150,11 +150,14 @@ def decoration(kind: str) -> list[Segment]:
     ]
 
 
-def footer(*, links: bool = True) -> list[Segment]:
+def footer(*, links: bool = True, at_bench: bool = False) -> list[Segment]:
     """The page footer: the links to the ink legend (Requirement 4.5) and to how the lab works, relative
-    inside the application's folder, and a link to the front page. The front page has no footer links."""
+    inside the application's folder, and a link to the front page. The front page has no footer links. At the
+    bench only the legend is served, so only its link is left."""
     if not links:
         return html.element("footer", {"class": "footer"}, [])
+    if at_bench:
+        return html.element("footer", {"class": "footer"}, link(addresses.LEGEND, say_text("LEGEND_LINK")))
     return html.element(
         "footer",
         {"class": "footer"},
@@ -177,7 +180,9 @@ def framed(children: list[Segment]) -> list[Segment]:
     return html.element("article", {"class": "book plain-book"}, [*holes, *children])
 
 
-def page(title: str, children: list[Segment], *, app: "App | None" = None) -> list[Segment]:
+def page(
+    title: str, children: list[Segment], *, app: "App | None" = None, at_bench: bool = False
+) -> list[Segment]:
     """A whole page: the head with the stylesheet, the decoration of its application, `children` in the
     content column, the footer, and the page script. `app` is None for the front page. The `<html>` element
     carries the application and the theme the page opens in (`data-app`, `data-mode`), so the page has its
@@ -198,8 +203,13 @@ def page(title: str, children: list[Segment], *, app: "App | None" = None) -> li
         [
             *(decoration(app.decoration) if app is not None else []),
             *html.element("main", {"class": "page"}, children),
-            *footer(links=app is not None),
+            *footer(links=app is not None, at_bench=at_bench),
             *html.element("script", {"src": addresses.SCRIPT, "defer": "defer"}, []),
+            *(
+                html.element("script", {"src": addresses.WATCH_SCRIPT, "defer": "defer"}, [])
+                if at_bench
+                else []
+            ),
         ],
     )
     attrs = {"lang": "en", "data-app": "front", "data-mode": "night"}

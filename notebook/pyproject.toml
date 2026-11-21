@@ -8,6 +8,7 @@ dependencies = ["lab-bench", "body-lab-adapter", "wind-tunnel-adapter"]
 [project.scripts]
 notebook-build = "notebook.cli:main"
 notebook-retake = "notebook.retake:main"
+notebook-watch = "notebook.watch.cli:main"
 
 [tool.uv.sources]
 lab-bench = { path = "../bench", editable = true }
@@ -36,6 +37,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "TID", "BLE", "S110", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Open question 3 (approved by the user): the loopback server of the watch is the only file that may import `http`.
+"src/notebook/watch/serve.py" = ["TID251"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

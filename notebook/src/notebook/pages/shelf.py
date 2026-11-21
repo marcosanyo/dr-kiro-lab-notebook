@@ -11,6 +11,7 @@ from notebook.display import Retakes
 from notebook.errors import NotebookError
 from notebook.ink import Segment, commentary, pencil
 from notebook.pages import book, parts, photo
+from notebook.pages.book import AT_BENCH, MODES, SEALED
 from notebook.pages.parts import link, say_text
 from notebook.readerrequest import Request
 from notebook.readerruns import Run
@@ -136,18 +137,36 @@ def _page(
     runs: list[Run],
     requests: dict[str, Request],
     retakes: Retakes,
+    mode: str = SEALED,
 ) -> Page:
-    chosen = choices[(record.application, record.session)]
+    """One session page. `mode` is `sealed` (the build) or `at_bench` (the watch, design N34); the two differ
+    only in the parts `book.body` and the footer name. At the bench the page has no links to the front page,
+    the other application, the other sessions' cards or how the lab works, because the watch serves none."""
+    if mode not in MODES:
+        raise NotebookError(record.name, f"the page mode must be one of {', '.join(MODES)}, not {mode!r}")
+    at_bench = mode == AT_BENCH
+    chosen = None if at_bench else choices[(record.application, record.session)]
     layout = layouts.layout_for(table, record.application, record.name)
     others = {r.session: r for r in records if r.application == record.application}
-    inside, files = book.body(record, layout, chosen, app, runs, requests, retakes, others)
+    inside, files = book.body(record, layout, chosen, app, runs, requests, retakes, others, mode)
     top = [
-        *_lab_links(app, apps),
+        *([] if at_bench else _lab_links(app, apps)),
         *_masthead(app),
-        *_shelf(app, record, records, choices),
+        *([] if at_bench else _shelf(app, record, records, choices)),
         *_el("article", "book", inside, id="book"),
     ]
-    return parts.page("SHELF_TITLE", top, app=app), tuple(files)
+    return parts.page("SHELF_TITLE", top, app=app, at_bench=at_bench), tuple(files)
+
+
+def at_bench_page(
+    record: RecordModel,
+    app: App,
+    table: dict[str, layouts.Layout],
+    retakes: Retakes,
+) -> Page:
+    """The session page of a record so far (`records.from_entries`), as the watch shows it: the same code as
+    the build's page, in `at_bench` mode. It reads no choice file and no reader run."""
+    return _page(record, app, (app,), [record], {}, table, [], {}, retakes, AT_BENCH)
 
 
 def pages(

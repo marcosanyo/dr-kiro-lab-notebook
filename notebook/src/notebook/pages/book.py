@@ -38,6 +38,9 @@ STATUS_ICONS = {
     "observed": "M2 9 Q9 2 16 9 Q9 16 2 9 Z M9 7 A2 2 0 1 0 9.01 7",
     "rejected": "M4 4 L14 14 M14 4 L4 14",
 }
+SEALED = "sealed"
+AT_BENCH = "at_bench"
+MODES = (SEALED, AT_BENCH)
 LABEL_SHARE = 0.1
 MAX_LABELS = 4
 LABEL_CHAR = 8.5  # pixels of the chart's own scale taken by one character of a name
@@ -117,19 +120,23 @@ def _icon(status: str) -> list[Segment]:
     )
 
 
-def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) -> list[Segment]:
+def _chips(record: RecordModel, chosen: Choices | None, lab: App, table: Table | None) -> list[Segment]:
+    """`chosen` is None at the bench: the model and the date are a person's words, written after the seal."""
     source = f"{record.name}: chips"
     counts = progress.predictions(record)
-    chips: list[list[Segment]] = [
-        [*say_text("CHIP_MODEL"), *_human(chosen.model, f"{chosen.file} key model")],
-        [*html.text(pencil(str(len(record.trials)), source)), markup(" "), *_human(lab.unit, lab.source)],
-        [*say_text("CHIP_DATE"), *_human(chosen.date, f"{chosen.file} key date")],
-    ]
+    chips: list[list[Segment]] = []
+    if chosen is not None:
+        chips.append([*say_text("CHIP_MODEL"), *_human(chosen.model, f"{chosen.file} key model")])
+    chips.append(
+        [*html.text(pencil(str(len(record.trials)), source)), markup(" "), *_human(lab.unit, lab.source)]
+    )
+    if chosen is not None:
+        chips.append([*say_text("CHIP_DATE"), *_human(chosen.date, f"{chosen.file} key date")])
     if record.variant is not None:
         chips.append(
             [*say_text("CHIP_BODY"), *html.text(pencil(record.variant, f"{record.name}: start entry"))]
         )
-    elif chosen.body is not None:
+    elif chosen is not None and chosen.body is not None:
         chips.append([*say_text("CHIP_BODY"), *_human(chosen.body, f"{chosen.file} key body")])
     if table is None:
         chips.append(say_text("CHIP_NO_TABLE"))
@@ -156,7 +163,7 @@ def _chips(record: RecordModel, chosen: Choices, lab: App, table: Table | None) 
             *say_text("CHIP_PREDICTIONS"),
         ]
     )
-    if record.seal.end == "stopped":
+    if record.seal is not None and record.seal.end == "stopped":
         chips.append([*say_text("CHIP_STOPPED"), *html.text(record.seal.reason.segment())])
     return _el("ul", "chips", [s for chip in chips for s in html.element("li", None, chip)])
 
@@ -207,7 +214,7 @@ def _story(record: RecordModel, table: Table | None, runs: list[readerruns.Run])
     if registered == 0:
         return _el("section", "story", [*head, *_el("p", "story-none", say_text("STORY_NONE"))], id="story")
     first = _sentence(source, "@STORY_WROTE_BEFORE", str(registered), "@STORY_WROTE_AFTER")
-    stopped = record.seal.end == "stopped"
+    stopped = record.seal is not None and record.seal.end == "stopped"
     if stopped:
         second = _sentence(source, str(counts.hit), "@OF", str(counts.total), "@STORY_CHECKED_STOPPED")
     elif table is None:
@@ -655,7 +662,7 @@ def _rule(
     snapshot: Snapshot,
     view: tables.TableView,
     index: int,
-    checked: bool,
+    label: str,
     known: set[str],
 ) -> list[Segment]:
     """One compact card: the id and stamp, the rule, and where it was rewritten. The scope and the evidence
@@ -665,7 +672,7 @@ def _rule(
     src = f"{snapshot.design.source} line {row.line}"
     head = [
         *html.text(_cell(snapshot, row, row.id)),
-        *stamp(stamp_segment(row.status, src), "CHECKED" if checked else "NOT_CHECKED"),
+        *stamp(stamp_segment(row.status, src), label),
     ]
     body = [
         *_el("p", "rule-head", head),
@@ -706,15 +713,18 @@ def _rule(
     return html.element("li", {"class": cls, "id": addresses.row(row.id, src)}, body)
 
 
-def _spec(record: RecordModel, table: Table | None, checked: bool) -> list[Segment]:
+def _spec(record: RecordModel, table: Table | None, checked: bool, mode: str) -> list[Segment]:
+    """At the bench every status is labelled "not yet checked by the bench", whatever the latest snapshot
+    is, and the note about an unchecked table is left out."""
+    label = "NOT_YET_CHECKED" if mode == AT_BENCH else "CHECKED" if checked else "NOT_CHECKED"
     head = [*_el("h3", "cap", say_text("SPEC_HEADING")), *_el("p", "intro", say_text("SPEC_INTRO"))]
     snapshot = tables.end_snapshot(record) or (record.snapshots[-1] if record.snapshots else None)
     if table is None or snapshot is None:
         return _el("section", "spec", [*head, *_el("p", None, say_text("SPEC_NONE"))], id="spec")
     view = tables.table_view(table)
     known = _anchors(record)
-    items = [s for i in range(len(view.rows)) for s in _rule(record, snapshot, view, i, checked, known)]
-    note = [] if checked else _el("p", "spec-note", say_text("SPEC_UNCHECKED"))
+    items = [s for i in range(len(view.rows)) for s in _rule(record, snapshot, view, i, label, known)]
+    note = [] if checked or mode == AT_BENCH else _el("p", "spec-note", say_text("SPEC_UNCHECKED"))
     ended = _end_refusals(record)
     return _el("section", "spec", [*head, *note, *ended, *_el("ul", "rules", items)], id="spec")
 
@@ -783,7 +793,15 @@ def _plan(record: RecordModel) -> list[Segment]:
 # Every experiment and hypothesis
 
 
-def _outcome_line(record: RecordModel, hypothesis: Hypothesis, outcomes: dict[str, Outcome]) -> list[Segment]:
+def _waiting(record: RecordModel, mode: str) -> bool:
+    """At the bench, a prediction with no outcome entry is waiting; once the seal entry is in the prefix it
+    was not run, as on the finished page."""
+    return mode == AT_BENCH and record.seal is None
+
+
+def _outcome_line(
+    record: RecordModel, hypothesis: Hypothesis, outcomes: dict[str, Outcome], mode: str
+) -> list[Segment]:
     out: list[Segment] = []
     for i, prediction in enumerate(hypothesis.predictions):
         source = _src(record, hypothesis.seq)
@@ -792,7 +810,10 @@ def _outcome_line(record: RecordModel, hypothesis: Hypothesis, outcomes: dict[st
         outcome = outcomes.get(prediction.id)
         short = prediction.id.split(".")[-1]
         if outcome is None:
-            out += [*html.text(pencil(short, source)), *say_text("OUTCOME_NOT_RUN")]
+            out += [
+                *html.text(pencil(short, source)),
+                *say_text("OUTCOME_WAITING" if _waiting(record, mode) else "OUTCOME_NOT_RUN"),
+            ]
             continue
         word = html.text(pencil(outcome.outcome, source))
         out += [
@@ -807,7 +828,7 @@ def _outcome_line(record: RecordModel, hypothesis: Hypothesis, outcomes: dict[st
     return out
 
 
-def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome]) -> list[Segment]:
+def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome], mode: str) -> list[Segment]:
     """One registered prediction as a line to read: "x in [0.1, 2] when a0 = 1, f = 1 -> hit"."""
     source = _src(record, next(h.seq for h in record.hypotheses if prediction in h.predictions))
     where = f"{source}: {prediction.id}"
@@ -833,7 +854,9 @@ def _prediction(record: RecordModel, prediction, outcomes: dict[str, Outcome]) -
                 *html.text(pencil(f" = {numbers.short(param.value, where)}", source)),
             ]
     line += [markup(" &rarr; ")]
-    if outcome is None:
+    if outcome is None and _waiting(record, mode):
+        line += say_text("PREDICTION_WAITING")
+    elif outcome is None:
         line += html.text(pencil("not run", source))
     else:
         word = html.text(pencil(outcome.outcome, source))
@@ -946,6 +969,7 @@ def _hypothesis_row(
     checked: bool,
     outcomes: dict[str, Outcome],
     shown: Shown,
+    mode: str,
 ) -> list[Segment]:
     source = _src(record, hypothesis.seq)
     hid = html.check_id("hypothesis", hypothesis.id, source)
@@ -972,16 +996,22 @@ def _hypothesis_row(
         *_el("span", "hnum", html.text(pencil(hid, source))),
         *_el("span", "hyp-title", html.text(hypothesis.title.segment())),
         *_el("span", "hyp-expect", [*say_text("EXPECTS"), *html.text(hypothesis.statement.segment())]),
-        *_el("span", "hyp-results", _outcome_line(record, hypothesis, outcomes)),
+        *_el("span", "hyp-results", _outcome_line(record, hypothesis, outcomes, mode)),
         *_el("span", "hyp-stamps", _row_stamps(record, table, checked, {e.id for e in experiments})),
     ]
+    # At the bench, the hypothesis that is registered and has no verdict yet is the one being run (23.9).
+    running = mode == AT_BENCH and record.seal is None and verdict is None
+    if running:
+        summary += _el("span", "at-bench-mark", say_text("AT_BENCH"))
     if star:
         summary += _el("span", "newbest", [markup("&#9733; "), *say_text("NEW_BEST")])
     inside: list[Segment] = [
         *_el("p", "sticky-label", say_text("WRITTEN_BY_DRKIRO")),
         *_frozen(hypothesis),
         *_el(
-            "ul", "predictions", [s for p in hypothesis.predictions for s in _prediction(record, p, outcomes)]
+            "ul",
+            "predictions",
+            [s for p in hypothesis.predictions for s in _prediction(record, p, outcomes, mode)],
         ),
     ]
     for experiment in experiments:
@@ -1003,17 +1033,22 @@ def _hypothesis_row(
         "details",
         "hyp-detail",
         [*_el("summary", "hyp-summary", summary), *_el("section", "sticky-open", inside)],
+        **({"open": "open"} if running else {}),
     )
     return html.element("li", {"class": "hyp", "id": hid}, [*_el("section", "hyp-pic", pic), *detail])
 
 
 def _experiments(
-    record: RecordModel, layout: Layout, chosen: Choices, table: Table | None, shown: Shown
+    record: RecordModel, layout: Layout, chosen: Choices | None, table: Table | None, shown: Shown, mode: str
 ) -> list[Segment]:
     if not record.hypotheses:
         return []
-    found = progress.series(record, chosen.progress) if chosen.progress is not None else None
-    checked = tables.end_snapshot(record) is not None
+    found = (
+        progress.series(record, chosen.progress)
+        if chosen is not None and chosen.progress is not None
+        else None
+    )
+    checked = mode == SEALED and tables.end_snapshot(record) is not None
     outcomes = {o.prediction: o for o in record.outcomes}
     source = f"{record.name}: all experiments"
     heading = [
@@ -1024,7 +1059,7 @@ def _experiments(
     rows = [
         s
         for h in record.hypotheses
-        for s in _hypothesis_row(record, layout, h, found, table, checked, outcomes, shown)
+        for s in _hypothesis_row(record, layout, h, found, table, checked, outcomes, shown, mode)
     ]
     return _el(
         "section",
@@ -1235,46 +1270,103 @@ def _reader(
 
 
 # The page body
+def _after_seal(heading: str, line: str, cls: str, **attrs: str) -> list[Segment]:
+    """A part that only a person or a later run writes: its heading and one line saying when it comes."""
+    return _el(
+        "section",
+        cls,
+        [*_el("h3", "cap", say_text(heading)), *_el("p", "after-seal", say_text(line))],
+        **attrs,
+    )
+
+
+def _at_bench_head(record: RecordModel) -> list[Segment]:
+    """The head of the page at the bench: the label and the session id in place of the title, the heading of
+    the summary with the line saying when it comes, and the sealed statement once the seal entry is in."""
+    source = _src(record, 1)
+    head = [
+        *_el(
+            "h2",
+            "book-title",
+            [
+                *html.text(pencil(record.session, source)),
+                markup(" "),
+                *_el("span", "at-bench-label", say_text("AT_BENCH")),
+            ],
+        ),
+        *_after_seal("SUMMARY_HEADING", "WRITTEN_AFTER_SEAL", "book-summary"),
+    ]
+    if record.seal is not None:
+        head += _el("p", "sealed-banner", say_text("SEALED_BANNER"))
+    return head
 
 
 def body(
     record: RecordModel,
     layout: Layout,
-    chosen: Choices,
+    chosen: Choices | None,
     lab: App,
     runs: list[readerruns.Run],
     requests: dict[str, readerrequest.Request],
     retakes: Retakes,
     others: dict[str, RecordModel] | None = None,
+    mode: str = SEALED,
 ) -> tuple[list[Segment], list[photo.PictureFile]]:
-    """The opened notebook of one session, and the picture files it shows."""
+    """The opened notebook of one session, and the picture files it shows. `mode` is `sealed` (the build) or
+    `at_bench` (the watch, notebook-watch design N34): at the bench there is no choice file, so `chosen` is
+    None, and the parts a person or a later run writes show their heading and when they come."""
+    if mode not in MODES:
+        raise NotebookError(record.name, f"the page mode must be one of {', '.join(MODES)}, not {mode!r}")
+    if (mode == AT_BENCH) != (chosen is None):
+        raise NotebookError(
+            record.name, "a page at the bench has no choice file, and a sealed page needs one"
+        )
     others = others or {}
-    if chosen.record != record.name:
-        raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
     shown = Shown([], retakes)
-    table, checked = progress.table_of(record)
-    start = f"{chosen.file} key title"
-    out = [
-        *(parts.web("book-web") if lab.decoration != "none" else []),
-        *_el("span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}),
-        *_el(
-            "h2",
-            "book-title",
-            [
-                *_human(chosen.title, start),
-                *_el("span", "book-sub", _human(f" — {chosen.subtitle}", start)),
-                *_ours(),
-            ],
-        ),
-        *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
-        *_story(record, table, runs),
-        *_chips(record, chosen, lab, table),
-        *_highlight(record, layout, chosen, table, lab, shown),
-        *_reader(record, runs, requests, table, others),
-        *_spec(record, table, checked),
-        *_plan(record),
-        *_experiments(record, layout, chosen, table, shown),
-    ]
+    holes = _el(
+        "span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}
+    )
+    web = parts.web("book-web") if lab.decoration != "none" else []
+    if chosen is None:
+        table, _ = progress.table_of(record)
+        out = [
+            *web,
+            *holes,
+            *_at_bench_head(record),
+            *_story(record, table, []),
+            *_chips(record, None, lab, table),
+            *_after_seal("HIGHLIGHT_HEADING", "WRITTEN_AFTER_SEAL", "highlight", id="highlight"),
+            *_after_seal("READER_HEADING", "RUNS_AFTER_SEAL", "reader", id="reader"),
+            *_spec(record, table, False, mode),
+            *_plan(record),
+            *_experiments(record, layout, None, table, shown, mode),
+        ]
+    else:
+        if chosen.record != record.name:
+            raise NotebookError(chosen.file, f"the choice file is for {chosen.record}, not {record.name}")
+        table, checked = progress.table_of(record)
+        start = f"{chosen.file} key title"
+        out = [
+            *web,
+            *holes,
+            *_el(
+                "h2",
+                "book-title",
+                [
+                    *_human(chosen.title, start),
+                    *_el("span", "book-sub", _human(f" — {chosen.subtitle}", start)),
+                    *_ours(),
+                ],
+            ),
+            *_el("p", "book-summary", [*_human(chosen.summary, f"{chosen.file} key summary"), *_ours()]),
+            *_story(record, table, runs),
+            *_chips(record, chosen, lab, table),
+            *_highlight(record, layout, chosen, table, lab, shown),
+            *_reader(record, runs, requests, table, others),
+            *_spec(record, table, checked, mode),
+            *_plan(record),
+            *_experiments(record, layout, chosen, table, shown, mode),
+        ]
     unique: dict[str, photo.PictureFile] = {}
     for picture in shown.files:
         unique.setdefault(picture.path, picture)

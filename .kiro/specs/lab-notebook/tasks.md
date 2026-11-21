@@ -460,8 +460,8 @@ Requirement 23 and design Component 13 (N33-N37). The watch shows one session wh
 computer only. It is a second command in the `notebook/` project. It writes no file and is never published. It comes
 after milestone 3 and before "Built from the spec".
 
-- [ ] 25. Watch: the reader and the page
-  - [ ] 25.1 Write the watch reader
+- [x] 25. Watch: the reader and the page
+  - [x] 25.1 Write the watch reader
     - `notebook/src/notebook/watch/reader.py`: reads only complete lines of `log.jsonl` in the record folder given by
       `--record`, incrementally from the byte offset after the last accepted line, every 500 ms (N36). A last line
       without a line end is left for the next pass and not shown (23.5). A complete line is accepted only if it passes
@@ -479,11 +479,11 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.2, 23.4, 23.5_
 
-  - [ ] 25.2 Write property test for the reader
+  - [x] 25.2 Write property test for the reader
     - **Property 18: The reader shows exactly the complete, valid prefix**
     - **Validates: Requirements 23.4, 23.5, 23.12**
 
-  - [ ] 25.3 Write the `at_bench` mode of the session page and the view of the record so far
+  - [x] 25.3 Write the `at_bench` mode of the session page and the view of the record so far
     - `records.py`: a model built from accepted entries of a prefix, without the whole-file `verify`, since the reader
       has checked each line (N35). `views.py`: `view(record, upto)` on the prefix. `pages/session.py`: the `mode`
       parameter (`sealed` or `at_bench`, N34), with exactly the differences listed in design Component 13: the header
@@ -497,11 +497,11 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.1, 23.7, 23.8, 23.9, 23.10_
 
-  - [ ] 25.4 Write property test for the at-bench data
+  - [x] 25.4 Write property test for the at-bench data
     - **Property 19: The at-bench page shows what the sealed page shows for the same prefix**
     - **Validates: Requirements 23.1, 23.8**
 
-  - [ ] 25.5 Write the per-version scan and picture check, and the stop
+  - [x] 25.5 Write the per-version scan and picture check, and the stop
     - `notebook/src/notebook/watch/versions.py`: one version per pass that accepts complete entries. It builds the page
       from `views.view` of the record so far in `at_bench` mode, runs both scan passes of Component 11 and the picture
       check of 7.3 on it, and holds it in memory (N36). A finding stops the watch at its entry and shows the entry number
@@ -513,7 +513,7 @@ after milestone 3 and before "Built from the spec".
     - _Requirements: 23.6, 20.1, 20.2, 7.3_
 
 - [ ] 26. Watch: the loopback server and the refresh
-  - [ ] 26.1 **Stop and ask**: the server exception of Open question 3
+  - [x] 26.1 **Stop and ask**: the server exception of Open question 3
     - Report to the user in Japanese, and wait. The question: `notebook/` bans `http` and `socket` (N1), and the watch
       needs a loopback HTTP server. The proposed exception is `notebook/src/notebook/watch/serve.py` only, with the
       standard `http.server` bound to 127.0.0.1; the build modules keep the ban, and a test checks that no build module
@@ -521,7 +521,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the user's answer is recorded in `docs/status.md`.
     - _Requirements: 23.3_
 
-  - [ ] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes)
+  - [x] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes)
     - Note: this task may import the standard `http.server` only in `notebook/src/notebook/watch/serve.py`, because the
       user's answer to Open question 3 allows it. No other file may import `http`, `socket` or `urllib`, and the build
       modules keep every ban.
@@ -539,7 +539,7 @@ after milestone 3 and before "Built from the spec".
     - Verified by: the checks.
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 3.2_
 
-  - [ ] 26.3 Write `watch.js` and its static checks
+  - [x] 26.3 Write `watch.js` and its static checks
     - `notebook/src/notebook/watch/assets/watch.js` (served by the watch only): polls `/version` every 1000 ms; when the
       number changes it fetches the page at the current address (same origin), saves `scrollY` and the open state of every
       `<details>` by id, replaces the content of `main`, restores the scroll position and the open states, shows the stop

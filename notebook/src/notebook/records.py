@@ -290,7 +290,7 @@ class RecordModel:
     refusals: tuple[Refusal, ...]
     snapshots: tuple[Snapshot, ...]
     failure: Failure | None
-    seal: Seal
+    seal: Seal | None  # None only for a record built from the entries of a prefix (`from_entries`)
 
 
 # Loading
@@ -328,6 +328,17 @@ def load_record(folder: Path, name: str, *, allow_fake: bool = False) -> RecordM
     except VerifyError as error:
         raise NotebookError(f"{name}/{error.where}", error.problem) from error
     return _Reader(folder, name, entries).model(allow_fake)
+
+
+def from_entries(
+    folder: Path, name: str, entries: list[dict[str, Any]], *, allow_fake: bool = False
+) -> RecordModel:
+    """The model of the accepted entries of a record that may still be open (design N35, Requirement 23).
+    The watch reader has already checked every line (chain, shape, blobs), so this does not call `verify`,
+    which needs the whole, sealed file. The entries must be one prefix of a record: the first is the start
+    entry. The model has no seal until the seal entry is among them. Only the session id is checked against
+    the last part of `name`: the state folder has no application folder (N33)."""
+    return _Reader(Path(folder), name, list(entries)).model(allow_fake, prefix=True)
 
 
 class _Reader:
@@ -416,7 +427,7 @@ class _Reader:
 
     # Entries
 
-    def model(self, allow_fake: bool) -> RecordModel:
+    def model(self, allow_fake: bool, *, prefix: bool = False) -> RecordModel:
         parts: dict[str, list[Any]] = {kind: [] for kind in _BODY_KEYS}
         start = None
         for entry in self.entries:
@@ -437,18 +448,27 @@ class _Reader:
             raise NotebookError(self.name, "the record has no start entry")
         session, application, seed, budget, step_bound, declaration, variant = start
         self.where = f"{self.name}/{LOG_NAME} line 1"
-        expected = tuple(self.name.split("/")[-2:])
-        if (application, session) != expected:
-            folder = "/".join(expected)
-            raise self.fail(
-                f"the start entry names {application}/{session}, but the record folder is {folder}"
-            )
+        if prefix:
+            if session != self.name.split("/")[-1]:
+                raise self.fail(
+                    f"the start entry names session {session}, but the record folder is {self.name}"
+                )
+        else:
+            expected = tuple(self.name.split("/")[-2:])
+            if (application, session) != expected:
+                folder = "/".join(expected)
+                raise self.fail(
+                    f"the start entry names {application}/{session}, but the record folder is {folder}"
+                )
         if declaration.fake and not allow_fake:
             raise self.fail("the declaration is labelled fake; a fake record is never built into a site")
         for trial in parts["trial"]:
             if trial.fake and not allow_fake:
                 self.where = f"{self.name}/{LOG_NAME} line {trial.seq}"
                 raise self.fail(f"trial {trial.id} is labelled fake; a fake trial is never built into a site")
+        seals = parts["seal"]
+        if len(seals) > 1 or (not seals and not prefix):
+            raise NotebookError(self.name, f"the record has {len(seals)} seal entries")
         failures = parts["failure"]
         if len(failures) > 1:
             raise NotebookError(self.name, f"the record has {len(failures)} failure entries")
@@ -471,7 +491,7 @@ class _Reader:
             refusals=tuple(parts["refusal"]),
             snapshots=tuple(parts["snapshot"]),
             failure=failures[0] if failures else None,
-            seal=parts["seal"][0],
+            seal=seals[0] if seals else None,
         )
 
     def _start(self, body: Any) -> tuple[str, str, int, int, int, Declaration, str | None]:

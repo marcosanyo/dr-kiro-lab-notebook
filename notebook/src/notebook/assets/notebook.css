@@ -2100,3 +2100,38 @@ details[open] > summary::before {
   margin: 0;
   padding-left: 1.2rem;
 }
+/* The session page at the bench (notebook-watch, design N34): the label, the open entry, the lines that say
+   when a part comes, and the sealed statement. Plain paper and the stamp border; no red. */
+.at-bench-label,
+.at-bench-mark {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0 0.5rem;
+  border: 2px solid var(--stamp-observed);
+  border-radius: 4px;
+  color: var(--stamp-observed);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(-2deg);
+}
+.at-bench-label .ink-c,
+.at-bench-mark .ink-c {
+  color: inherit;
+  font-family: inherit;
+}
+.after-seal {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+}
+.sealed-banner {
+  display: inline-block;
+  margin: 0.8rem 0 0;
+  padding: 0.4rem 0.8rem;
+  border: 2px solid var(--stamp-observed);
+  border-radius: 4px;
+  background: var(--card);
+  font-size: 0.95rem;
+}
