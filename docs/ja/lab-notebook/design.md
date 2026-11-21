@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `12d0f2e1bcb812cbf1c6f17c6b44ecdd11d9da783832d05497cc633d676fd8b9`
+> 原文 SHA-256: `3492d9083f58d9776a618687cc41cf6bd45b1184a3a0dc8abe656e93754edf3d`
 
 # Design: lab-notebook
 
@@ -7,7 +7,7 @@
 
 どの Kiro か: ここにあるものはすべて **ビルダー** が作って動かし、**訪問者** が読みます。Dr. Kiro とリーダーはノートブックにもそのビルドにも触れません。
 
-この版に含めない（requirements の Decision 48）: 等しい試行の一覧（要件 14.5）、入力の線（9.8）、実験エントリーの中の軌跡（10.10）。保留（要件の決定 48）: リプレイ（要件 16）。この版は予測チャートの後で止まる。これらはすべて以下に記述が残るがビルドは実装しない。関係する節、Property、決定には印をつけてある。
+この版に含めない（requirements の Decision 48）: 等しい試行の一覧（要件 14.5）、入力の線（9.8）。実験エントリーの中の軌跡（10.10）は戻した（requirements の Decision 54）。保留（要件の決定 48）: リプレイ（要件 16）。この版は予測チャートの後で止まる。これらはすべて以下に記述が残るがビルドは実装しない。関係する節、Property、決定には印をつけてある。
 
 ## Overview
 
@@ -712,7 +712,7 @@ unit = "trials"
 - **N18 Requirements shown with the plan.** 要件 16.2 はステップの要件を見せる。セッションページでは、`requirements.md` は Dr. Kiro の計画の下に折りたたんで見せるので、10.1 の節の順序は保たれる。
 - **N19 Fixture mode only through the library.** `build(..., allow_fake=True)` は fake の記録を受け入れ、すべてのページに "test fixture" の印をつける。CLI はそれができない。
 - **N20 Visual system.** 上の提案のとおり。まずステアリングに書く。
-- **N21 Plots (the input lines are not in this version, requirements Decision 48).** 軌跡の経路は、x と y の縮尺を等しく保ち、その試行自身の軌跡に合わせ、開始点に印をつける。入力の線は固定の [-1, 1] の軸を使う。SVG の座標は小数 2 桁で書式化するので、出力は安定する。
+- **N21 Plots (the input lines are not in this version, requirements Decision 48).** 軌跡の経路（`photo.track_sketch`。撮り直した絵のない試行カードごと、requirements の Decision 54）は、x と y の縮尺を等しく保ち、その試行自身の軌跡に合わせ、開始点に印をつける。入力の線は固定の [-1, 1] の軸を使う。SVG の座標は小数 2 桁で書式化するので、出力は安定する。
 - **N22 Built from the spec.** `build-from-spec` が記録を定義するまで、実行のための CLI オプションはない。ページは、まだ実行がないと述べる。
 - **N23 Adapters installed for the scan (user, option A).** ベンチのスキャンは、各アプリケーションの宣言を import して許可リストを読む（`load_app` は、`mujoco` を import する `body_lab.adapter` と、`wind_tunnel_model` を import する `wind_tunnel.declaration` を import する）。ノートブックは両方のアダプターパッケージにパスで依存する。MuJoCo の Python パッケージはインストールされるが、何もシミュレートも解きもせず、Docker も要らない（要件 1.5、要件の Decision 42）。選ばなかったもの: B、各アプリケーション自身の環境で別プロセスとしてスキャンを走らせる（プロセスの起動が要り、N1 が禁じている。またスキャンの前にサイトのステージングがディスク上に必要になる）。C、スキャンが宣言を別の場所から取れるようにベンチを変更する（`bench/` の変更であり、許可リストはアプリケーション自身の宣言から来なければならない、`rules.md` 1）。
 - **N24 No link to the root `.kiro/` (user).** "How the lab works" にはリポジトリのルートの `.kiro/` へのリンクがなく、ラボの外のファイルやフォルダーを名指ししたりリンクしたりする解説もない。この問いは README のステップ（`docs/brief.md` セクション 5 項目 8）で改めて決める（要件 18.5、要件の Decision 43）。以前の Open question 3 だったもの。

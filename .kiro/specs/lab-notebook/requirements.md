@@ -451,7 +451,8 @@ to every experiment, so that I can check any claim.
    (Decision 45).
 10. WHERE an application's measurements include series (body-lab `track_x`, `track_y`, `track_heading`), THE
    experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the
-   series is a not-measured outcome. Not in this version (Decision 48).
+   series is a not-measured outcome. Back in this version (Decision 54): the application names the two series
+   it draws; a card whose trial has a retaken picture keeps the track in the picture's corner map instead.
 11. WHERE a record holds refusal entries with action `end`, and a quote part of a refusal message equals the id of
     a row of the shown table exactly, character for character, THE session page SHALL show once, above the table, a
     block with the heading "the bench refused to end this session N time" for one refusal or "N times" for more,
@@ -1107,6 +1108,16 @@ exception to a rule.
     records (Requirement 23). The first version (23.1-23.12) was kept small; the user then asked for the rest
     (23.13-23.17): the close after a verdict, the not-run check, the card on the shelf, the link to the finished
     page and the replay of a sealed record.
+54. **The tracks are back on the cards** (user, 2026-11-22). At the bench there are no retaken pictures, so a
+    session page that is still filling in showed no track: the bench's pictures are small and the body seems to
+    stay in place. The user asked for the track drawn from the record. Requirement 10.10 is back in this version,
+    and only it (the input lines of 9.8 and the equal-trial list of 14.5 stay out, Decision 48): every trial card of
+    an application that names its track series in `app.toml` (`track = [<along>, <across>]`, body-lab
+    `["track_x", "track_y"]`) draws the whole track from above, small, in pencil, on one scale, with the start
+    circled, the last point dotted and a 10 cm bar; a not-measured series draws nothing and says so. A card whose
+    trial has a retaken picture keeps the corner map of that picture (the same track, with the moving dot) and gets
+    no second drawing. Not chosen: guessing the series from their names, which would draw tracks for any
+    application with two series.
 
 ## Open questions
 
