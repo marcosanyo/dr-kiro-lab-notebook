@@ -1422,7 +1422,7 @@ section[data-sync] .photo-controls button[data-action="step"] {
     width: 100%;
   }
 }
-/* Orange is for small headings, the marks "our notes" and the switch; the other text is ordinary text. */
+/* Orange is for small headings and the marks "our notes"; the other text is ordinary text. */
 .cap .ink-c,
 .kicker .ink-c {
   color: var(--ink-commentary);
@@ -1515,8 +1515,8 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   --muted: #5a6b86;
   --shadow: rgba(30, 50, 90, 0.2);
 }
-/* The front page: two doors on one skeleton. It has no palette of its own: the paper and the inks are the
-   notebook's (the night candle paper by default, the day paper where the visitor's system asks for it). */
+/* The front page: two doors on one skeleton. It has no palette of its own. It always opens on the night candle
+   paper, the page's default (the front page has no mode attribute, and no palette follows the visitor's system). */
 .front-head {
   max-width: 46rem;
   padding: 1rem 0 1.4rem;
@@ -1526,11 +1526,6 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   margin: 0.6rem 0 0;
   font-size: 1.2rem;
   color: var(--text);
-}
-.front-tagline {
-  font-family: var(--font-script);
-  font-size: 1.9rem;
-  color: var(--title);
 }
 .front-lead {
   max-width: 40rem;

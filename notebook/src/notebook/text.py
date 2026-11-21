@@ -150,7 +150,6 @@ BANDS_OPEN_HIGH = ")"
 # stamp labels of the cited rows (8.2) within the limit, the cover's photos show the trial id without the word
 # "trial" and the track has a one-word caption (user, checkpoint 11).
 SITE_TITLE = "Dr. Kiro's Lab Notebook"
-TAGLINE = "The experiment gets the final edit."
 COVER_MISS_NONE = "This session has no missed prediction."
 COVER_NO_ROW = "No row cites it."
 COVER_DETAILS = "details"
@@ -547,11 +546,7 @@ FRONT_LINK = "All labs"
 KEY_NOTES_BLUE = "blue pen: our notes"
 KEY_NOTES_ORANGE = "orange label: our notes"
 FRONT_KICKER = "a laboratory · two cases"
-FRONT_CLAIM = (
-    "An MCP bench makes a blind Kiro agent register predictions first, keeps its wrong rules struck "
-    "through, and a second Kiro builds from that spec alone."
-)
-FRONT_TAGLINE = "The experiment gets the final edit."
+FRONT_CLAIM = "Normally the spec judges the code. Here, the experiment judges the spec."
 FRONT_LEAD = (
     "Dr. Kiro, a Kiro agent, studies a system it has no description of and writes down the spec it finds. "
     "Two applications stand on one skeleton. Choose a door."
