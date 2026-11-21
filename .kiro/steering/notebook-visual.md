@@ -91,7 +91,8 @@ Markup (`.ink-m`) carries no text of its own. The ink legend (`legend.html`) is 
 - Uppercase monospace, weight 600, 2px border in the stamp colour, rounded corners, rotated -2deg. The stamp itself
   is not letter-spaced; the small headings are.
 - Colours: validated `--stamp-validated` `#1d5e3a`, partly `--stamp-partly` `#7a4b00`, observed `--stamp-observed`
-  `#3a4a5c`, rejected `--stamp-rejected` `#5b2a6e`. A status cell that is not one of the four words uses the
+  `#3a4a5c` with a dashed border, rejected `--stamp-rejected` `#5b2a6e` filled with the word in white (2026-11-22, so
+  observed and rejected read apart at a glance). A status cell that is not one of the four words uses the
   pencil colour (`.stamp` alone). The word is always written out; colour only adds to it.
 - The label ("checked by the bench", "not checked by the bench", "not yet checked by the bench") sits below the
   stamp in small commentary type (`.stamp-label`).
@@ -300,7 +301,8 @@ desk and the cards.
 `--page-grid`); the desk behind a day notebook is plain (no grid). The night lab's madness is on the page itself,
 never icons around it (`parts.page_marks`, paths only): a pencil sketch of a stitched machine struck by a bolt
 (`mark-sketch`, top right, hidden under 700 px), green drips from the top edge (`mark-drips`), a burn at the bottom
-right corner (`.book::after`), with the jar ring and the candle wax. They lie under the writing (`.book` is its own
+right corner (`.book::after`). The titles are red ink: the masthead `#d8392f` on the desk, the session's title
+`--title` `#8a1a12` on the page; the headings stay orange, as the ink legend says. They lie under the writing (`.book` is its own
 stacking context, the marks are at `z-index: -1`) and never move. The sewn binding is a thin, faint thread with cross
 stitches at 3rem, clear of the writing. Only the spider and the bats move.
 
