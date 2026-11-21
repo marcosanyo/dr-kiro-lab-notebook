@@ -8,6 +8,8 @@ The lab notebook is a static website built from the sealed session records. A vi
 judge) should understand in 60 seconds what Dr. Kiro discovered, and see that every line of it has evidence. The
 notebook is built around Dr. Kiro's `## Discovered spec` table (`lab-bench` Requirement 12). It shows the table as
 the sealed record holds it and never makes up a status, a row or a replacement.
+A second command, the watch, shows one session while the bench is still writing its record, on the user's own
+computer and never published (Requirement 23).
 
 Source: `docs/brief.md` sections 1-3 and 4.4 (with 4.1 and 4.5), `lab-bench` requirements (Requirements 6, 7, 10,
 12, 13 and 15 in particular), `bench/src/bench/conditions.py` (the bench's condition classes) and
@@ -104,6 +106,8 @@ shown in "Built from the spec" are made by `build-from-spec`; this spec only sho
   (Requirement 13).
 - **Ink**: one of three fixed text styles that say who wrote a text: Dr. Kiro's ink, commentary ink, pencil.
 - **Commentary**: text written by the builder for the notebook (headings, explanations, labels).
+- **Watch**: the command that shows one running session as its session page in an "at the bench" state, on the
+  user's computer only (Requirement 23). It is not the build and writes no site.
 - **Replay**: the session page shown as of one step of the session (Requirement 16).
 - **Step**: one snapshot taken after a verdict, or the `end` snapshot.
 - **Build-from-spec run**: one sealed run record of `build-from-spec` (`docs/brief.md` 4.5).
@@ -794,6 +798,65 @@ rebuilt and compared byte for byte.
    test SHALL check this on the real body-2 record. The test of the strike-through at a middle replay step with the
    fixture of 16.11 is on hold (Decision 48).
 
+### Requirement 23: The session at the bench
+
+**Concerns:** the user (watching a session on their own computer while Dr. Kiro works) and the builder.
+
+**User Story:** As the user, I want to watch a session's page fill in while Dr. Kiro works, beside Kiro, so that I
+see each prediction registered, run, hit or missed, and the spec written as it happens, on the same page the
+notebook will publish.
+
+#### Acceptance criteria
+
+1. THE notebook SHALL have a second command, the watch, separate from the build. THE watch SHALL show one session
+   while the bench writes its record, as the session page of Requirement 10 made by the same code as the build
+   from the record so far: the session page in an "at the bench" state, not a second kind of page.
+2. THE watch SHALL read only the one session folder the bench is writing in the bench state folder (`lab-bench`
+   Requirement 9.3), given as an explicit argument, and the inputs of Requirement 1.1 that the session page needs.
+   It SHALL NOT read any `lab/` folder, and SHALL NOT write to the bench state folder, to `sessions/` or to the
+   build's output folder. Requirements 1.2 and 2.3 apply to the build, not to the watch.
+3. THE watch SHALL answer only on the loopback address of the user's computer, and SHALL NOT be published by
+   `publish`. Its page SHALL make no request to any other host (3.2).
+4. WHEN the bench adds an entry to the record, THE watch SHALL make the page again from the record so far, and
+   THE page SHALL load the new version within 2 seconds without the user reloading it, keeping the reader's scroll
+   position.
+5. IF the last line of the record has no line end yet, THEN THE watch SHALL leave that line for the next pass and
+   SHALL NOT show it. IF any other line cannot be read, lacks a field the record format requires, or is out of
+   sequence, THEN THE watch SHALL stop making new versions and show, on the page, the line number and the problem.
+   THE watch SHALL NOT skip, guess or repair an entry.
+6. BEFORE it shows a version, THE watch SHALL apply the same blind scan (Requirement 20) and picture check (7.3)
+   as the build. IF either finds anything, THEN THE watch SHALL stop as in 23.5, showing the entry and the kind of
+   finding but not the text.
+7. WHILE the session is at the bench, THE parts that only the user or a later run can write (the session's title
+   and summary, the chosen highlight (Requirement 12) and the reader's test (Requirement 19)) SHALL each show their
+   heading and one line in commentary ink saying when they come: "written after the seal" or "runs after the
+   seal". In place of the title, THE page SHALL show the session id.
+8. Dr. Kiro's plan (10.6) and the discovered spec table (Requirement 8) SHALL come from the latest snapshot, with
+   the status words labelled "not yet checked by the bench" (16.3) until the `end` snapshot; until a table exists,
+   the chips SHALL say "no spec table yet". EACH prediction without an outcome entry SHALL show "waiting" until its
+   hypothesis has a verdict, and "not run" after it.
+9. THE entry of the hypothesis being run (registered, with no verdict yet) SHALL be open and marked "at the bench".
+10. THE page SHALL be labelled "at the bench" with the session id, and SHALL NOT be presented as a sealed record.
+    WHEN the seal entry arrives, THE page SHALL say that the session is sealed and that the build makes its
+    finished page.
+11. WHEN the page is 600 CSS pixels wide, as in Kiro IDE's built-in browser beside the chat, THE page's scroll
+    width SHALL NOT exceed the viewport width (3.5).
+12. A test SHALL feed a fixture record to the watch one line at a time, including a half-written last line, and
+    SHALL check 23.4, 23.5, 23.8 and 23.9. A test SHALL show that a term planted in bench-written text of a fixture
+    record stops the watch (23.6).
+13. WHEN the verdict of the hypothesis being run is recorded, THE entry SHALL show the verdict stamp and, after a
+    pause of about 2 seconds, close to its one-line summary, as every closed entry of the session page. WHEN the
+    page is opened while a session runs, THE finished entries SHALL be shown closed, without playing each close.
+14. WHEN a flag entry counts predictions as not run, THE watch SHALL check that the hypothesis has exactly that many
+    predictions with no outcome entry before the flag. IF the numbers differ, THEN THE watch SHALL stop as in 23.5.
+15. THE shelf on the page SHALL show one card, this session's, marked "at the bench", with the budget used so far
+    and the predictions that came true so far. It SHALL NOT be a link: the watch serves no other session.
+16. IF the watch is given a built site that holds this session's page, THEN after the seal entry THE page SHALL
+    link to that page, which the watch serves read-only from the built site.
+17. THE watch SHALL also show a sealed record the same way, releasing one entry every interval given as an
+    argument, labelled "replay of a sealed record" (16.7) in place of "at the bench", for checking the watch and
+    for recording. A record that does not end with a seal entry SHALL be refused before anything is shown.
+
 ---
 
 ## Decisions
@@ -1034,6 +1097,14 @@ exception to a rule.
     the rewrite red and the stamps are lightened and keep their roles (6.4, Decision 51). Every pair of the
     contrast list reaches 4.5:1 with the night values too (4.6). The steering file `notebook-visual.md` holds the
     values (section "Night lab").
+53. **The session at the bench** (user, 2026-11-21). The user wants to watch a session's page fill in while Dr. Kiro
+    works, beside Kiro. It is the session page in an "at the bench" state, not a separate screen. The watch makes
+    the page with the build's own code from the record so far, and the page loads each new version by itself, so
+    there is one way of drawing a session and the blind scan and picture check are the build's. The watch runs only
+    on the user's computer and is never published; the published site stays a static site built from sealed
+    records (Requirement 23). The first version (23.1-23.12) was kept small; the user then asked for the rest
+    (23.13-23.17): the close after a verdict, the not-run check, the card on the shelf, the link to the finished
+    page and the replay of a sealed record.
 
 ## Open questions
 

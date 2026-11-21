@@ -84,7 +84,11 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
     shipped = {f"{scope}{addresses.FONT_LICENSE}" for scope in ("", "fake/")} | {
         f"{scope}{addresses.ASSET_DIR}/{n}" for scope in ("", "fake/") for n in addresses.FONT_FILES
     }
-    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures | shipped
+    # The front page's card shows a picture of the session the application opens on, in p/ at the root.
+    hashes = {hashlib.sha256(t.picture.data).hexdigest() for t in record.trials}
+    front = {p for p in _all_files(built) if p.startswith("p/")}
+    assert front and all(p[2:-4] in hashes for p in front)
+    expected = texts | {t + SIDECAR_SUFFIX for t in texts} | pictures | shipped | front
     assert _all_files(built) == expected
     for path in pictures:
         data = (built / path).read_bytes()

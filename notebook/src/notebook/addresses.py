@@ -26,6 +26,7 @@ PICTURE_DIR = "p"
 ASSET_DIR = "a"
 STYLESHEET = f"{ASSET_DIR}/notebook.css"
 SCRIPT = f"{ASSET_DIR}/notebook.js"
+WATCH_SCRIPT = f"{ASSET_DIR}/watch.js"  # served and linked by the watch only
 # The typefaces and their licence, served from the site itself (the stylesheet names them without a folder).
 FONT_FILES = (
     "caveat-700.woff2",

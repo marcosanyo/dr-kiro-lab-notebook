@@ -46,6 +46,7 @@ APP_KEYS = frozenset(
         "about",
         "open",
         "unit",
+        "unit_one",
         "theme",
         "pen",
         "decoration",
@@ -125,7 +126,8 @@ class App:
     door_line: str
     about: str
     open: str  # the session id the application's first page opens
-    unit: str  # the word for one budgeted step, "trials" or "runs"
+    unit: str  # the word for budgeted steps, "trials" or "runs"
+    unit_one: str  # the same word for one step, "trial" or "run"
     theme: str  # "day" or "night": the theme its notebook opens in
     pen: str  # "blue" or "orange": the colour of the pen of our notes
     decoration: str  # "none" or "halloween"
@@ -325,6 +327,18 @@ def load_file(path: Path, record: RecordModel) -> Choices:
 
 
 def _app(folder: Path, records: list[RecordModel]) -> App:
+    app = read_app(folder)
+    where = app.source
+    sessions = {r.session for r in records if r.application == app.application}
+    if not sessions:
+        raise NotebookError(f"{where} application", f"the records hold no session of {app.application!r}")
+    if app.open not in sessions:
+        raise NotebookError(f"{where} open", f"names no record ({app.application}/{app.open})")
+    return app
+
+
+def read_app(folder: Path) -> App:
+    """One application's settings file, checked on its own (the watch has no record of the whole book)."""
     path = folder / APP_NAME
     where = str(path)
     if not path.is_file():
@@ -332,12 +346,7 @@ def _app(folder: Path, records: list[RecordModel]) -> App:
     data = _read_toml(path)
     _exact(where, data, APP_KEYS, APP_KEYS - {"display", "symbols"})
     application = _string(f"{where} application", data["application"], 40)
-    sessions = {r.session for r in records if r.application == application}
-    if not sessions:
-        raise NotebookError(f"{where} application", f"the records hold no session of {application!r}")
     opened = _string(f"{where} open", data["open"], 40)
-    if opened not in sessions:
-        raise NotebookError(f"{where} open", f"names no record ({application}/{opened})")
     order = data["order"]
     if type(order) is not int or order < 1:
         raise NotebookError(f"{where} order", "must be a whole number from 1")
@@ -364,6 +373,7 @@ def _app(folder: Path, records: list[RecordModel]) -> App:
         about=_string(f"{where} about", data["about"], 400),
         open=opened,
         unit=_string(f"{where} unit", data["unit"], 20),
+        unit_one=_string(f"{where} unit_one", data["unit_one"], 20),
         theme=theme,
         pen=pen,
         decoration=decoration,

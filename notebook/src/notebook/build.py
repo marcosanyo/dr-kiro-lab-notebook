@@ -127,7 +127,12 @@ Pages = Callable[[Model], dict[str, tuple[list[Segment], tuple[PictureFile, ...]
 
 
 def _front(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:
-    return {addresses.COVER: (front.page(m.checked.apps.apps), ())}
+    checked = m.checked
+    return {
+        addresses.COVER: front.page(
+            checked.apps.apps, list(checked.records), checked.apps.choices, checked.layouts, checked.retakes
+        )
+    }
 
 
 def _applications(m: Model) -> dict[str, tuple[list[Segment], tuple[PictureFile, ...]]]:

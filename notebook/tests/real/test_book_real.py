@@ -76,6 +76,22 @@ def test_the_front_page_has_two_doors_and_each_application_opens_on_its_notebook
     assert (site / "body-lab" / "index.html").read_bytes() == (site / "body-lab/body-3.html").read_bytes()
 
 
+def test_each_front_card_shows_a_picture_what_the_lab_is_and_a_link_to_open_its_notebook(site):
+    page, found = _page(site, "index.html")
+    assert (
+        found.classes["door-open"] == 2
+        and found.classes["door-about"] == 2
+        and found.classes["door-found"] == 2
+    )
+    # one moving picture per card, from the session the application opens on, kept at the site root
+    assert found.classes["photo"] == 2
+    for name in re.findall(r'src="(p/[0-9a-f]{64}\.png)"', page):
+        assert (site / name).is_file()
+    words = re.sub(r"\s+", " ", re.sub(r"<[^>]*>", "", page))
+    assert "It opens on The Quiet Body: " in words and "It opens on The Silent Channel: " in words
+    assert "Choose a door" not in words and "opens by day" not in words
+
+
 def test_each_application_opens_in_its_own_theme_and_only_the_robot_has_decoration(site):
     day, day_found = _page(site, "wind-tunnel/index.html")
     night, night_found = _page(site, "body-lab/index.html")
@@ -291,6 +307,12 @@ def test_the_chart_is_one_line_that_fills_its_frame_and_has_no_scattered_dots(si
         assert "hollow" not in page
 
 
+def _story_text(page: str) -> str:
+    """The words of "What happened here": its section, which holds no other section."""
+    start = page.index('id="story"')
+    return _text_of(page[start:], 'id="story"', "</section>")
+
+
 def _text_of(page: str, start: str, end: str) -> str:
     part = page[page.index(start) : page.index(end)]
     return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", "", part)).strip()
@@ -299,7 +321,7 @@ def _text_of(page: str, start: str, end: str) -> str:
 def test_the_story_of_body_2_says_what_happened_in_three_steps_from_the_record(site, loaded_all):
     page, found = _page(site, "body-lab/body-2.html")
     assert found.classes["story-step"] == 3
-    story = _text_of(page, 'id="story"', 'class="chips"')
+    story = _story_text(page)
     record = loaded_all["body-2"]
     registered = sum(len(h.predictions) for h in record.hypotheses)
     assert f"Dr. Kiro wrote {registered} predictions, each before its experiment ran." in story
@@ -309,7 +331,7 @@ def test_the_story_of_body_2_says_what_happened_in_three_steps_from_the_record(s
 
 def test_the_story_of_the_wind_tunnel_does_not_claim_a_reader_that_was_not_run(site):
     page, found = _page(site, "wind-tunnel/wt-004.html")
-    story = _text_of(page, 'id="story"', 'class="chips"')
+    story = _story_text(page)
     assert "Another Kiro" not in story and found.classes["tile"] == 0
     assert "4 rows are validated and can be trusted; 2 are only partly tested or observed" in story
     assert "No second Kiro has been run on this spec yet." in story
@@ -375,7 +397,7 @@ def test_each_retaken_picture_has_a_corner_map_with_one_dot_per_cell(site):
 
 def test_the_changed_body_shows_the_earlier_spec_beside_its_own_on_the_same_request(site):
     page, found = _page(site, "body-lab/body-3.html")
-    story = _text_of(page, 'id="story"', 'class="chips"')
+    story = _story_text(page)
     assert "Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2." in story
     assert "Given the spec of body-2, written before the body changed, 0 of 2." in story
     reader = _text_of(page, 'id="reader"', 'id="spec"')

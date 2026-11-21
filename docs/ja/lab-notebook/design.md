@@ -1,9 +1,9 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/design.md`](../../../.kiro/specs/lab-notebook/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `bb7a8860c1589b1022ce55af8dcb61c25d82c0c03c8bd594038ba0c4b34e6dd0`
+> 原文 SHA-256: `46bc95d82aeb76e089c315f46120844d1776f0533abb28d8594c0a8684138d67`
 
 # Design: lab-notebook
 
-この設計は `lab-notebook` の要件 1-22 を対象とします。"N4" のような節の参照は、末尾の「Decisions」にあるビルダーの設計判断を指します。ユーザーの判断、規則の例外、`bench/` の変更が要るものは「Open questions」にあります。この設計はそのどれも自分では決めません。
+この設計は `lab-notebook` の要件 1-23 を対象とします。"N4" のような節の参照は、末尾の「Decisions」にあるビルダーの設計判断を指します。ユーザーの判断、規則の例外、`bench/` の変更が要るものは「Open questions」にあります。この設計はそのどれも自分では決めません。
 
 どの Kiro か: ここにあるものはすべて **ビルダー** が作って動かし、**訪問者** が読みます。Dr. Kiro とリーダーはノートブックにもそのビルドにも触れません。
 
@@ -21,6 +21,8 @@
 4. **書き出し**: 新しいステージングフォルダーに書き、1 回のリネームで出力フォルダーにする。
 
 フェーズ 1-3 での失敗は、名前つきのエラーでビルドを止め、何も書きません。フェーズ 4 での失敗は、出力フォルダーを存在しない状態か空の状態のままにします（N4）。
+
+ウォッチ（`notebook-watch`、要件 23、Component 13）は 2 つ目のコマンドです。ベンチが記録を書いている間のセッションを 1 つ、ユーザー自身のコンピューターの上だけで見せ、ユーザーが動かします。訪問者は見ません。その時点までの記録から、ビルドと同じビュー、ページ、ブラインドスキャン、写真の検査を使って `at_bench` モードのセッションページを作り、127.0.0.1 で配信します。ファイルは書かず、公開するサイトには決して入りません。ビルドのモジュールはウォッチを import しません（N33、N34）。
 
 ## Architecture
 
@@ -56,13 +58,19 @@ flowchart LR
   PG --> SC[scan.py]
   X --> SC
   SC --> ST[site.py: staging write + sidecars + rename]
+  subgraph watch["notebook-watch: user's computer only, writes nothing"]
+    BS[bench state folder: one session folder] --> WR[watch/reader.py: complete lines, chain, stop rules]
+    WR --> M
+    SC --> WV[watch/versions.py: scan and picture check per version, in memory]
+    WV --> WH[watch/serve.py: 127.0.0.1 only, GET only]
+  end
 ```
 
 ### Package layout
 
 ```
 notebook/
-  pyproject.toml          uv project "lab-notebook", Python 3.12, console script notebook-build
+  pyproject.toml          uv project "lab-notebook", Python 3.12, console scripts notebook-build and notebook-watch
   uv.lock
   layouts.toml            frame layout table (Requirement 7.1)
   commentary-words.txt    reviewed word list for the motion-wording rule (5.5)
@@ -92,6 +100,12 @@ notebook/
     scan.py               the bench Scanner over segments and finished files
     site.py               Site: path -> bytes and ranges; sidecars; staging and rename
     build.py              the four phases
+    watch/                notebook-watch (Component 13); no build module imports it
+      cli.py              argument parsing for notebook-watch
+      reader.py           incremental reader of the record: complete lines, chain, stop rules
+      versions.py         one version per pass: views, page in at_bench mode, scan, picture check, in memory
+      serve.py            loopback server, GET only (Open question 3: answered yes)
+      assets/watch.js     the refresh script, served by the watch only (23.4)
   tests/                  unit, properties, real (see Testing Strategy)
 ```
 
@@ -105,6 +119,7 @@ dependencies = ["lab-bench", "body-lab-adapter", "wind-tunnel-adapter"]
 
 [project.scripts]
 notebook-build = "notebook.cli:main"
+notebook-watch = "notebook.watch.cli:main"
 
 [tool.uv.sources]
 lab-bench = { path = "../bench", editable = true }
@@ -130,6 +145,20 @@ uv run --project notebook notebook-build \
 ```
 
 すべてのオプションが必須です（`argparse` の `required=True`。`--scan-config` は少なくとも 1 回）。欠けているものは名指しされ、ビルドは何も読む前に終了コード 2 で終わります。どのオプションにもデフォルトはありません。`--out` は存在しないか、空のフォルダーでなければなりません。そうでなければビルドは、それを名指しして拒否します。build-from-spec の実行は、`build-from-spec` の spec がその記録を定義したときにオプションを得ます（19.8、N22）。
+
+### Command line of the watch (Requirement 23, N33)
+
+```
+uv run --project notebook notebook-watch \
+  --record <bench state folder>/<session-id> --state <bench state folder> \
+  --layouts notebook/layouts.toml --words notebook/commentary-words.txt \
+  --scan-config body-lab/adapter/scan_sources.toml --scan-config wind-tunnel/adapter/scan_sources.toml \
+  --stop-list .kiro/blind-scan/stop-list.txt --port <port> \
+  --app wind-tunnel/notebook --app body-lab/notebook \
+  [--replay <seconds>] [--site <built site>]
+```
+
+すべてのオプションが必須で、既定値を持ちません。ただし、ある部分を動かす 2 つは別です: `--replay` は封印済みの記録をその秒数ごとに 1 項目ずつ見せ（23.17）、`--site` は、封印の後にこのセッションのページへリンクするビルド済みのサイトを指します（23.16）。`--scan-config` と `--app` は少なくとも 1 回です。`--app` は、ビルドと同じく、アプリケーションのノートブックのフォルダーを指します。ウォッチは、`app.toml` が記録の開始エントリーのアプリケーションを名指しするものを使い、ちょうど 1 つでなければ失敗します。ほかの入力の隣から設定ファイルを探すことはしません。欠けているオプションは名指しされ、ウォッチは何も読む前に 2 で終了します。`--out`（ウォッチはサイトを書かない）、`--choices`（封印の後の部分は読まない、23.7）、ホストのオプション（ウォッチは 127.0.0.1 だけに bind する、23.3）はありません。`--record` は `--state` の下になければなりません。使い方の誤りは 2、チェックの失敗は 1 で終了し、メッセージの形はビルドと同じです。
 
 ## Components and Interfaces
 
@@ -287,6 +316,52 @@ body-lab の各試行について（ラボのカードは除く）、ページ�
 ### 12. Site writing (Requirements 2.7, 20.3, 21)
 
 `Site` は、相対パスをバイト列に対応づける。各 `.html`、`.css`、`.js` のファイルは `<file>.authors.json` を得る: `{"ranges": [...]}` を `json.dumps(..., sort_keys=True, separators=(",", ":"), ensure_ascii=False)` と最後の改行で書く。アセットは `bench` の範囲 1 つである。書き出し: `<parent>/.<out-name>.staging` を作り（すでにあれば拒否）、すべてのファイルをパスの並び順で書き、`os.replace(staging, out)`（out は存在しないか、空のフォルダー）。
+
+### 13. The watch (Requirement 23; N33-N37)
+
+ウォッチは、ベンチが書いている間のセッションを 1 つ見せます。ビルドとは別のコマンド `notebook-watch` です（N33）。どこにもファイルを書かず、公開されません（23.3）。
+
+**入力。** 記録フォルダーは、`--state` で渡すベンチ状態フォルダーの中の `<state>/<session-id>` です（`lab-bench` 9.1）。ウォッチが読むのは、そのフォルダーの `log.jsonl` と `blobs/`、フレームレイアウト表、解説の語のリスト、スキャンのソース、ストップリストです（23.2）。`lab/`、`sessions/`、`discovered/` のどのフォルダーも、選択ファイルもカバーファイルも読みません。開始エントリーのセッションは、記録フォルダーの名前と等しくなければなりません。状態フォルダーにはアプリケーションのフォルダーがないので（`bench` design 9.1）、アプリケーションは開始エントリーから示し、フォルダー名とは照合しません（N33）。
+
+**リーダー（23.4、23.5、23.12。N35）。** リーダーは 500 ms ごとに、最後に受理した完全な行の直後のバイト位置から `log.jsonl` を読みます。
+
+- 行末のない最後の断片は次の回に回し、見せません（23.5）。
+- 完全な行を受理するのは、次をすべて満たすときだけです: JSON であること。オブジェクトのキーがちょうど seq、kind、body、prev、hash であること。正規形の JSON であること。kind がベンチのエントリーの種類の 1 つで、body がその種類の厳密な形を持つこと（N2、`records.py` のモデル）。seq が最後に受理した seq より 1 大きいこと（最初の行は 1）。prev が前のハッシュと等しいこと（最初の行は `GENESIS`、64 個のゼロ）。hash が、hash を除いたエントリーの `chain.entry_hash` と等しいこと。body の中のすべての blob 参照が `check_blob_ref` の受け付ける形で、`blobs/` の中のファイルを名指しし、最初に読んだときにその中身のハッシュが名前と一致すること。
+- チェックに落ちた行で、リーダーはその行で止まります。飛ばしたり、推測したり、直したりはしません（23.5）。
+- リーダーは `.lock` を開かず、`Store.open` を呼ばず、`builder.log` を読まず、`blobs/` のドットで始まる一時的な名前を無視し、何も書きません。
+
+**停止の文。** 停止はどれも、`text.py` の固定の問題文を出します。たとえば "not JSON"、"not in the record's format"、"out of sequence"、"prev does not follow the entry before"、"hash does not match"、"refers to a blob that is not in the record"、"the record so far does not make a session page" です。悪い文そのものも、ベンチのエラーの文も出しません（N37）。
+
+**ブラインドスキャンと写真の検査（23.6）。** 各版（下）は、Component 11 の 2 つのスキャンのパスと、使うすべての写真について 7.3 の写真の検査を通ります。パス 1 の指摘は、そのソースの行のエントリーでウォッチを止めます。パス 2 の指摘は、仕上がったファイル全体に属するので、そのパスの最新のエントリーでウォッチを止めます。停止は、エントリーの番号と指摘の種類（語、パス、資格情報、写真）を出し、文そのものは出しません。
+
+**1 つのページ、2 つのモード（23.1、23.7-23.10。N34）。** セッションページの関数は `mode` を受け取ります: `sealed`（ビルド）か `at_bench`（ウォッチ）です。違うのは次の部分だけです:
+
+- 見出しは "at the bench" と言い、題の代わりにセッション ID を出す。
+- 題と要約、ハイライト、リーダーのテストは、見出しと、解説インクの "written after the seal" か "runs after the seal" を出す（23.7）。
+- 表のすべてのステータスに "not yet checked by the bench" と添える（23.8、16.3）。表は最新のスナップショットから取り、終わりのチェックは走らせない。
+- 結果のエントリーのない予測は "waiting" を出す（23.8）。
+- 登録されてまだ判定のない仮説のエントリーは開いていて、"at the bench" の印を付ける（23.9）。
+- 封印のエントリーで、ページはセッションが封印されたことと、完成したページはビルドが作ることを言う（23.10）。
+- ウォッチが配信しないページ（`how.html`、カバー、ラボのページ、リプレイのページ）へのリンクは出さない。
+- "What happened here" は、記録に封印のエントリーがない間、これまでの外れの数と、ベンチが封印の時に spec を確かめ、その後で次の Kiro が読むことを言う（`STORY_MISSED_SO_FAR`、`STORY_AT_BENCH`）。まだ書かれている記録について "final" とは言わない（23.7）。
+- まだ試行のない仮説は、記録に封印のエントリーがない間、"never run" の代わりに "not run yet" を出す。
+- 結果のエントリーのない予測は、その仮説に判定が出るまでは "waiting"、出た後は "not run"（23.8）。表がまだ無い間、札は "no spec table yet"（`CHIP_NO_TABLE_YET`）。
+- 棚にはリンクでないカード `card-bench` が 1 枚: セッション ID、"at the bench"（または再生のラベル）、これまでに使った予算、これまでに当たった予測（23.15）。
+- ウォッチが再生するとき、見出しは "at the bench" の代わりに "replay of a sealed record" と言う（23.17）。封印のエントリーの後、`--site` がそのページを持つとき、封印の文は "Open the finished page." をリンクする（23.16）。
+
+セッションページは `pages/book.py` の `body`（部品）と `pages/shelf.py`（その周りのページ）です。ウォッチは `shelf.at_bench_page` を呼びます。ページの数は、1 のときは単数になります（"1 row is validated"、"1 trial"、"1 rule was struck out"）。予算の 1 歩を指す語の単数は、`app.toml` の `unit_one`（notebook-shelf design）から取り、`unit` の文字を削って作りはしません。
+
+**版（23.1、23.4。N36）。** 新しい完全なエントリーを少なくとも 1 つ受理したパスは、その時点までの記録（`records.from_entries`）から版を作ります。すべての試行の画像シートを確かめ、`at_bench` モードでページを作り（`shelf.at_bench_page`）、両方のスキャンのパスをかけます。同じパスでエントリーを受理した後にリーダーが止まったときは、受理したエントリーの版を先に作り、停止はその後に記録します。ページを作る前に、各フラグのエントリーを確かめます: その `not-run` の数は、フラグより前に結果のエントリーの無い、その仮説の予測の数と等しくなければならず、違えばウォッチはフラグで `WATCH_NOT_RUN_COUNT` とともに止まります（23.14）。`--replay` のとき、リーダーは `ReplayReader` です: 封印済みの記録全体を 1 回読んで確かめ、封印のエントリーの無い記録を拒否し、間隔ごとに 1 エントリーずつ出します。版はメモリに保持されます。番号は 1 ずつ増え、`/version` がそれを返します。版は、すべてを通ってから配信されます。
+
+**停止（23.5、23.6。N37）。** 停止の後は新しい版を作らず、リーダーはそれ以上読みません。最後に通った版がページに残ります。`/version` は停止の文も返し、`watch.js` はそれを要素 `#watch-stop` に出します。プロセスは、ユーザーが止めるまで配信を続けます。
+
+**配信（23.3。Open question 3）。** ウォッチは 127.0.0.1 だけで、GET だけに、次の固定のルートで応答します: `/<app>-<session>.html` と `/` のセッションページ。`/version`（JSON: 版の番号と、停止の文または `null`）。`/legend.html`。`/a/notebook.css`、`/a/notebook.js`、`/a/watch.js`。ページが名指しする写真ごとの `/p/<sha256>.png`。`notebook.css` が参照する書体と書体のライセンス（`/a/*.woff2`、`/a/fonts-license.txt`）も配信します。ほかのパスは 404 です。アセットはウォッチの起動時にパッケージから読みます。写真は記録の blob か、メモリの版から来ます。ウォッチはファイルを書きません。サーバーは、ユーザーが承認した例外のもとで標準の `http.server` を使います（Open question 3、答えは yes）。`serve.py` には `fetch()` もあります。テストがルートを読むための小さな `http.client` の呼び出しで、テストは `http` と `socket` の禁止をそのまま守るためです。`--site` のとき、`/site/<path>` はビルド済みのサイトのそのファイルで応答します。求められたときに読み、そのフォルダーの中だけから、サイト自身のファイルの種類だけを返します（23.16）。
+
+**更新（23.4。`a/watch.js`）。** `watch.js` はウォッチだけが配信し、ビルドはリンクしません。1000 ms ごとに `/version` を読みます。番号が変わると、今のアドレスのページを取得し（同じオリジン）、`scrollY` と、すべての `<details>` の開閉状態を id ごとに保存し、`main` の中身を入れ替え、スクロールの位置と開閉状態を戻し、停止の文を `textContent` で `#watch-stop` に出し、`document` にイベント `notebook:refresh` を送ります。更新の前に "at the bench" の印を持ち、更新の後にそれを失った（判定が来た）項目は、2000 ms（`CLOSE_AFTER`）開いたままにしてから閉じます（23.13）。ページを開いたときにすでに終わっていた項目は、ウォッチから閉じた状態で来ます。`notebook.js` はそのイベントを聞き、新しい中身の上で動く画像を設定し直すので、スクリプトにグローバルな名前は要りません。要求は同じオリジンだけです。Node は使わないので（`tech.md`）、スクリプトのテストは Python の静的なチェックです（26.3）。スクリプトは、N28 のとおり、`window.` を付けずに `scrollY` を読みます。
+
+**幅（23.11）。** 600 px のチェックは、3.5 の 360 px の規則を幅 600 にしたもので、ユーザーの Mac のブラウザーで確かめます（タスク 26.4）。
+
+**公開（23.3）。** `publish` はウォッチを決して公開せず、`publish` の spec はそれを配信してはなりません。ウォッチは何も書かないので、サイトから除くものはありません。ビルドはウォッチのモジュールを持たず、`watch.js` をリンクしません（テストが両方を確かめます）。
 
 ## Data Models
 
@@ -483,6 +558,18 @@ unit = "trials"
 
 **Validates: Requirements 2.8, 10.8**
 
+### Property 18: The reader shows exactly the complete, valid prefix
+
+*任意の* 生成された記録（Testing Strategy の "Fixtures"）と、そのバイト列を続けて書く断片への任意の分け方について、任意の大きさの断片でウォッチのリーダーに渡したとき、リーダーが受理するエントリーは、それまでの完全な行とちょうど同じで、順番も同じであり、ページが行の一部を見せることはありません。行末のない最後の行は見せません。Component 13 の規則を破る *任意の* 完全な行（JSON でない、種類が求めるのと違うキーの集合、1 大きい以外の seq、前のハッシュ以外の prev、`entry_hash` 以外の hash、`blobs/` にないファイルへの blob 参照）について、リーダーはちょうどその行番号で止まり、その行から先は何も受理せず、後の行を読みません。
+
+**Validates: Requirements 23.4, 23.5, 23.12**
+
+### Property 19: The at-bench page shows what the sealed page shows for the same prefix
+
+*任意の* 生成された記録と、そのエントリーのすべての完全な接頭辞（1 行からすべての行まで）について、その接頭辞の `at_bench` のページが見せるデータ（試行の測定値とその結果、仮説と判定、拒否、表の行とステータスの語、予測の行）は、同じ接頭辞について `sealed` モードが見せるデータと等しくなります。2 つのモードが違うのは、23.7-23.10 と Component 13 で名指しした見出しと部分だけです。
+
+**Validates: Requirements 23.1, 23.8**
+
 ## Error Handling
 
 - エラーの型は 1 つ、`NotebookError(where, problem)`。`where` はファイル（と行またはエントリー）か、選択のキー。`problem` は何が間違っているかを言う。ベンチのエラー（`VerifyError`、`TableError`、`PictureError`、`ScanError`）は、ベンチのエラーを原因として、そのテキストを保ったまま `NotebookError` として再送出する。`try`/`except` はエラーを握りつぶさず、再試行もデフォルト値もない（`rules.md` 2）。
@@ -530,6 +617,14 @@ unit = "trials"
 - 色: ビジュアルのステアリングで宣言された前景と背景の組はすべて、CSS のカスタムプロパティから WCAG の式で計算したコントラスト比が 4.5:1 以上である（4.6、6.5）。
 - `uv.lock` に `mcp` がない。`git diff --stat bench/` が、タスクの検証ステップで空である（7.4）。
 
+### Watch tests (Requirement 23)
+
+- `notebook/tests/properties/` の Property 18 と 19（上のとおり）。
+- `tmp_path` の合成した記録（`fake = true`、ライブラリーを通して `allow_fake=True` で作る）でのリーダーと停止の例: 書きかけの最後の行、反転した 1 バイト、間違った seq、間違った prev、欠けた blob、種類に合わないキーの集合。スキャンのソースの語をベンチの書いた文に仕込むと、ウォッチはそのエントリーで止まり、種類を出して文は出さない（23.6）。
+- セッションの途中のフィクスチャでの `at_bench` のページ: "waiting"、開いた仮説、23.7 の見出しとラベル、封印のエントリーの後の封印の文（23.8-23.10）。
+- 静的なチェック: `serve.py` は 127.0.0.1 だけに bind し、固定のルートで GET だけに応答する。ビルドのモジュールは `notebook.watch` を import しない。ページと `watch.js` は他のホストに要求を出さない（3.2）。`watch.js` は 1000 ms ごとに問い合わせ、同じオリジンの要求だけを使い、`window.` も `tagName` も持たない。写しの上で動かした前後で、ベンチ状態フォルダーと `sessions/` が同じである（フォルダーの一覧とハッシュ）。
+- 600 px と 360 px でのブラウザーのチェックと、2 秒以内の更新は、マイルストーン 4 のチェックポイント（タスク 26.4）でユーザーの Mac で行う。
+
 ### Manual checks
 
 ブラウザーでの 360 px の幅とモーション低減（3.5、3.6）、動く画像、そしてマイルストーン 1 でのユーザーによる最初の画面のレビュー（22.4）。`docs/status.md` に記録します。
@@ -563,7 +658,8 @@ unit = "trials"
 1. **Milestone 1**: プロジェクト、入力、記録、ビュー、表、選択、カバーファイル、レイアウト、インクとサイドカー、スキャン、サイトの書き出し、ビジュアルのステアリングファイル、カバー、そしてセッションページの発見された spec の表（それに要るタブ、逆リンク、スタンプ、拒否された終了の注記、動く画像を含む）を、本物の記録から作る。そこで止まり、カバーと body-2 の表を、デスクトップと 360 px の画面でユーザーに見せる（22.4）。
 2. **Milestone 2**: 実験エントリーと動く画像の全体、ラボのページと停止したセッション、"How the lab works"、走行バンド。
 3. **Milestone 3**: 予測チャート。リプレイは保留であり、等しい試行の一覧と body-lab の入力の線はこの版に含めない（requirements の Decision 48）。この版は予測チャートの後で止まる。
-4. **その後**: "Built from the spec" は "there are no runs yet" を見せる（19.1）。19.2-19.7 は `build-from-spec` の spec を待つ（19.8）。
+4. **Milestone 4（要件 23、Decision 53）**: ウォッチ。マイルストーン 3 の後、「その後」の前。タスク 25 はリーダーと `at_bench` のページで、Property 18 と 19 を含む。タスク 26 はループバックのサーバーと更新で、Open question 3 とユーザーの Mac でのチェックポイントを待つ。
+5. **その後**: "Built from the spec" は "there are no runs yet" を見せる（19.1）。19.2-19.7 は `build-from-spec` の spec を待つ（19.8）。
 
 ## Requirements coverage
 
@@ -590,6 +686,7 @@ unit = "trials"
 | 20 | Components 8、11、12、Property 2、16 |
 | 21 | Data Models（順序）、Components 12、Property 15 |
 | 22 | Testing（本物の記録）、Delivery order |
+| 23 | Component 13、Command line of the watch、N33-N37、Property 18、19、Open question 3 |
 
 ## Decisions
 
@@ -628,6 +725,28 @@ unit = "trials"
 - **N30 Declaration columns on `how.html` and the footer link (user, 2026-11-17).** タスク 14.1 で、封印済みの body-1 の記録の宣言は、body-2 の宣言と、ページが見せないフィールドだけが違うことがわかった。決定: `how.html` では、1 つのアプリケーションの記録を別々の列で見せるのは、要件 18.3 の 5 つの項目（ノブとその範囲、測定、予算、画像の種類、目標）が違うときだけである。宣言のそれ以外のフィールド、たとえば測定の作り方（`measured_by`）やノブの説明は見せず、列を作らない（`how.declaration_key`）。すべてのページのフッターは、インクの凡例へのリンクの隣に `how.html` へのリンクを持つ（Components 9）。記録と `bench/` は変えない（要件 18.3）。
 - **N31 Rejected-row tab open by default (user, 2026-11-17).** 表の別の 1 行だけをセルが名指しする `rejected` の行の "replaced by" `<details>` は `open` つきで書く。中身とリンクは変えない。訪問者は閉じることができる（要件 8.13、requirements の Decision 49）。
 - **N32 Enlarged picture (user, 2026-11-17).** ビルドは記録された PNG を `zlib` と `struct` で復号し（新しい依存なし。`notebook/src/notebook/png.py` は 8 ビットの RGB と RGBA を、フィルターなしまたは 5 種の行フィルターで読み、フィルター種別 0 で書く）、領域はシートのピクセルから選び、軌跡からは選ばない（記録には軌跡の座標から画像のピクセルへの対応がない）。あるフレームの同じ位置で、色が最初のフレームのピクセルと違うピクセルを動いているとする。動くピクセルすべてを囲む箱に、セルで切った 4 ピクセルの余白を足したものを、シートのレイアウトのまま全フレームから切り出す（動くピクセルがなければセル全体）。切り出しは、拡大した箱が両方向でフレーム以上の大きさになる最小の整数倍に、最近傍法で拡大する。拡大したシートはレイアウトを保ち、隙間はない（`notebook/src/notebook/magnify.py`）。ほかの画像と同じく、自分のバイト列の SHA-256 で名付ける（7.7）。動く画像の隣に、狭い画面で折り返す 1 行で見せる。ラボのカード以外の body-lab のすべての動く画像に 1 つ付く（`photo(..., magnified=False)`、7.9）。wind-tunnel の画像には付かない。流れがシート全体を動くためである（`photo.MAGNIFIED_APPLICATIONS`、Decision 50）。記録されたファイルは従来どおり 1 バイトずつ複製する（7.7）。導出したファイルは決定的で、画像検査とスキャンを通る（要件 7.9、requirements の Decision 50）。
+- **N33 The watch is a second command that writes nothing (Decision 53).** `notebook-watch` は `notebook/src/notebook/watch/` にあり、`notebook-build` のオプションではなく、それ自身のコンソールスクリプトです。オプションは「Command line of the watch」にあり、すべて必須で、既定値を持つものはありません。サイトを書かないので `--out` はなく、封印の後の部分を読まないので `--choices` はなく（23.7）、127.0.0.1 だけに bind するのでホストのオプションはありません（23.3）。`--record` は `--state` の下になければなりません。開始エントリーのセッションは、記録フォルダーの名前と等しくなければなりません。状態フォルダーにはアプリケーションのフォルダーがないので（`bench` design 9.1）、アプリケーションはフォルダー名と照合しません。選ばなかったもの: ビルドのフラグ（出力フォルダーの規則とサイトの書き手を共有することになるが、ウォッチはサイトを書かない）、2 つ目のページのコード（23.1）。
+- **N34 One session page, two modes (Decision 53).** `pages/book.py` の `body` と `pages/shelf.py` は、`mode` を `sealed` か `at_bench` として受け取ります。ビルドは `sealed` を、ウォッチは `at_bench` を渡します。違いはちょうど Component 13 に挙げたもので、ほかの部分はすべて同じコードなので、Property 19 が両者を比べられます。封印の文と "at the bench" のラベルは、解説インクと判子のスタイルを使います。そのクラスは、N28 が許す語で `notebook.css` に加えます。選ばなかったもの: ウォッチのための別のテンプレート（23.1 は 1 種類のページを求める）。
+- **N35 The watch has its own reader; facts of the bench (Decision 53).** ベンチのコードで確かめた事実:
+  - `Store.put_blob` は、どのエントリーが参照するよりも前に blob のファイルを書く（一時的な名前、`fsync`、それからリネーム）。`Store.append` は、参照する blob が `blobs/` にないエントリーを拒否する（`store.py` の `append`: "entry references blob ... that is not stored"）。そのため、完全な行の blob は必ずディスクにある。blob はそのエントリーより少し前から存在しうるので、セッションが開いている間、リーダーはすべての blob が参照されていることを求めない。
+  - `chain.verify(folder, sealed=False)` はファイル全体を読み、どのエントリーも参照しない blob を拒否する。ウォッチは伸びていくファイルにそれを使えないので、`chain.read_entries` と同じチェックを 1 行ずつかける: 正規形、seq、prev、`entry_hash` によるハッシュ（`GENESIS` とともに）、各 blob 参照の形（`check_blob_ref`）。
+  - `Store.open` は `.lock` ファイルを取る。ウォッチはそれを呼ばず、`.lock` を開かない。
+  - その時点までの記録は、`records.from_entries` でモデルに、`shelf.at_bench_page` でページになる。どちらかが失敗すると、ウォッチはそのパスの最新のエントリーで、固定の文 "the record so far does not make a session page"（`WATCH_NO_PAGE`）とともに止まる。エラーそのものの文は、記録を引用しうるので出さない。
+  選ばなかったもの: ベンチの中の少しずつ進む `verify`（`bench/` の変更で、この spec はそれをしてはならない）。
+- **N36 Versions are held in memory (Decision 53).** 版は、メモリに保持するファイルの完全な組です: ページ、凡例、ページが名指しする写真、そこから作る拡大した写真（Component 10）。ビルドの関数がそれを作ります。リーダーは 500 ms ごとに記録を確かめ、ブラウザーは 1000 ms ごとに問い合わせるので、新しい行は、書かれてから描画の前までにおよそ 1.5 秒以内でページに届き、23.4 の 2 秒に収まります。500 ms はビルダーの選択で、要件ではありません。選ばなかったもの: 版をフォルダーに書くこと（23.2 はどこに書くことも禁じる）。
+- **N37 A stop keeps the last good version (Decision 53; 23.5, 23.6).** 停止は、チェックに落ちた最初の行、最初のスキャンか写真の指摘、またはその記録からページが作れない最初のパスで決まります。停止は版を作りません。最後に通った版が配信され続け、`/version` は停止の文を返し、それ以上の行は読みません。プロセスは、ユーザーが止めるまで配信を続けます。停止の文は行番号（seq は行番号と等しいので、エントリーの番号）と固定の問題文を出します。指摘は、エントリーの番号と指摘の種類を出し、文そのものは出しません。やり直しも飛ばしもしません（`rules.md` 2）。
+
 ## Open questions
 
-なし。以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 2（途中のステップで読めない表）は N26 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。
+Open question 3 は、ユーザーが yes と答えました（2026-11-21）。下の例外は `pyproject.toml` にあります。以前の Open question 1（スキャンのためのアダプター）は、ユーザーが N23 として、以前の Open question 2（途中のステップで読めない表）は N26 として、以前の Open question 3 は N24 として、以前の Open question 4 は N25 として決めました。新しい Open question 3 は、同じ番号の別の問いです。
+
+### 3. Serving the watch on loopback (answered: yes)
+
+要件 23.3 は、ループバックアドレスで応答する HTTP サーバーを求めます。Ruff は `notebook/` で `http` と `socket` を禁じているので（N1）、例外なしにはサーバーを書けません。ユーザーがこれを決めました（下）。
+
+提案した例外: `notebook/src/notebook/watch/serve.py` だけのファイルごとの例外で、127.0.0.1 に bind する標準の `http.server` を許す。ビルドのモジュールは禁止のままで、どのビルドのモジュールもウォッチを import しないことをテストが確かめる。
+
+ユーザーへの選択肢:
+
+- (a) Yes: 上に書いた例外。**ユーザーが選んだ（2026-11-21）。**
+- (b) No: ループバックで配信する別の方法を提案する。選ぶまで、ウォッチは設計どおりには作れない。

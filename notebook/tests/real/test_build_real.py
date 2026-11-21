@@ -66,8 +66,11 @@ def test_the_real_build_writes_every_page_written_so_far_with_sidecars(site):
         for scope in SCOPES
         for path in (addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES))
     }
-    assert {f for f in files if "/p/" not in f} == texts | {t + SIDECAR_SUFFIX for t in texts} | shipped
-    assert all(re.fullmatch(r"(wind-tunnel|body-lab)/p/[0-9a-f]{64}\.png", f) for f in files if "/p/" in f)
+    pictures = {f for f in files if "/p/" in f or f.startswith("p/")}
+    assert files - pictures == texts | {t + SIDECAR_SUFFIX for t in texts} | shipped
+    # The notebooks' pictures are in each application's p/; the front page's cards' are in p/ at the root.
+    assert all(re.fullmatch(r"((wind-tunnel|body-lab)/)?p/[0-9a-f]{64}\.png", f) for f in pictures)
+    assert any(f.startswith("p/") for f in pictures)
     assert not (site.parent / ".site.staging").exists()
 
 

@@ -9,8 +9,9 @@ from notebook import addresses, html, layouts, progress
 from notebook.choices import App, Choices
 from notebook.display import Retakes
 from notebook.errors import NotebookError
-from notebook.ink import Segment, commentary, pencil
+from notebook.ink import Segment, commentary, markup, pencil
 from notebook.pages import book, parts, photo
+from notebook.pages.book import AT_BENCH, MODES, SEALED
 from notebook.pages.parts import link, say_text
 from notebook.readerrequest import Request
 from notebook.readerruns import Run
@@ -41,11 +42,18 @@ def _masthead(app: App) -> list[Segment]:
             *_el("p", "kicker", say_text("KICKER")),
             *_el("h1", "big-title", say_text("MASTHEAD_TITLE")),
             *_el("p", "lab-about", html.text(commentary(app.about, app.source))),
-            *_el("p", "ink-key", legend),
-            *(
-                _el("p", "symbols", html.text(commentary(app.symbols, f"{app.source} symbols")))
-                if app.symbols
-                else []
+            *_el(
+                "details",
+                "reading-key",
+                [
+                    *_el("summary", None, say_text("READING_KEY")),
+                    *_el("p", "ink-key", legend),
+                    *(
+                        _el("p", "symbols", html.text(commentary(app.symbols, f"{app.source} symbols")))
+                        if app.symbols
+                        else []
+                    ),
+                ],
             ),
         ],
     )
@@ -126,6 +134,37 @@ def _shelf(
     return _el("section", "shelf", [*cards(ended, False), *cards(stopped, True)])
 
 
+def _bench_card(record: RecordModel, app: App, replay: bool) -> list[Segment]:
+    """The one card of the shelf at the bench (Requirement 23.13): the session id, "at the bench" (or the
+    replay label), the budget used so far and the predictions that came true so far. It is not a link: the
+    watch serves no other session."""
+    source = f"{record.name}: bench card"
+    counts = progress.predictions(record)
+    small = [
+        *html.text(pencil(str(len(record.trials)), source)),
+        *say_text("OF"),
+        *html.text(pencil(str(record.budget), source)),
+        markup(" "),
+        *html.text(commentary(app.unit, app.source)),
+        *say_text("CARD_BUDGET_USED"),
+        *say_text("LIST_SEPARATOR"),
+        *html.text(pencil(str(counts.hit), source)),
+        *say_text("OF"),
+        *html.text(pencil(str(counts.total), source)),
+        *say_text("CARD_HITS"),
+    ]
+    card = _el(
+        "span",
+        "card card-bench is-open",
+        [
+            *_el("span", "card-title", html.text(pencil(record.session, source))),
+            *_el("span", "card-line", say_text("REPLAY_LABEL" if replay else "AT_BENCH")),
+            *_el("span", "card-small", small),
+        ],
+    )
+    return _el("section", "shelf", card)
+
+
 def _page(
     record: RecordModel,
     app: App,
@@ -136,18 +175,47 @@ def _page(
     runs: list[Run],
     requests: dict[str, Request],
     retakes: Retakes,
+    mode: str = SEALED,
+    *,
+    replay: bool = False,
+    finished: str | None = None,
 ) -> Page:
-    chosen = choices[(record.application, record.session)]
+    """One session page. `mode` is `sealed` (the build) or `at_bench` (the watch, design N34); the two differ
+    only in the parts `book.body` and the footer name. At the bench the page has no links to the front page,
+    the other application, the other sessions' cards or how the lab works, because the watch serves none."""
+    if mode not in MODES:
+        raise NotebookError(record.name, f"the page mode must be one of {', '.join(MODES)}, not {mode!r}")
+    at_bench = mode == AT_BENCH
+    chosen = None if at_bench else choices[(record.application, record.session)]
     layout = layouts.layout_for(table, record.application, record.name)
     others = {r.session: r for r in records if r.application == record.application}
-    inside, files = book.body(record, layout, chosen, app, runs, requests, retakes, others)
+    inside, files = book.body(
+        record, layout, chosen, app, runs, requests, retakes, others, mode, replay=replay, finished=finished
+    )
     top = [
-        *_lab_links(app, apps),
+        *([] if at_bench else _lab_links(app, apps)),
         *_masthead(app),
-        *_shelf(app, record, records, choices),
+        *(_bench_card(record, app, replay) if at_bench else _shelf(app, record, records, choices)),
         *_el("article", "book", inside, id="book"),
     ]
-    return parts.page("SHELF_TITLE", top, app=app), tuple(files)
+    return parts.page("SHELF_TITLE", top, app=app, at_bench=at_bench), tuple(files)
+
+
+def at_bench_page(
+    record: RecordModel,
+    app: App,
+    table: dict[str, layouts.Layout],
+    retakes: Retakes,
+    *,
+    replay: bool = False,
+    finished: str | None = None,
+) -> Page:
+    """The session page of a record so far (`records.from_entries`), as the watch shows it: the same code as
+    the build's page, in `at_bench` mode. It reads no choice file and no reader run. `replay` labels a replay
+    of a sealed record; `finished` is the address of the session's finished page in a built site, or None."""
+    return _page(
+        record, app, (app,), [record], {}, table, [], {}, retakes, AT_BENCH, replay=replay, finished=finished
+    )
 
 
 def pages(

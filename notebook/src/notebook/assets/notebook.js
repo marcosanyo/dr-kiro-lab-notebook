@@ -12,6 +12,7 @@
    magnified one (a lab card, data-start "first") waits on its first cell until play is pressed.
    When the browser asks for reduced motion, a moving picture starts paused on its first cell.
 
+   Refresh: on the event notebook:refresh (sent by the watch's script) the pictures are set up again.
    Addresses: the <details> named by the address, and every <details> around it, are opened.
 
    Without this script a body-lab picture shows its first cell and a wind-tunnel picture its whole sheet;
@@ -142,6 +143,10 @@
       draw();
       show(true);
       timer = setInterval(function () {
+        if (!figure.isConnected) {
+          stop();
+          return;
+        }
         cell = (cell + 1) % view.cells;
         draw();
       }, view.rate);
@@ -282,6 +287,10 @@
       button.textContent = labels[1];
       var rate = Number(group.getAttribute("data-interval"));
       timer = setInterval(function () {
+        if (!group.isConnected) {
+          stop();
+          return;
+        }
         go((position + 1) % steps);
       }, rate);
     }
@@ -319,32 +328,39 @@
     target.scrollIntoView();
   }
 
-  var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // A figure inside a closed <details> is set up when the note is first opened, so a page with many trials
-  // moves only the pictures that are in view.
-  document.querySelectorAll("section[data-sync]").forEach(function (group) {
-    setUpGroup(group, reduced);
-  });
-  document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
-    if (figure.closest("section[data-sync]") !== null) {
-      return;
-    }
-    var note = figure.closest("details");
-    if (note === null || note.open) {
-      setUp(figure, reduced, false);
-      return;
-    }
-    note.addEventListener(
-      "toggle",
-      function () {
-        if (figure.getAttribute("data-ready") === null) {
-          figure.setAttribute("data-ready", "yes");
-          setUp(figure, reduced, false);
-        }
-      },
-      { once: true }
-    );
-  });
+  // The setting up of every moving picture on the page. The watch's script replaces the content of `main`
+  // and dispatches `notebook:refresh` on the document; the pictures of the new content are set up again
+  // through the same function. The timers of the old content stop on their next tick (isConnected).
+  function setUpPictures() {
+    var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // A figure inside a closed <details> is set up when the note is first opened, so a page with many trials
+    // moves only the pictures that are in view.
+    document.querySelectorAll("section[data-sync]").forEach(function (group) {
+      setUpGroup(group, reduced);
+    });
+    document.querySelectorAll("figure.photo[data-columns]").forEach(function (figure) {
+      if (figure.closest("section[data-sync]") !== null) {
+        return;
+      }
+      var note = figure.closest("details");
+      if (note === null || note.open) {
+        setUp(figure, reduced, false);
+        return;
+      }
+      note.addEventListener(
+        "toggle",
+        function () {
+          if (figure.getAttribute("data-ready") === null) {
+            figure.setAttribute("data-ready", "yes");
+            setUp(figure, reduced, false);
+          }
+        },
+        { once: true }
+      );
+    });
+  }
+  setUpPictures();
+  document.addEventListener("notebook:refresh", setUpPictures);
   openAddress();
   addEventListener("hashchange", openAddress);
 })();

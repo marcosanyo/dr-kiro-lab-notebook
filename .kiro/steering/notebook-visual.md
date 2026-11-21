@@ -279,6 +279,13 @@ Written after the body-3 page review. These rules hold where they differ from th
 - A link into a card lights the card (`:target`). A `details` summary has a small triangle, which turns when open.
 - On a lab page, the masthead title is smaller, the ended and the stopped sessions share one row of cards, and an
   unselected card is dimmed. A session whose record names a body says "changed body" in its card.
+- The first screen of a lab page (1280 x 900) reaches the highlight's photos: the ink legend and the symbols line
+  are folded under one muted line, the session cards grow to share the row, the subtitle is a serif block under the
+  title with the "our notes" mark beside the title, and "What happened here" comes after the highlight.
+- The front page shows one card per lab, not a door: a picture cut to one height (14rem) with no controls, the
+  case line, the script title, the description, the quoted line with an accent rule on its left, and an outlined
+  button "Open the notebook" in the accent colour beside the session count. Day card on the day paper, night card
+  on the night paper.
 
 ## Night lab (Requirement 6.2)
 

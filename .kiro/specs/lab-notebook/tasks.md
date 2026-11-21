@@ -2,11 +2,11 @@
 
 ## Overview
 
-Tasks for the notebook build, from `requirements.md` (Requirements 1-22) and `design.md`. They are run with "Run All
+Tasks for the notebook build, from `requirements.md` (Requirements 1-23) and `design.md`. They are run with "Run All
 Tasks" by an orchestrator that dispatches one sub-agent per task. The order is the user's (requirements Decision
 40): milestone 1 (the cover and the discovered spec table from the real records, then stop and show the user),
 milestone 2 (experiment entries, stopped sessions, "How the lab works", run bands), milestone 3 (prediction chart,
-replay, equal trial keys, input lines and tracks), then "Built from the spec", the done-when checks and the
+replay, equal trial keys, input lines and tracks), milestone 4 (the watch, Requirement 23), then "Built from the spec", the done-when checks and the
 handover.
 
 Which Kiro: every task is done by **the builder**. Nothing here is visible to Dr. Kiro or the reader; the build
@@ -15,7 +15,7 @@ writes nothing into a `lab/` folder.
 ## Notes for the user and for every sub-agent
 
 - **Where to run.** Every task needs no Docker and no display and can run in Kiro Web or locally, except the
-  checkpoints that show pages in a browser (tasks 11, 16, 21), which run on the user's Mac. Task 1.1 installs the
+  checkpoints that show pages in a browser (tasks 11, 16, 21 and 26.4), which run on the user's Mac. Task 1.1 installs the
   two adapter packages by path (design N23); if `mujoco` or `wind-tunnel-model` (Gmsh) cannot be installed or
   imported in an environment, **stop and report**; do not drop the dependency or stub the scan.
 - **Checks of the project** ("the checks") means: in `notebook/`, `uv run pytest`, `uv run ruff check` and
@@ -41,6 +41,9 @@ writes nothing into a `lab/` folder.
 - **Blind rules.** No part, joint, actuator or solver name is written into the notebook's own text (`text.py`,
   assets, choice reasons). A scan finding in builder text is fixed by rewording, never by the stop list.
 - **No invented numbers.** Every number on the site comes from a record field or a computation the design names.
+- **The watch.** Tasks 25 and 26 (Requirement 23, design Component 13, N33-N37) write no file, never take the bench's
+  `.lock` file, and read only the one record folder given by `--record`. Task 26.1 asked the user about Open question 3
+  of the design; the answer was yes (2026-11-21).
 - **Commits.** Commit only the files the task changed, each added by name, with no co-author line.
 
 ## Tasks
@@ -399,7 +402,7 @@ writes nothing into a `lab/` folder.
     - **Property 14: The prediction chart scale and marks**
     - **Validates: Requirements 5.4, 17.2, 17.3**
 
-- [x] 18. Replay
+- [x] 18. Replay (code kept; not built in this version, On hold, Decision 48)
   - [x] 18.1 Write the replay steps and pages
     - `views.steps(record)`: one step per `verdict` snapshot plus the `end` snapshot; `<app>-<session>-replay-<n>.html`
       rendered from `view(record, step.seq)` with the same code as the session page; "replay of a sealed record";
@@ -422,7 +425,7 @@ writes nothing into a `lab/` folder.
     - **Property 9: Replay steps equal snapshots and record prefixes**
     - **Validates: Requirements 16.1, 16.2, 16.10, 16.12**
 
-- [ ] 19. Equal trial keys
+- [ ] 19. Equal trial keys (On hold, Decision 48)
   - [ ] 19.1 Write `pairs.py` and the equal-trial list
     - Pairs of trials with the same recorded `key` per application, including within one record, ordered as design
       "Ordering"; "exactly equal" by JSON equality of `measurements`; the compact list on each session page with
@@ -435,7 +438,7 @@ writes nothing into a `lab/` folder.
     - **Property 10: Equal-trial pairs are exactly the equal keys**
     - **Validates: Requirements 14.5**
 
-- [ ] 20. Input lines and tracks in experiment entries
+- [ ] 20. Input lines and tracks in experiment entries (On hold, Decision 48)
   - [ ] 20.1 Write the input lines and the trial tracks
     - For body-lab: one small SVG line per channel of each cited trial's recorded `inputs` against [-1, 1] beside
       the run bands, and the overhead track path of every trial in its experiment entry (from 8.1's plot), in pencil;
@@ -445,35 +448,166 @@ writes nothing into a `lab/` folder.
     - Verified by: the checks.
     - _Requirements: 9.8, 10.10_
 
-- [ ] 21. Checkpoint — **[local Mac]**
+- [ ] 21. Checkpoint — **[local Mac]** (On hold, Decision 48)
   - Ensure all tests pass, ask the user if questions arise. Rebuild into a new git-ignored folder; check the chart,
     the replay of body-2 (play, step, reduced motion) and the equal-trial list at desktop and 360 px widths;
     report in Japanese.
   - _Requirements: 3.5, 3.6, 16.8_
 
+### Milestone 4: the watch
+
+Requirement 23 and design Component 13 (N33-N37). The watch shows one session while the bench writes it, on the user's
+computer only. It is a second command in the `notebook/` project. It writes no file and is never published. It comes
+after milestone 3 and before "Built from the spec".
+
+- [x] 25. Watch: the reader and the page
+  - [x] 25.1 Write the watch reader
+    - `notebook/src/notebook/watch/reader.py`: reads only complete lines of `log.jsonl` in the record folder given by
+      `--record`, incrementally from the byte offset after the last accepted line, every 500 ms (N36). A last line
+      without a line end is left for the next pass and not shown (23.5). A complete line is accepted only if it passes
+      every check of design Component 13 and N35: JSON; exactly the keys seq, kind, body, prev, hash; canonical form;
+      a kind in the bench's entry kinds with the strict body shape of N2; seq one more than before; prev equal to the
+      previous hash (`GENESIS` first); hash equal to `chain.entry_hash`; every blob reference of the right shape that
+      names a file in `blobs/`, whose bytes hash to its name when first read. The first failing line stops the reader
+      with a fixed problem text from `text.py`, never the bad text (N37).
+    - The reader never opens `.lock`, never calls `Store.open`, never reads `builder.log`, ignores names starting with a
+      dot in `blobs/`, and writes nothing.
+    - Unit tests on fixture records (synthesized as in 4.2, `fake = true`, `tmp_path`, `allow_fake=True`): a complete
+      record is accepted entry by entry; a half-written last line is not shown; a flipped byte, a wrong seq, a wrong
+      prev, a key set that does not fit the kind and a missing blob each stop at their line number; nothing is read past
+      the stop.
+    - Verified by: the checks.
+    - _Requirements: 23.2, 23.4, 23.5_
+
+  - [x] 25.2 Write property test for the reader
+    - **Property 18: The reader shows exactly the complete, valid prefix**
+    - **Validates: Requirements 23.4, 23.5, 23.12**
+
+  - [x] 25.3 Write the `at_bench` mode of the session page and the view of the record so far
+    - `records.py`: a model built from accepted entries of a prefix, without the whole-file `verify`, since the reader
+      has checked each line (N35). `views.py`: `view(record, upto)` on the prefix. `pages/book.py` and `pages/shelf.py`: the `mode`
+      parameter (`sealed` or `at_bench`, N34), with exactly the differences listed in design Component 13: the header
+      "at the bench" with the session id in place of the title; the headings "written after the seal" or "runs after
+      the seal" in commentary ink; "not yet checked by the bench" on every table status and no end check; "waiting" for
+      a prediction with no outcome entry; the open "at the bench" entry of a hypothesis registered with no verdict yet;
+      the sealed statement with "the build makes the finished page" on the seal entry; no links to `how.html`, the
+      cover, the lab pages or the replay pages. The new classes go into `notebook.css` with words N28 allows.
+    - Unit tests on a fixture halfway through a session (`allow_fake=True`): "waiting", the open hypothesis, the labels,
+      the headings, the sealed statement after the seal entry, and no link to `how.html`.
+    - Verified by: the checks.
+    - _Requirements: 23.1, 23.7, 23.8, 23.9, 23.10_
+
+  - [x] 25.4 Write property test for the at-bench data
+    - **Property 19: The at-bench page shows what the sealed page shows for the same prefix**
+    - **Validates: Requirements 23.1, 23.8**
+
+  - [x] 25.5 Write the per-version scan and picture check, and the stop
+    - `notebook/src/notebook/watch/versions.py`: one version per pass that accepts complete entries. It builds the page
+      from `views.view` of the record so far in `at_bench` mode, runs both scan passes of Component 11 and the picture
+      check of 7.3 on it, and holds it in memory (N36). A finding stops the watch at its entry and shows the entry number
+      and the kind of finding, never the text (N37, 23.6). A pass 2 finding stops at the newest entry of that pass.
+    - Unit tests: a term from the scan sources planted in a bench-written text of a fixture record stops the watch at its
+      entry, and the text appears in no response of the watch; a picture that fails the check stops the watch at the entry
+      that refers to it; a clean prefix makes a version with the next number.
+    - Verified by: the checks.
+    - _Requirements: 23.6, 20.1, 20.2, 7.3_
+
+- [x] 26. Watch: the loopback server and the refresh
+  - [x] 26.1 **Stop and ask**: the server exception of Open question 3 (answered yes, 2026-11-21)
+    - Report to the user in Japanese, and wait. The question: `notebook/` bans `http` and `socket` (N1), and the watch
+      needs a loopback HTTP server. The proposed exception is `notebook/src/notebook/watch/serve.py` only, with the
+      standard `http.server` bound to 127.0.0.1; the build modules keep the ban, and a test checks that no build module
+      imports the watch. Ask for yes or no. Write no server code before the answer.
+    - Verified by: the user's answer is recorded in `docs/status.md`.
+    - _Requirements: 23.3_
+
+  - [x] 26.2 Write `notebook-watch` and the loopback server (only after 26.1 is answered yes)
+    - Note: this task may import the standard `http.server` only in `notebook/src/notebook/watch/serve.py`, because the
+      user's answer to Open question 3 allows it. No other file may import `http`, `socket` or `urllib`, and the build
+      modules keep every ban.
+    - `notebook/src/notebook/watch/cli.py` (console script `notebook-watch`): every option of design "Command line of the
+      watch" required, no default, `--scan-config` and `--app` at least once; no `--out`, no `--choices`, no host option; a record
+      folder outside `--state` is refused; a start entry whose session differs from the folder name is refused. Usage
+      errors exit 2, check failures exit 1. `serve.py`: binds 127.0.0.1 only; answers GET only; the fixed routes of
+      design Component 13 (the session page at its address and at `/`, `/version`, `/legend.html`, `/a/notebook.css`,
+      `/a/notebook.js`, `/a/watch.js`, and `/p/<sha256>.png` for each picture the page names); any other path gets 404.
+      The assets are read at start; nothing else is read from disk except the record.
+    - Tests: each missing option is named; a record outside `--state` is refused; the bound address is 127.0.0.1; only
+      GET is answered and only the fixed routes exist; after a run on a copy, the bench state folder and `sessions/` have
+      the same listing and hashes as before; no build module imports `notebook.watch`; the served page makes no request to
+      any other host (3.2).
+    - Verified by: the checks.
+    - _Requirements: 23.1, 23.2, 23.3, 23.4, 3.2_
+
+  - [x] 26.3 Write `watch.js` and its static checks (after 26.2)
+    - `notebook/src/notebook/watch/assets/watch.js` (served by the watch only): polls `/version` every 1000 ms; when the
+      number changes it fetches the page at the current address (same origin), saves `scrollY` and the open state of every
+      `<details>` by id, replaces the content of `main`, restores the scroll position and the open states, shows the stop
+      text with `textContent` in `#watch-stop`, and dispatches `notebook:refresh` on `document`. `notebook.js` listens for
+      that event and sets up the moving pictures again (design 10, N28). No `window.` and no `tagName` in the script
+      (N28); read the scroll position as `scrollY`.
+    - Static Python checks: the poll interval is 1000; every request in the script is same-origin; no `http:` or `https:`
+      URL; the event name is the same in both scripts; no `window.` or `tagName`.
+    - Verified by: the checks.
+    - _Requirements: 23.4, 3.2_
+
+  - [x] 26.4 **[local Mac] Checkpoint — Stop and ask**
+    - Run `notebook-watch` on a copy of a fixture record that is fed line by line; never on the real bench state folder.
+      At 600 px and at 360 px in a browser, check that a new line appears within 2 seconds, that the scroll position and
+      the open entries are kept, that the "at the bench" label and the waiting words show, that the sealed statement
+      appears after the seal line, and that the page has no sideways scroll (23.11, 3.5). Report in Japanese and wait for
+      the user.
+    - Verified by: the user's answer is recorded in `docs/status.md`.
+    - _Requirements: 23.4, 23.11, 3.5_
+  - [x] 26.5 Fix what the browser check found
+    - "What happened here" before the seal says the misses so far and when the spec is checked and read, never
+      "final"; a hypothesis with no trial yet shows "not run yet"; counts of one take the singular, with `unit_one` in
+      `app.toml`. `notebook-watch` takes `--app` like the build instead of looking beside `--scan-config`. A record
+      so far that does not make a page stops the watch at the newest entry with `WATCH_NO_PAGE` (N37).
+    - Unit tests: the story and "not run yet" before and after the seal, the singular trial chip, the stop on a second
+      start entry; Property 19 leaves out the story section as it leaves out the title.
+    - Verified by: the checks.
+    - _Requirements: 23.5, 23.7, 23.9_
+  - [x] 26.6 The rest of the watch (Requirement 23.13-23.17)
+    - `watch.js` closes a finished entry 2000 ms after its verdict; a prediction without an outcome is "not run"
+      after its hypothesis's verdict; each flag's not-run count is checked (`WATCH_NOT_RUN_COUNT`); the shelf holds
+      one `card-bench`; `--site` links the finished page and serves the built site under `/site/`; `--replay`
+      releases a sealed record one entry per interval (`ReplayReader`), labelled "replay of a sealed record"; the
+      chips say "no spec table yet" until a table exists.
+    - Unit tests: the close in `watch.js`; a flag with a wrong and a right not-run count; the replay timing and its
+      refusal of a record without a seal; the bench card; the replay label; the finished link only after the seal;
+      `/site/` serves only files inside the site.
+    - Verified by: the checks, and a replay of body-3 at 1280 px in a browser.
+    - _Requirements: 23.8, 23.13, 23.14, 23.15, 23.16, 23.17_
+
 ### Then
 
-- [ ] 22. Built from the spec
-  - [ ] 22.1 Write `built.html` with "there are no runs yet"
+Tasks 29-31 wait for a `build-from-spec` run record (user decision): they do not start until that record exists.
+
+- [ ] 29. Built from the spec
+  - [ ] 29.1 Write `built.html` with "there are no runs yet"
     - `pages/built.py`: the section says that there are no runs yet; no CLI option for runs (N22). Requirements
       19.2-19.7 wait for the `build-from-spec` spec, which defines the records.
     - Unit tests: the page holds the sentence and is linked from the cover and every lab page.
     - Verified by: the checks.
     - _Requirements: 19.1, 19.8_
 
-- [ ] 23. Done-when checks
-  - [ ] 23.1 Write the done-when tests
+- [ ] 30. Done-when checks
+  - [ ] 30.1 Write the done-when tests
     - In `tests/real/test_done.py`: the full build of both labs passes (22.1); every row of every table shows its
       status word (22.2); the replay matches the snapshots of every real record and the fixture (22.3); the body-2
       checks of 22.5; two CLI builds into different folders are byte-identical; `git diff --stat bench/` is empty.
     - Verified by: the checks.
     - _Requirements: 7.4, 21.4, 22.1, 22.2, 22.3, 22.5_
 
-- [ ] 24. Handover
-  - [ ] 24.1 Update `docs/status.md` and commit the tasks with their translation
+- [ ] 31. Handover
+  - [ ] 31.1 Update `docs/status.md` and commit the tasks with their translation
     - Update `docs/status.md` in Japanese (what was done, the user's screen review of task 11, the next step, the
       README limits line of requirements Decision 41). Commit `tasks.md` and `docs/ja/lab-notebook/tasks.md`
       together, each added by name, after `sh scripts/ja-check.sh` reports nothing stale (`handoff.md`).
+    - Before `sh scripts/ja-check.sh` can pass, `docs/ja/lab-notebook/` must be synchronised with the English
+      `requirements.md`, `design.md` and `tasks.md`, including milestone 4 and the new task numbers. Do not do that
+      translation in the run that adds milestone 4; it is done at the handover (`handoff.md`).
     - Verified by: `sh scripts/ja-check.sh` passes; `git status` shows no uncommitted file of this spec.
     - _Requirements: 22.4_
 
@@ -483,8 +617,9 @@ writes nothing into a `lab/` folder.
 - Each task references the requirements it covers. Property tests validate the universal properties of the design;
   unit tests cover examples on the real records and edge cases.
 - Waves keep tasks that write the same file apart (`pages/session.py`, `text.py` and `tests/fixtures/session.py`
-  are written by one task per wave). The checkpoints (11, 16, 21) are not in the graph; task 11 blocks every later
-  wave until the user's answer is recorded.
+  are written by one task per wave). The checkpoints (11, 16, 21, 26.4) are not in the graph; task 11 blocks every later
+  wave until the user's answer is recorded. Task 26.1 blocks 26.2 and 26.3 until the user answers Open question 3 of the
+  design. The watch waves (24-30) come after wave 23, so that `pages/session.py` is written by one task per wave.
 
 ## Task Dependency Graph
 
@@ -515,11 +650,18 @@ writes nothing into a `lab/` folder.
     { "id": 21, "tasks": ["15.2", "17.1"] },
     { "id": 22, "tasks": ["17.2", "18.1"] },
     { "id": 23, "tasks": ["18.2", "18.3"] },
-    { "id": 24, "tasks": ["19.1"] },
-    { "id": 25, "tasks": ["19.2", "20.1"] },
-    { "id": 26, "tasks": ["22.1"] },
-    { "id": 27, "tasks": ["23.1"] },
-    { "id": 28, "tasks": ["24.1"] }
+    { "id": 24, "tasks": ["25.1"] },
+    { "id": 25, "tasks": ["25.2", "25.3"] },
+    { "id": 26, "tasks": ["25.4"] },
+    { "id": 27, "tasks": ["25.5"] },
+    { "id": 28, "tasks": ["26.1"] },
+    { "id": 29, "tasks": ["26.2"] },
+    { "id": 30, "tasks": ["26.3"] },
+    { "id": 31, "tasks": ["19.1"] },
+    { "id": 32, "tasks": ["19.2", "20.1"] },
+    { "id": 33, "tasks": ["29.1"] },
+    { "id": 34, "tasks": ["30.1"] },
+    { "id": 35, "tasks": ["31.1"] }
   ]
 }
 ```
