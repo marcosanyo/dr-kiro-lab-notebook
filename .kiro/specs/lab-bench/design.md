@@ -731,8 +731,8 @@ A tool not in the table is refused until it is seen in a hook log and added here
 | Path-taking | `read_file` (`path`), `list_directory` (`path`), `fs_write` (`path`), `fs_append` (`path`), `str_replace` (`path`) |
 | Path-less, allowed | `file_search`, `grep_search`, `tool_load`, `mcp_bench_register_hypothesis`, `mcp_bench_run_experiment`, `mcp_bench_record_verdict`, `mcp_bench_end_session` |
 
-Precondition for 17.10: Dr. Kiro runs only in Kiro CLI, started with the lab as the working folder (17.12), so
-the workspace the search tools see is the lab. The IDE is never used to run Dr. Kiro.
+Precondition for 17.10: Dr. Kiro works in its lab folder as the working folder, in Kiro CLI or in the Kiro IDE with
+only the lab folder open (17.12), so the workspace the search tools see is the lab.
 
 The hook text is the builder's wording and passes the core's scan with the rest of `lab/.kiro/` (Requirement 15).
 It contains no paths: the script builds the parent-folder and home-folder checks from `pathlib` parts, never from
@@ -785,8 +785,9 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
 
 ## F11. Tests
 
-- Confinement hook (17.21): three tests. A call with a path outside the lab is refused with exit code 2. Malformed
-  input is refused with exit code 2. A write into a protected folder is refused with exit code 2.
+- Confinement hook (17.21): four tests. A call with a path outside the lab is refused with exit code 2. Malformed
+  input is refused with exit code 2. A write into a protected folder is refused with exit code 2. A call with the
+  path "." is allowed with exit code 0.
 - Server, through the SDK's in-process client with the fake application: the four tools are listed; a refusal is a
   tool error with the core's text; a run returns no image content and the picture file exists with the adapter's
   bytes; two parallel runs give one `Ran` and one `Refused` (gate 6). These are example tests.
@@ -802,7 +803,10 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
   variables (`BENCH_HOOK_LOG`, `BENCH_SESSION_CONFIG`). Approved: a `bench-run/` folder at the repository root, ignored
   by git and listed in `structure.md`.
 - **D3. Long calls.** Not needed. The 900 s call passed in the spike, so there is no parallel-trials fallback.
-- **D4. Dr. Kiro runs only in Kiro CLI**, started in the lab folder (Requirement 17.12). The IDE is for the builder.
+- **D4. Where Dr. Kiro runs.** In Kiro CLI, or in the Kiro IDE with only the lab folder open (Requirement 17.12). A
+  sealed session runs in Kiro CLI only. The IDE check used the fake application in `bench-run/fake-ide/`. It found
+  one fault: the confinement hook raised IndexError on the path `.` (the top of the lab) and refused the call. The
+  fault is fixed and tested in `bench/tests/frontend/test_hooks.py`.
 
 Approved in the review of tasks 17-21, after the core was built:
 

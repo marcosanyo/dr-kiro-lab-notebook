@@ -549,8 +549,9 @@ the front end writes or returns. Nothing in the core depends on this requirement
 11. A second hook SHALL record the name and input of every tool call, before and after it runs. THE log SHALL be
     kept outside the lab, for the builder, and SHALL NOT be part of the sealed session record. This includes the
     hook's own refusals.
-12. Dr. Kiro SHALL run only in Kiro CLI, started with the lab folder as the working folder. The Kiro IDE is for the
-    builder and for showing the specs, and is never used to run Dr. Kiro.
+12. THE working folder of Dr. Kiro SHALL be the lab folder. Dr. Kiro SHALL run either in Kiro CLI started with the lab
+    folder as the working folder, or in the Kiro IDE with only the lab folder open. A session whose record is sealed
+    (Requirement 13) SHALL run in Kiro CLI only.
 
 *Pictures*
 
@@ -577,9 +578,10 @@ the front end writes or returns. Nothing in the core depends on this requirement
 
 *Tests*
 
-21. THE confinement hook SHALL have three tests: a call with a path outside the lab is refused with the blocking
-    exit code; malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code; and
-    a write into a protected folder (17.7) is refused with the blocking exit code.
+21. THE confinement hook SHALL have four tests: a call with a path outside the lab is refused with the blocking
+    exit code; malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code; a
+    write into a protected folder (17.7) is refused with the blocking exit code; and a call that lists the path "."
+    (the lab folder itself, which the Kiro IDE lists at the top of the lab) is allowed, with exit code 0 and no output.
 
 #### Notes
 

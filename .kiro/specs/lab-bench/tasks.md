@@ -181,8 +181,9 @@ one place where the MCP SDK is imported.
     folders (F8 step 6, D7) and no literal path strings in the scripts; `bench-lab-hooks <lab>` copies them and
     writes the three hook JSON files into `<lab>/.kiro/hooks/`; a test that the copies in each lab equal the
     sources, and a test that `bench-scan` finds nothing in a generated lab.
-  - Exactly three tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
-    code 2; malformed input is refused with exit code 2; a write into a protected folder is refused with exit code 2.
+  - Exactly four tests for the confinement hook (Requirement 17.21): a path outside the lab is refused with exit
+    code 2; malformed input is refused with exit code 2; a write into a protected folder is refused with exit code 2;
+    the path "." is allowed with exit code 0.
   - The tool table is the one in design F8, taken from the spike's `hook-log.jsonl`: `list_directory`,
     `read_file`, `fs_write`, `fs_append`, `str_replace` (field `path`); `file_search`, `grep_search`, `tool_load`
     and `mcp_bench_*` (no path). Any other tool, `delete_file` included, is refused.
@@ -190,7 +191,7 @@ one place where the MCP SDK is imported.
 
 - [x] 21. Check by hand in Kiro CLI — **Stop and ask**
   - Not automated: it needs the user's Kiro CLI. Write the steps in `bench/README.md`, run them with the user, and
-    report each result as observed or not observed. Kiro CLI only; the IDE is never used to run Dr. Kiro.
+    report each result as observed or not observed. Kiro CLI only, because the check seals a session (Requirement 17.12).
   - With the fake application's lab, started in the lab folder, and the agent definition of design F10:
     - the agent lists the four tools and calls each one;
     - `BENCH_SESSION_CONFIG` reaches the server (`${BENCH_SESSION_CONFIG}` in `env`), and `BENCH_HOOK_LOG` reaches

@@ -44,6 +44,14 @@ def test_confine_refuses_a_path_outside_the_lab(hooked: Lab) -> None:
     assert done.stderr.strip() == "That path is outside your folder. Use a path inside your folder."
 
 
+def test_confine_allows_the_lab_folder_itself_as_dot(hooked: Lab) -> None:
+    # Kiro IDE lists the top of the lab with path "."; before the fix, Path(".").parts[0] raised IndexError.
+    call = {"tool_name": "list_directory", "tool_input": {"path": "."}}
+    done = hook(hooked, "confine.py", json.dumps(call))
+    assert done.returncode == 0
+    assert done.stderr == ""
+
+
 def test_confine_refuses_malformed_input(hooked: Lab) -> None:
     done = hook(hooked, "confine.py", "not json at all")
     assert done.returncode == 2

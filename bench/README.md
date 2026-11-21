@@ -24,8 +24,8 @@ The copy goes into `discovered/<application>/<session-id>/` and is committed wit
 
 ## Manual check in Kiro CLI (task 21)
 
-This check needs Kiro CLI on the builder's machine. It is not automated. Kiro CLI only: the IDE is never used to
-run Dr. Kiro (Requirement 17.12). Run each step and note for each check: observed, or not observed, with what
+This check needs Kiro CLI on the builder's machine. It is not automated. Kiro CLI only, because the check seals a
+session (Requirement 17.12). Run each step and note for each check: observed, or not observed, with what
 happened. A failure is reported, not worked around (`rules.md` 2).
 
 The lab here uses the fake application. Its numbers are not results.
@@ -169,7 +169,8 @@ Send the notes for the checks and `bench-run/fake/hook-log.jsonl`.
 
 ## Running Dr. Kiro
 
-Dr. Kiro runs only in Kiro CLI, started in its lab folder. Its builder files are installed with `bench-make-lab`;
+Dr. Kiro runs in Kiro CLI started in its lab folder, or in the Kiro IDE with only the lab folder open (Requirement
+17.12). A sealed session runs in Kiro CLI only. Its builder files are installed with `bench-make-lab`;
 each session starts with `bench-new-session`, which resets Dr. Kiro's files, starts the session and writes its
 config. After pulling new bench code, reinstall the commands:
 
@@ -178,6 +179,8 @@ uv tool install --editable './bench[frontend]' --reinstall
 ```
 
 - Start line (type it as the first message): `Begin the session.`
+- Kiro IDE (for checks, not for a sealed session): open only the lab folder, not the repository, then type the same
+  start line in Dr. Kiro's chat.
 - Variant (lab-bench Requirement 23): `bench-new-session --variant <label>` for an application whose adapter
   declares `variants` (body-lab: `a`, `b`). Such an application does not start without a label or with an
   unknown one, and no default is filled in. An application without `variants` refuses the option.
