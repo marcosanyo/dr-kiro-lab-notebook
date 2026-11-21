@@ -37,7 +37,8 @@ def _door(
     figure: list[Segment] = []
     files: list[PictureFile] = []
     if chosen.polaroids:
-        first = chosen.polaroids[0]
+        # The card shows the session's starred photo (its best result) when it has one, as the highlight does.
+        first = next((p for p in chosen.polaroids if p.star), chosen.polaroids[0])
         trial = next(t for t in opened.trials if t.id == first.trial)
         layout = layouts.layout_for(table, opened.application, opened.name)
         figure, files = photo.photo(
