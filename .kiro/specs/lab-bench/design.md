@@ -785,8 +785,9 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
 
 ## F11. Tests
 
-- Confinement hook (17.21): three tests. A call with a path outside the lab is refused with exit code 2. Malformed
-  input is refused with exit code 2. A write into a protected folder is refused with exit code 2.
+- Confinement hook (17.21): four tests. A call with a path outside the lab is refused with exit code 2. Malformed
+  input is refused with exit code 2. A write into a protected folder is refused with exit code 2. A call with the
+  path "." is allowed with exit code 0.
 - Server, through the SDK's in-process client with the fake application: the four tools are listed; a refusal is a
   tool error with the core's text; a run returns no image content and the picture file exists with the adapter's
   bytes; two parallel runs give one `Ran` and one `Refused` (gate 6). These are example tests.

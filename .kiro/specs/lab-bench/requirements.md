@@ -578,9 +578,10 @@ the front end writes or returns. Nothing in the core depends on this requirement
 
 *Tests*
 
-21. THE confinement hook SHALL have three tests: a call with a path outside the lab is refused with the blocking
-    exit code; malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code; and
-    a write into a protected folder (17.7) is refused with the blocking exit code.
+21. THE confinement hook SHALL have four tests: a call with a path outside the lab is refused with the blocking
+    exit code; malformed input (not valid JSON, or a missing tool name) is refused with the blocking exit code; a
+    write into a protected folder (17.7) is refused with the blocking exit code; and a call that lists the path "."
+    (the lab folder itself, which the Kiro IDE lists at the top of the lab) is allowed, with exit code 0 and no output.
 
 #### Notes
 
