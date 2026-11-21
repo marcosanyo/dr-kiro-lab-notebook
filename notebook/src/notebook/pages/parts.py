@@ -108,7 +108,8 @@ def web(cls: str) -> list[Segment]:
 
 def decoration(kind: str) -> list[Segment]:
     """The pieces of an application's decoration. `none` has none (the page holds no drawing at all);
-    `halloween` is the moon, cobweb, hanging spider and bats of the night lab."""
+    `halloween` is the moon, cobweb, hanging spider and bats of the night lab, and the mad scientist's bench
+    at the bottom of the room: a flask that bubbles green and a coil that sparks."""
     if kind == "none":
         return []
     if kind != "halloween":
@@ -139,6 +140,47 @@ def decoration(kind: str) -> list[Segment]:
         *html.shape("circle", {"class": "spider-head", "cx": "24", "cy": "84", "r": "6"}),
     ]
     bats = [s for d in _BAT for s in html.element("path", {"d": d, "fill": "currentColor"}, [])]
+    flask = [
+        *html.element(
+            "path",
+            {"class": "flask-brew", "d": "M13 64 H47 L54 77 Q57 86 48 87 H12 Q3 86 6 77 Z"},
+            [],
+        ),
+        *html.element(
+            "path",
+            {
+                "class": "flask-glass",
+                "d": "M24 4 H36 V30 L54 74 Q59 87 47 88 H13 Q1 87 6 74 L24 30 Z",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "2",
+            },
+            [],
+        ),
+        *html.shape("circle", {"class": "bubble bubble-one", "cx": "24", "cy": "76", "r": "2.6"}),
+        *html.shape("circle", {"class": "bubble bubble-two", "cx": "34", "cy": "80", "r": "1.8"}),
+        *html.shape("circle", {"class": "bubble bubble-three", "cx": "40", "cy": "74", "r": "2.2"}),
+    ]
+    coil = [
+        *html.element(
+            "path",
+            {"class": "coil-arc", "d": "M30 14 L22 4 L27 2 L16 -8 M30 14 L40 6 L36 2 L46 -6", "fill": "none"},
+            [],
+        ),
+        *html.shape("circle", {"class": "coil-top", "cx": "30", "cy": "20", "r": "10"}),
+        *html.element(
+            "path",
+            {
+                "class": "coil-wire",
+                "d": "M22 34 H38 M21 42 H39 M20 50 H40 M19 58 H41 M18 66 H42 M17 74 H43 M16 82 H44",
+                "fill": "none",
+                "stroke": "currentColor",
+                "stroke-width": "3",
+            },
+            [],
+        ),
+        *html.element("path", {"class": "coil-base", "d": "M6 90 H54 V100 H6 Z", "fill": "currentColor"}, []),
+    ]
     return [
         *web(""),
         *_svg("deco-moon", "0 0 88 88", 140, 140, moon),
@@ -147,6 +189,8 @@ def decoration(kind: str) -> list[Segment]:
         *_svg("deco-bat deco-bat-two", "0 88 64 24", 42, 16, bats),
         *_svg("deco-bat deco-bat-three", "0 88 64 24", 52, 20, bats),
         *_svg("deco-bat deco-bat-four", "0 88 64 24", 34, 13, bats),
+        *_svg("deco-flask", "0 0 60 90", 72, 108, flask),
+        *_svg("deco-coil", "0 -10 60 112", 64, 120, coil),
     ]
 
 

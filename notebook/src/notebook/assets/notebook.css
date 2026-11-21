@@ -2287,3 +2287,140 @@ html[data-mode="night"] .book .rule::before,
 html[data-mode="night"] .book .tile::before {
   background: rgba(214, 196, 150, 0.55);
 }
+/* One notebook paper for every lab (2026-11-22): the page is white graph paper in both, the template's own
+   paper. What differs is the room around it, set by each application's theme and decoration. */
+.book {
+  --page-grid: #d9e4f1;
+  background-image:
+    conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
+    conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
+  background-size: 1.5rem 1.5rem, 1.5rem 1.5rem;
+}
+html[data-mode="night"] .book {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(circle 0.55rem at 1.4rem 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
+    radial-gradient(circle 0.55rem at calc(100% - 1.4rem) 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
+    radial-gradient(circle at 93% 96%, transparent 2.9rem, rgba(90, 170, 60, 0.28) 3rem, rgba(90, 170, 60, 0.12) 3.3rem, transparent 3.45rem),
+    radial-gradient(circle 0.3rem at 88% 91%, rgba(90, 170, 60, 0.35) 90%, transparent 100%),
+    radial-gradient(circle 0.18rem at 90.5% 88%, rgba(90, 170, 60, 0.3) 90%, transparent 100%),
+    radial-gradient(ellipse 0.9rem 0.6rem at 22% 0, rgba(196, 150, 80, 0.4) 95%, transparent 100%),
+    radial-gradient(ellipse 0.35rem 0.8rem at 22.6% 0.5rem, rgba(196, 150, 80, 0.36) 95%, transparent 100%),
+    conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
+    conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+}
+/* The binding of the night lab's notebook is sewn: a dark thread down the margin with cross stitches. */
+html[data-mode="night"] .book::before {
+  left: 3.3rem;
+  width: 0.7rem;
+  border-left: 0;
+  background-image:
+    conic-gradient(rgba(50, 35, 25, 0.75) 0deg 360deg),
+    conic-gradient(at 0 0.13rem, rgba(50, 35, 25, 0.7) 0deg 90deg, transparent 90deg 360deg);
+  background-size: 0.12rem 100%, 0.7rem 1.5rem;
+  background-position: 0.29rem 0, 0 0.75rem;
+  background-repeat: no-repeat, repeat-y;
+}
+/* The mad scientist's room: a green glow from the bench below, a lamp that flickers, a flash of lightning now
+   and then, a title that glows a little. All of it stops for readers who ask for less motion. */
+html[data-mode="night"] body {
+  background-image:
+    radial-gradient(ellipse 60% 45% at 18% 0%, var(--lamp), transparent 70%),
+    radial-gradient(ellipse 70% 35% at 50% 100%, rgba(80, 220, 110, 0.16), transparent 75%),
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed, fixed, fixed;
+}
+html[data-mode="night"] .big-title {
+  text-shadow: 0 0 18px rgba(120, 230, 120, 0.35);
+}
+.deco-flask,
+.deco-coil {
+  position: fixed;
+  bottom: 0.6rem;
+  z-index: 2;
+  pointer-events: none;
+}
+.deco-flask {
+  left: 0.8rem;
+  color: var(--deco);
+}
+.deco-coil {
+  right: 1rem;
+  color: #6f6a62;
+}
+.deco-flask .flask-brew {
+  fill: rgba(90, 220, 110, 0.75);
+}
+.deco-flask .bubble {
+  fill: rgba(170, 255, 170, 0.85);
+}
+.deco-coil .coil-top {
+  fill: #9aa0a8;
+}
+.deco-coil .coil-arc {
+  stroke: #c9b8ff;
+  stroke-width: 2;
+  opacity: 0;
+}
+html[data-mode="night"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  background: radial-gradient(ellipse 80% 60% at 85% 0%, rgba(210, 220, 255, 0.5), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .deco-flask .bubble {
+    animation: rise 2.6s ease-in infinite;
+  }
+  .deco-flask .bubble-two {
+    animation-delay: 0.9s;
+  }
+  .deco-flask .bubble-three {
+    animation-delay: 1.7s;
+  }
+  .deco-coil .coil-arc {
+    animation: spark 5s steps(1, end) infinite;
+  }
+  html[data-mode="night"] body::after {
+    animation: lightning 13s cubic-bezier(0, 0, 1, 1) infinite;
+  }
+  html[data-mode="night"] .deco-moon {
+    animation: flicker 6s ease-in-out infinite;
+  }
+}
+@keyframes rise {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-58px); opacity: 0; }
+}
+@keyframes spark {
+  0%, 70% { opacity: 0; }
+  72% { opacity: 1; }
+  76% { opacity: 0; }
+  80% { opacity: 0.8; }
+  84%, 100% { opacity: 0; }
+}
+@keyframes lightning {
+  0%, 93% { opacity: 0; }
+  94% { opacity: 0.9; }
+  95% { opacity: 0.1; }
+  96% { opacity: 0.6; }
+  98%, 100% { opacity: 0; }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.88; }
+  50% { opacity: 0.97; }
+  55% { opacity: 0.85; }
+}
+@media (max-width: 700px) {
+  .deco-flask,
+  .deco-coil {
+    display: none;
+  }
+}
