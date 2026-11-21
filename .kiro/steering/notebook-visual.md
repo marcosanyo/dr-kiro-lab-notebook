@@ -297,11 +297,12 @@ page: the stitches of a spec card, the candle wax at the top edge, the tape. The
 desk and the cards.
 
 **One paper, two rooms (user, 2026-11-22).** Every lab's notebook page is the same white graph paper (`.book`,
-`--page-grid`). The night lab's room is a mad scientist's: a green glow from below, a flask that bubbles and a coil
-that sparks (paths only, `deco-flask`, `deco-coil`, fixed at the bottom corners, hidden under 700 px), the moon
-flickering, a flash of lightning every 13 s (`body::after`), a faint green glow on the title; the page's binding is a
-sewn thread with cross stitches and two bolts hold its top corners. All motion stops under
-`prefers-reduced-motion: reduce`.
+`--page-grid`); the desk behind a day notebook is plain (no grid). The night lab's madness is on the page itself,
+never icons around it (`parts.page_marks`, paths only): a pencil sketch of a stitched machine struck by a bolt
+(`mark-sketch`, top right, hidden under 700 px), green drips from the top edge (`mark-drips`), a burn at the bottom
+right corner (`.book::after`), with the jar ring and the candle wax. They lie under the writing (`.book` is its own
+stacking context, the marks are at `z-index: -1`) and never move. The sewn binding is a thin, faint thread with cross
+stitches at 3rem, clear of the writing. Only the spider and the bats move.
 
 The night palette is the default `:root` of the stylesheet, and each page without a day mode uses it. It is the same notebook on a dark desk under a lamp: warm
 near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim
