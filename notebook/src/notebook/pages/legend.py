@@ -58,4 +58,4 @@ def legend(app: App) -> list[Segment]:
         *html.element("p", None, say_text("LEGEND_STATUS_INTRO")),
         *html.element("dl", {"class": "legend"}, statuses),
     ]
-    return parts.page("LEGEND_TITLE", body, app=app)
+    return parts.page("LEGEND_TITLE", parts.framed(body), app=app)

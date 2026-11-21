@@ -252,10 +252,11 @@ record of work.
 1. THE builder SHALL write the visual system as a steering file, `.kiro/steering/notebook-visual.md`, before the
    pages are built: paper, the three inks, the miss red, the status stamp, pinned instant photos, sticky notes, the
    strike-through of a rejected row, type, spacing, and the narrow-screen layout.
-2. THE site SHALL have one look in two palettes, the day paper and the night lab, chosen only by the visitor's
-   system colour scheme (`prefers-color-scheme`), with no theme switch, no script and no stored choice. Every text
+2. THE site SHALL have one look in two palettes, the day paper and the night lab. Each application has one palette
+   fixed by its settings file (the wind tunnel by day, the stitched body and the front page by night), with no
+   theme switch, no script, no stored choice and no change by the visitor's system colour scheme. Every text
    pair SHALL reach the ratio of Requirement 4.6 in both palettes, and the recorded pictures SHALL be shown as
-   recorded in both (Decision 52).
+   recorded in both (Decision 52; notebook-shelf).
 3. Moving pictures SHALL be shown as instant photos pinned to the page; side notes in commentary ink SHALL be shown
    as sticky notes.
 4. THE miss red SHALL be used only for missed predictions and their measured values, and SHALL always come with
@@ -265,6 +266,15 @@ record of work.
    page markup, not a separate file, and SHALL carry no namespace URL (Decision 46).
 6. WHEN the user describes a difference from the reference, THE builder SHALL update this requirement or the
    steering file first, and the pages after.
+7. THE red of a rejected row SHALL be the rewrite red, a different red from the miss red: it marks the card of a
+   rejected row, its struck rule and its band, never a stamp and never a miss. A card that an end refusal names
+   SHALL carry only a small amber mark, not a red box.
+8. THE session end refusals SHALL appear once per session, above the spec table, and never once per card. The
+   plain pages (the legend and how the lab works) SHALL be set on the same paper as the notebook pages, so that no
+   decoration lies over their text, and each quote note of a refusal SHALL appear once per page.
+9. Small headings and the text of a person SHALL be set in the paper's text faces: the subtitle of a session and
+   the title of a hypothesis SHALL be set in the serif face, not in the script. The card of an unselected session
+   on a lab page SHALL be dimmed, and the card of a session whose record names a body SHALL say so in small type.
 
 ### Requirement 7: Picture sheets and moving pictures
 
@@ -439,11 +449,12 @@ to every experiment, so that I can check any claim.
    experiment entry SHALL show the recorded track of each trial as a small overhead path in pencil, unless the
    series is a not-measured outcome. Not in this version (Decision 48).
 11. WHERE a record holds refusal entries with action `end`, and a quote part of a refusal message equals the id of
-    a row of the shown table exactly, character for character, THE session page SHALL attach to that row a sticky
-    note in the bench's stamp style: "the bench refused to end this session N times", with N the number of such
-    refusal entries, each refusal message shown as recorded with each part in the ink of its recorded author, the
-    note that the sealed row's status is the one shown in the table, and the commentary "the record holds no copy of
-    the table that was refused" (Decision 33; body-2 R13).
+    a row of the shown table exactly, character for character, THE session page SHALL show once, above the table, a
+    block with the heading "the bench refused to end this session N time" for one refusal or "N times" for more,
+    N the number of `end` refusal entries of the session, each refusal message shown as recorded with each part in
+    the ink of its recorded author, and the note that the sealed row's status is the one shown in the table. THE
+    row that such a quote names SHALL carry a small amber mark (Requirement 6.7) and nothing else; no text beside the
+    row is added to what the bench recorded (Decision 33; body-2 R13).
 12. THE build SHALL attach the note of 10.11 only by exact equality of a quote part with a row id, SHALL NOT read
     any other meaning from a refusal message, and SHALL NOT infer or show what changed between refusals or between
     a refused table and the sealed table.
@@ -880,11 +891,13 @@ exception to a rule.
     user's reading of the brief's "the row that replaced it stands beside it", and it supersedes a literal reading
     of it. body-2 needs it: R11 and R13 each replace several rows, and R1 comes before R2, which it replaces
     (Requirement 8.3, 8.4, 8.10-8.12).
-33. **Refused ends are shown** (user). A sticky note in the bench's stamp style, "the bench refused to end this
-    session N times", is attached to the row whose id equals exactly the text of a quote in the refusal message
-    (body-2 R13). Each message is shown as recorded, each part in its recorded author's ink, with the note that the
-    sealed row's status is the one in the table and the commentary "the record holds no copy of the table that was
-    refused". The notebook never infers what changed between refusals and reads no other meaning from the message.
+33. **Refused ends are shown** (user; revised 2026-11-21). The session's `end` refusals are shown once, above
+    the spec table, as one block: the heading "the bench refused to end this session N time" for one refusal or
+    "N times" for more, then each message as recorded, each part in its recorded author's ink, and the note that the
+    sealed row's status is the one in the table. A row whose id equals exactly the text of a quote in a refusal
+    message (body-2 R13) carries only a small amber mark (Requirement 6.7); no card gets a red box, and no text
+    beside a card is added. The quote note appears once in the block. The notebook never infers what changed between
+    refusals and reads no other meaning from the message.
     In the replay, refusals are events of the step whose entries they precede (body-2: between the E11 verdict step
     and the `end` step). The refusal counts of Requirement 18.4 stay (Requirements 10.11, 10.12, 16.12).
 34. **Quotes composed by the bench** (user). The quote "H11.P3: hit/not-comparable" is shown as recorded, in Dr.
@@ -1011,9 +1024,10 @@ exception to a rule.
     Caveat as files of the site, with their licence; this fetches nothing from another host (3.2). The word
     "spacing", a setting of the wind tunnel like "ahead", is on the stop list, and small headings are letter-spaced.
     The steering file `notebook-visual.md` holds the details.
-52. **Night lab** (user, 2026-11-19). The notebook has a dark palette, the night lab: the same paper notebook on a
-    dark desk under a lamp, not an inversion. It follows `prefers-color-scheme: dark` in CSS only; there is no switch
-    and no script, and without a stated preference the page is the day paper (6.2). Only colours change: every
+52. **Night lab** (user, 2026-11-19; revised 2026-11-21). The notebook has a dark palette, the night lab: the same paper notebook on a
+    dark desk under a lamp, not an inversion. It is fixed for each application by its settings file, not chosen by the
+    visitor's system: the wind tunnel is the day paper, the stitched body and the front page the night paper; there is
+    no switch and no script (6.2; notebook-shelf Requirement 1.4). Only colours change: every
     custom property of the night lab overrides one of the day, and the layout, the wording and the motion
     (including `prefers-reduced-motion`) are the same. The recorded pictures are never filtered or inverted; the
     photo frame is a dark neutral with a thin edge. The SVG tracks follow the ink in `currentColor`. The miss red,

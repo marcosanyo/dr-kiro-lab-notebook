@@ -54,6 +54,9 @@ APP_KEYS = frozenset(
     }
 )
 SUMMARY_MAX = 700
+SUMMARY_WORDS_MAX = (
+    40  # the summary a person writes under the title, in words (notebook-shelf Requirement 2.3)
+)
 TITLE_MAX = 60
 SUBTITLE_MAX = 110
 LINE_MAX = 120
@@ -158,6 +161,16 @@ def _exact(where: str, data: dict[str, Any], expected: frozenset[str], required:
     missing = sorted(required - data.keys())
     if missing:
         raise NotebookError(where, f"missing key(s): {', '.join(missing)}")
+
+
+def _summary(where: str, value: Any) -> str:
+    """The summary under a session's title: at most `SUMMARY_MAX` characters and `SUMMARY_WORDS_MAX` words.
+    Nothing is cut to fit; a longer summary fails the build, naming the key."""
+    text = _string(where, value, SUMMARY_MAX)
+    words = len(text.split())
+    if words > SUMMARY_WORDS_MAX:
+        raise NotebookError(where, f"is {words} words; at most {SUMMARY_WORDS_MAX}")
+    return text
 
 
 def _string(where: str, value: Any, limit: int) -> str:
@@ -299,7 +312,7 @@ def load_file(path: Path, record: RecordModel) -> Choices:
         file=file,
         title=_string(f"{file} key title", data["title"], TITLE_MAX),
         subtitle=_string(f"{file} key subtitle", data["subtitle"], SUBTITLE_MAX),
-        summary=_string(f"{file} key summary", data["summary"], SUMMARY_MAX),
+        summary=_summary(f"{file} key summary", data["summary"]),
         line=_string(f"{file} key line", data["line"], LINE_MAX),
         model=_string(f"{file} key model", data["model"], 60),
         date=date,

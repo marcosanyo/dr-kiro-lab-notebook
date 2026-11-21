@@ -63,12 +63,11 @@ def test_body_2_shows_one_register_and_two_end_refusals(loaded, written) -> None
     assert how.refusal_counts(body2) == [("register", 1), ("run", 0), ("verdict", 0), ("end", 2)]
     shown = "".join(_parse(written).text)
     assert "body-lab, session body-2Refusals by action: register: 1, run: 0, verdict: 0, end: 2" in shown
-    # Each refusal's message as recorded, with the quote note where it holds a quote.
+    # Each refusal's message as recorded.
     for refusal in body2.refusals:
         assert "".join(p.text.text for p in refusal.message) in shown
-    assert shown.count(text.REFUSAL_QUOTE_NOTE) == sum(
-        1 for r in loaded for refusal in r.refusals if any(p.is_quote for p in refusal.message)
-    )
+    # The quote note is written once for the whole page, not once per refusal.
+    assert shown.count(text.REFUSAL_QUOTE_NOTE) == 1
 
 
 def test_both_applications_budgets_and_declarations_come_from_the_records(loaded, written) -> None:

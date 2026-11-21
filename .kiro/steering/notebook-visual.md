@@ -14,8 +14,7 @@ below as a CSS custom property on `:root`; pages use the properties and the clas
 Which Kiro: the builder writes the pages; visitors read them. Dr. Kiro and the reader never see the notebook.
 
 The site looks like a scientist's paper notebook, not a dashboard. It has two palettes of the same notebook, the
-day paper and the night lab (below), chosen by the visitor's system through `prefers-color-scheme` and by nothing
-else: no switch, no script, no stored choice (Requirement 6.2). The stylesheet bundles three typefaces as files of the site and names them first in each font
+day paper and the night lab (below), fixed by each application's settings file (the wind tunnel by day, the stitched body and the front page by night), never by the visitor's system and never by a switch, a script or a stored choice (Requirement 6.2; notebook-shelf Requirement 1.4). The stylesheet bundles three typefaces as files of the site and names them first in each font
 stack: Lora (400 and 600, the serif), IBM Plex Mono (400 and 600, the monospace) and Caveat (700, the script of
 the title, the tagline and the tab titles). They are `woff2` files in `notebook/src/notebook/assets/fonts/`, served
 from `a/` with their licence (`a/fonts-license.txt`), and the stylesheet names them without a folder. The system
@@ -262,9 +261,28 @@ the lab tabs (`.cover-labs`); the footer.
 - With `prefers-reduced-motion: reduce`, a moving picture starts paused on its first cell, and CSS transitions and
   animations are off.
 
+## Review pass on the session pages (2026-11-21)
+
+Written after the body-3 page review. These rules hold where they differ from the sections below.
+
+- Red is for rejected rows and misses only. A rejected card has the rewrite red on its band and its struck rule. A
+  stamp is never red.
+- The end refusals of a session are shown once above the spec table, in a plain dashed block with no red and the
+  heading "the bench refused to end this session N time" (one) or "N times" (more). Each card that a quote names
+  carries a small amber dot (`--accent`), nothing else. No text beside a card is added to what the bench recorded.
+- The plain pages (the legend, how the lab works) are one paper article with the binder holes. Their quote note is
+  written once for the page.
+- The reader's test has three columns: the old spec (the spec of an earlier session on the same body, shown first),
+  the new spec of this session ("New spec, after the body changed"), and "No spec". A session with no earlier spec
+  on its body keeps "Spec only".
+- Session subtitles and hypothesis titles are set in the serif face; the script face is for the titles only.
+- A link into a card lights the card (`:target`). A `details` summary has a small triangle, which turns when open.
+- On a lab page, the masthead title is smaller, the ended and the stopped sessions share one row of cards, and an
+  unselected card is dimmed. A session whose record names a body says "changed body" in its card.
+
 ## Night lab (Requirement 6.2)
 
-Under `@media (prefers-color-scheme: dark)` the page is the same notebook on a dark desk under a lamp: warm
+The night palette is the default `:root` of the stylesheet, and each page without a day mode uses it. It is the same notebook on a dark desk under a lamp: warm
 near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim
 yellow. It is not an inversion. The stylesheet has `color-scheme: light dark` on `:root` (so the buttons and the
 scrollbar follow), and one `prefers-color-scheme: dark` block holding a second `:root` with the custom properties

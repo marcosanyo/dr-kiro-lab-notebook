@@ -168,6 +168,15 @@ def footer(*, links: bool = True) -> list[Segment]:
     )
 
 
+def framed(children: list[Segment]) -> list[Segment]:
+    """Plain pages (the legend, how the lab works) set on the same paper as a notebook: one `article.book`
+    with the binder holes, so no decoration of the page lies over the text."""
+    holes = html.element(
+        "span", {"class": "holes", "aria-hidden": "true"}, [markup("<span></span><span></span><span></span>")]
+    )
+    return html.element("article", {"class": "book plain-book"}, [*holes, *children])
+
+
 def page(title: str, children: list[Segment], *, app: "App | None" = None) -> list[Segment]:
     """A whole page: the head with the stylesheet, the decoration of its application, `children` in the
     content column, the footer, and the page script. `app` is None for the front page. The `<html>` element

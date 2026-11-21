@@ -57,3 +57,12 @@ def test_a_table_without_the_row_gets_no_note() -> None:
     shown = [_refusal(5, "end", _quote("R9"))]
     assert refusals.refused_end_notes(_table("R1", "R2"), shown) == {}
     assert refusals.refused_end_notes(_table(), shown) == {}
+
+
+def test_the_end_heading_says_time_for_one_refusal_and_times_for_more() -> None:
+    from notebook import refusals, text
+
+    one = "".join(str(s.text) for s in refusals.end_heading(1, "record"))
+    many = "".join(str(s.text) for s in refusals.end_heading(2, "record"))
+    assert one.endswith(text.REFUSED_END_AFTER_ONE) and not one.endswith(text.REFUSED_END_AFTER_COUNT)
+    assert many.endswith(text.REFUSED_END_AFTER_COUNT)
