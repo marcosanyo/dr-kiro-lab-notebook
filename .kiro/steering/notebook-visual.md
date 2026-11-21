@@ -299,10 +299,15 @@ desk and the cards.
 
 **One paper, two rooms (user, 2026-11-22).** Every lab's notebook page is the same white graph paper (`.book`,
 `--page-grid`); the desk behind a day notebook is plain (no grid). The night lab's madness is on the page itself,
-never icons around it (`parts.page_marks`, paths only): a pencil sketch of a stitched machine struck by a bolt
-(`mark-sketch`, top right, hidden under 700 px), green drips from the top edge (`mark-drips`), a burn at the bottom
-right corner (`.book::after`). The titles are red ink: the masthead `#d8392f` on the desk, the session's title
-`--title` `#8a1a12` on the page; the headings stay orange, as the ink legend says. They lie under the writing (`.book` is its own
+never icons around it (`parts.page_marks`, paths only): one soft green drip from the top edge (`mark-drips`), burns
+along the page's edges (radial gradients in the `.book` background) and at the bottom right corner (`.book::after`).
+The titles are red ink: the masthead `#d8392f` on the desk, the session's title `--title` `#8a1a12` on the page.
+
+**Three pens (user, 2026-11-22), in every lab.** Green `--ink-drkiro` for Dr. Kiro; blue for our notes (both
+applications' `pen` is `blue`; the body lab's commentary is `#1f4fa3` on the page and `#8fb4ff` on the desk); red
+`--red-pen` `#c4271c` for the section headings (`.book .cap`), the reader's request (`.request`) and the experiment's
+corrections: the line through a struck rule, the line a rewrite hangs from, a wavy line under a missed prediction.
+No red margin rule. They lie under the writing (`.book` is its own
 stacking context, the marks are at `z-index: -1`) and never move. The sewn binding is a thin, faint thread with cross
 stitches at 3rem, clear of the writing. Only the spider and the bats move.
 
