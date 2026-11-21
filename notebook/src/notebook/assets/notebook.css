@@ -2301,14 +2301,19 @@ html[data-mode="night"] .book {
   background-image:
     radial-gradient(circle 0.55rem at 1.4rem 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
     radial-gradient(circle 0.55rem at calc(100% - 1.4rem) 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
+    radial-gradient(ellipse 2.6rem 5.5rem at 100% 31%, rgba(45, 22, 6, 0.42), rgba(110, 60, 20, 0.24) 45%, rgba(170, 110, 50, 0.1) 68%, transparent 82%),
+    radial-gradient(ellipse 2.2rem 4rem at 0 58%, rgba(45, 22, 6, 0.36), rgba(110, 60, 20, 0.2) 45%, rgba(170, 110, 50, 0.08) 68%, transparent 82%),
+    radial-gradient(ellipse 3.4rem 2rem at 64% 0, rgba(45, 22, 6, 0.3), rgba(110, 60, 20, 0.16) 45%, transparent 80%),
+    radial-gradient(ellipse 2.4rem 4.6rem at 100% 79%, rgba(45, 22, 6, 0.34), rgba(110, 60, 20, 0.2) 45%, rgba(170, 110, 50, 0.08) 68%, transparent 82%),
+    radial-gradient(circle 0.7rem at 37% 47%, rgba(80, 45, 15, 0.16), rgba(140, 90, 40, 0.07) 60%, transparent 100%),
     conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
     conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
-  background-size: 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
 }
 /* The binding of the night lab's notebook is sewn: a dark thread down the margin with cross stitches. */
 html[data-mode="night"] .book::before {
   left: 3rem;
-  width: 0.44rem;
+  width: 0.9rem;
   border-left: 0;
   background-image:
     conic-gradient(rgba(50, 35, 25, 0.4) 0deg 360deg),
@@ -2336,17 +2341,6 @@ html[data-mode="night"] .book {
   z-index: -1;
   pointer-events: none;
 }
-.mark-sketch {
-  top: 8.5rem;
-  right: 1.6rem;
-  width: 10rem;
-  height: auto;
-  color: rgba(70, 70, 75, 0.42);
-  transform: rotate(-7deg);
-}
-.mark-sketch .mark-bolt {
-  fill: rgba(150, 30, 20, 0.35);
-}
 .mark-drips {
   top: 0;
   left: 42%;
@@ -2368,11 +2362,6 @@ html[data-mode="night"] .book::after {
     radial-gradient(ellipse 70% 80% at 100% 100%, rgba(40, 20, 5, 0.55), rgba(110, 60, 20, 0.35) 45%, rgba(170, 110, 50, 0.15) 65%, transparent 80%),
     radial-gradient(circle 1.4rem at 72% 78%, rgba(60, 30, 10, 0.3), transparent 100%);
   pointer-events: none;
-}
-@media (max-width: 700px) {
-  .mark-sketch {
-    display: none;
-  }
 }
 /* Red ink for the titles of the night lab (2026-11-22): the masthead in a bright red on the dark desk, the
    session's title in a dark red on the white page. The headings stay orange, as the ink legend says. */
@@ -2397,4 +2386,40 @@ html[data-mode="night"] .book {
 }
 .stamp-rejected {
   border-color: var(--stamp-rejected);
+}
+/* Three pens (2026-11-22), in both labs: green for Dr. Kiro, blue for our notes, red for the headings and the
+   experiment's corrections. A struck rule is crossed out in red, the rewrite under it hangs from a red line, a missed
+   prediction is underlined in red. The words keep their inks; only the pen marks are red. */
+.book {
+  --red-pen: #c4271c;
+}
+.rule-text.struck .ink-k,
+html[data-mode="night"] .rule-text.struck .ink-k {
+  text-decoration: line-through 2px var(--red-pen);
+  text-decoration-skip-ink: none;
+}
+.rule-rewrite,
+html[data-mode="night"] .rule-rewrite {
+  border-left: 3px solid var(--red-pen);
+}
+.miss .ink-p,
+.hyp-results .miss .ink-p {
+  text-decoration: underline wavy var(--red-pen);
+  text-underline-offset: 3px;
+}
+.book .cap .ink-c {
+  color: var(--red-pen);
+}
+html[data-app="body-lab"] {
+  --ink-commentary: #8fb4ff;
+}
+html[data-app="body-lab"][data-mode="night"] .book {
+  --ink-commentary: #1f4fa3;
+}
+/* The reader's request is the one sentence the test is about: written in the red pen. */
+.book .request {
+  border-left-color: var(--red-pen);
+}
+.book .request .ink-c {
+  color: var(--red-pen);
 }

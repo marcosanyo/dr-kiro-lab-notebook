@@ -151,63 +151,9 @@ def decoration(kind: str) -> list[Segment]:
 
 
 def page_marks() -> list[Segment]:
-    """The mad scientist's traces on the night lab's notebook page itself: a pencil sketch of a stitched
-    machine struck by a bolt, green drips from the top edge, and a burn at the bottom corner (in the
-    stylesheet). Paths only, no words, hidden from assistive technology, under the writing (design N28)."""
-    sketch = [
-        *html.element(
-            "path",
-            {
-                "d": "M30 60 H110 V112 H30 Z M30 86 H110 M44 60 V112 M96 60 V112",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "1.6",
-                "stroke-dasharray": "5 3",
-            },
-            [],
-        ),
-        *html.element(
-            "path",
-            {
-                "d": "M38 86 l4 -4 m-4 0 l4 4 M54 86 l4 -4 m-4 0 l4 4 M70 86 l4 -4 m-4 0 l4 4 "
-                "M86 86 l4 -4 m-4 0 l4 4 M102 86 l4 -4 m-4 0 l4 4",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "1.2",
-            },
-            [],
-        ),
-        *html.shape("circle", {"cx": "30", "cy": "66", "r": "4", "fill": "none", "stroke": "currentColor"}),
-        *html.shape("circle", {"cx": "110", "cy": "66", "r": "4", "fill": "none", "stroke": "currentColor"}),
-        *html.element(
-            "path",
-            {
-                "d": "M50 112 C46 128 38 136 26 140 M62 112 C62 130 58 140 52 150 "
-                "M74 112 C78 128 80 140 86 150 M86 112 C92 124 100 132 112 136 "
-                "M98 112 C108 118 118 120 128 118",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "1.4",
-            },
-            [],
-        ),
-        *html.element(
-            "path",
-            {"class": "mark-bolt", "d": "M84 4 L66 30 H80 L62 56 L94 24 H78 L94 4 Z"},
-            [],
-        ),
-        *html.element(
-            "path",
-            {
-                "d": "M14 20 C40 6 120 4 136 30 C150 56 136 150 70 156 C20 160 4 120 8 90 C12 50 30 30 60 26",
-                "fill": "none",
-                "stroke": "currentColor",
-                "stroke-width": "1",
-                "opacity": "0.6",
-            },
-            [],
-        ),
-    ]
+    """The mad scientist's traces on the night lab's notebook page itself: green drips from the top edge (the
+    burns along the edges are in the stylesheet). Paths only, no words, hidden from assistive technology,
+    under the writing (design N28)."""
     drips = [
         *html.element(
             "path",
@@ -221,7 +167,6 @@ def page_marks() -> list[Segment]:
         ),
     ]
     return [
-        *_svg("mark mark-sketch", "0 0 150 162", 150, 162, sketch),
         *_svg("mark mark-drips", "0 0 88 64", 88, 64, drips),
     ]
 

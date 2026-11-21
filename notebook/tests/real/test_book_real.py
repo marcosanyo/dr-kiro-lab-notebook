@@ -95,8 +95,8 @@ def test_each_front_card_shows_a_picture_what_the_lab_is_and_a_link_to_open_its_
 def test_each_application_opens_in_its_own_theme_and_only_the_robot_has_decoration(site):
     day, day_found = _page(site, "wind-tunnel/index.html")
     night, night_found = _page(site, "body-lab/index.html")
-    assert 'data-app="wind-tunnel" data-mode="day" data-pen="blue"' in day
-    assert 'data-app="body-lab" data-mode="night" data-pen="orange"' in night
+    assert 'data-app="wind-tunnel" data-mode="day"' in day
+    assert 'data-app="body-lab" data-mode="night"' in night
     assert "<svg" not in re.sub(
         r'<svg class="icon".*?</svg>|<svg class="chart".*?</svg>', "", day, flags=re.S
     )
