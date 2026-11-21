@@ -4,7 +4,8 @@ A hypothesis starts at a level-3 heading `### H<n>` (optionally `: title`) and r
 to level-3 heading outside a code fence. Its frozen part is the heading line, the statement, and the
 fenced block with the info string `prediction` that follows the statement, fences included, with line
 endings normalised to `\\n`. Text after the closing fence is free (notes and results) and is never part
-of the frozen part.
+of the frozen part, except a second `prediction` block: the bench reads only the first, so a later one is
+refused at registration and stops every action after it (Requirement 24).
 """
 
 import math
@@ -154,6 +155,37 @@ def _locate(block: _Block, file: str) -> _Located:
     )
 
 
+def _second_prediction(located: _Located) -> int | None:
+    """The line of a `prediction` fence after the first prediction block of the hypothesis, or None."""
+    lines = located.block.lines
+    fence: str | None = None
+    for number in range(located.fence_close + 1, located.block.end + 1):
+        match = _FENCE.fullmatch(lines[number - 1].strip())
+        if not match:
+            continue
+        if fence is None:
+            if match.group(2) == "prediction":
+                return number
+            fence = match.group(1)
+        elif match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) and not match.group(2):
+            fence = None
+    return None
+
+
+def second_prediction_line(text: str, hypothesis_id: str) -> int | None:
+    """The line of a second `prediction` block in the one block of `hypothesis_id`, or None (Req 24.2).
+    None too when the block is missing, repeated or has no closed first block: the frozen check reports
+    those."""
+    blocks = [b for b in _blocks(text) if b.id == hypothesis_id]
+    if len(blocks) != 1:
+        return None
+    try:
+        located = _locate(blocks[0], "requirements.md")
+    except SpecRefusal:
+        return None
+    return _second_prediction(located)
+
+
 def frozen_parts(text: str) -> dict[str, list[str | None]]:
     """Every hypothesis id in the file with the frozen part of each block that has that id. A block without a
     closed prediction block has None. Used for the frozen check (6.6)."""
@@ -222,6 +254,17 @@ def parse_hypothesis(text: str, hypothesis_id: str, decl: Declaration, file: str
         )
     located = _locate(blocks[0], file)
     block = blocks[0]
+    second = _second_prediction(located)
+    if second is not None:
+        raise _refuse(
+            file,
+            second,
+            "hypothesis ",
+            Quote(hypothesis_id, file, block.start),
+            " has a second ```prediction block; the bench reads only the first "
+            f"(line {located.fence_open}). Put every prediction of this hypothesis in that block, "
+            "or write the later ones as a new hypothesis",
+        )
     if ears_shape(located.statement) is None:
         raise _refuse(
             file,

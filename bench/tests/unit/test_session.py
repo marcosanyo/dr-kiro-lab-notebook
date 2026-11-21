@@ -215,6 +215,20 @@ def test_frozen_part_and_appended_notes(lab: Lab) -> None:
     assert isinstance(session.verdict("E1", "supported", "held"), Ran)
 
 
+def test_a_second_prediction_block_after_registration_stops_every_action(lab: Lab) -> None:
+    session = lab.start()
+    registered(lab, session)
+    clean = lab.read("requirements.md")
+    block = clean[clean.index("```prediction") :]
+    block = block[: block.index("```", len("```prediction")) + 3] + "\n"
+    lab.write("requirements.md", clean + "\nOne more:\n\n" + block.replace('"P1"', '"P2"'))
+    outcome = session.run(lab.experiment("e1.py", exp_file("H1", [[0.5, 1.0]])))
+    refused(outcome, "has a second ```prediction block at line")
+    refused(outcome, "write those predictions as a new hypothesis")
+    lab.write("requirements.md", clean)
+    ran(lab, session, "e1.py", exp_file("H1", [[0.5, 1.0]]))
+
+
 # Verdict
 
 

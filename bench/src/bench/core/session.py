@@ -62,7 +62,7 @@ from bench.record.store import Store, StoreError, authored
 from bench.scan.scan import Finding, Scanner
 from bench.scan.terms import ScanError
 from bench.specfiles.discovered import Evidence, check_table
-from bench.specfiles.hypotheses import frozen_status, parse_hypothesis
+from bench.specfiles.hypotheses import frozen_status, parse_hypothesis, second_prediction_line
 
 SPEC_FILE_KEYS = ("requirements", "design", "tasks")
 _FOLDER_NAME_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
@@ -394,6 +394,15 @@ class Session:
                     Quote(hid, file, 1),
                     f" {reason} in {file}; "
                     "restore its heading, statement and prediction block before any other action",
+                )
+            second = second_prediction_line(text, hid)
+            if second is not None:
+                raise _refuse(
+                    "registered hypothesis ",
+                    Quote(hid, file, 1),
+                    f" has a second ```prediction block at line {second} of {file}, which the bench "
+                    "does not read; remove it, or write those predictions as a new hypothesis, "
+                    "before any other action",
                 )
 
     # Output scan (11.4) and failures
