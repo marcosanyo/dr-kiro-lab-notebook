@@ -6,6 +6,7 @@ from bench.core.session import Session
 from bench.drkiro.lab import BUILDER_FILES, FILES, TEMPLATES, make_lab
 from bench.drkiro.session import main
 from bench.frontend import config as config_file
+from bench.frontend import pointer
 from labkit import FAKE_SOURCES, STOP_LIST
 
 
@@ -51,7 +52,13 @@ def test_new_session_resets_the_lab_and_refuses_while_one_is_open(tmp_path: Path
     assert "session s1 is not sealed" in capsys.readouterr().err
     assert (lab / "experiments" / "e1.py").exists()  # nothing changed
 
-    config = config_file.load(tmp_path / "s1.toml")
+    # The lab's session file names the config and the hook log; bench-mcp started in the lab finds them.
+    assert pointer.read(lab) == {
+        "session_config": (tmp_path / "s1.toml").resolve(),
+        "hook_log": (tmp_path / "s1.hook-log.jsonl").resolve(),
+    }
+    assert not pointer.path_for(lab).is_relative_to(lab.resolve())
+    config = config_file.for_lab(lab)
     assert config.resume is True
     assert config.session.discovered_table == "required"
     session = Session.open(config.session)
@@ -60,9 +67,21 @@ def test_new_session_resets_the_lab_and_refuses_while_one_is_open(tmp_path: Path
     session.close()
 
     assert main(args(tmp_path, "s2")) == 0
+    assert pointer.read(lab)["session_config"] == (tmp_path / "s2.toml").resolve()
     files = sorted(p.relative_to(lab).as_posix() for p in lab.rglob("*") if p.is_file())
     expected = set(BUILDER_FILES.values()) | set(TEMPLATES.values()) | {".gitignore"}
     hooks = {p for p in files if p.startswith(".kiro/hooks/")}
     assert set(files) - hooks == expected
     assert (lab / TEMPLATES["requirements.md"]).read_bytes() == (FILES / "requirements.md").read_bytes()
     assert main(args(tmp_path, "s2")) == 2  # a session id is used once
+
+
+def test_new_session_refuses_a_config_inside_the_lab(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]  # noqa: E501
+    for name in ("lab", "state", "sessions"):
+        (tmp_path / name).mkdir()
+    make_lab(tmp_path / "lab")
+    given = args(tmp_path, "s1")
+    given[given.index("--config-out") + 1] = str(tmp_path / "lab" / "s1.toml")
+    assert main(given) == 2
+    assert "lies inside the lab" in capsys.readouterr().err
+    assert not pointer.path_for(tmp_path / "lab").exists()

@@ -28,3 +28,5 @@ spikes/mcp/*
 bench-run/
 # Task tool state (generated)
 .kiro/specs/*/tasks.meta.json
+# The session file of a lab: next to the lab, written when a session starts (lab-bench design D2)
+*.bench-session.json

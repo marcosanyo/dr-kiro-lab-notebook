@@ -1,4 +1,4 @@
-"""The session config file named by BENCH_SESSION_CONFIG (design F7, D8).
+"""The session config file, found through the lab's session file (design F7, D2, D8).
 
 A TOML file the builder writes outside the lab. It has one field for each field of `SessionConfig`, plus
 `resume`. There are no defaults: a missing or extra field stops the server with a message (1.3, rules.md 2).
@@ -8,14 +8,13 @@ stay relative to the lab, as in `SessionConfig`.
 
 import importlib
 import inspect
-import os
 import tomllib
 from dataclasses import dataclass, fields
 from pathlib import Path
 
 from bench.core.session import SessionConfig
+from bench.frontend import pointer
 
-ENV_VAR = "BENCH_SESSION_CONFIG"
 FIELDS = tuple(f.name for f in fields(SessionConfig) if f.name != "variant") + ("resume",)
 OPTIONAL = ("variant",)  # optional: lab-bench 23.1
 _PATH_FIELDS = ("lab_dir", "state_dir", "sessions_dir", "stop_list")
@@ -116,8 +115,19 @@ def load(path: Path) -> ServerConfig:
     return ServerConfig(session, data["resume"])
 
 
-def from_environment() -> ServerConfig:
-    value = os.environ.get(ENV_VAR)
-    if not value:
-        raise ConfigError(f"{ENV_VAR} is not set; it names the session config file")
-    return load(Path(value))
+def config_path_for(lab: Path) -> Path:
+    """The session config named by the session file of `lab` (`pointer`)."""
+    try:
+        return pointer.read(lab)["session_config"]
+    except pointer.PointerError as error:
+        raise ConfigError(str(error)) from error
+
+
+def for_lab(lab: Path) -> ServerConfig:
+    """The config of the session that runs in `lab`. Its `lab_dir` must be `lab` itself."""
+    loaded = load(config_path_for(lab))
+    if loaded.session.lab_dir.resolve() != Path(lab).resolve():
+        raise ConfigError(
+            f"{WHERE}: lab_dir names another folder; start bench-mcp in the session's lab folder"
+        )
+    return loaded

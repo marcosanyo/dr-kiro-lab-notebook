@@ -1,7 +1,6 @@
 """Task 17: the MCP server through the SDK's in-process client, with the fake application (design F11)."""
 
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
@@ -12,6 +11,7 @@ import pytest
 from mcp.client import Client
 
 from bench.frontend import config as config_file
+from bench.frontend import pointer
 from bench.frontend.server import TOOLS, BenchServer, open_session, startup_log_for
 from labkit import FAKE_SOURCES, STOP_LIST, Lab, exp_file, hyp_block
 
@@ -228,10 +228,9 @@ def test_state_folder_in_use_by_a_live_process_stops_with_a_bench_line(lab: Lab,
     )
     try:
         assert holder.stdout is not None and holder.stdout.readline().strip() == "locked"
-        env = {**os.environ, config_file.ENV_VAR: str(resumed)}
         done = subprocess.run(
             [sys.executable, "-c", RUN_MAIN],
-            env=env,
+            cwd=_session_file(resumed),
             capture_output=True,
             text=True,
             timeout=60,
@@ -251,27 +250,44 @@ def test_state_folder_in_use_by_a_live_process_stops_with_a_bench_line(lab: Lab,
     assert "/" not in line
 
 
-def test_missing_session_config_variable_stops_the_server() -> None:
-    env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
+def _session_file(config: Path, lab_folder: Path | None = None) -> Path:
+    """Write the session file of the lab (default: `lab` beside the config) and return the lab folder."""
+    folder = config.parent / "lab" if lab_folder is None else lab_folder
+    folder.mkdir(exist_ok=True)
+    pointer.write(folder, config, config.parent / "hook-log.jsonl")
+    return folder
+
+
+def test_missing_session_file_stops_the_server(tmp_path: Path) -> None:
     done = subprocess.run(
-        [sys.executable, "-c", "import sys; from bench.frontend.server import main; sys.exit(main())"],
-        env=env,
+        [sys.executable, "-c", RUN_MAIN],
+        cwd=tmp_path,
         capture_output=True,
         text=True,
         timeout=60,
         stdin=subprocess.DEVNULL,
     )
     assert done.returncode == 2
-    assert "BENCH_SESSION_CONFIG is not set" in done.stderr
+    assert done.stderr.splitlines() == [
+        "bench-mcp: the lab's session file is not there; start the session with bench-new-session, "
+        "and run bench-mcp in the lab folder"
+    ]
 
 
-def _run_bench_mcp(config: Path | None) -> subprocess.Popen[str]:
-    env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
-    if config is not None:
-        env[config_file.ENV_VAR] = str(config)
+def test_a_config_for_another_lab_stops_the_server(lab: Lab, tmp_path: Path) -> None:
+    other = tmp_path / "other"
+    proc = _run_bench_mcp(_config_file(lab, tmp_path), other)
+    _, err = proc.communicate(timeout=60)
+    assert proc.returncode == 2
+    assert err.splitlines() == [
+        "bench-mcp: session config: lab_dir names another folder; start bench-mcp in the session's lab folder"
+    ]
+
+
+def _run_bench_mcp(config: Path, lab_folder: Path | None = None) -> subprocess.Popen[str]:
     return subprocess.Popen(
         [sys.executable, "-c", RUN_MAIN],
-        env=env,
+        cwd=_session_file(config, lab_folder),
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

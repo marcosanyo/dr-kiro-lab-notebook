@@ -6,10 +6,10 @@ worker thread is not abandoned if the client cancels: the run finishes and is re
 no gate and builds no message text of its own.
 """
 
-import os
 import sys
 import traceback
 from collections.abc import Callable
+from pathlib import Path
 
 import anyio
 import anyio.to_thread
@@ -94,10 +94,19 @@ def open_session(cfg: config_file.ServerConfig) -> Session:
     return outcome.result
 
 
-def main() -> int:
-    log = startup_log_for(os.environ.get(config_file.ENV_VAR))
+def _known_config(lab: Path) -> str | None:
+    # Only to place the startup log; a missing session file is reported by `for_lab` just below.
     try:
-        server = BenchServer(open_session(config_file.from_environment()))
+        return str(config_file.config_path_for(lab))
+    except config_file.ConfigError:
+        return None
+
+
+def main() -> int:
+    lab = Path.cwd()
+    log = startup_log_for(_known_config(lab))
+    try:
+        server = BenchServer(open_session(config_file.for_lab(lab)))
     except (config_file.ConfigError, StartupError) as error:
         record_startup_failure(log, str(error))
         print(f"bench-mcp: {error}", file=sys.stderr)
