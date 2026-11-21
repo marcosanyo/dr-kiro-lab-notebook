@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-bench/design.md`](../../../.kiro/specs/lab-bench/design.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `ad39bf0af6b7722d0d6e12d208549682027a48d0d965c69002172c29d96d0034`
+> 原文 SHA-256: `01f80b1f66a53215cdd56b1b051166871af1087370f5d306dca133a6d9c58b13`
 
 # 設計: lab-bench（コア）
 
@@ -449,7 +449,8 @@ frontend/
   render.py        Outcome -> MCP result (section F4)
   pictures.py      write picture files into lab/pictures/ (F5)
   describe.py      tool descriptions built from the adapter declaration (F3)
-  config.py        read the session config file named by BENCH_SESSION_CONFIG (F7)
+  pointer.py       the lab's session file, which names the session config and the hook log (F7, F9, D2)
+  config.py        read the session config file that the lab's session file names (F7)
   stop.py          the bench-stop command (F7)
   hooks/
     confine.py     the confinement hook (F8)
@@ -513,8 +514,8 @@ MCP SDK をインポートするのはフロントエンドだけです。`bench
 
 ## F7. 開始と停止 (17.5)
 
-- `bench-mcp` は引数を取りません。`BENCH_SESSION_CONFIG` を読みます。これは、ビルダーがラボの外に書く TOML ファイルのパスです。変数、ファイル、フィールドのいずれかが欠けていれば、サーバーはメッセージを出して停止します (1.3, `rules.md` 2)。フィールドは `SessionConfig`（セクション 3）の各フィールドに 1 つずつです: `session_id`、`application`、`adapter`（`module:factory`）、`lab_dir`、`spec_files`、`experiments_dir`、`state_dir`、`sessions_dir`、`seed`、`scan_sources`、`stop_list`。それに加えて `resume`（`true` は `Session.open` で既存のセッションを開き、`false` は新しいセッションを開始します。デフォルトはありません）。
-- Dr. Kiro がそのファイルや変数を見ることはありません。どのツール入力でも、それらは一切設定できません。
+- `bench-mcp` は引数を取りません。作業フォルダーはラボです (17.12)。ラボフォルダーの隣にあるラボのセッションファイル `<lab>.bench-session.json`（D2）を読みます。このファイルは、ビルダーがラボの外に書く TOML ファイルを指します。セッションファイル、設定ファイル、フィールドのいずれかが欠けていれば、サーバーはメッセージを出して停止します (1.3, `rules.md` 2)。設定の `lab_dir` が作業フォルダーでない場合も停止します。フィールドは `SessionConfig`（セクション 3）の各フィールドに 1 つずつです: `session_id`、`application`、`adapter`（`module:factory`）、`lab_dir`、`spec_files`、`experiments_dir`、`state_dir`、`sessions_dir`、`seed`、`scan_sources`、`stop_list`。それに加えて `resume`（`true` は `Session.open` で既存のセッションを開き、`false` は新しいセッションを開始します。デフォルトはありません）。
+- Dr. Kiro はどちらのファイルも見ません。どちらもラボの外にあり、閉じ込めフックがすべての読み取りを拒否します。どのツール入力でも、それらは一切設定できません。
 - Kiro が接続を閉じると、サーバーは終了し、セッションは開いたまま残ります。サーバーはセッションを終了も停止もしません。
 - `bench-stop <config> --reason <text>` は `Session.open` でセッションを開き、`Session.stop` を呼びます (11.4)。状態フォルダーがロックされているため（セクション 3）、これは `bench-mcp` が動いていないときにだけ機能します。閉じた接続によって開いたまま残った記録は、この方法で停止します。
 
@@ -548,9 +549,9 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 
 ## F9. ログ記録フック (17.11)
 
-- `calllog.py` は、ラボの外にある `BENCH_HOOK_LOG` で指定されたファイルに、呼び出しごとに 1 行の JSON を追記します: `{"phase": "pre" | "post" | "refused", "tool_name", "tool_input", "reason"?}`。閉じ込めフックも、同じ関数で拒否を書き込みます。タイムスタンプはハッシュも封印もされません。このログは記録の一部ではありません (17.11)。
-- パスを環境変数から取るのは、ラボ外のパスが `lab/.kiro/` に現れないようにするためです。変数がない場合や行を書き込めない場合、pre-tool フックは終了コード 2 で終了します（ログに残らない呼び出しは作りません）。post-tool フックは呼び出しを取り消せませんが、同じく終了コード 2 で終了し、これは障害を報告するだけです。
-- Kiro CLI がこの変数をフックに渡すかどうかは分かっていません。task 21 で確認します。渡さない場合は、作業を止めて相談します。
+- `calllog.py` は、ラボのセッションファイルが指す、ラボの外のフックログに、呼び出しごとに 1 行の JSON を追記します: `{"phase": "pre" | "post" | "refused", "tool_name", "tool_input", "reason"?}`。閉じ込めフックも、同じ関数で拒否を書き込みます。タイムスタンプはハッシュも封印もされません。このログは記録の一部ではありません (17.11)。
+- パスはラボの隣のセッションファイルから取るので、ラボ外のパスが `lab/.kiro/` に現れません。フックは、スクリプトの 2 つ上のフォルダーを自分のラボとします。セッションファイルがない・使えない場合や、行を書き込めない場合、pre-tool フックは終了コード 2 で終了します（ログに残らない呼び出しは作りません）。post-tool フックは呼び出しを取り消せませんが、同じく終了コード 2 で終了し、これは障害を報告するだけです。
+- フックは、ラボに単独でコピーされる（標準ライブラリだけ）ため、セッションファイルを読む処理を自分で持ちます。`pointer.py` と同じパスを読むことをテストで確かめます。
 
 ## F10. エージェント定義 (17.6, 17.7, 17.12)
 
@@ -558,8 +559,7 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 
 ```json
 {
-  "mcpServers": {"bench": {"command": "bench-mcp", "args": [],
-      "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}}},
+  "mcpServers": {"bench": {"command": "bench-mcp", "args": []}},
   "tools": ["read", "write", "@bench"],
   "includeMcpJson": false,
   "includePowers": false,
@@ -588,7 +588,7 @@ lab = the folder two levels above this script's folder (the script lives in <lab
 ## F12. 決定事項（ユーザーが承認済み）
 
 - **D1. 実行時依存。** セクション 1 と 14 には、ベンチは標準ライブラリ以外の実行時依存を持たず、それが必要になったら作業を止めて相談する、とあります。MCP サーバーには `mcp` パッケージが必要です。承認された内容: `mcp==2.3.0`（スパイクで使ったバージョン）を任意の依存グループ `frontend` に固定し、コアとそのテストは標準ライブラリだけで済むようにします。
-- **D2. フックログとセッション設定の置き場所。** どちらもラボの外にあり、環境変数（`BENCH_HOOK_LOG`、`BENCH_SESSION_CONFIG`）で指定されます。承認された内容: リポジトリのルートに `bench-run/` フォルダーを置き、git の管理対象外とし、`structure.md` に記載します。
+- **D2. フックログとセッション設定の置き場所。** どちらもラボの外、リポジトリのルートの `bench-run/` フォルダーにあり、git の管理対象外で、`structure.md` に記載します（承認済み）。この 2 つは、ラボを入れたフォルダーにあるラボのセッションファイル `<lab>.bench-session.json` が指します。`bench-new-session` と `bfs-run` がセッションの開始時に書き、git は `*.bench-session.json` を無視します。2026-11-22 に変更: 当初は環境変数 `BENCH_SESSION_CONFIG` と `BENCH_HOOK_LOG` で指定していました。ラボを開いた Kiro IDE は、それを export したシェルから起動しない限りこの変数を持たず、IDE は承認された変数しか展開しないので、開いたままの IDE ではセッションを動かせませんでした (17.12)。変数はもう読みません。ファイルはラボの中にないので、Dr. Kiro はその中のビルダーのパスを読めません。
 - **D3. 長い呼び出し。** 必要ありません。スパイクで 900 s の呼び出しが通ったので、並行試行による代替策は用意しません。
 - **D4. Dr. Kiro の実行場所。** Kiro CLI か、ラボフォルダーだけを開いた Kiro IDE で実行します (Requirement 17.12)。封印されるセッションは Kiro CLI でだけ実行します。IDE の確認はフェイクアプリケーション（`bench-run/fake-ide/`）で行い、パス `.`（ラボの最上位）で拒否される不具合が 1 つ見つかりました。フックが IndexError を出していたもので、直してテストを足しました（`bench/tests/frontend/test_hooks.py`）。
 
@@ -882,3 +882,15 @@ def _records(sessions: Path) -> list[Path]:
 
 - これが入るとき、`bench-run/` で開いているセッションがある。影響しない: その設定には `variant` がなく、アダプターが `variants` を持つのは `body-lab` の変更のときだけで、その変更は古い設定を開始時に拒否する。ビルダーが報告する。
 - 設定ローダー以外のアダプターファクトリーの呼び出し元（ブラインドスキャンの用語リスト、`bench-new-session`、`build-from-spec`、ノート）は、バリアントなしでは動かない。呼び出し元が必要とするのは宣言だけで、宣言はバリアントに依存しない（`body-lab` 要件 7.5）。呼び出し元がボディそのものを必要とするなら、ビルダーは止めて確認する。
+
+# 改訂: 1 つの仮説に 1 つの予測ブロック（要件 24）
+
+## G1. ルール（24.1-24.4）
+
+- `specfiles/hypotheses.py` は、仮説ブロックの中で、最初のブロックの閉じるフェンスの後、ほかのフェンスの外にある最初の `prediction` フェンスを探す（`_second_prediction`）。`parse_hypothesis` はその行を示して拒否する（24.1）。
+- `second_prediction_line(text, id)` は、登録済みの仮説について同じ行を返す。`Session._check_frozen` は `frozen_status` が通った後にこれを呼ぶので、凍結部分の変更が先に報告される。そのうえで仮説と行を示して拒否する（24.2）。凍結部分と `frozen_parts` は変わらない（6.7）。
+- 封印された記録の読み方は何も変わらない（24.4）。封印されたセッションの `discovered/` の写しは、どれも 1 つの仮説に 1 つのブロックである（2026-11-22 に確認）。
+
+## G2. テスト
+
+`bench/tests/unit/test_hypotheses.py`: 登録時に行を示して拒否する。凍結部分が変わらないまま後のブロックを見つける。別のフェンスに引用されたブロックと、次の仮説のブロックは数えない。`bench/tests/unit/test_session.py`: 登録後に足したブロックは `run_experiment` を拒否させ、取り除くと実行が通る。

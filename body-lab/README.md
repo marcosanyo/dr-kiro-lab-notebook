@@ -57,8 +57,6 @@ bench-new-session --application body-lab --adapter body_lab.adapter:BodyAdapter 
   --scan-sources body-lab/adapter/scan_sources.toml --stop-list .kiro/blind-scan/stop-list.txt \
   --lab body-lab/lab --state $R/state --sessions sessions --session-id body-1 --seed 1 --variant a \
   --config-out $R/body-1.toml
-export BENCH_SESSION_CONFIG="$PWD/$R/body-1.toml"
-export BENCH_HOOK_LOG="$PWD/$R/body-1.hook-log.jsonl"
 cd body-lab/lab
 kiro-cli chat --agent dr-kiro
 ```

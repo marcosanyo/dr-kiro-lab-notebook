@@ -74,7 +74,7 @@ def test_an_application_folder_gives_its_settings_and_choices(tmp_path, record):
         "blue",
         "none",
     )
-    assert app.display is None and set(apps.choices) == {("fake", "s1")}
+    assert app.display is None and app.track is None and set(apps.choices) == {("fake", "s1")}
 
 
 @pytest.mark.parametrize(
@@ -88,6 +88,8 @@ def test_an_application_folder_gives_its_settings_and_choices(tmp_path, record):
         ('application = "fake"', 'application = "other"', "no session of"),
         ('unit = "runs"', 'unit = "runs"\nextra = 1', "unknown key"),
         ('unit = "runs"', 'unit = "runs"\ndisplay = "nowhere"', "is not a folder"),
+        ('unit = "runs"', 'unit = "runs"\ntrack = ["track_x"]', "must name two recorded series"),
+        ('unit = "runs"', 'unit = "runs"\ntrack = ["a", "a"]', "must name two different series"),
     ],
 )
 def test_a_bad_application_file_fails_naming_the_key(tmp_path, record, old, new, problem):

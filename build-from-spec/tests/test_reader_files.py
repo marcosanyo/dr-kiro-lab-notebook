@@ -29,12 +29,9 @@ def test_reader_json_is_dr_kiro_json_with_name_description_and_prompt_changed_an
     assert isinstance(reader["description"], str) and "\n" not in reader["description"]
     for name in ("name", "description", "prompt"):
         del reader[name], dr_kiro[name]
-    # K31: the one other difference is the env entry of the bench server. Dr. Kiro's copies
-    # BENCH_SESSION_CONFIG; the reader's has none, because the variable reaches bench-mcp from the
-    # environment of Kiro CLI.
-    assert dr_kiro["mcpServers"]["bench"]["env"] == {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}
+    # K31: no other difference. Neither bench entry has an env entry: bench-mcp finds the session through the
+    # folder's session file (lab-bench design D2).
     assert "env" not in reader["mcpServers"]["bench"]
-    del dr_kiro["mcpServers"]["bench"]["env"]
     assert reader == dr_kiro
 
 

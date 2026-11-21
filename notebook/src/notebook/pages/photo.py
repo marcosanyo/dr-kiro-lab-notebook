@@ -331,6 +331,62 @@ def _corner_map(trial: Trial, retake: "Retake", source: str) -> list[Segment]:
     )
 
 
+SKETCH_SIZE = 64.0  # the card's track sketch, in its own units
+
+
+def track_sketch(
+    trial: Trial, names: tuple[str, str], declared: dict[str, str], source: str
+) -> list[Segment]:
+    """The whole recorded track of a trial seen from above, small, for its card (Requirement 10.10, design
+    N21): the series `names` (along, across) on one scale, along to the right and across upward, a circle at
+    the start and a dot at the end. Drawn from the record only, so a page at the bench shows it as soon as the
+    trial is recorded. A not-measured series draws no track and says so. `declared` maps each measurement of
+    the record to its kind."""
+    along_name, across_name = names
+    for name in names:
+        if declared.get(name) != "series":
+            raise NotebookError(source, f"{name} is not a recorded series of this application")
+    recorded = dict(trial.measurements)
+    along, across = recorded[along_name], recorded[across_name]
+    if not isinstance(along, tuple) or not isinstance(across, tuple):
+        return html.element("p", {"class": "track-none"}, say_text("TRACK_NOT_MEASURED"))
+    if len(along) != len(across) or len(along) < 2:
+        raise NotebookError(source, f"{along_name} and {across_name} are not two series of one length")
+    xs, ys = [float(v) for v in along], [float(v) for v in across]
+    span = max(max(xs) - min(xs), max(ys) - min(ys), MAP_MIN_SPAN)
+    cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+    pad = 8.0
+    scale = (SKETCH_SIZE - 2 * pad) / span
+
+    def at(i: int) -> tuple[float, float]:
+        return SKETCH_SIZE / 2 + (xs[i] - cx) * scale, SKETCH_SIZE / 2 - (ys[i] - cy) * scale
+
+    route = "M" + " L".join(f"{a:.2f} {b:.2f}" for a, b in (at(i) for i in range(len(xs))))
+    (sx, sy), (ex, ey) = at(0), at(len(xs) - 1)
+    bar = 0.1 * scale
+    marks = [
+        *html.element("path", {"class": "sketch-line", "d": route, "fill": "none"}, []),
+        *html.shape("circle", {"class": "map-start", "cx": f"{sx:.2f}", "cy": f"{sy:.2f}", "r": "2.6"}),
+        *html.shape("circle", {"class": "sketch-dot", "cx": f"{ex:.2f}", "cy": f"{ey:.2f}", "r": "2.2"}),
+        *html.shape(
+            "line",
+            {"class": "map-bar", "x1": f"{pad:.2f}", "x2": f"{pad + bar:.2f}", "y1": "60", "y2": "60"},
+        ),
+    ]
+    return html.element(
+        "svg",
+        {
+            "class": "track-sketch",
+            "viewbox": f"0 0 {SKETCH_SIZE:.0f} {SKETCH_SIZE:.0f}",
+            "width": f"{SKETCH_SIZE:.0f}",
+            "height": f"{SKETCH_SIZE:.0f}",
+            "role": "img",
+            "aria-label": text.TRACK_CAPTION + "; the bar is 10 cm",
+        },
+        marks,
+    )
+
+
 def _controls(actions: tuple[str, ...]) -> list[Segment]:
     buttons: list[Segment] = []
     for action, label in _CONTROLS:

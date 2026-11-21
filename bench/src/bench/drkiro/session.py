@@ -3,6 +3,8 @@
 Starts a fresh session in a lab: checks that no earlier session is still open, removes Dr. Kiro's files of the
 previous session (the sealed record holds them), writes the templates, starts the session with the core, and
 writes the session config with `resume = true`, so that `bench-mcp` always reopens the session it is given.
+Last it writes the lab's session file (`bench.frontend.pointer`), which names the config and the hook log
+`<config stem>.hook-log.jsonl` beside it; `bench-mcp` and the logging hook read it, so nothing is exported.
 Every argument is required. Nothing is changed before the checks pass.
 """
 
@@ -19,6 +21,7 @@ from pathlib import Path
 from bench.core.outcome import Ran
 from bench.core.session import Session, SessionConfig
 from bench.drkiro.lab import BUILDER_FILES, TEMPLATES
+from bench.frontend import pointer
 from bench.record.chain import VerifyError, verify
 
 FILES = resources.files("bench.drkiro") / "files"
@@ -26,6 +29,8 @@ SPEC_FILES = tuple(TEMPLATES.values())
 EXPERIMENTS = "experiments"
 DISCOVERED_TABLE = "required"  # Dr. Kiro's sessions always need the table (build-from-spec 12.4)
 PICTURES = "pictures"
+HOOK_LOG_SUFFIX = ".hook-log.jsonl"
+CONFIG_SUFFIXES = (".session.toml", ".toml")
 
 
 class NewSessionError(Exception):
@@ -78,6 +83,15 @@ def _relative(path: Path, base: Path) -> str:
     return os.path.relpath(path.resolve(), base.resolve())
 
 
+def hook_log_for(config_out: Path) -> Path:
+    """`<stem>.hook-log.jsonl` beside the config; the stem drops `.session.toml` or `.toml`."""
+    name = config_out.name
+    for suffix in CONFIG_SUFFIXES:
+        if name.endswith(suffix):
+            return config_out.with_name(name.removesuffix(suffix) + HOOK_LOG_SUFFIX)
+    raise NewSessionError(f"--config-out must end with .toml, got {config_out.name}")
+
+
 def new_session(args: argparse.Namespace) -> Path:
     lab, state, sessions = Path(args.lab), Path(args.state), Path(args.sessions)
     config_out = Path(args.config_out)
@@ -97,6 +111,10 @@ def new_session(args: argparse.Namespace) -> Path:
         raise NewSessionError(f"{config_out} already exists; a session id is used once")
     if not config_out.parent.is_dir():
         raise NewSessionError(f"the folder of {config_out} does not exist")
+    hook_log = hook_log_for(config_out)
+    for name, path in (("--config-out", config_out), ("the hook log", hook_log)):
+        if path.resolve().is_relative_to(lab.resolve()):
+            raise NewSessionError(f"{name} {path} lies inside the lab; builder files stay outside it")
     adapter = _adapter(args.adapter, args.variant)
     # Reset Dr. Kiro's files and write the templates.
     _clear(lab / EXPERIMENTS)
@@ -145,6 +163,7 @@ def new_session(args: argparse.Namespace) -> Path:
     if args.variant is not None:
         values["variant"] = args.variant
     config_out.write_text("".join(f"{k} = {json.dumps(v)}\n" for k, v in values.items()), encoding="utf-8")
+    pointer.write(lab, config_out, hook_log)
     return config_out
 
 
@@ -175,4 +194,5 @@ def main(argv: list[str] | None = None) -> int:
         print(f"bench-new-session: {error}", file=sys.stderr)
         return 2
     print(f"bench-new-session: session {args.session_id} is open; config at {path}")
+    print(f"bench-new-session: the lab's session file is {pointer.path_for(Path(args.lab))}")
     return 0

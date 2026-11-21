@@ -52,6 +52,7 @@ APP_KEYS = frozenset(
         "decoration",
         "display",
         "symbols",
+        "track",
     }
 )
 SUMMARY_MAX = 700
@@ -132,6 +133,7 @@ class App:
     pen: str  # "blue" or "orange": the colour of the pen of our notes
     decoration: str  # "none" or "halloween"
     display: Path | None  # the folder of retaken pictures, when the application has one
+    track: tuple[str, str] | None  # the recorded series along and across, drawn on each trial's card
     symbols: str | None  # one line on the names a reader meets on the pages (cd, x, ...), written by a person
     folder: Path
     source: str  # the file, for messages
@@ -344,7 +346,7 @@ def read_app(folder: Path) -> App:
     if not path.is_file():
         raise NotebookError(where, "the application's settings file is missing")
     data = _read_toml(path)
-    _exact(where, data, APP_KEYS, APP_KEYS - {"display", "symbols"})
+    _exact(where, data, APP_KEYS, APP_KEYS - {"display", "symbols", "track"})
     application = _string(f"{where} application", data["application"], 40)
     opened = _string(f"{where} open", data["open"], 40)
     order = data["order"]
@@ -364,6 +366,14 @@ def read_app(folder: Path) -> App:
         display = folder / _string(f"{where} display", data["display"], 40)
         if not display.is_dir():
             raise NotebookError(f"{where} display", f"{display} is not a folder")
+    track = None
+    if "track" in data:
+        names = data["track"]
+        if not (isinstance(names, list) and len(names) == 2 and all(isinstance(n, str) and n for n in names)):
+            raise NotebookError(f"{where} track", "must name two recorded series, along and across")
+        if names[0] == names[1]:
+            raise NotebookError(f"{where} track", "must name two different series")
+        track = (names[0], names[1])
     return App(
         application=application,
         order=order,
@@ -378,6 +388,7 @@ def read_app(folder: Path) -> App:
         pen=pen,
         decoration=decoration,
         display=display,
+        track=track,
         symbols=_string(f"{where} symbols", data["symbols"], 400) if "symbols" in data else None,
         folder=folder,
         source=where,

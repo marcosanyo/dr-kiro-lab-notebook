@@ -11,4 +11,5 @@ theme = "night"
 pen = "blue"
 decoration = "halloween"
 display = "display"
+track = ["track_x", "track_y"]
 symbols = """c0 to c4: the signal sent into each of the five unlabeled channels over time, from -1 to 1. x: metres moved in the direction the body first faced. y: metres to the side. heading: degrees it turned."""

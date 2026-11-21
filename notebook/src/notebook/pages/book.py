@@ -54,6 +54,7 @@ class Shown:
 
     files: list[photo.PictureFile]
     retakes: Retakes
+    track: tuple[str, str] | None = None  # the application's track series (`App.track`)
 
     def retake(self, record: RecordModel, trial: Trial) -> Retake | None:
         return self.retakes.get((record.application, record.session, trial.id))
@@ -944,10 +945,17 @@ def _trial_card(
     values = [*html.text(pencil(_values(record, trial, full=True), source))]
     if best:
         values += [markup(" "), *_new_best()]
+    words = [*_el("p", "trial-params", params), *_el("p", "pol-values", values)]
+    card = "trial-card"
+    # A retaken picture carries the track in its corner map; a card without one gets the sketch (10.10).
+    if shown.track is not None and shown.retake(record, trial) is None:
+        kinds = {m.name: m.kind for m in record.declaration.measurements}
+        words += photo.track_sketch(trial, shown.track, kinds, source)
+        card = "trial-card with-track"
     return html.element(
         "li",
-        {"class": "trial-card", "id": addresses.trial(experiment.id, trial.id, source)},
-        [*figure, *_el("p", "trial-params", params), *_el("p", "pol-values", values)],
+        {"class": card, "id": addresses.trial(experiment.id, trial.id, source)},
+        [*figure, *words],
     )
 
 
@@ -1362,7 +1370,7 @@ def body(
             record.name, "a page at the bench has no choice file, and a sealed page needs one"
         )
     others = others or {}
-    shown = Shown([], retakes)
+    shown = Shown([], retakes, lab.track)
     holes = _el(
         "span", "holes", [markup("<span></span><span></span><span></span>")], **{"aria-hidden": "true"}
     )

@@ -585,7 +585,8 @@ frontend/
   render.py        Outcome -> MCP result (section F4)
   pictures.py      write picture files into lab/pictures/ (F5)
   describe.py      tool descriptions built from the adapter declaration (F3)
-  config.py        read the session config file named by BENCH_SESSION_CONFIG (F7)
+  pointer.py       the lab's session file, which names the session config and the hook log (F7, F9, D2)
+  config.py        read the session config file that the lab's session file names (F7)
   stop.py          the bench-stop command (F7)
   hooks/
     confine.py     the confinement hook (F8)
@@ -677,13 +678,16 @@ Run result, for `run_experiment` (keys are fixed here; values come from the core
 
 ## F7. Starting and stopping (17.5)
 
-- `bench-mcp` takes no arguments. It reads `BENCH_SESSION_CONFIG`, the path of a TOML file that the builder writes
-  outside the lab. A missing variable, file or field stops the server with a message (1.3, `rules.md` 2). Fields,
+- `bench-mcp` takes no arguments. Its working folder is the lab (17.12). It reads the lab's session file,
+  `<lab>.bench-session.json` next to the lab folder (D2), which names a TOML file that the builder writes outside
+  the lab. A missing session file, config file or field stops the server with a message (1.3, `rules.md` 2), and
+  so does a config whose `lab_dir` is not the working folder. Fields,
   one for each field of `SessionConfig` (section 3): `session_id`, `application`, `adapter` (`module:factory`),
   `lab_dir`, `spec_files`, `experiments_dir`, `state_dir`, `sessions_dir`, `seed`, `scan_sources`, `stop_list`;
   and `resume` (`true` opens an existing session with `Session.open`; `false` starts a new one;
   no default).
-- Dr. Kiro never sees the file or the variable. No tool input sets any of it.
+- Dr. Kiro never sees either file: both lie outside the lab, where the confinement hook refuses every read. No
+  tool input sets any of it.
 - When Kiro closes the connection, the server exits and leaves the session open. It does not end or stop it.
 - `bench-stop <config> --reason <text>` opens the session with `Session.open` and calls `Session.stop`
   (11.4). It works only when `bench-mcp` is not running, because the state folder is locked (section 3). A
@@ -741,13 +745,15 @@ a lab that `bench-lab-hooks` generated.
 
 ## F9. The logging hook (17.11)
 
-- `calllog.py` appends one JSON line per call to the file named by `BENCH_HOOK_LOG`, outside the lab:
+- `calllog.py` appends one JSON line per call to the hook log that the lab's session file names, outside the lab:
   `{"phase": "pre" | "post" | "refused", "tool_name", "tool_input", "reason"?}`. The confinement hook writes its
   refusals with the same function. No timestamp is hashed or sealed; the log is not part of the record (17.11).
-- The path comes from an environment variable so that no path outside the lab appears in `lab/.kiro/`. If the
-  variable is missing or the line cannot be written, the pre-tool hook exits 2 (no unlogged call). The post-tool
-  hook cannot undo the call and exits 2 as well, which only reports the failure.
-- Whether Kiro CLI passes the variable to hooks is not known. Task 21 checks it. If it does not, stop and ask.
+- The path comes from the session file next to the lab, so no path outside the lab appears in `lab/.kiro/`. The
+  hook finds its lab as the folder two levels above the script. If the session file is missing or unusable, or the
+  line cannot be written, the pre-tool hook exits 2 (no unlogged call). The post-tool hook cannot undo the call
+  and exits 2 as well, which only reports the failure.
+- The hook keeps its own reader of the session file, because it is copied into the lab alone (standard library
+  only). A test checks that it reads the same path as `pointer.py`.
 
 ## F10. The agent definition (17.6, 17.7, 17.12)
 
@@ -755,8 +761,7 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
 
 ```json
 {
-  "mcpServers": {"bench": {"command": "bench-mcp", "args": [],
-      "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"}}},
+  "mcpServers": {"bench": {"command": "bench-mcp", "args": []}},
   "tools": ["read", "write", "@bench"],
   "includeMcpJson": false,
   "includePowers": false,
@@ -799,9 +804,14 @@ The mechanical fields; the `dr-kiro` spec adds the name, description and prompt.
   library, and that a need for one means stop and ask. The MCP server needs the `mcp` package. Approved: pin
   `mcp==2.3.0` (the version the spike used) in an optional dependency group `frontend`, so the core and its tests
   stay standard-library only.
-- **D2. Where the hook log and session config live.** Both are outside the lab and are named by environment
-  variables (`BENCH_HOOK_LOG`, `BENCH_SESSION_CONFIG`). Approved: a `bench-run/` folder at the repository root, ignored
-  by git and listed in `structure.md`.
+- **D2. Where the hook log and session config live.** Both are outside the lab: a `bench-run/` folder at the
+  repository root, ignored by git and listed in `structure.md` (approved). They are named by the lab's session file,
+  `<lab>.bench-session.json` in the folder that holds the lab, which `bench-new-session` and `bfs-run` write when a
+  session starts; git ignores `*.bench-session.json`. Changed on 2026-11-22: the paths were first named by the
+  environment variables `BENCH_SESSION_CONFIG` and `BENCH_HOOK_LOG`. A Kiro IDE opened on the lab does not have
+  them unless it is started from a shell that exported them, and the IDE expands only approved variables, so the
+  IDE could not run a session as it was opened (17.12). The variables are no longer read. The file is not inside
+  the lab, so Dr. Kiro cannot read the builder's paths in it.
 - **D3. Long calls.** Not needed. The 900 s call passed in the spike, so there is no parallel-trials fallback.
 - **D4. Where Dr. Kiro runs.** In Kiro CLI, or in the Kiro IDE with only the lab folder open (Requirement 17.12). A
   sealed session runs in Kiro CLI only. The IDE check used the fake application in `bench-run/fake-ide/`. It found
@@ -1203,3 +1213,22 @@ Added for the `body-lab` spec (its Requirement 7).
 - A caller of an adapter factory other than the config loader (the blind scan's term list, `bench-new-session`,
   `build-from-spec`, the notebook) cannot work without a variant. They only need the declaration, which does not
   depend on the variant (`body-lab` Requirement 7.5). The builder stops and asks if one of them needs the body itself.
+
+# Amendment: one prediction block per hypothesis (Requirement 24)
+
+## G1. Rules (24.1-24.4)
+
+- `specfiles/hypotheses.py` finds the first `prediction` fence after the first block's closing fence, inside the
+  hypothesis block, outside any other fence (`_second_prediction`). `parse_hypothesis` refuses with that line (24.1).
+- `second_prediction_line(text, id)` gives the same line for a registered hypothesis. `Session._check_frozen` calls
+  it after `frozen_status` passes, so a changed frozen part is still reported first, and refuses with the hypothesis
+  and the line (24.2). The frozen part and `frozen_parts` do not change (6.7).
+- Nothing reads sealed records differently (24.4). The `discovered/` copies of the sealed sessions hold one block per
+  hypothesis (checked on 2026-11-22).
+
+## G2. Tests
+
+`bench/tests/unit/test_hypotheses.py`: refusal at registration with the line; a later block found while the frozen
+part is unchanged; a block quoted in another fence and the next hypothesis's block are not counted.
+`bench/tests/unit/test_session.py`: a block added after registration refuses `run_experiment`, and the run passes
+once it is removed.

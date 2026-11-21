@@ -5,12 +5,11 @@ prints one bench line naming the module that cannot be imported and exits 2. The
 before it creates anything (build-from-spec design 3.9, phase A).
 
 Without `--check` the server starts as before (`server.main`). When the import of the server fails, one line
-goes to the builder-side startup log, if BENCH_SESSION_CONFIG names an existing file, and one bench line goes
-to stderr. Errors other than an import failure are not caught here.
+goes to the builder-side startup log, if the lab's session file names an existing config, and one bench line
+goes to stderr. Errors other than an import failure are not caught here.
 """
 
 import importlib
-import os
 import sys
 from pathlib import Path
 
@@ -41,8 +40,12 @@ def check() -> int:
 
 
 def start() -> int:
-    config_value = os.environ.get(config_file.ENV_VAR)
-    log = startup_log_for(config_value) if config_value and Path(config_value).is_file() else None
+    # Only to place the startup log: the server itself reports a missing or unusable session file.
+    try:
+        config_path = config_file.config_path_for(Path.cwd())
+    except config_file.ConfigError:
+        config_path = None
+    log = startup_log_for(str(config_path)) if config_path is not None and config_path.is_file() else None
     try:
         from bench.frontend import server
     except ImportError as error:

@@ -1090,6 +1090,48 @@ section[data-sync] .photo-controls button[data-action="step"] {
   margin-top: 0.3rem;
   font-size: 0.75rem;
 }
+/* A card without a retaken picture: the recorded track seen from above, in pencil, beside the words (10.10). */
+.trial-card.with-track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  align-content: start;
+}
+.trial-card.with-track > .photo {
+  grid-column: 1 / -1;
+}
+.trial-card.with-track > .trial-params,
+.trial-card.with-track > .pol-values {
+  grid-column: 1;
+}
+.trial-card.with-track > .track-sketch,
+.trial-card.with-track > .track-none {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+}
+.track-sketch {
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  margin-top: 0.3rem;
+  border: 1px solid rgba(60, 45, 30, 0.3);
+  background: rgba(255, 249, 232, 0.9);
+  transform: rotate(1deg);
+}
+.sketch-line {
+  stroke: #3d3126;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.sketch-dot {
+  fill: #3d3126;
+}
+.track-none {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
 .verdict {
   margin-top: 0.8rem;
   font-weight: 600;

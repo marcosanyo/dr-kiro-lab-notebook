@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from bench.frontend import config as config_file
+from bench.frontend import pointer
 from bench.frontend.launch import main
 
 MISSING = "no_such_module_for_bench_launch_tests"
@@ -29,14 +29,17 @@ def _broken_mcp(root: Path) -> Path:
 def _run(
     args: list[str], tmp: Path, *, broken: bool, config: Path | None = None
 ) -> subprocess.CompletedProcess[str]:
-    env = {k: v for k, v in os.environ.items() if k != config_file.ENV_VAR}
+    env = dict(os.environ)
+    folder = tmp / "lab"
+    folder.mkdir(exist_ok=True)
     if config is not None:
-        env[config_file.ENV_VAR] = str(config)
+        pointer.write(folder, config, tmp / "hook-log.jsonl")
     if broken:
         env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(_broken_mcp(tmp)), env.get("PYTHONPATH")]))
     return subprocess.run(
         [sys.executable, "-m", "bench.frontend.launch", *args],
         env=env,
+        cwd=folder,
         capture_output=True,
         text=True,
         timeout=120,

@@ -7,8 +7,8 @@ under "Open questions"; nothing in this design makes one of them.
 Which Kiro: everything here is built and run by **the builder** and read by **visitors**. Dr. Kiro and the reader
 never see the notebook or its build.
 
-Not in this version (requirements Decision 48): the equal-trial list (Requirement 14.5), the input lines (9.8) and the tracks in
-experiment entries (10.10). On hold (requirements Decision 48): the replay (Requirement 16). This version stops after the
+Not in this version (requirements Decision 48): the equal-trial list (Requirement 14.5) and the input lines (9.8). The tracks in
+experiment entries (10.10) are back (requirements Decision 54). On hold (requirements Decision 48): the replay (Requirement 16). This version stops after the
 prediction chart; all of these stay described below but are not implemented by the build. The sections, properties and decisions concerned are marked.
 
 ## Overview
@@ -1082,7 +1082,8 @@ changes `bench/`.
 - **N19 Fixture mode only through the library.** `build(..., allow_fake=True)` accepts fake records and marks every
   page "test fixture"; the CLI cannot.
 - **N20 Visual system.** As proposed above, written to steering first.
-- **N21 Plots (the input lines are not in this version, requirements Decision 48).** Track paths keep equal x and y scale, fitted to the trial's own track with the start marked;
+- **N21 Plots (the input lines are not in this version, requirements Decision 48).** Track paths (`photo.track_sketch`, on each trial card
+  without a retaken picture, requirements Decision 54) keep equal x and y scale, fitted to the trial's own track with the start marked;
   input lines use a fixed [-1, 1] axis; SVG coordinates are formatted with 2 decimals so the output is stable.
 - **N22 Built from the spec.** No CLI option for runs until `build-from-spec` defines its records; the page says
   there are no runs yet.

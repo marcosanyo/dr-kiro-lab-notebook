@@ -3,7 +3,13 @@ import pytest
 from bench.adapter import Declaration, FunctionKnob, Measurement, NumberKnob
 from bench.core.outcome import Quote
 from bench.specfiles.ears import ears_shape
-from bench.specfiles.hypotheses import SpecRefusal, frozen_parts, frozen_status, parse_hypothesis
+from bench.specfiles.hypotheses import (
+    SpecRefusal,
+    frozen_parts,
+    frozen_status,
+    parse_hypothesis,
+    second_prediction_line,
+)
 
 DECL = Declaration(
     knobs=(FunctionKnob("drive", -1.0, 1.0, (0.0, 0.5, 1.0), 1.0), NumberKnob("gain", 0.0, 3.0)),
@@ -195,3 +201,48 @@ def test_refusal_names_the_prediction_line_and_quotes_dr_kiro_names() -> None:
     line = DOC.split("\n").index('id = "P1"') + 1
     assert info.value.message.plain().startswith(f"requirements.md line {line}: ")
     assert Quote("leg_speed", FILE, line) in info.value.message.spans
+
+
+# Requirement 24: one prediction block per hypothesis.
+
+SECOND = """```prediction
+[[prediction]]
+id = "P2"
+measurement = "distance"
+range = [0.5, 0.9]
+label = "outside"
+[prediction.when]
+gain = 2.9
+amp = 0.5
+```
+"""
+
+
+def test_a_second_prediction_block_is_refused_at_registration() -> None:
+    doc = DOC.replace("Notes after the block are free.", "More predictions:\n\n" + SECOND)
+    with pytest.raises(SpecRefusal) as caught:
+        parse_hypothesis(doc, "H1", DECL, FILE)
+    text = caught.value.message.plain()
+    line = doc.split("\n").index("More predictions:") + 3
+    assert text.startswith(f"requirements.md line {line}: hypothesis H1 has a second ```prediction block")
+    assert "write the later ones as a new hypothesis" in text
+
+
+def test_a_second_prediction_block_after_registration_is_found_but_keeps_the_frozen_part() -> None:
+    doc = DOC.replace("Notes after the block are free.", "Notes.\n\n" + SECOND)
+    assert frozen_status(doc, "H1", H1) is None  # the frozen part is unchanged (6.7)
+    assert second_prediction_line(doc, "H1") == doc.split("\n").index("Notes.") + 3
+    assert second_prediction_line(DOC, "H1") is None
+    assert second_prediction_line(DOC, "H9") is None
+
+
+def test_a_prediction_block_quoted_inside_another_fence_is_not_a_second_block() -> None:
+    quoted = "~~~~text\n" + SECOND + "~~~~\n"
+    doc = DOC.replace("Notes after the block are free.", quoted)
+    assert second_prediction_line(doc, "H1") is None
+    assert parse_hypothesis(doc, "H1", DECL, FILE).id == "H1"
+
+
+def test_the_next_hypothesis_block_is_not_a_second_block() -> None:
+    later = H1.replace("### H1: gain moves it further", "### H3: again")
+    assert second_prediction_line(DOC + "\n" + later, "H1") is None

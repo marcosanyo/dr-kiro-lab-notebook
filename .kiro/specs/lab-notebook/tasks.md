@@ -611,6 +611,15 @@ Tasks 29-31 wait for a `build-from-spec` run record (user decision): they do not
     - Verified by: `sh scripts/ja-check.sh` passes; `git status` shows no uncommitted file of this spec.
     - _Requirements: 22.4_
 
+- [x] 32. Tracks on the trial cards (Decision 54)
+  - [x] 32.1 Draw the recorded track on each card without a retaken picture
+    - `app.toml` `track` (two series, checked when read); `photo.track_sketch`; the card in `book._trial_card`
+      gets it when the trial has no retaken picture; a not-measured series draws nothing and says so; no `div`
+      (a blind-scan word) in the markup.
+    - Tests: the settings check; on body-3 at the bench every card has a sketch whose route is the recorded track
+      on one scale; a not-measured series gives the sentence; the sealed site keeps the corner maps only.
+    - _Requirements: 10.10_
+
 ## Notes
 
 - All tasks are required; none is optional.

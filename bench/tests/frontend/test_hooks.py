@@ -1,13 +1,13 @@
 """Task 20: the lab hooks (Requirements 15, 17.7-17.11, 17.21, design F8, F9)."""
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from bench.frontend import pointer
 from bench.frontend.labhooks import HOOK_FILES, SCRIPTS, SOURCES, install
 from bench.scan.scan import Scanner, local_paths
 from bench.scan.terms import LabLayout, load_app, load_stop_list
@@ -17,17 +17,16 @@ from labkit import FAKE_SOURCES, STOP_LIST, Lab
 @pytest.fixture
 def hooked(lab: Lab) -> Lab:
     install(lab.lab)
+    pointer.write(lab.lab, lab.root / "session.toml", lab.root / "hook-log.jsonl")
     return lab
 
 
 def hook(lab: Lab, script: str, stdin: str, *args: str) -> subprocess.CompletedProcess[str]:
-    env = dict(os.environ, BENCH_HOOK_LOG=str(lab.root / "hook-log.jsonl"))
     return subprocess.run(
         [sys.executable, str(lab.lab / ".kiro" / "hooks" / script), *args],
         input=stdin,
         capture_output=True,
         text=True,
-        env=env,
         cwd=lab.lab,
         timeout=60,
         check=False,
@@ -76,17 +75,21 @@ def test_calllog_appends_and_blocks_without_its_log(hooked: Lab) -> None:
     assert hook(hooked, "calllog.py", json.dumps(call), "pre").returncode == 0
     (line,) = (hooked.root / "hook-log.jsonl").read_text().splitlines()
     assert json.loads(line)["phase"] == "pre" and json.loads(line)["tool_name"] == "mcp_bench_end_session"
-    env = {k: v for k, v in os.environ.items() if k != "BENCH_HOOK_LOG"}
-    done = subprocess.run(
-        [sys.executable, str(hooked.lab / ".kiro" / "hooks" / "calllog.py"), "pre"],
-        input=json.dumps(call),
-        capture_output=True,
-        text=True,
-        env=env,
-        timeout=60,
-        check=False,
-    )
+    pointer.path_for(hooked.lab).unlink()
+    done = hook(hooked, "calllog.py", json.dumps(call), "pre")
     assert done.returncode == 2
+    assert done.stderr.strip() == "The lab's call log is not available, so the call is not allowed."
+
+
+def test_calllog_reads_the_hook_log_that_the_session_file_names(hooked: Lab) -> None:
+    # The hook keeps its own reader (it is copied alone); both must agree on the same file.
+    sys.path.insert(0, str(SOURCES))
+    try:
+        import calllog
+    finally:
+        sys.path.remove(str(SOURCES))
+    assert calllog.SESSION_FILE_SUFFIX == pointer.SUFFIX
+    assert calllog.hook_log(hooked.lab.resolve()) == pointer.read(hooked.lab)["hook_log"]
 
 
 def test_installed_copies_equal_the_sources_and_hook_files_are_v1(hooked: Lab) -> None:

@@ -195,12 +195,13 @@ All arguments are required (`rules.md` 2). Steps, each failing with a message an
 
 ```sh
 bench-make-lab body-lab/lab                       # once, and after builder files change
-bench-new-session ... --config-out bench-run/body-lab/<id>.toml
-export BENCH_SESSION_CONFIG="$PWD/bench-run/body-lab/<id>.toml"
-export BENCH_HOOK_LOG="$PWD/bench-run/body-lab/<id>.hook-log.jsonl"
+bench-new-session ... --config-out bench-run/body-lab/<id>.toml   # also writes body-lab/lab.bench-session.json
 cd body-lab/lab
 kiro-cli chat --agent dr-kiro                     # then type the start line
 ```
+
+`bench-new-session` writes the lab's session file next to the lab (lab-bench design D2). `bench-mcp` and the hooks
+find the session through it, so nothing is exported and a Kiro IDE opened on the lab finds the same session.
 
 - Start line: `Begin the session.` Continue line: `Continue the session.`
 - Without interaction, where the builder has a `KIRO_API_KEY`:

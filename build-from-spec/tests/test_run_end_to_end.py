@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 import pytest
+from bench.frontend import pointer
 from bench.record.chain import verify
 from bench.scan.levels import SIDECAR_SUFFIX
 
@@ -82,11 +83,12 @@ def test_three_setups_seal_and_check_together(repo: Path) -> None:
     spec_given = repo / RUN_DATA / "probe-spec-1" / "given"
     assert sorted(p.name for p in spec_given.iterdir()) == ["design.md", "requirements.md", "tasks.md"]
     assert (repo / RUN_DATA / "probe-record-1" / "given" / "record" / "log.jsonl").is_file()
-    # The turn log stays builder-side, and the bench got absolute paths to the config and the hook log.
+    # The turn log stays builder-side, and the session file (beside the folder, not in it) names the config
+    # and the hook log, both outside the folder.
     assert (repo / RUN_DATA / "probe-spec-1.turn-1.log").is_file()
-    env = kiro_by_setup["spec"].envs[0]
-    assert Path(env["BENCH_SESSION_CONFIG"]).is_absolute() and Path(env["BENCH_HOOK_LOG"]).is_absolute()
-    assert not Path(env["BENCH_HOOK_LOG"]).is_relative_to(folder)
+    named = pointer.read(folder)
+    assert not pointer.path_for(folder).is_relative_to(folder.resolve())
+    assert not any(path.is_relative_to(folder.resolve()) for path in named.values())
 
 
 def test_a_silent_first_turn_gets_one_continue_line(repo: Path) -> None:
@@ -136,11 +138,14 @@ def test_a_failure_during_a_turn_stops_the_session_and_keeps_a_run_file(repo: Pa
     assert "the fake launch broke" in seal_body(repo, "probe-none-1")
 
 
-def test_kiro_cli_is_started_with_the_session_config_in_its_environment(repo: Path) -> None:
-    # K31: the reader's bench entry has no env entry, so bench-mcp gets BENCH_SESSION_CONFIG only from this
-    # environment. It must be the absolute path of the config the script wrote for this run.
+def test_the_reader_folder_gets_a_session_file_naming_this_runs_config(repo: Path) -> None:
+    # K31: the reader's bench entry has no env entry, and no variable is set: bench-mcp, started in the
+    # reader's folder, finds the config through the folder's session file (lab-bench design D2).
     kiro = FakeKiro(reader_ends)
     run_script(run_args("none"), repo, TEST_APPS, kiro)
     config = (repo / RUN_DATA / "probe-none-1.session.toml").resolve()
     assert config.is_file()
-    assert kiro.envs[0]["BENCH_SESSION_CONFIG"] == str(config)
+    assert pointer.read(repo / RUN_DATA / "probe-none-1") == {
+        "session_config": config,
+        "hook_log": (repo / RUN_DATA / "probe-none-1.hook-log.jsonl").resolve(),
+    }

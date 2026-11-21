@@ -181,12 +181,13 @@ async def after_pause(
 
 
 async def drive(lab: Path, config: Path, source_root: Path | None) -> None:
-    env = {"BENCH_SESSION_CONFIG": str(config)}
+    # bench-mcp, started in the lab, finds the config through the lab's session file (bench-new-session).
+    env: dict[str, str] = {}
     if source_root is not None:
         env["PYTHONPATH"] = os.pathsep.join(
             str(source_root / "wind-tunnel" / part / "src") for part in ("model", "adapter")
         )
-    server = StdioServerParameters(command="bench-mcp", env=env, cwd=lab)
+    server = StdioServerParameters(command="bench-mcp", env=env or None, cwd=lab)
     async with (
         stdio_client(server) as (read, write),
         ClientSession(read, write) as client,

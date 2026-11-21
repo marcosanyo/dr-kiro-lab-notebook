@@ -68,9 +68,10 @@ Builder side, git-ignored (`bench-run/` is ignored):
 bench-run/build-from-spec/
   state/<run-id>/                bench state folder of the run (log, blobs, builder.log)
   <run-id>/                      the working folder (section 3.5)
-  <run-id>.session.toml          session config, named by BENCH_SESSION_CONFIG
+  <run-id>.bench-session.json    the folder's session file: names the config and the hook log (lab-bench D2)
+  <run-id>.session.toml          session config
   <run-id>.run-data.json         run data file (Req 11.11)
-  <run-id>.hook-log.jsonl        call log, named by BENCH_HOOK_LOG (Req 9.1)
+  <run-id>.hook-log.jsonl        call log (Req 9.1)
   <run-id>.turn-<k>.log          Kiro CLI's stdout and stderr of turn k
 ```
 
@@ -244,10 +245,9 @@ class ReaderAdapter:
 
 **`reader.json`** is `dr-kiro.json` with three fields changed: `name` `reader`, a one-line `description`, and
 `prompt` `file://./reader-prompt.md`. `resources`, `mcpServers` (the `bench` entry runs `bench-mcp` with no `env`
-entry: `BENCH_SESSION_CONFIG` reaches it from the environment that Kiro CLI is started with, K31), `tools` (`read`,
+entry: it finds the session through the folder's session file, K31), `tools` (`read`,
 `write`, `@bench`), `includeMcpJson`, `includePowers` and `permissions` are the same. No shell (Req 9.1). A test
-compares the two files as JSON with those three fields removed and with the `env` entry of `bench` removed from
-`dr-kiro.json`; that `env` entry is the only other difference (K31).
+compares the two files as JSON with those three fields removed; there is no other difference (K31).
 
 **`reader-prompt.md`**, about eight lines: you are the reader; you answer one request about a system you know
 nothing about except what the bench tools describe and what is in `given/`; the request is in `request.md` and is
@@ -320,8 +320,8 @@ Contents after `write_folder` (Req 7.2):
 - Setup `spec`: the three files of `final_spec(source).files`, byte for byte (Req 5.3). Setup `record`: the reduced
   record copy (section 3.6).
 - Nothing outside `given/` depends on the setup, the run number or the source: `builder_files` takes only the
-  request. The session config is reached through `BENCH_SESSION_CONFIG` and the call log through `BENCH_HOOK_LOG`
-  (Req 7.7).
+  request. The session config and the call log are named by the folder's session file `<run-id>.bench-session.json`,
+  which lies beside the folder, not in it (Req 7.7, lab-bench D2).
 - `file_hashes` covers every file outside `given/`; `tool_hashes` covers the four texts `bench-mcp` will register,
   built from the same declaration and the same `discovered_table` value (`"not-required"`, section 4.2) by the same
   function (Req 7.3).
@@ -480,8 +480,8 @@ only after the user removes it (Req 11.10).
 later start of `bench-mcp` reopens this session (Decision B11). From here the run counts (Req 17.4).
 
 **D. Turns** (section 3.10). Kiro CLI runs with the working folder as its working directory, standard input closed,
-standard output and error written to `<run-id>.turn-<k>.log`, and the environment of the script plus
-`BENCH_SESSION_CONFIG` and `BENCH_HOOK_LOG` as absolute paths. `KIRO_API_KEY`, which headless Kiro CLI needs
+standard output and error written to `<run-id>.turn-<k>.log`, and the environment of the script. Before the first
+turn the script writes the folder's session file, which names the config and the hook log (lab-bench D2). `KIRO_API_KEY`, which headless Kiro CLI needs
 (`bench/README.md`), stays in the builder's environment and is never written to a file.
 
 **E. End.**
@@ -982,7 +982,7 @@ I report it and ask; I do not change the method to get around it.
    (`kiro-cli chat --list-sessions` in the folder shows one conversation after two turns).
 3. The values given to `--model` and `--effort` are accepted (`kiro-cli chat --list-models`).
 4. Kiro CLI exits with 0 at the end of a normal turn and with 3 when `bench-mcp` cannot start.
-5. In headless mode `BENCH_SESSION_CONFIG` reaches `bench-mcp` and `BENCH_HOOK_LOG` reaches the hooks.
+5. In headless mode `bench-mcp` and the hooks find the config and the hook log through the folder's session file.
 6. When Kiro CLI exits, its `bench-mcp` exits too, so `bench-stop` can take the lock.
 7. The reader's file tool opens a picture blob in `given/record/blobs/` (hash name, no extension) (Req 6.5). If it
    does not, the limit goes into the README and I ask before any run.
@@ -1141,7 +1141,9 @@ this design (B1-B7).
   `bench` entry, and `BENCH_SESSION_CONFIG` reaches `bench-mcp` from the environment that `bfs-run` gives Kiro CLI
   (section 3.9, step D). The experiment does not show that this clears the rehearsal failure; the rehearsal must be
   run again after this change. Not chosen: keeping the entry, which the experiment shows is not needed, and
-  renaming the variable, which no evidence supports.
+  renaming the variable, which no evidence supports. Changed on 2026-11-22: no variable is read any more. Dr. Kiro's
+  entry has no `env` entry either, and both find the session through the folder's session file (lab-bench D2), so
+  the two files differ only in the three fields.
 - **K32. The earlier-run comparison reads counted runs only.** The run script compares a new run with the earlier runs
   of the same request before it writes the working folder (Requirement 7.4), and `bfs-check-runs` does the same for
   the sealed runs (14.6). Rehearsal run 1 (`rehearsal-fake-record-1`) was made before K31, so its recorded
@@ -1172,7 +1174,7 @@ this design (B1-B7).
   bench line naming the missing module, with no path, and exits 2.
   (d) Without `--check` the server starts as before. If the import of the server fails, one line goes to the
   builder-side startup log (`<stem>.mcp-startup.log`, the log of commit 1c20586), with the time, the process id
-  and the full error text, when `BENCH_SESSION_CONFIG` names an existing file. Stderr gets the bench line and the
+  and the full error text, when the folder's session file names an existing config. Stderr gets the bench line and the
   exit code is 2. Other errors are not caught.
   (e) The log functions move to `bench/frontend/startup_log.py`, which imports no SDK, so the launcher can write
   the log when the SDK import fails. `server.py` imports them, so its callers do not change.

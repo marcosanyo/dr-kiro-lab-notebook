@@ -31,7 +31,7 @@ from bench.core.outcome import Ran
 from bench.core.session import Session
 from bench.drkiro.session import NewSessionError, open_sessions
 from bench.frontend import config as config_file
-from bench.frontend import stop
+from bench.frontend import pointer, stop
 from bench.frontend.describe import descriptions
 from bench.record.chain import VerifyError, verify
 from bench.record.spec_copy import SpecCopyError, final_spec, read_end
@@ -555,11 +555,9 @@ def execute(
     data = read_run_data(data_path)
     folder = (run_dir / run_id).resolve()
     state = run_dir / STATE / run_id
-    env = {
-        **os.environ,
-        "BENCH_SESSION_CONFIG": str(config.resolve()),
-        "BENCH_HOOK_LOG": str((run_dir / f"{run_id}{HOOK_LOG_SUFFIX}").resolve()),
-    }
+    # bench-mcp and the logging hook find the session through the folder's session file (lab-bench design D2).
+    pointer.write(folder, config, run_dir / f"{run_id}{HOOK_LOG_SUFFIX}")
+    env = dict(os.environ)
     prompts: list[Prompt] = []
 
     def launch(kind: str) -> int:

@@ -184,10 +184,11 @@ class FakeKiro:
 
 def reader_ends(command: list[str], folder: Path, env, number: int) -> int:
     """The fake reader's ending turn: it registers H1 in its own lab spec, runs the experiment, gives the
-    verdict and ends the session. Each bench call goes through the session that the config named in the
-    environment names. The first turn is the start line; every later turn resumes with the continue line."""
+    verdict and ends the session. Each bench call goes through the session that the folder's session file
+    names, as bench-mcp started in the folder finds it. The first turn is the start line; every later turn
+    resumes with the continue line."""
     assert ("--resume" in command) == (number > 1), command
-    cfg = config_file.load(Path(env["BENCH_SESSION_CONFIG"]))
+    cfg = config_file.for_lab(folder)
     session = Session.open(cfg.session)
     spec = folder / SPEC_DIR / "requirements.md"
     spec.write_text(

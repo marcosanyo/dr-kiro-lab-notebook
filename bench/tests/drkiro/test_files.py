@@ -118,13 +118,7 @@ def test_agent_file_is_f10_plus_dr_kiro_fields() -> None:
         "prompt": "file://./dr-kiro-prompt.md",
         "resources": ["file://.kiro/steering/**/*.md"],
     }
-    assert agent["mcpServers"] == {
-        "bench": {
-            "command": "bench-mcp",
-            "args": [],
-            "env": {"BENCH_SESSION_CONFIG": "${BENCH_SESSION_CONFIG}"},
-        }
-    }
+    assert agent["mcpServers"] == {"bench": {"command": "bench-mcp", "args": []}}
     assert agent["tools"] == ["read", "write", "@bench"]
     assert agent["includeMcpJson"] is False and agent["includePowers"] is False
     protected = [".kiro/agents/**", ".kiro/hooks/**", ".kiro/steering/**", ".kiro/settings/**"]
