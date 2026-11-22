@@ -1124,21 +1124,16 @@ def _experiments(
             "li", {"class": "task task-done" if done else "task"}, [*_el("p", "task-line", line), *inside]
         )
     rest = [h for h in record.hypotheses if h.id not in placed]
-    # At the bench the spec files are copied only at a run, a verdict and the end, so a hypothesis registered
-    # since the last copy has no task line yet: when every hypothesis left over is such a one, the heading
-    # says they wait for their run. The order stays the record's, as on the sealed page.
-    waiting = (
-        mode == AT_BENCH
-        and record.seal is None
-        and tasks is not None
-        and bool(tasks[1])
-        and all(not any(e.hypothesis == h.id for e in record.experiments) for h in rest)
-    )
+    # At the bench the spec files are copied only at a run, a verdict and the end, and Dr. Kiro may write a
+    # task line after its experiment ran, so a hypothesis no line names yet is "not in the task list yet".
+    # The order stays the record's, as on the sealed page.
+    live = mode == AT_BENCH and record.seal is None
     after: list[Segment] = []
     if rest:
-        label = (
-            "TASKS_NONE" if tasks is None or not tasks[1] else "TASKS_WAITING" if waiting else "TASKS_UNNAMED"
-        )
+        if tasks is None or not tasks[1]:
+            label = "TASKS_NONE"
+        else:
+            label = "TASKS_NOT_YET" if live else "TASKS_UNNAMED"
         after = [*_el("h4", "tasks-rest", say_text(label)), *_el("ul", "hyps", rows(rest))]
     goal = record.declaration.goal
     return _el(

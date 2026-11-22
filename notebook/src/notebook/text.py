@@ -503,7 +503,7 @@ TASKS_INTRO = (
 )
 TASKS_UNNAMED = "Experiments that no task line names"
 TASKS_NONE = "No task list was saved in this record. Every experiment:"
-TASKS_WAITING = "Registered, waiting for its run"
+TASKS_NOT_YET = "Not in the task list yet"
 TASK_RAN_UNTICKED = "ran at the bench; the box was left empty"
 ALL_HINT = "Press a row to open the note: Dr. Kiro's words and every trial of that hypothesis."
 EXPECTS = "expects "
