@@ -3,6 +3,10 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## 夜のノートの綴じ目を外す（ブランチ `fix/no-sewn-binding`、2026-11-22、ローカル）
+- 済み: 夜のノートの余白の糸の縫い目（`.book::before`）を CSS から外した。狭い窓（IDE の真ん中の区画）で見出しと本文に重なったため（ユーザー）。穴とボルトは残す。notebook-shelf の要件 4 と訳も直した。`notebook` のテスト 497 件、`ja-check` は通る。
+- 次: PR をユーザーが見てマージ。
+
 ## タスクを背骨にしたノート（ブランチ `feat/notebook-tasks-first`、main の bc1a5c4 から、2026-11-22、ローカル）
 - 済み: セッションのページの「Dr. Kiro's plan」と「All N experiments and hypotheses」を 1 つの「Dr. Kiro's tasks」にまとめた。ベンチが宣言した目標（開始の記録の goal）→ 最後のスナップショットの `tasks.md` の行（箱は Dr. Kiro が付けたとおり）→ 各行が名指す実験（`E3`、`E1 to E7`）か仮説（`H3`）のカードをその下に。走ったのに箱が空の行には「ran at the bench; the box was left empty」（wt-004 の E5・E6）。どの行も名指さない仮説は後ろにまとめる。発見した spec の表はタスクの後ろへ。記録は変えていない（封印されたスナップショットに `tasks.md` がある）。
 - 済み: Dr. Kiro の steering（`bench/src/bench/drkiro/files/` と 2 つのラボの写し）。1 実験 = 1 タスクの行 `- [ ] E<n> / H<n>: …` を走らせる前に足し、判定の後にチェック。`tasks.md` の雛形は段階の見出しと最後の 1 行。
