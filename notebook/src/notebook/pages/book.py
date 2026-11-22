@@ -1,7 +1,8 @@
 """The opened notebook: one session as a story (notebook-shelf design 4 to 9).
 The first screen says what was found: the claim, the summary, the chips, the two large photos with their
 handwritten line, three sticky notes with numbers from the record, and the best so far trial by trial. Below
-it come the discovered spec, Dr. Kiro's plan, every experiment with its hypothesis, and the reader's results.
+it come Dr. Kiro's tasks with every experiment under the task that names it, the discovered spec, and the
+reader's results.
 The title, the summary and the words on the photos are written by a person (choice file, orange pen); every
 number comes from the record; Dr. Kiro's words keep Dr. Kiro's ink.
 """
@@ -46,6 +47,8 @@ MAX_LABELS = 4
 LABEL_CHAR = 8.5  # pixels of the chart's own scale taken by one character of a name
 LABEL_HEIGHT = 20.0
 _TASK = re.compile(r"^\s*- \[([ xX])\] (.+?)\s*$")
+_CITED_E = re.compile(r"\bE(\d+)(?:\s*(?:to|-|\u2013)\s*E?(\d+))?\b")
+_CITED_H = re.compile(r"\bH(\d+)\b")
 
 
 @dataclass
@@ -779,45 +782,6 @@ def _end_refusals(record: RecordModel) -> list[Segment]:
     )
 
 
-# Dr. Kiro's plan
-
-
-def _plan(record: RecordModel) -> list[Segment]:
-    snapshot = tables.end_snapshot(record) or (record.snapshots[-1] if record.snapshots else None)
-    if snapshot is None:
-        return []
-    text = snapshot.tasks.text()
-    steps = []
-    for number, line in enumerate(text.text.splitlines(), start=1):
-        found = _TASK.match(line)
-        if found is None:
-            continue
-        source = f"{snapshot.tasks.source} line {number}"
-        steps.append((found.group(1) != " ", Authored(found.group(2), text.author, source).segment()))
-    if not steps:
-        return []
-    items: list[Segment] = []
-    for i, (done, segment) in enumerate(steps, start=1):
-        number = _el("span", "plan-num", html.text(pencil(str(i), snapshot.tasks.source)))
-        words = _el("span", "plan-text", html.text(segment))
-        items += html.element(
-            "li",
-            {"class": "plan-step plan-done" if done else "plan-step"},
-            html.element("details", None, html.element("summary", None, [*number, *words])),
-        )
-    return _el(
-        "section",
-        "plan",
-        [
-            *_el("h3", "cap", say_text("PLAN_HEADING")),
-            *_el("p", "intro", say_text("PLAN_INTRO")),
-            *_el("p", "hint", say_text("PLAN_HINT")),
-            *_el("ol", "plan-list", items),
-        ],
-        id="plan",
-    )
-
-
 # Every experiment and hypothesis
 
 
@@ -1078,9 +1042,39 @@ def _hypothesis_row(
     return html.element("li", {"class": "hyp", "id": hid}, [*_el("section", "hyp-pic", pic), *detail])
 
 
+def _cited(words: str) -> tuple[set[str], set[str]]:
+    """The experiment ids (`E<n>`, with ranges such as `E1 to E7`) and hypothesis ids (`H<n>`) a task line
+    names, as Dr. Kiro wrote them."""
+    experiments: set[str] = set()
+    for found in _CITED_E.finditer(words):
+        first = int(found.group(1))
+        last = int(found.group(2)) if found.group(2) else first
+        if last < first:
+            raise NotebookError(words, f"the range E{first} to E{last} runs backwards")
+        experiments |= {f"E{n}" for n in range(first, last + 1)}
+    return experiments, {f"H{n}" for n in _CITED_H.findall(words)}
+
+
+def _task_lines(record: RecordModel) -> tuple[Snapshot, list[tuple[int, bool, str]]] | None:
+    """The task lines of the session's end snapshot (or, at the bench, its latest one): line number, ticked,
+    words. None when the record holds no snapshot."""
+    snapshot = tables.end_snapshot(record) or (record.snapshots[-1] if record.snapshots else None)
+    if snapshot is None:
+        return None
+    lines = []
+    for number, line in enumerate(snapshot.tasks.text().text.splitlines(), start=1):
+        found = _TASK.match(line)
+        if found is not None:
+            lines.append((number, found.group(1) != " ", found.group(2)))
+    return snapshot, lines
+
+
 def _experiments(
     record: RecordModel, layout: Layout, chosen: Choices | None, table: Table | None, shown: Shown, mode: str
 ) -> list[Segment]:
+    """Dr. Kiro's tasks (tasks.md of the last snapshot), one per line as written, each holding the cards of
+    the hypotheses whose experiments (or ids) the line names. A hypothesis goes under the first line that
+    names it; one that no line names is listed after the tasks, under its own heading."""
     if not record.hypotheses:
         return []
     found = (
@@ -1090,25 +1084,65 @@ def _experiments(
     )
     checked = mode == SEALED and tables.end_snapshot(record) is not None
     outcomes = {o.prediction: o for o in record.outcomes}
-    source = f"{record.name}: all experiments"
-    heading = [
-        *say_text("ALL_BEFORE"),
-        *html.text(pencil(str(len(record.experiments)), source)),
-        *say_text("ALL_AFTER"),
-    ]
-    rows = [
-        s
-        for h in record.hypotheses
-        for s in _hypothesis_row(record, layout, h, found, table, checked, outcomes, shown, mode)
-    ]
+
+    def rows(hypotheses: list[Hypothesis]) -> list[Segment]:
+        return [
+            s
+            for h in hypotheses
+            for s in _hypothesis_row(record, layout, h, found, table, checked, outcomes, shown, mode)
+        ]
+
+    placed: set[str] = set()
+    items: list[Segment] = []
+    tasks = _task_lines(record)
+    for number, done, words in tasks[1] if tasks is not None else []:
+        snapshot = tasks[0]
+        source = f"{snapshot.tasks.source} line {number}"
+        experiments, named = _cited(words)
+        mine = [
+            h
+            for h in record.hypotheses
+            if h.id not in placed
+            and (
+                h.id in named or any(e.hypothesis == h.id and e.id in experiments for e in record.experiments)
+            )
+        ]
+        placed |= {h.id for h in mine}
+        ran = any(e.hypothesis == h.id for h in mine for e in record.experiments)
+        line = [
+            *_el("span", "task-box", [markup("&#10003;" if done else "")], **{"aria-hidden": "true"}),
+            *_el(
+                "span",
+                "task-text",
+                html.text(Authored(words, snapshot.tasks.text().author, source).segment()),
+            ),
+        ]
+        if ran and not done:
+            line += _el("span", "task-unticked", say_text("TASK_RAN_UNTICKED"))
+        inside = _el("ul", "hyps", rows(mine)) if mine else []
+        items += html.element(
+            "li", {"class": "task task-done" if done else "task"}, [*_el("p", "task-line", line), *inside]
+        )
+    rest = [h for h in record.hypotheses if h.id not in placed]
+    after: list[Segment] = []
+    if rest:
+        label = "TASKS_NONE" if tasks is None or not tasks[1] else "TASKS_UNNAMED"
+        after = [*_el("h4", "tasks-rest", say_text(label)), *_el("ul", "hyps", rows(rest))]
+    goal = record.declaration.goal
     return _el(
         "section",
         "experiments",
         [
-            *_el("h3", "cap", heading),
-            *_el("p", "intro", say_text("ALL_INTRO")),
+            *_el("h3", "cap", say_text("TASKS_HEADING")),
+            *_el(
+                "p",
+                "task-goal",
+                [*say_text("TASKS_GOAL"), *html.text(goal.segment())],
+            ),
+            *_el("p", "intro", say_text("TASKS_INTRO")),
             *_el("p", "hint", say_text("ALL_HINT")),
-            *_el("ul", "hyps", rows),
+            *(_el("ol", "task-list", items) if items else []),
+            *after,
         ],
         id="experiments",
     )
@@ -1385,9 +1419,8 @@ def body(
             *_chips(record, None, lab, table, mode),
             *_after_seal("HIGHLIGHT_HEADING", "WRITTEN_AFTER_SEAL", "highlight", id="highlight"),
             *_after_seal("READER_HEADING", "RUNS_AFTER_SEAL", "reader", id="reader"),
-            *_spec(record, table, False, mode),
-            *_plan(record),
             *_experiments(record, layout, None, table, shown, mode),
+            *_spec(record, table, False, mode),
         ]
     else:
         if chosen.record != record.name:
@@ -1411,9 +1444,8 @@ def body(
             *_highlight(record, layout, chosen, table, lab, shown),
             *_story(record, table, runs),
             *_reader(record, runs, requests, table, others),
-            *_spec(record, table, checked, mode),
-            *_plan(record),
             *_experiments(record, layout, chosen, table, shown, mode),
+            *_spec(record, table, checked, mode),
         ]
     unique: dict[str, photo.PictureFile] = {}
     for picture in shown.files:

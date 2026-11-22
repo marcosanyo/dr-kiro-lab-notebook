@@ -146,7 +146,7 @@ def test_body_2_states_its_story_from_the_choice_file_and_the_record(site, loade
     assert f'<span class="ink-p">{len(record.trials)}</span> ' in page
     assert found.classes["hyp"] == len(record.hypotheses) == 11
     assert found.classes["rule"] == 14 and found.classes["struck"] == 8
-    assert found.classes["plan-step"] == 13
+    assert found.classes["task"] == 13
 
 
 def test_body_2_shows_the_readers_three_results(site):
@@ -214,9 +214,9 @@ def test_titles_are_marked_as_our_notes_and_the_other_pages_have_every_retaken_p
     assert len(pictures) >= 39  # every trial's retaken sheet (the recorded sheets load only when asked)
 
 
-def test_the_plan_steps_and_the_rule_details_are_closed_notes(site):
+def test_the_tasks_and_the_rule_details_are_listed(site):
     page, found = _page(site, "body-lab/body-2.html")
-    assert found.classes["plan-step"] == 13 and found.classes["rule-more"] == 14
+    assert found.classes["task"] == 13 and found.classes["rule-more"] == 14
 
 
 def test_an_opened_note_shows_headings_and_predictions_as_they_read_not_as_they_were_written(site):
@@ -349,10 +349,12 @@ def test_the_stopped_sessions_tell_what_they_can(site):
 
 def test_the_reader_comes_right_after_the_highlight_and_every_section_says_what_it_is(site):
     page, _ = _page(site, "body-lab/body-2.html")
-    ids = [page.index(f'id="{i}"') for i in ("highlight", "reader", "spec", "plan", "experiments")]
+    ids = [page.index(f'id="{i}"') for i in ("highlight", "reader", "experiments", "spec")]
     assert ids == sorted(ids)
     assert "A struck line was believed, tested, and proved wrong; the line under it replaced it." in page
-    assert "Each card: what Dr. Kiro predicted before the run, and what happened." in page
+    assert (
+        "Under each task: what it predicted before the run (in requirements.md), and what happened." in page
+    )
     text = re.sub(r"<[^>]*>", "", page)
     assert "predictions, written before the run, came true" in text and "predictions hit" not in text
 
@@ -492,3 +494,23 @@ def test_a_not_measured_track_draws_nothing_and_says_so(loaded_all):
     page = _sketch_page(changed)
     assert page.count('<svg class="track-sketch"') == len(record.trials) - 1
     assert text.TRACK_NOT_MEASURED.strip() in page
+
+
+def test_every_experiment_sits_under_the_task_line_that_names_it(site):
+    page, _ = _page(site, "body-lab/body-2.html")
+    tasks = re.findall(r'<li class="task[^"]*">(.*?)</li>\s*(?=<li class="task|</ol>)', page, re.S)
+    assert len(tasks) == 13
+    for n in range(1, 12):
+        assert f'id="H{n}"' in tasks[n - 1], f"H{n} is not under task {n}"
+    assert "Experiments that no task line names" not in page
+    page, _ = _page(site, "wind-tunnel/wt-004.html")
+    assert page.count("ran at the bench; the box was left empty") == 2
+
+
+def test_a_task_line_names_experiments_by_id_and_by_range():
+    from notebook.pages.book import _cited
+
+    assert _cited("Map the system (E1 to E7: every input)") == ({f"E{n}" for n in range(1, 8)}, set())
+    assert _cited("Test the rules (E9 and E10: H9 hit, H10 missed)") == ({"E9", "E10"}, {"H9", "H10"})
+    assert _cited("E1 / H1: each channel alone") == ({"E1"}, {"H1"})
+    assert _cited("Fill the Discovered spec table") == (set(), set())

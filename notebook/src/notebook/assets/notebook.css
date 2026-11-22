@@ -821,77 +821,55 @@ section[data-sync] .photo-controls button[data-action="step"] {
   margin-bottom: 0.8rem;
   font-size: 0.85rem;
 }
-/* Dr. Kiro's plan: numbers in circles joined by arrows, one line each. */
-.plan-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 0;
-  align-items: flex-start;
+/* Dr. Kiro's tasks: one line of tasks.md each, a box ticked as Dr. Kiro ticked it, the cards under it. */
+.task-goal {
+  margin-bottom: 0.4rem;
 }
-.plan-step {
-  position: relative;
-  max-width: 22rem;
-  padding-right: 2rem;
+.task-list {
+  list-style: none;
+  padding: 0;
+}
+.task {
+  margin-bottom: 1rem;
+}
+.task-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
   font-family: var(--font-script);
   font-size: 1.2rem;
-  line-height: 1.15;
+  line-height: 1.2;
 }
-.plan-step details {
-  min-width: 0;
-}
-.plan-step summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  list-style: none;
-}
-.plan-step summary::-webkit-details-marker {
-  display: none;
-}
-.plan-step::after {
-  content: "→";
-  position: absolute;
-  top: 0.35rem;
-  right: 0.45rem;
-  color: var(--muted);
-  font-family: var(--font-sans);
-  font-size: 1.2rem;
-}
-.plan-step:last-child::after {
-  content: "";
-}
-.plan-text {
-  min-width: 0;
-  max-width: 16rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.plan-step details[open] .plan-text {
-  max-width: 20rem;
-  white-space: normal;
-}
-.plan-step .ink-k {
-  white-space: inherit;
-}
-.plan-num {
+.task-box {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 2px dashed var(--ink-pencil);
-  border-radius: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--ink-pencil);
+  border-radius: 3px;
+  color: var(--ink-drkiro);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1;
 }
-.plan-num .ink-p {
-  font-family: var(--font-mono);
+.task-done .task-box {
+  border-color: var(--ink-drkiro);
+}
+.task-unticked {
+  font-family: var(--font-sans);
   font-size: 0.8rem;
 }
-.plan-done .plan-num {
-  border-style: solid;
-  border-color: var(--ink-drkiro);
+.task-unticked .ink-c {
+  color: var(--muted);
+}
+.task .hyps {
+  margin-left: 1.6rem;
+}
+.tasks-rest {
+  margin: 0.6rem 0;
 }
 /* Every experiment and hypothesis: cards in two columns. */
 .hint {
@@ -1459,9 +1437,8 @@ section[data-sync] .photo-controls button[data-action="step"] {
   .rules {
     grid-template-columns: minmax(0, 1fr);
   }
-  .plan-step {
-    max-width: none;
-    width: 100%;
+  .task .hyps {
+    margin-left: 0;
   }
 }
 /* Orange is for small headings and the marks "our notes"; the other text is ordinary text. */

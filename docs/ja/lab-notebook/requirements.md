@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/lab-notebook/requirements.md`](../../../.kiro/specs/lab-notebook/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `6d86c96d803035ec55d5a55953c7a707b7d4a3023e0c6769273ca7956c19ab96`
+> 原文 SHA-256: `b2e92c47f45d3caa04e96175cb842abd44759ed1f97eadce25905e5b7b73c3b5`
 # Requirements Document
 Spec: `lab-notebook`。
 ## Introduction
@@ -169,7 +169,7 @@ Spec: `lab-notebook`。
 3. THE highlight SHALL show the chosen contrast (two trials side by side) and the chosen best result as moving pictures with their measured values, labelled "chosen by a person"。
 4. IF the contrast or the best result is "none", THEN THE highlight SHALL show "none" and the choice file's reason in its place。
 5. THE progress SHALL show the budget used and the budget, the experiments by phase, and the counts of each prediction outcome, from the record。
-6. Dr. Kiro's plan SHALL be the `tasks.md` of the session's last snapshot, shown as written (Requirement 4.3)。
+6. Dr. Kiro のタスクは、セッションの最後のスナップショットの `tasks.md` を書かれたとおりに出し、各実験をそれを名指すタスクの行の下に置かなければなりません（要件 4.3、notebook-shelf の要件 4.3）。
 7. WHERE a session is an ended session with an `end` snapshot、THE table SHALL come from that snapshot; WHERE a session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words labelled "not checked by the bench" (10.14 applies where the reader does not accept the table)。
 8. EACH experiment entry SHALL show: the hypothesis's frozen part as written; its predictions, with conditions, range, condition class (labelled "classified at registration") and Dr. Kiro's label; the experiment file as written; each trial with its parameter values, its measurements or not-measured outcomes, and its moving picture; each prediction outcome; the verdict with Dr. Kiro's words; and the verdict flag if the bench recorded one。
 9. IF an ended session's record has no `end` snapshot (body-1), THEN THE session page SHALL show "no table" in place of the table, with commentary that the record holds no table, and SHALL list every missed prediction of the session in its place. THE build SHALL NOT fill in a table. "No table" SHALL be used for no other case (Decision 45)。
@@ -315,7 +315,7 @@ Spec: `lab-notebook`。
 5. 記録の最後の行にまだ行末が無い場合、ウォッチはその行を次の回に回し、見せてはなりません。それ以外の行が読めない、記録の形式が求める欄が無い、または順番が合わない場合、ウォッチは新しい版を作るのをやめ、その行番号と問題をページに出さなければなりません。ウォッチは項目を飛ばしたり、推測したり、直したりしてはなりません。
 6. 版を見せる前に、ウォッチはビルドと同じブラインドスキャン（要件 20）と写真の検査（7.3）をしなければなりません。どちらかが何かを見つけた場合、ウォッチは 23.5 と同じく止まり、項目と見つかったものの種類を出し、文そのものは出してはなりません。
 7. セッションが実験中の間、ユーザーか後の実行だけが書ける部分（セッションの題と要約、選んだハイライト（要件 12）、リーダーのテスト（要件 19））は、それぞれ見出しと、いつ来るかを言う解説インクの 1 行（"written after the seal" または "runs after the seal"）を出さなければなりません。題の代わりに、ページはセッション ID を出さなければなりません。
-8. Dr. Kiro の計画（10.6）と発見した spec の表（要件 8）は最新のスナップショットから出し、`end` スナップショットまではステータスの語に "not yet checked by the bench"（16.3）と添えなければなりません。表がまだ無い間、札は "no spec table yet" と言わなければなりません。結果の項目がまだ無い予測は、その仮説に判定が出るまでは "waiting"、出た後は "not run" と出さなければなりません。
+8. Dr. Kiro のタスク（10.6）と発見した spec の表（要件 8）は最新のスナップショットから出し、`end` スナップショットまではステータスの語に "not yet checked by the bench"（16.3）と添えなければなりません。表がまだ無い間、札は "no spec table yet" と言わなければなりません。結果の項目がまだ無い予測は、その仮説に判定が出るまでは "waiting"、出た後は "not run" と出さなければなりません。
 9. 走っている仮説（登録され、まだ判定が無いもの）の項目は開いていて、"at the bench" と印を付けなければなりません。
 10. ページはセッション ID とともに "at the bench" と表示し、封印済みの記録として見せてはなりません。封印の項目が届いたとき、ページはセッションが封印されたことと、完成したページはビルドが作ることを言わなければなりません。
 11. ページの幅が 600 CSS ピクセル（チャットの横に開いた Kiro IDE の内蔵ブラウザ）のとき、ページのスクロール幅はビューポートの幅を超えてはなりません（3.5）。

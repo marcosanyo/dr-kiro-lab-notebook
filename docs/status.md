@@ -3,6 +3,12 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## タスクを背骨にしたノート（ブランチ `feat/notebook-tasks-first`、main の bc1a5c4 から、2026-11-22、ローカル）
+- 済み: セッションのページの「Dr. Kiro's plan」と「All N experiments and hypotheses」を 1 つの「Dr. Kiro's tasks」にまとめた。ベンチが宣言した目標（開始の記録の goal）→ 最後のスナップショットの `tasks.md` の行（箱は Dr. Kiro が付けたとおり）→ 各行が名指す実験（`E3`、`E1 to E7`）か仮説（`H3`）のカードをその下に。走ったのに箱が空の行には「ran at the bench; the box was left empty」（wt-004 の E5・E6）。どの行も名指さない仮説は後ろにまとめる。発見した spec の表はタスクの後ろへ。記録は変えていない（封印されたスナップショットに `tasks.md` がある）。
+- 済み: Dr. Kiro の steering（`bench/src/bench/drkiro/files/` と 2 つのラボの写し）。1 実験 = 1 タスクの行 `- [ ] E<n> / H<n>: …` を走らせる前に足し、判定の後にチェック。`tasks.md` の雛形は段階の見出しと最後の 1 行。
+- 仕様: notebook-shelf の要件 2A.3・4.3・4.4、設計「Tables and tasks」と Decision 9、lab-notebook の要件 10.6。訳もそろえ、`scripts/ja-check.sh` は通る。`notebook` のテスト 495 件、`bench` 576 件（`uv run --all-extras --all-groups pytest`）、ruff は通る。
+- 次: PR をユーザーが見てマージ。その後、IDE で新しいセッションを撮り直す（新しい steering で tasks が 1 行ずつ増える）。
+
 ## ノートのページの見直し（ブランチ `fix/notebook-body-page-review`、main の 583a1ff から）
 - 済み: 要約を 40 語以内にし、ビルドで確かめる（`choices._summary`）。5 つの要約を差し替えた（wt-003 は今のまま）。セッションの終わりの拒否は表の上に 1 回のブロック（「1 time」と「N times」）、名前が出た行は小さい琥珀色の点。読み取り 3 列は「Old spec, before the body changed」「New spec, after the body changed」「No spec」。legend と how は紙の上に入る。止まったセッションは終わったセッションと同じ行。
 - 未決（ユーザーの判断待ち）: body-3 の最初の画面に写真が入らない。写真の上端は約 y=1120 px、画面は 900 px。「What happened here」を写真の下に動かすかを決める。動かすと写真の上端は約 820 px になる見込み。
