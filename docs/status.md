@@ -7,6 +7,7 @@ Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの�
 - 済み: セッションのページの「Dr. Kiro's plan」と「All N experiments and hypotheses」を 1 つの「Dr. Kiro's tasks」にまとめた。ベンチが宣言した目標（開始の記録の goal）→ 最後のスナップショットの `tasks.md` の行（箱は Dr. Kiro が付けたとおり）→ 各行が名指す実験（`E3`、`E1 to E7`）か仮説（`H3`）のカードをその下に。走ったのに箱が空の行には「ran at the bench; the box was left empty」（wt-004 の E5・E6）。どの行も名指さない仮説は後ろにまとめる。発見した spec の表はタスクの後ろへ。記録は変えていない（封印されたスナップショットに `tasks.md` がある）。
 - 済み: Dr. Kiro の steering（`bench/src/bench/drkiro/files/` と 2 つのラボの写し）。1 実験 = 1 タスクの行 `- [ ] E<n> / H<n>: …` を走らせる前に足し、判定の後にチェック。`tasks.md` の雛形は段階の見出しと最後の 1 行。
 - 仕様: notebook-shelf の要件 2A.3・4.3・4.4、設計「Tables and tasks」と Decision 9、lab-notebook の要件 10.6。訳もそろえ、`scripts/ja-check.sh` は通る。`notebook` のテスト 495 件、`bench` 576 件（`uv run --all-extras --all-groups pytest`）、ruff は通る。
+- 直し（レビュー後）: ベンチは spec のファイルを実行・判定・終わりのときだけ写すので、steering でチェックを判定の前に付けさせた。「box was left empty」は封印されたページだけ。ベンチの前で、最後の写しの後に登録された仮説は「Registered, waiting for its run」の見出し。1 枚だけのカードは横幅いっぱい。発見した spec の表はタスクの前に戻した（Kiro の順）。How のページの文を「its tasks list the experiments」に。
 - 次: PR をユーザーが見てマージ。その後、IDE で新しいセッションを撮り直す（新しい steering で tasks が 1 行ずつ増える）。
 
 ## ノートのページの見直し（ブランチ `fix/notebook-body-page-review`、main の 583a1ff から）

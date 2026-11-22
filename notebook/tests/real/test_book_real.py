@@ -349,7 +349,7 @@ def test_the_stopped_sessions_tell_what_they_can(site):
 
 def test_the_reader_comes_right_after_the_highlight_and_every_section_says_what_it_is(site):
     page, _ = _page(site, "body-lab/body-2.html")
-    ids = [page.index(f'id="{i}"') for i in ("highlight", "reader", "experiments", "spec")]
+    ids = [page.index(f'id="{i}"') for i in ("highlight", "reader", "spec", "experiments")]
     assert ids == sorted(ids)
     assert "A struck line was believed, tested, and proved wrong; the line under it replaced it." in page
     assert (

@@ -14,8 +14,9 @@ inclusion: always
 4. Write one experiment file in `experiments/` at the root of the lab (next to `.kiro/`, not inside `.kiro/specs/`)
    that names it.
 5. Run it with `run_experiment`, and open each picture it returns.
-6. Record a verdict with `record_verdict`.
-7. Tick its task line and update `design.md`. Then start the next loop.
+6. Tick its task line and update `design.md`.
+7. Record a verdict with `record_verdict`. The bench keeps a copy of your spec files at each run, verdict and end,
+   so a box ticked before the verdict shows in that copy. Then start the next loop.
 
 ## Hypotheses
 

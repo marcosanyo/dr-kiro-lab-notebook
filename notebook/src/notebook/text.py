@@ -342,8 +342,6 @@ CHART_SCALE = "; scale of the measurement "
 CHART_NO_VALUE = "; no measured value is drawn"
 
 # Dr. Kiro's plan (Requirement 10.6, design N18).
-PLAN_NOTE = "The plan file of the session's last snapshot, as written."
-PLAN_REQUIREMENTS = "Dr. Kiro's requirements file of the same snapshot, as written"
 
 # The experiment entries (Requirements 10.8, 11, 15.1, 15.3).
 ENTRIES_HEADING = "Experiments"
@@ -408,8 +406,8 @@ HOW_LEVEL_BUILDER = (
 )
 HOW_LEVEL_DRKIRO = (
     "Dr. Kiro's lab spec is written by Dr. Kiro from evidence: its requirements hold the hypotheses and "
-    "their predictions, its design holds the discovered spec table, and its tasks hold the plan. Before a "
-    "session can end, the bench checks the table against the record."
+    "their predictions, its design holds the discovered spec table, and its tasks list the experiments. "
+    "Before a session can end, the bench checks the table against the record."
 )
 HOW_TOUCH_HEADING = "What Dr. Kiro can and cannot touch"
 HOW_CAN = (
@@ -505,6 +503,7 @@ TASKS_INTRO = (
 )
 TASKS_UNNAMED = "Experiments that no task line names"
 TASKS_NONE = "No task list was saved in this record. Every experiment:"
+TASKS_WAITING = "Registered, waiting for its run"
 TASK_RAN_UNTICKED = "ran at the bench; the box was left empty"
 ALL_HINT = "Press a row to open the note: Dr. Kiro's words and every trial of that hypothesis."
 EXPECTS = "expects "

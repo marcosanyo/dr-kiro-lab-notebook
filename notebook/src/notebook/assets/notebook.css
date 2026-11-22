@@ -868,6 +868,9 @@ section[data-sync] .photo-controls button[data-action="step"] {
 .task .hyps {
   margin-left: 1.6rem;
 }
+.task .hyps:has(> .hyp:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
 .tasks-rest {
   margin: 0.6rem 0;
 }

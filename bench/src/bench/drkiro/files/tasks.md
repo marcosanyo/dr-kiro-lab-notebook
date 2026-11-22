@@ -1,7 +1,7 @@
 # Tasks
 
 Each experiment is one task line, `- [ ] E<n> / H<n>: <what it tests>`, added under its phase before it runs
-and ticked after its verdict.
+and ticked before its verdict.
 
 ## Map the system
 

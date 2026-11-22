@@ -1,8 +1,8 @@
 """The opened notebook: one session as a story (notebook-shelf design 4 to 9).
 The first screen says what was found: the claim, the summary, the chips, the two large photos with their
 handwritten line, three sticky notes with numbers from the record, and the best so far trial by trial. Below
-it come Dr. Kiro's tasks with every experiment under the task that names it, the discovered spec, and the
-reader's results.
+it come the reader's results, the discovered spec, and Dr. Kiro's tasks with every experiment under the
+task that names it.
 The title, the summary and the words on the photos are written by a person (choice file, orange pen); every
 number comes from the record; Dr. Kiro's words keep Dr. Kiro's ink.
 """
@@ -1117,16 +1117,28 @@ def _experiments(
                 html.text(Authored(words, snapshot.tasks.text().author, source).segment()),
             ),
         ]
-        if ran and not done:
+        if mode == SEALED and ran and not done:
             line += _el("span", "task-unticked", say_text("TASK_RAN_UNTICKED"))
         inside = _el("ul", "hyps", rows(mine)) if mine else []
         items += html.element(
             "li", {"class": "task task-done" if done else "task"}, [*_el("p", "task-line", line), *inside]
         )
     rest = [h for h in record.hypotheses if h.id not in placed]
+    # At the bench the spec files are copied only at a run, a verdict and the end, so a hypothesis registered
+    # since the last copy has no task line yet: when every hypothesis left over is such a one, the heading
+    # says they wait for their run. The order stays the record's, as on the sealed page.
+    waiting = (
+        mode == AT_BENCH
+        and record.seal is None
+        and tasks is not None
+        and bool(tasks[1])
+        and all(not any(e.hypothesis == h.id for e in record.experiments) for h in rest)
+    )
     after: list[Segment] = []
     if rest:
-        label = "TASKS_NONE" if tasks is None or not tasks[1] else "TASKS_UNNAMED"
+        label = (
+            "TASKS_NONE" if tasks is None or not tasks[1] else "TASKS_WAITING" if waiting else "TASKS_UNNAMED"
+        )
         after = [*_el("h4", "tasks-rest", say_text(label)), *_el("ul", "hyps", rows(rest))]
     goal = record.declaration.goal
     return _el(
@@ -1419,8 +1431,8 @@ def body(
             *_chips(record, None, lab, table, mode),
             *_after_seal("HIGHLIGHT_HEADING", "WRITTEN_AFTER_SEAL", "highlight", id="highlight"),
             *_after_seal("READER_HEADING", "RUNS_AFTER_SEAL", "reader", id="reader"),
-            *_experiments(record, layout, None, table, shown, mode),
             *_spec(record, table, False, mode),
+            *_experiments(record, layout, None, table, shown, mode),
         ]
     else:
         if chosen.record != record.name:
@@ -1444,8 +1456,8 @@ def body(
             *_highlight(record, layout, chosen, table, lab, shown),
             *_story(record, table, runs),
             *_reader(record, runs, requests, table, others),
-            *_experiments(record, layout, chosen, table, shown, mode),
             *_spec(record, table, checked, mode),
+            *_experiments(record, layout, chosen, table, shown, mode),
         ]
     unique: dict[str, photo.PictureFile] = {}
     for picture in shown.files:

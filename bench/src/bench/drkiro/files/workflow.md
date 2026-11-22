@@ -21,10 +21,13 @@ In the map, rules and test phases, study every measurement, not only the one the
 
 Every trial uses one unit of budget. Keep enough budget for the test phase and the best phase.
 
-## After each verdict
+## After each run, before its verdict
 
 - Tick the experiment's task line in `tasks.md`.
 - Update `design.md`: what you now believe about the system, and why.
+
+## After each verdict
+
 - Add the next experiment to `tasks.md` when you plan it, not before. Leave the unrun ideas in a short note under
   the last task line when the budget runs out.
 
