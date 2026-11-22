@@ -12,7 +12,15 @@ from mcp.client import Client
 
 from bench.frontend import config as config_file
 from bench.frontend import pointer
-from bench.frontend.server import TOOLS, BenchServer, open_session, startup_log_for
+from bench.frontend.server import (
+    NO_SESSION_FILE,
+    OTHER_APPLICATION,
+    STILL_OPEN,
+    TOOLS,
+    BenchServer,
+    open_session,
+    startup_log_for,
+)
 from labkit import FAKE_SOURCES, STOP_LIST, Lab, exp_file, hyp_block
 
 STATEMENT = "WHEN amp rises, THE distance SHALL rise."
@@ -395,3 +403,67 @@ def test_a_normal_start_writes_no_startup_log(lab: Lab, tmp_path: Path) -> None:
     _, err = proc.communicate(timeout=60)
     assert proc.returncode == 0, err
     assert not (tmp_path / "session.mcp-startup.log").exists()
+
+
+def _point_lab_at(lab: Lab, config: Path) -> None:
+    pointer.write(lab.lab, config, config.with_name(config.stem + ".hook-log.jsonl"))
+
+
+def _followed_server(lab: Lab, tmp: Path, session_id: str) -> BenchServer:
+    config = _config_file(lab, tmp, session_id=session_id)
+    _point_lab_at(lab, config)
+    session = open_session(config_file.load(config))
+    key = config_file.key_for(lab.lab)[1]
+    return BenchServer(session, lab.lab, key)
+
+
+def test_a_new_session_takes_over_on_the_next_call_once_the_old_one_is_sealed(
+    lab: Lab, tmp_path: Path
+) -> None:
+    old = tmp_path / "old"
+    new = tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    srv = _followed_server(lab, old, "s2")
+    srv.session.stop("the first session ends")
+    _point_lab_at(lab, _config_file(lab, new, session_id="s3"))
+    (result,) = call(srv, ("register_hypothesis", {"id": "H7"}))
+    assert srv.session.config.session_id == "s3"
+    assert srv.session.state.budget == 12
+    assert result.is_error and text(result).startswith("hypothesis H7 is not in")
+
+
+def test_an_open_session_is_not_replaced(lab: Lab, tmp_path: Path) -> None:
+    old = tmp_path / "old"
+    new = tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    srv = _followed_server(lab, old, "s2")
+    _point_lab_at(lab, _config_file(lab, new, session_id="s3"))
+    (result,) = call(srv, ("register_hypothesis", {"id": "H1"}))
+    assert result.is_error and text(result) == STILL_OPEN
+    assert srv.session.config.session_id == "s2"
+
+
+def test_a_session_of_another_application_is_not_taken_over(lab: Lab, tmp_path: Path) -> None:
+    old = tmp_path / "old"
+    new = tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    srv = _followed_server(lab, old, "s2")
+    srv.session.stop("the first session ends")
+    _point_lab_at(lab, _config_file(lab, new, session_id="s3", application="other"))
+    (result,) = call(srv, ("register_hypothesis", {"id": "H1"}))
+    assert result.is_error and text(result) == OTHER_APPLICATION
+    assert srv.session.config.session_id == "s2"
+
+
+def test_a_missing_session_file_is_refused_and_the_current_session_is_kept(lab: Lab, tmp_path: Path) -> None:
+    old = tmp_path / "old"
+    old.mkdir()
+    srv = _followed_server(lab, old, "s2")
+    current = srv.session
+    pointer.path_for(lab.lab).unlink()
+    (result,) = call(srv, ("register_hypothesis", {"id": "H1"}))
+    assert result.is_error and text(result) == NO_SESSION_FILE
+    assert srv.session is current

@@ -6,6 +6,7 @@ Folder and file paths are resolved against the folder of the config file. `spec_
 stay relative to the lab, as in `SessionConfig`.
 """
 
+import hashlib
 import importlib
 import inspect
 import tomllib
@@ -121,6 +122,19 @@ def config_path_for(lab: Path) -> Path:
         return pointer.read(lab)["session_config"]
     except pointer.PointerError as error:
         raise ConfigError(str(error)) from error
+
+
+def key_for(lab: Path) -> tuple[Path, str]:
+    """The session config named by the lab's session file, and a digest of its bytes. A new session writes a
+    new config file, so the digest changes with the session. The server compares digests on every call."""
+    path = config_path_for(lab)
+    if not path.is_file():
+        raise ConfigError(f"{WHERE}: file not found")
+    try:
+        raw = path.read_bytes()
+    except OSError as error:
+        raise ConfigError(f"{WHERE}: cannot be read ({error.strerror})") from error
+    return path, hashlib.sha256(raw).hexdigest()
 
 
 def for_lab(lab: Path) -> ServerConfig:
