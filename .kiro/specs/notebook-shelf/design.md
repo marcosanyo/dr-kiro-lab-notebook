@@ -42,9 +42,9 @@ The step line is a path through its exact corners with short pieces between them
 
 Hits out of all outcomes the bench recorded (hit, miss, not-checkable). A prediction never run has no outcome and is not counted.
 
-## Tables and plans
+## Tables and tasks
 
-`progress.table_of` takes the accepted `end` snapshot's table (checked), else the last snapshot's table when it has rows (not checked), else none. The plan lines are the `- [x]`/`- [ ]` lines of that snapshot's `tasks.md`, with the author of the record. Status counts count only the bench's four words.
+`progress.table_of` takes the accepted `end` snapshot's table (checked), else the last snapshot's table when it has rows (not checked), else none. The task lines are the `- [x]`/`- [ ]` lines of that snapshot's `tasks.md`, with the author of the record. A line names experiments by `E<n>` and ranges `E<a> to E<b>` (also `-` and an en dash), and hypotheses by `H<n>` (`book._cited`). Status counts count only the bench's four words.
 
 ## Night and day
 
@@ -73,7 +73,7 @@ The wind tunnel is not run again: a larger picture would need the sampling of th
 ## The top of a page
 On a lab page the masthead title is smaller (`.masthead .big-title`), the ink legend and the symbols line are folded in `details.reading-key` (`READING_KEY`), the subtitle is a block under the title with the "our notes" mark beside the title, the highlight has its heading and no intro line, and the stopped sessions are in the same card row as the ended ones (`_shelf`). An unselected card is dimmed (`.card:not(.is-open)`). The end refusals of a session are one block above the spec table (`_end_refusals` in `pages/book.py`), and a card a quote names carries a small amber dot (`.refused-mark`).
 
-Numbers at the top of a page are short (`numbers.brief`): metres under 10 cm in centimetres (`+3.9 cm`), larger in metres (`0.75 m`), a value with no unit with three decimals (`0.993`), never in exponent form. The recorded values are in the opened notes. The two highlight photos are one group: one play button and one slider move both, and under each photo a line says "t = 3.0 s forward 38 cm" from the recorded track at that cell. The chart is a framed box, names at most four steps (the largest, at least 10% of the climb), and places each name where it does not overlap another. Titles are cream; the text of a person is ordinary text with a small orange mark "our notes". Each discovered spec card shows the id, the stamp, the rule and its rewrite; scope and evidence are in a closed note. Each step of the plan is one line that opens to the whole text. Each hypothesis is a card in a two-column grid that spans both columns when its note is open.
+Numbers at the top of a page are short (`numbers.brief`): metres under 10 cm in centimetres (`+3.9 cm`), larger in metres (`0.75 m`), a value with no unit with three decimals (`0.993`), never in exponent form. The recorded values are in the opened notes. The two highlight photos are one group: one play button and one slider move both, and under each photo a line says "t = 3.0 s forward 38 cm" from the recorded track at that cell. The chart is a framed box, names at most four steps (the largest, at least 10% of the climb), and places each name where it does not overlap another. Titles are cream; the text of a person is ordinary text with a small orange mark "our notes". Each discovered spec card shows the id, the stamp, the rule and its rewrite; scope and evidence are in a closed note. Each task line is Dr. Kiro's handwriting with a box; the cards of its hypotheses stand under it, indented, in a two-column grid that spans both columns when a note is open.
 
 ## Decisions
 
@@ -85,3 +85,4 @@ Numbers at the top of a page are short (`numbers.brief`): metres under 10 cm in 
 6. The front page has no palette of its own. It takes the night paper that every page without a day mode has, and each door copies its lab's palette (see "Night and day"). The door colours are a copy of the palette values; a change to a palette needs the same change in the two door blocks.
 7. The summary under a session's title is at most 40 words. Nothing is cut to fit; a longer summary fails the build (requirement 2.3).
 8. The end refusals are shown once above the spec table, not once per card (lab-notebook Decision 33, revised 2026-11-21).
+9. The experiments are grouped under Dr. Kiro's own task lines, not listed by hypothesis (2026-11-22). The discovered spec stays before them, in Kiro's own order (requirements, design, tasks) and where a reader skimming the page looks for it. The steering has Dr. Kiro tick a task before its verdict, because the bench copies the spec files at the verdict. In the Kiro IDE the requirements file grows with every hypothesis and result while the task list stays short, so a reader saw the requirements as the log and the tasks as an afterthought. The task list is what Dr. Kiro planned and ticked; the hypotheses stay in `requirements.md` and are shown as the prediction of each task. Nothing in the records changes: every sealed snapshot already holds `tasks.md`.

@@ -342,8 +342,6 @@ CHART_SCALE = "; scale of the measurement "
 CHART_NO_VALUE = "; no measured value is drawn"
 
 # Dr. Kiro's plan (Requirement 10.6, design N18).
-PLAN_NOTE = "The plan file of the session's last snapshot, as written."
-PLAN_REQUIREMENTS = "Dr. Kiro's requirements file of the same snapshot, as written"
 
 # The experiment entries (Requirements 10.8, 11, 15.1, 15.3).
 ENTRIES_HEADING = "Experiments"
@@ -408,8 +406,8 @@ HOW_LEVEL_BUILDER = (
 )
 HOW_LEVEL_DRKIRO = (
     "Dr. Kiro's lab spec is written by Dr. Kiro from evidence: its requirements hold the hypotheses and "
-    "their predictions, its design holds the discovered spec table, and its tasks hold the plan. Before a "
-    "session can end, the bench checks the table against the record."
+    "their predictions, its design holds the discovered spec table, and its tasks list the experiments. "
+    "Before a session can end, the bench checks the table against the record."
 )
 HOW_TOUCH_HEADING = "What Dr. Kiro can and cannot touch"
 HOW_CAN = (
@@ -497,9 +495,16 @@ REWRITTEN_AS = "rewritten as "
 REWRITTEN_NOWHERE = "rewritten nowhere: "
 FROM_EXPERIMENTS = "from "
 FROM_PREDICTIONS = " · predictions "
-PLAN_HEADING = "Dr. Kiro's plan"
-ALL_BEFORE = "All "
-ALL_AFTER = " experiments and hypotheses"
+TASKS_HEADING = "Dr. Kiro's tasks"
+TASKS_GOAL = "The goal, set before the session: "
+TASKS_INTRO = (
+    "Dr. Kiro planned its experiments as tasks in its Kiro spec (tasks.md) and ticked each one it finished. "
+    "Under each task: what it predicted before the run (in requirements.md), and what happened."
+)
+TASKS_UNNAMED = "Experiments that no task line names"
+TASKS_NONE = "No task list was saved in this record. Every experiment:"
+TASKS_NOT_YET = "Not in the task list yet"
+TASK_RAN_UNTICKED = "ran at the bench; the box was left empty"
 ALL_HINT = "Press a row to open the note: Dr. Kiro's words and every trial of that hypothesis."
 EXPECTS = "expects "
 NEVER_RUN = "never run"
@@ -536,7 +541,6 @@ CLOCK_BACK = "back "
 CLOCK_AT = "at the start"
 OURS = "our notes"
 RULE_MORE = "conditions and evidence"
-PLAN_HINT = "Press a step to read all of it."
 SYNC_PLAY = "Play"
 SYNC_PAUSE = "Pause"
 SYNC_LABEL = "Time"
@@ -600,8 +604,6 @@ SPEC_INTRO = (
     "What Dr. Kiro now believes about this system. A struck line was believed, tested, and proved wrong; "
     "the line under it replaced it."
 )
-PLAN_INTRO = "The steps Dr. Kiro wrote for itself, in order. A solid circle is a step it finished."
-ALL_INTRO = "Each card: what Dr. Kiro predicted before the run, and what happened."
 READER_INTRO = "The test of the spec: another Kiro, who never saw the experiments, is given one task."
 PROGRESS_MARK_A = " The dashed line marks the first trial where "
 PROGRESS_MARK_B = "."

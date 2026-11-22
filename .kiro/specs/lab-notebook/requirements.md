@@ -436,7 +436,8 @@ to every experiment, so that I can check any claim.
    in its place.
 5. THE progress SHALL show the budget used and the budget, the experiments by phase, and the counts of each
    prediction outcome, from the record.
-6. Dr. Kiro's plan SHALL be the `tasks.md` of the session's last snapshot, shown as written (Requirement 4.3).
+6. Dr. Kiro's tasks SHALL be the `tasks.md` of the session's last snapshot, shown as written, with each
+   experiment under the task line that names it (Requirement 4.3; notebook-shelf Requirement 4.3).
 7. WHERE a session is an ended session with an `end` snapshot, THE table SHALL come from that snapshot; WHERE a
    session is a stopped session with snapshots, THE table SHALL come from its last snapshot, with its status words
    labelled "not checked by the bench" (10.14 applies where the reader does not accept the table).

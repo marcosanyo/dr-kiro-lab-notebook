@@ -21,10 +21,15 @@ In the map, rules and test phases, study every measurement, not only the one the
 
 Every trial uses one unit of budget. Keep enough budget for the test phase and the best phase.
 
+## After each run, before its verdict
+
+- Tick the experiment's task line in `tasks.md`.
+- Update `design.md`: what you now believe about the system, and why.
+
 ## After each verdict
 
-- Update `design.md`: what you now believe about the system, and why.
-- Update `tasks.md`: tick what is done and add what comes next.
+- Add the next experiment to `tasks.md` when you plan it, not before. Leave the unrun ideas in a short note under
+  the last task line when the budget runs out.
 
 ## Ending
 
@@ -49,4 +54,4 @@ A rule that was refuted is not removed from the Discovered spec table; it stays 
 | R3 | <rule> | <scope> | E<c> | | observed | |
 ```
 
-Then call `end_session`. If it refuses, fix the table as it says, and call it again.
+Then tick the last task line and call `end_session`. If it refuses, fix the table as it says, and call it again.

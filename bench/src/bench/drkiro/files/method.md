@@ -6,13 +6,17 @@ inclusion: always
 
 ## The loop
 
-1. Write a hypothesis in `.kiro/specs/lab/requirements.md`.
-2. Register it with `register_hypothesis`.
-3. Write one experiment file in `experiments/` at the root of the lab (next to `.kiro/`, not inside `.kiro/specs/`)
+1. Add the experiment to `.kiro/specs/lab/tasks.md` as one task line under its phase:
+   `- [ ] E<n> / H<n>: <what it tests>`. The bench numbers experiments in the order they run (E1, E2, ...), so
+   `E<n>` is one more than the last experiment that ran.
+2. Write its hypothesis in `.kiro/specs/lab/requirements.md`.
+3. Register it with `register_hypothesis`.
+4. Write one experiment file in `experiments/` at the root of the lab (next to `.kiro/`, not inside `.kiro/specs/`)
    that names it.
-4. Run it with `run_experiment`, and open each picture it returns.
-5. Record a verdict with `record_verdict`.
-6. Update `design.md` and `tasks.md`. Then start the next loop.
+5. Run it with `run_experiment`, and open each picture it returns.
+6. Tick its task line and update `design.md`.
+7. Record a verdict with `record_verdict`. The bench keeps a copy of your spec files at each run, verdict and end,
+   so a box ticked before the verdict shows in that copy. Then start the next loop.
 
 ## Hypotheses
 
