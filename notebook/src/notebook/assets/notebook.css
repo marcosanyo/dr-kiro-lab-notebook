@@ -2000,15 +2000,6 @@ html[data-mode="night"] .book {
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
-html[data-mode="night"] .book::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 3.4rem;
-  border-left: 1px solid rgba(214, 90, 70, 0.4);
-  pointer-events: none;
-}
 html[data-mode="night"] .deco-moon {
   filter: none;
 }
@@ -2331,18 +2322,6 @@ html[data-mode="night"] .book {
     conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
     conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
-}
-/* The binding of the night lab's notebook is sewn: a dark thread down the margin with cross stitches. */
-html[data-mode="night"] .book::before {
-  left: 3rem;
-  width: 0.9rem;
-  border-left: 0;
-  background-image:
-    conic-gradient(rgba(50, 35, 25, 0.4) 0deg 360deg),
-    conic-gradient(at 0 0.1rem, rgba(50, 35, 25, 0.38) 0deg 90deg, transparent 90deg 360deg);
-  background-size: 0.08rem 100%, 0.44rem 1.5rem;
-  background-position: 0.18rem 0, 0 0.75rem;
-  background-repeat: no-repeat, repeat-y;
 }
 /* The room behind a day notebook is a plain desk: the graph lines belong to the notebook's page only. */
 html[data-mode="day"] body {
