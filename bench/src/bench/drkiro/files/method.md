@@ -8,7 +8,8 @@ inclusion: always
 
 1. Write a hypothesis in `.kiro/specs/lab/requirements.md`.
 2. Register it with `register_hypothesis`.
-3. Write one experiment file in `experiments/` that names it.
+3. Write one experiment file in `experiments/` at the root of the lab (next to `.kiro/`, not inside `.kiro/specs/`)
+   that names it.
 4. Run it with `run_experiment`, and open each picture it returns.
 5. Record a verdict with `record_verdict`.
 6. Update `design.md` and `tasks.md`. Then start the next loop.
