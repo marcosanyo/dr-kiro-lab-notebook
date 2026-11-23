@@ -549,7 +549,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     steps = [
         (i, p)
         for i, p in enumerate(points)
-        if p.step and p.delta is not None and abs(p.delta) >= LABEL_SHARE * span
+        if p.improved and p.delta is not None and abs(p.delta) >= LABEL_SHARE * span
     ]
     steps.sort(key=lambda item: -abs(item[1].delta))
     named: list[tuple[float, float, float]] = []  # (left, right, y) of each name
@@ -997,7 +997,14 @@ def _hypothesis_row(
         *_el("span", "hyp-title", html.text(hypothesis.title.segment())),
         *_el("span", "hyp-expect", [*say_text("EXPECTS"), *html.text(hypothesis.statement.segment())]),
         *_el("span", "hyp-results", _outcome_line(record, hypothesis, outcomes, mode)),
-        *_el("span", "hyp-stamps", _row_stamps(record, table, checked, {e.id for e in experiments})),
+        *_el(
+            "span",
+            "hyp-stamps",
+            [
+                *_row_stamps(record, table, checked, {e.id for e in experiments}),
+                *_el("span", "hyp-open", say_text("OPEN_NOTE")),
+            ],
+        ),
     ]
     # At the bench, the hypothesis that is registered and has no verdict yet is the one being run (23.9).
     running = mode == AT_BENCH and record.seal is None and verdict is None

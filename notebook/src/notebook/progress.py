@@ -4,7 +4,7 @@ no number that the record does not hold. A trial counts when its measurement is 
 names a second measurement, that one equals the given value (the wind tunnel's goal: no shedding).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from bench.specfiles.discovered import STATUSES as BENCH_STATUSES
 from bench.specfiles.discovered import Table
@@ -26,7 +26,7 @@ class Point:
     best: float | None  # the best value up to and including this trial
     improved: bool
     delta: float | None  # the change from the earlier best, None for the first counting trial
-    step: bool  # a new best that beats the earlier one by at least `min_gain`: the star and the chart name
+    step: bool  # the trial that set the session's final best: the only trial with a star
 
 
 @dataclass(frozen=True)
@@ -74,8 +74,11 @@ def series(record: RecordModel, spec: Progress) -> Series:
             improved = True
             delta = None if best is None else value - best
             best = value
-        step = improved and delta is not None and delta >= spec.min_gain
-        points.append(Point(trial, hypothesis_of[trial.id], raw, value, best, improved, delta, step))
+        points.append(Point(trial, hypothesis_of[trial.id], raw, value, best, improved, delta, False))
+    # The star goes to the trial that set the final best, when that trial beat an earlier best.
+    last = max((i for i, p in enumerate(points) if p.improved), default=None)
+    if last is not None and points[last].delta is not None:
+        points[last] = replace(points[last], step=True)
     mark_index = None
     if spec.mark is not None:
         for i, trial in enumerate(record.trials):

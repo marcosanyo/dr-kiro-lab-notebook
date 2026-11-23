@@ -9,7 +9,6 @@ color = "green"
 [progress]
 measurement = "x"
 better = "higher"
-min_gain = 0.03
 
 [[polaroid]]
 heading = "The miss"

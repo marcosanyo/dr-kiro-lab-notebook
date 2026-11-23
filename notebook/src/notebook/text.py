@@ -614,6 +614,8 @@ PROGRESS_MARK_A = " The dashed line marks the first trial where "
 PROGRESS_MARK_B = "."
 OTHER_LAB = "Go to "
 LINK_SEPARATOR = " · "
+# The cue at the bottom right of a hypothesis card: the card opens its note (the marker is in the stylesheet).
+OPEN_NOTE = "open note"
 CARD_STOPPED = "stopped early"
 CARD_CHANGED_BODY = "changed body"
 # The watch reader (Requirement 23.5, design N35, N37). Fixed problem texts; the bad text is never shown.

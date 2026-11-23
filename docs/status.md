@@ -3,9 +3,9 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
-## ノートの表示の直し 8 件（ブランチ `fix/notebook-display-issues`、main の f6cd5a7 から、2026-11-23、ローカル）
+## ノートの表示の直し（ブランチ `fix/notebook-display-issues`、main の f6cd5a7 から、2026-11-23、ローカル）
 - 済み: 折りたたみの三角を 1 つだけにした（ブラウザーの三角を消し、タスクのカードの ▸ は出さない）。390px では上の棚のカードを縦に積む。how・legend の見出し、段落、リストに余白を足した。夜の垂れは題の右側（left 74%）へ。reader の課題文は赤でなく青のペン（コメンタリーの色）。凡例に赤のペンを足し、コメンタリーを青のペンと書いた。上の小見出しはラボの名（`case`）、上の行に「how the lab works」。夜の spec のテープは規則の上の縁より上へ（判子と重ならない）。
-- 済み: 「★ new best」は `[progress]` の `min_gain`（測る値の単位）以上に最良を上げた試行だけ。body-3 は 0.03 m（ユーザーの指示「わずか」の値は私が決めた。変えるなら choices の 1 行）。星・見どころ・グラフの名前は同じ判定。最良の値（0.27 m）は変えていない。
+- 済み: 「★ new best」は、セッションの最良を出した試行（body-3 なら T40）にだけ付く。`min_gain` の案は取り下げた。カードの右下に「▸ open note」の印を置いた（開けるカード）。
 - 確かめ: `notebook` のテスト 497 件が通る。ruff は通る（`tests/unit/test_tasks_at_bench.py` の E501 は main から既にある）。
 - 次: ユーザーが実機で見る。commit は手元のみ、push と PR はしない。
 
