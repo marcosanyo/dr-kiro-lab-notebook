@@ -37,8 +37,14 @@ def _door(
     figure: list[Segment] = []
     files: list[PictureFile] = []
     if chosen.polaroids:
-        # The card shows the session's starred photo (its best result) when it has one, as the highlight does.
-        first = next((p for p in chosen.polaroids if p.star), chosen.polaroids[0])
+        # The card shows the photo marked `door` when there is one, else the starred photo (the best result,
+        # as the highlight does), else the first.
+        doors = [p for p in chosen.polaroids if p.door]
+        if len(doors) > 1:
+            raise NotebookError(
+                doors[1].source, "only one photo of a session can be the card's picture (door)"
+            )
+        first = doors[0] if doors else next((p for p in chosen.polaroids if p.star), chosen.polaroids[0])
         trial = next(t for t in opened.trials if t.id == first.trial)
         layout = layouts.layout_for(table, opened.application, opened.name)
         figure, files = photo.photo(
@@ -88,6 +94,12 @@ def _door(
     return out, files
 
 
+COVER_ART_ALT = (
+    "One building cut open: upstairs by day, a tidy lab with a wind tunnel; downstairs at night, a secret "
+    "lab with a robot."
+)
+
+
 def page(
     apps: tuple[App, ...],
     records: list[RecordModel],
@@ -113,7 +125,12 @@ def page(
         card, files = _door(app, mine, choices, table, retakes)
         cards += card
         pictures += files
-    doors = _el("section", "doors", cards)
+    art = html.element(
+        "figure",
+        {"class": "cover-art"},
+        html.void("img", {"src": addresses.COVER_ART, "alt": COVER_ART_ALT, "loading": "eager"}),
+    )
+    doors = [*art, *_el("section", "doors", cards)]
     layers = _el(
         "ol",
         "skeleton-layers",

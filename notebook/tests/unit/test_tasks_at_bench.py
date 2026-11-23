@@ -1,5 +1,6 @@
-"""Dr. Kiro's tasks at the bench when Dr. Kiro follows the steering: a task line before each run, ticked before
-its verdict (notebook-shelf Requirement 4.3, Decision 9). The record is a fake session; nothing here is a result."""
+"""Dr. Kiro's tasks at the bench when Dr. Kiro follows the steering: a task line before each run, ticked
+before its verdict (notebook-shelf Requirement 4.3, Decision 9). The record is a fake session; nothing here
+is a result."""
 
 import pytest
 

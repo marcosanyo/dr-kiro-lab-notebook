@@ -204,6 +204,12 @@ def render(m: Model) -> dict[str, bytes]:
         for path, name in ASSET_FILES.items():
             source = f"{ASSET_SOURCE}/{name}"
             site.add_text(scope + path, [markup((ASSETS / name).read_text(encoding="utf-8"), source)], source)
+        for name in addresses.ART_FILES:
+            site.add_bytes(
+                f"{scope}{addresses.ASSET_DIR}/{name}",
+                (ASSETS / "art" / name).read_bytes(),
+                f"{ASSET_SOURCE}/art/{name}",
+            )
         for name in addresses.FONT_FILES:
             site.add_bytes(
                 f"{scope}{addresses.ASSET_DIR}/{name}",

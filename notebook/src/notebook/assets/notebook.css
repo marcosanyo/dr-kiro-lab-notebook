@@ -1591,12 +1591,20 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   max-width: 100%;
   transform: none;
 }
-/* Both cards show their picture at one height, so the two labs stand level; the canvas keeps its aspect and is
-   cut to fit. The picture's own controls and trial id are on the notebook's pages, not on the front page. */
+/* Both cards show their picture in one 16:9 frame, so the two labs stand level at any width; the whole picture
+   is shown inside it (a wide wind-tunnel frame gets white bands, never a cut edge). The picture's own controls
+   and trial id are on the notebook's pages, not on the front page. */
 .door > .photo canvas {
   width: 100%;
-  height: 14rem;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #ffffff;
+}
+/* The robot's picture is nearly square and has no edge that matters, so it fills the frame. */
+.door-night > .photo canvas {
   object-fit: cover;
+  background: transparent;
 }
 .door > .photo figcaption {
   display: none;
@@ -1692,21 +1700,26 @@ html[data-app="wind-tunnel"][data-mode="day"] {
   margin-top: 1.6rem;
 }
 .skeleton-layers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 .layer {
-  padding: 0.8rem 1.1rem;
+  padding: 1rem 1.2rem;
   border: 2px dashed var(--chip-edge);
-  border-radius: 6px;
-  background: var(--chip);
-  font-size: 0.95rem;
+  border-left: 5px solid var(--title);
+  border-radius: 8px;
+  background: rgba(255, 244, 222, 0.06);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 .layer-bench {
   border-style: solid;
 }
 @media (max-width: 700px) {
+  .skeleton-layers {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .doors {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2388,14 +2401,10 @@ html[data-mode="night"] .book::after {
     radial-gradient(circle 1.4rem at 72% 78%, rgba(60, 30, 10, 0.3), transparent 100%);
   pointer-events: none;
 }
-/* Red ink for the titles of the night lab (2026-11-22): the masthead in a bright red on the dark desk, the
-   session's title in a dark red on the white page. The headings stay orange, as the ink legend says. */
-html[data-mode="night"] .big-title .ink-c,
-html[data-mode="night"] .big-title {
-  color: #d8392f;
-}
+/* Titles and headings in orange ink (2026-11-23): the masthead keeps the desk's orange, the session's title and
+   the section headings on the white page a deep orange. Red is kept for the experiment's corrections only. */
 html[data-mode="night"] .book {
-  --title: #8a1a12;
+  --title: #a8471a;
 }
 /* Observed and rejected read apart at a glance: a rejected stamp is filled (the word in white on its colour), an
    observed stamp has a dashed edge, the weaker claim. Neither is red: red stays the miss and the rewrite. */
@@ -2412,8 +2421,8 @@ html[data-mode="night"] .book {
 .stamp-rejected {
   border-color: var(--stamp-rejected);
 }
-/* Three pens (2026-11-22), in both labs: green for Dr. Kiro, blue for our notes, red for the headings and the
-   experiment's corrections. A struck rule is crossed out in red, the rewrite under it hangs from a red line, a missed
+/* Three pens, in both labs: green for Dr. Kiro, blue for our notes, red for the experiment's corrections only
+   (2026-11-23; the headings were red from 11-22 to 11-23). A struck rule is crossed out in red, the rewrite under it hangs from a red line, a missed
    prediction is underlined in red. The words keep their inks; only the pen marks are red. */
 .book {
   --red-pen: #c4271c;
@@ -2433,7 +2442,7 @@ html[data-mode="night"] .rule-rewrite {
   text-underline-offset: 3px;
 }
 .book .cap .ink-c {
-  color: var(--red-pen);
+  color: #b0501c;
 }
 html[data-app="body-lab"] {
   --ink-commentary: #8fb4ff;
@@ -2482,5 +2491,44 @@ html[data-mode="night"] .rule::before {
     flex: 0 0 auto;
     width: 100%;
     max-width: none;
+  }
+}
+/* Illustrations (2026-11-23). The cover shows one building cut open: the day lab upstairs, the night lab below,
+   above the two cards it leads to. Each lab's masthead has a margin sketch in ink, as a researcher would draw in
+   a notebook; on the dark night desk the same sketch is turned into light ink. */
+.cover-art {
+  margin: 1.4rem 0 1.6rem;
+}
+.cover-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+/* The sketch floats beside the lab's description, under the title, so it stays clear of the moon and the web
+   in the page's top corner. */
+.masthead {
+  display: flow-root;
+}
+.margin-sketch {
+  float: right;
+  width: 13rem;
+  height: auto;
+  margin: 0.8rem 0 0.4rem 1rem;
+  pointer-events: none;
+}
+html[data-mode="night"] .margin-sketch {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92);
+  opacity: 0.85;
+}
+/* On a night page the moon hangs low enough to reach the title's line between 900 and 1100 pixels. */
+html[data-mode="night"] .margin-sketch {
+  margin-top: 2rem;
+}
+@media (max-width: 900px) {
+  .margin-sketch {
+    width: 8rem;
+    margin: 0.6rem 0 0.4rem 0.8rem;
   }
 }

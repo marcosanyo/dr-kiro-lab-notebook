@@ -36,6 +36,16 @@ FONT_FILES = (
     "plex-mono-600.woff2",
 )
 FONT_LICENSE = f"{ASSET_DIR}/fonts-license.txt"
+# Illustrations, served from the site itself (assets/art/): the cover's picture of the two labs, and one
+# margin sketch per application, shown beside its masthead (sketch-<application>.png).
+ART_FILES = ("cover.jpg", "sketch-wind-tunnel.png", "sketch-body-lab.png")
+COVER_ART = f"{ASSET_DIR}/cover.jpg"
+
+
+def sketch(application: str) -> str | None:
+    """The address of the application's margin sketch, or None when it has none."""
+    name = f"sketch-{application}.png"
+    return f"{ASSET_DIR}/{name}" if name in ART_FILES else None
 
 
 def site_id(kind: str, text: str, source: str) -> str:

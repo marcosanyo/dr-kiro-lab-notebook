@@ -16,6 +16,7 @@ mark_words = "vortices stop"
 [[polaroid]]
 heading = "Where it started"
 trial = "T1"
+door = true
 words = "The square body sheds vortices: the wake swings from side to side."
 
 [[polaroid]]

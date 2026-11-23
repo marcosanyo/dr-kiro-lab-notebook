@@ -35,12 +35,19 @@ def _masthead(app: App) -> list[Segment]:
         *_el("span", "key key-c", say_text(pen)),
         *_el("span", "key key-p", say_text("KEY_PENCIL")),
     ]
+    drawn = addresses.sketch(app.application)
+    sketch = (
+        html.void("img", {"class": "margin-sketch", "src": drawn, "alt": "", "aria-hidden": "true"})
+        if drawn
+        else []
+    )
     return _el(
         "header",
         "masthead",
         [
             *_el("p", "kicker", html.text(commentary(app.case, app.source))),
             *_el("h1", "big-title", say_text("MASTHEAD_TITLE")),
+            *sketch,
             *_el("p", "lab-about", html.text(commentary(app.about, app.source))),
             *_el(
                 "details",

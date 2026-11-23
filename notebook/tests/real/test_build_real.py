@@ -64,7 +64,10 @@ def test_the_real_build_writes_every_page_written_so_far_with_sidecars(site):
     shipped = {
         f"{scope}{path}"
         for scope in SCOPES
-        for path in (addresses.FONT_LICENSE, *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.FONT_FILES))
+        for path in (
+            addresses.FONT_LICENSE,
+            *(f"{addresses.ASSET_DIR}/{n}" for n in (*addresses.FONT_FILES, *addresses.ART_FILES)),
+        )
     }
     pictures = {f for f in files if "/p/" in f or f.startswith("p/")}
     assert files - pictures == texts | {t + SIDECAR_SUFFIX for t in texts} | shipped
