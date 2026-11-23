@@ -35,7 +35,7 @@ NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
 NOTE_KEYS = frozenset({"kind", "prediction"})
 NOTES = 3
 PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals", "mark", "mark_equals", "mark_words"})
-POLAROID_KEYS = frozenset({"heading", "trial", "words", "star"})
+POLAROID_KEYS = frozenset({"heading", "trial", "words", "star", "door"})
 APP_KEYS = frozenset(
     {
         "application",
@@ -88,6 +88,7 @@ class Polaroid:
     words: str
     star: bool
     source: str
+    door: bool = False  # the picture of the lab's card on the front page
 
 
 @dataclass(frozen=True)
@@ -236,12 +237,16 @@ def _polaroid(file: str, index: int, data: Any, record: RecordModel) -> Polaroid
     star = data.get("star", False)
     if not isinstance(star, bool):
         raise NotebookError(f"{where} star", "must be true or false")
+    door = data.get("door", False)
+    if not isinstance(door, bool):
+        raise NotebookError(f"{where} door", "must be true or false")
     return Polaroid(
         _string(f"{where} heading", data["heading"], HEADING_MAX),
         trial,
         _string(f"{where} words", data["words"], WORDS_MAX),
         star,
         where,
+        door,
     )
 
 

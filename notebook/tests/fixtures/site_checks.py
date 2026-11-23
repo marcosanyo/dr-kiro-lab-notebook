@@ -44,12 +44,14 @@ FORBIDDEN_SCRIPT = (
 )
 # The only buttons: the moving picture controls (design 10).
 BUTTON_ACTIONS = {"play", "pause", "step", "sheet", "back"}
-# The assets of `a/`: the stylesheet, the script, the typefaces and their licence (all served by the site).
+# The assets of `a/`: the stylesheet, the script, the typefaces and their licence, the drawings (all served
+# by the site).
 ASSETS = {
     addresses.STYLESHEET,
     addresses.SCRIPT,
     addresses.FONT_LICENSE,
     *(f"{addresses.ASSET_DIR}/{name}" for name in addresses.FONT_FILES),
+    *(f"{addresses.ASSET_DIR}/{name}" for name in addresses.ART_FILES),
 }
 _CSS_URL = re.compile(r"url\(\s*['\"]?([^'\")]*)", re.IGNORECASE)
 _SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
@@ -134,7 +136,10 @@ def layout_problems(site: Path) -> list[str]:
                 out.append(f"{f}: a file that is not a page, at a page's place")
         elif rest.startswith(f"{addresses.ASSET_DIR}/"):
             if rest not in ASSETS or rest.count("/") != 1:
-                out.append(f"{f}: an asset that is not the stylesheet, the script, a typeface or the licence")
+                out.append(
+                    f"{f}: an asset that is not the stylesheet, the script, a typeface, the licence "
+                    "or a drawing"
+                )
         elif not re.fullmatch(r"p/[0-9a-f]{64}\.png", rest) or f.endswith(SIDECAR_SUFFIX):
             out.append(f"{f}: a file in a subfolder that is not a picture or an asset")
     return out
@@ -171,7 +176,12 @@ def _link_problem(value: str) -> str | None:
         return "contains .."
     if target and not (
         re.fullmatch(r"[a-z0-9-]+\.html|[a-z0-9-]+/index\.html", target)
-        or target in (addresses.STYLESHEET, addresses.SCRIPT)
+        or target
+        in (
+            addresses.STYLESHEET,
+            addresses.SCRIPT,
+            *(f"{addresses.ASSET_DIR}/{n}" for n in addresses.ART_FILES),
+        )
         or re.fullmatch(r"p/[0-9a-f]{64}\.png", target)
     ):
         return "names no page, asset or picture of the flat site"

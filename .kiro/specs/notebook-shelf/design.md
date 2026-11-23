@@ -79,9 +79,11 @@ Numbers at the top of a page are short (`numbers.brief`): metres under 10 cm in 
 
 1. The hypothesis stamp on a row is the status of the table rows that cite its experiment (the four bench words). Dr. Kiro's verdict word (supported, partly, rejected) is a different word and is shown in Dr. Kiro's ink inside the open note.
 2. The first counting trial is not a "new best" on the best so far or on a hypothesis row, because nothing came before it.
+2A. The star (the highlight's photo and the hypothesis card) goes only to the trial that set the session's final best, the last trial that raised the best, and only when it had an earlier best. Earlier steps are not starred; they are labelled in the chart when they are large enough (the progress paragraph above). No threshold is used.
 3. The model name is not in the record. It is a required key of the choice file, written by a person.
 4. The date is the day a person says the session was sealed. The record holds no time. The first set of dates is the day each record was added to git.
 5. The reader's budget and units come from the reader run's sealed start entry, not from the request file or the builder's app table. The request file holds only the sentence and the ranges. A budget that the records do not state fails the build (requirement 5.2).
+6A. The cover picture (`assets/art/cover.jpg`) sits above the two doors; each lab's margin sketch (`assets/art/sketch-<application>.png`) floats beside its masthead description. `build.py` copies the files of `ART_FILES` into each application's `a/` folder and the front page; `watch/serve.py` serves the same files. A marked `door` photo (`Polaroid.door`, at most one per session) is the card's picture; `pages/front.py` falls back to the starred photo, then the first.
 6. The front page has no palette of its own. It takes the night paper that every page without a day mode has, and each door copies its lab's palette (see "Night and day"). The door colours are a copy of the palette values; a change to a palette needs the same change in the two door blocks.
 7. The summary under a session's title is at most 40 words. Nothing is cut to fit; a longer summary fails the build (requirement 2.3).
 8. The end refusals are shown once above the spec table, not once per card (lab-notebook Decision 33, revised 2026-11-21).

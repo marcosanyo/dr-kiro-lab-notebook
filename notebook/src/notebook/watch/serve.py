@@ -31,6 +31,7 @@ _TYPES = {
     ".woff2": "font/woff2",
     ".txt": "text/plain; charset=utf-8",
     ".png": "image/png",
+    ".jpg": "image/jpeg",
     ".html": HTML,
     ".json": "application/json",
 }
@@ -44,13 +45,19 @@ def content_type(name: str) -> str:
 
 def load_assets(site_assets: Path) -> dict[str, tuple[bytes, str]]:
     """Read the files of `a/` once, at start: the stylesheet, the script, the typefaces with their licence,
-    and `watch.js` when the package has it (task 26.3 writes it). A file that is named and missing fails."""
+    the drawings, and `watch.js` when the package has it (task 26.3 writes it). A file that is named and
+    missing fails."""
     out: dict[str, tuple[bytes, str]] = {}
     for path, name in ((addresses.STYLESHEET, "notebook.css"), (addresses.SCRIPT, "notebook.js")):
         out["/" + path] = ((site_assets / name).read_bytes(), content_type(name))
     for name in addresses.FONT_FILES:
         out[f"/{addresses.ASSET_DIR}/{name}"] = (
             (site_assets / "fonts" / name).read_bytes(),
+            content_type(name),
+        )
+    for name in addresses.ART_FILES:
+        out[f"/{addresses.ASSET_DIR}/{name}"] = (
+            (site_assets / "art" / name).read_bytes(),
             content_type(name),
         )
     out["/" + addresses.FONT_LICENSE] = (

@@ -82,7 +82,9 @@ def test_a_fixture_build_writes_the_expected_paths_with_a_sidecar_per_text_file(
         "fake/a/notebook.js",
     }
     shipped = {f"{scope}{addresses.FONT_LICENSE}" for scope in ("", "fake/")} | {
-        f"{scope}{addresses.ASSET_DIR}/{n}" for scope in ("", "fake/") for n in addresses.FONT_FILES
+        f"{scope}{addresses.ASSET_DIR}/{n}"
+        for scope in ("", "fake/")
+        for n in (*addresses.FONT_FILES, *addresses.ART_FILES)
     }
     # The front page's card shows a picture of the session the application opens on, in p/ at the root.
     hashes = {hashlib.sha256(t.picture.data).hexdigest() for t in record.trials}
