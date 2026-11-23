@@ -362,7 +362,7 @@ def _polaroid(
     if pol.star:
         head += _el("span", "star", [markup("&#9733;")], title="best")
     values = [*html.text(pencil(f"{trial.id} · {_values(record, trial)}", source))]
-    if point.improved and point.delta is not None:
+    if point.step:
         values += [markup(" "), *_new_best()]
     tilt = "tilt-left" if chosen.polaroids[0] is pol else "tilt-right"
     return _el(
@@ -977,11 +977,7 @@ def _hypothesis_row(
     source = _src(record, hypothesis.seq)
     hid = html.check_id("hypothesis", hypothesis.id, source)
     experiments = [e for e in record.experiments if e.hypothesis == hypothesis.id]
-    bests = (
-        {p.trial.id for p in found.points if p.improved and p.delta is not None}
-        if found is not None
-        else set()
-    )
+    bests = {p.trial.id for p in found.points if p.step} if found is not None else set()
     mine = [t for e in experiments for t in record.trials if t.id in e.trials]
     star = [t for t in mine if t.id in bests]
     pic: list[Segment] = []
@@ -1001,7 +997,14 @@ def _hypothesis_row(
         *_el("span", "hyp-title", html.text(hypothesis.title.segment())),
         *_el("span", "hyp-expect", [*say_text("EXPECTS"), *html.text(hypothesis.statement.segment())]),
         *_el("span", "hyp-results", _outcome_line(record, hypothesis, outcomes, mode)),
-        *_el("span", "hyp-stamps", _row_stamps(record, table, checked, {e.id for e in experiments})),
+        *_el(
+            "span",
+            "hyp-stamps",
+            [
+                *_row_stamps(record, table, checked, {e.id for e in experiments}),
+                *_el("span", "hyp-open", say_text("OPEN_NOTE")),
+            ],
+        ),
     ]
     # At the bench, the hypothesis that is registered and has no verdict yet is the one being run (23.9).
     running = mode == AT_BENCH and record.seal is None and verdict is None

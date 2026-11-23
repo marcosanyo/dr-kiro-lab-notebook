@@ -19,6 +19,7 @@ _INKS = (
     ("INK_COMMENTARY_NAME", "INK_COMMENTARY_ABOUT", "c"),
     # The miss red has no swatch: it is used only on missed predictions (Requirement 6.4).
     ("MISS_RED_NAME", "MISS_RED_ABOUT", None),
+    ("RED_PEN_NAME", "RED_PEN_ABOUT", None),
 )
 
 _STATUS_WORDS = (

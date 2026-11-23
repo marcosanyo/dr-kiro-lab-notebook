@@ -39,7 +39,7 @@ def _masthead(app: App) -> list[Segment]:
         "header",
         "masthead",
         [
-            *_el("p", "kicker", say_text("KICKER")),
+            *_el("p", "kicker", html.text(commentary(app.case, app.source))),
             *_el("h1", "big-title", say_text("MASTHEAD_TITLE")),
             *_el("p", "lab-about", html.text(commentary(app.about, app.source))),
             *_el(
@@ -62,6 +62,7 @@ def _masthead(app: App) -> list[Segment]:
 def _lab_links(current: App, apps: tuple[App, ...]) -> list[Segment]:
     """Two small links at the top of the page: the front page, and the other application (or each of them)."""
     links = [*link(addresses.apps_link("", current.source), say_text("FRONT_LINK"))]
+    links += [*say_text("LINK_SEPARATOR"), *link(addresses.HOW, say_text("HOW_LINK"))]
     for app in apps:
         if app is current:
             continue

@@ -256,8 +256,13 @@ INK_PENCIL_ABOUT = (
 )
 INK_COMMENTARY_NAME = "Commentary ink"
 INK_COMMENTARY_ABOUT = (
-    "Our own text, written by the builder of the lab: the titles and summaries, headings, labels and "
-    "explanations. Ordinary type, with a small mark saying our notes."
+    "Our own text, written by the builder of the lab: the titles and summaries, the reader's request, labels "
+    "and explanations. Blue pen. A small mark says our notes."
+)
+RED_PEN_NAME = "Red pen"
+RED_PEN_ABOUT = (
+    "Our marks on the page, not the author's words: the section headings, a rule struck out and the rewrite "
+    "beside it, and a prediction that missed."
 )
 MISS_RED_NAME = "Miss red"
 MISS_RED_ABOUT = (
@@ -609,6 +614,8 @@ PROGRESS_MARK_A = " The dashed line marks the first trial where "
 PROGRESS_MARK_B = "."
 OTHER_LAB = "Go to "
 LINK_SEPARATOR = " · "
+# The cue at the bottom right of a hypothesis card: the card opens its note (the marker is in the stylesheet).
+OPEN_NOTE = "open note"
 CARD_STOPPED = "stopped early"
 CARD_CHANGED_BODY = "changed body"
 # The watch reader (Requirement 23.5, design N35, N37). Fixed problem texts; the bad text is never shown.
