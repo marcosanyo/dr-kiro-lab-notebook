@@ -34,7 +34,9 @@ BOOK_KEYS = frozenset(
 NOTE_KINDS = ("best", "hits", "rejected", "trials", "miss")
 NOTE_KEYS = frozenset({"kind", "prediction"})
 NOTES = 3
-PROGRESS_KEYS = frozenset({"measurement", "better", "require", "equals", "mark", "mark_equals", "mark_words"})
+PROGRESS_KEYS = frozenset(
+    {"measurement", "better", "min_gain", "require", "equals", "mark", "mark_equals", "mark_words"}
+)
 POLAROID_KEYS = frozenset({"heading", "trial", "words", "star"})
 APP_KEYS = frozenset(
     {
@@ -78,6 +80,7 @@ class Progress:
     mark: str | None  # a measurement whose first value `mark_equals` is flagged on the chart
     mark_equals: float | None
     mark_words: str | None  # the words a person writes at the flag
+    min_gain: float  # a new best is marked only when it beats the earlier best by at least this (its unit)
     source: str
 
 
@@ -222,7 +225,13 @@ def _progress(file: str, data: Any, record: RecordModel) -> Progress:
             raise NotebookError(f"{where} mark_equals", "must be a number")
         mark_equals = float(value)
         mark_words = _string(f"{where} mark_words", data["mark_words"], 30)
-    return Progress(measurement, better, require, equals, mark, mark_equals, mark_words, where)
+    min_gain = 0.0
+    if "min_gain" in data:
+        value = data["min_gain"]
+        if isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+            raise NotebookError(f"{where} min_gain", "must be a number, zero or more")
+        min_gain = float(value)
+    return Progress(measurement, better, require, equals, mark, mark_equals, mark_words, min_gain, where)
 
 
 def _polaroid(file: str, index: int, data: Any, record: RecordModel) -> Polaroid:

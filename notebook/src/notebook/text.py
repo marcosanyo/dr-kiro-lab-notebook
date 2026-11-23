@@ -256,8 +256,13 @@ INK_PENCIL_ABOUT = (
 )
 INK_COMMENTARY_NAME = "Commentary ink"
 INK_COMMENTARY_ABOUT = (
-    "Our own text, written by the builder of the lab: the titles and summaries, headings, labels and "
-    "explanations. Ordinary type, with a small mark saying our notes."
+    "Our own text, written by the builder of the lab: the titles and summaries, the reader's request, labels "
+    "and explanations. Blue pen. A small mark says our notes."
+)
+RED_PEN_NAME = "Red pen"
+RED_PEN_ABOUT = (
+    "Our marks on the page, not the author's words: the section headings, a rule struck out and the rewrite "
+    "beside it, and a prediction that missed."
 )
 MISS_RED_NAME = "Miss red"
 MISS_RED_ABOUT = (

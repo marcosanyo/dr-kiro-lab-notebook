@@ -2032,7 +2032,7 @@ html[data-mode="night"] .rule::before,
 html[data-mode="night"] .tile::before {
   content: "";
   position: absolute;
-  top: -0.45rem;
+  top: -0.75rem;
   left: 50%;
   width: 3.4rem;
   height: 0.9rem;
@@ -2135,6 +2135,18 @@ details > summary::before {
 }
 details[open] > summary::before {
   content: "\25BE ";
+}
+/* One marker per summary: the browser's own triangle is hidden, the ::before above is the only one. The hypothesis
+   summary is a grid, where a ::before would take a cell of its own, so it has no marker; its number is the cue. */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details > .hyp-summary::before,
+details[open] > .hyp-summary::before {
+  content: none;
 }
 .rule {
   position: relative;
@@ -2344,7 +2356,7 @@ html[data-mode="night"] .book {
 }
 .mark-drips {
   top: 0;
-  left: 42%;
+  left: 74%;
   width: 5.5rem;
   height: auto;
   fill: rgba(60, 140, 45, 0.3);
@@ -2417,10 +2429,46 @@ html[data-app="body-lab"] {
 html[data-app="body-lab"][data-mode="night"] .book {
   --ink-commentary: #1f4fa3;
 }
-/* The reader's request is the one sentence the test is about: written in the red pen. */
+/* The reader's request is our own sentence, so it is in the blue pen (the commentary ink), not the red one. */
 .book .request {
-  border-left-color: var(--red-pen);
+  border-left-color: var(--ink-commentary);
 }
 .book .request .ink-c {
-  color: var(--red-pen);
+  color: var(--ink-commentary);
+}
+/* The plain pages (the ink legend, how the lab works) have no decoration over the text. The reset at the top of the
+   sheet removes every margin, so their headings, paragraphs and lists get spacing here. */
+.plain-book h1 {
+  margin: 0 0 0.9rem;
+}
+.plain-book h2 {
+  margin: 1.6rem 0 0.6rem;
+}
+.plain-book p {
+  margin: 0 0 0.8rem;
+}
+.plain-book ul,
+.plain-book ol {
+  margin: 0 0 0.8rem;
+  padding-left: 1.4rem;
+  list-style: disc;
+}
+.plain-book li {
+  margin: 0.25rem 0;
+}
+/* The night tape sits above the card's top edge, clear of the stamp row (the tape of a spec card used to cover it). */
+html[data-mode="night"] .rule::before {
+  top: -0.8rem;
+}
+/* Narrow screens: the cover cards stack in one column, each as wide as the page. */
+@media (max-width: 700px) {
+  .shelf {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  .shelf .card {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+  }
 }

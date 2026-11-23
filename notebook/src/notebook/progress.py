@@ -26,6 +26,7 @@ class Point:
     best: float | None  # the best value up to and including this trial
     improved: bool
     delta: float | None  # the change from the earlier best, None for the first counting trial
+    step: bool  # a new best that beats the earlier one by at least `min_gain`: the star and the chart name
 
 
 @dataclass(frozen=True)
@@ -73,7 +74,8 @@ def series(record: RecordModel, spec: Progress) -> Series:
             improved = True
             delta = None if best is None else value - best
             best = value
-        points.append(Point(trial, hypothesis_of[trial.id], raw, value, best, improved, delta))
+        step = improved and delta is not None and delta >= spec.min_gain
+        points.append(Point(trial, hypothesis_of[trial.id], raw, value, best, improved, delta, step))
     mark_index = None
     if spec.mark is not None:
         for i, trial in enumerate(record.trials):
