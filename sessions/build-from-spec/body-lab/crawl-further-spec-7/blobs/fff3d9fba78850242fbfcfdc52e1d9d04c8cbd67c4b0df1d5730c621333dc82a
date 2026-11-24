@@ -1,0 +1,26 @@
+### H2: Replicating the given a1 = -1 results
+
+WHEN c1 is held at -1 and c3 is a unit sine at 1.5 Hz with the other inputs at 0, THE system SHALL end at x between 0.4 and 0.55 m, as E9 reported (0.469); and WHEN c1 is -1 with c3 at 0, THE system SHALL end at x between 0.08 and 0.15 m.
+
+```prediction
+# relies on: R9, R11, E9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.4, 0.55]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 1.5
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.08, 0.15]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 0
+f = 1.5
+```

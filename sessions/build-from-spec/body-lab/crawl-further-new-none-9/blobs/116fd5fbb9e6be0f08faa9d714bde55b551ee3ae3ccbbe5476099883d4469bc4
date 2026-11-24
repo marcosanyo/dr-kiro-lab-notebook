@@ -1,0 +1,18 @@
+### H4: Faster c2/c3 quadrature gives more forward travel
+
+WHEN c2 = sin(2 pi t / 0.25 s) and c3 = cos(2 pi t / 0.25 s) at amplitude 1 and c0, c1, c4 are 0, THE system SHALL end with x between 0.2 and 0.6 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 0.6]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 1.0
+a3 = 1.0
+a4 = 0.0
+period = 0.25
+```

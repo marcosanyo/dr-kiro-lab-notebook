@@ -1,0 +1,28 @@
+# Requirements
+
+### H1: Half-strength c1 with a c3 sine at 1.5 Hz crawls 0.3 to 0.5 m and stays straight
+
+WHEN c1 is held at -0.5 and c3 is a unit sine at 1.5 Hz with the other inputs at 0, THE system SHALL end at x between 0.3 and 0.5 m with heading within 20 deg of the start.
+
+```prediction
+# relies on: R9, R11, E9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 1.5
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 1.5
+```

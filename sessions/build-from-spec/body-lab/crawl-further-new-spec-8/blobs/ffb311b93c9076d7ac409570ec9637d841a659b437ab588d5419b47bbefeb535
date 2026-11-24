@@ -1,0 +1,92 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Lag, frequency and c4 near the best point raise x above 0.27 m
+
+WHEN c2 and c3 carry sines near 2.1 Hz with c3 lagging c2 by 200 deg, or at 2.2 Hz with lag 225 deg, or at 2.1 Hz with lag 225 deg and c4 in phase with c2 at amplitude 0.5, THE system SHALL reach x of at least 0.27 m.
+
+```prediction
+# relies on: R8
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.27, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.2, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 225
+a4 = 0.0
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.0, 0.4]
+label = "outside"
+[prediction.when]
+f = 2.1
+phi = 225
+a4 = 0.5
+```
+
+Notes and results go here.
+
+E1 result: T1 (2.1 Hz, lag 200, a4 0) x 0.294, y 0.113, heading 10.6. T2 (2.2 Hz, lag 225) x 0.240, heading -27.4. T3 (2.1 Hz, lag 225, a4 0.5) x 0.312, y 0.195, heading 24.9. Lag 200 and c4 both raise x and turn the body left. Final heading carries a wobble of about +-10 deg at 2.1 Hz.
+
+### H2: A small c4 with lag 200 to 225 deg gives x of at least 0.3 m with heading under 20 deg
+
+WHEN c2 and c3 carry 2.1 Hz sines with c3 lagging by 210 deg and c4 carries 0.3 times the c2 sine, THE system SHALL reach x of at least 0.3 m with heading magnitude under 20 deg and y under 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.29, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 210
+a4 = 0.3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-5.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 210
+a4 = 0.3
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.27, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 225
+a4 = 0.3
+
+[[prediction]]
+id = "P4"
+measurement = "x"
+range = [0.29, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0.3
+```
+
+Notes and results go here.

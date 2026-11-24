@@ -1,0 +1,29 @@
+# H4: Travelling wave at 1.5 Hz, lag 1.0 rad per channel, gives modest forward travel
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a", "f", "ph"]
+TRIALS = [
+    [1, 1.5, 1.0],
+]
+
+
+def c0(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 0)
+
+
+def c1(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 1)
+
+
+def c2(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 2)
+
+
+def c3(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 3)
+
+
+def c4(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 4)

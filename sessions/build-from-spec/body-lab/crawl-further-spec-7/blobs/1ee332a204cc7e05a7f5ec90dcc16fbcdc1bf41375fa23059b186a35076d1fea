@@ -1,0 +1,5 @@
+# Design
+
+Goal: x in 0.3 to 0.5 m, |y| <= 0.2 m, |heading| <= 20 deg.
+
+Known from given/: a1=-1, s3=1: f=1.5 gives x 0.469 but heading -29; f=2 gives x 0.621, heading 0. Reducing a1 reduces the c1 turn and the forward travel, so try a1=-0.5 at f 1.5 to 2.

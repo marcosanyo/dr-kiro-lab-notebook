@@ -1,0 +1,26 @@
+### H4: Travelling wave at 1.5 Hz, lag 1.0 rad per channel, gives modest forward travel
+
+WHEN channel i is sin(2*pi*1.5*t - 1.0*i) for i = 0..4, THE system SHALL end at x between 0.1 and 0.4 m with heading within 40 deg of the start, as E5 suggested (x 0.219 at f = 1.5).
+
+```prediction
+# relies on: R5
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-40, 40]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.0
+```

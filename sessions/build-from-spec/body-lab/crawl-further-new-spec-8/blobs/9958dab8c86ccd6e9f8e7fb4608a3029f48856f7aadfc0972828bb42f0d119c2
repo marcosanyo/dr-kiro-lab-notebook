@@ -1,0 +1,36 @@
+### H1: Lag, frequency and c4 near the best point raise x above 0.27 m
+
+WHEN c2 and c3 carry sines near 2.1 Hz with c3 lagging c2 by 200 deg, or at 2.2 Hz with lag 225 deg, or at 2.1 Hz with lag 225 deg and c4 in phase with c2 at amplitude 0.5, THE system SHALL reach x of at least 0.27 m.
+
+```prediction
+# relies on: R8
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.27, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0.0
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.2, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.2
+phi = 225
+a4 = 0.0
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.0, 0.4]
+label = "outside"
+[prediction.when]
+f = 2.1
+phi = 225
+a4 = 0.5
+```

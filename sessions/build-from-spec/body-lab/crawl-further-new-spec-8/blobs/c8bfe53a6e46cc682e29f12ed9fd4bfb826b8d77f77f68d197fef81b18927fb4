@@ -1,0 +1,45 @@
+### H2: A small c4 with lag 200 to 225 deg gives x of at least 0.3 m with heading under 20 deg
+
+WHEN c2 and c3 carry 2.1 Hz sines with c3 lagging by 210 deg and c4 carries 0.3 times the c2 sine, THE system SHALL reach x of at least 0.3 m with heading magnitude under 20 deg and y under 0.2 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.29, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 210
+a4 = 0.3
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-5.0, 20.0]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 210
+a4 = 0.3
+
+[[prediction]]
+id = "P3"
+measurement = "x"
+range = [0.27, 0.4]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 225
+a4 = 0.3
+
+[[prediction]]
+id = "P4"
+measurement = "x"
+range = [0.29, 0.45]
+label = "new-combination"
+[prediction.when]
+f = 2.1
+phi = 200
+a4 = 0.3
+```

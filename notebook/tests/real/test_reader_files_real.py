@@ -19,14 +19,17 @@ def runs() -> list[readerruns.Run]:
     return readerruns.load(SESSIONS)
 
 
-def test_the_twelve_committed_runs_load_in_request_setup_and_name_order(runs) -> None:
+def test_the_fifteen_committed_runs_load_in_request_setup_and_name_order(runs) -> None:
     assert [r.name for r in runs] == [
         "crawl-further-spec-1",
         "crawl-further-spec-2",
+        "crawl-further-spec-7",
         "crawl-further-new-spec-3",
         "crawl-further-new-spec-4",
+        "crawl-further-new-spec-8",
         "crawl-further-new-none-5",
         "crawl-further-new-none-6",
+        "crawl-further-new-none-9",
         "stop-ahead-spec-1",
         "stop-ahead-spec-2",
         "stop-ahead-record-1",

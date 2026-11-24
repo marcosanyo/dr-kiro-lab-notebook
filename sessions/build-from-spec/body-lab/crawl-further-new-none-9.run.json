@@ -1,0 +1,72 @@
+{
+  "continue_lines": 0,
+  "files": {
+    ".kiro/agents/reader-prompt.md": "e9a7e97ba8f5cb04d08b82bbca8223b7ae63d0c0df7882eb862ce89bb63efc89",
+    ".kiro/agents/reader.json": "38c45cdcaf0dbd2c92dde6edee285a5bde51e5f49925bb51c5ace41a62fbe91c",
+    ".kiro/hooks/calllog-post-tool.json": "cfa69f6bbad9b2357283fbb699eb3b3023f11aae77a3f8077fd67ca9b92b39fd",
+    ".kiro/hooks/calllog-pre-tool.json": "69c044523c1ede9b1fb1053c065cf60dad23acea60db8205b1e30f854de03863",
+    ".kiro/hooks/calllog.py": "e5b1534607e4370793291998a6cb5327e4e4bbdd4133fdbd186e7f3d8d960628",
+    ".kiro/hooks/confine-pre-tool.json": "ec1171b7aaf82b9f0d6dff66eaeab5832786723ccc71fb0a4b02308e4d89c554",
+    ".kiro/hooks/confine.py": "1f523c9672e826fb8b454b4b2b5aa888f505b77ddc0cc46526e4fa1e04c85a47",
+    ".kiro/specs/lab/design.md": "2ef3a566f89e6d4ed1d38352171d5b9a693c04c68c68beb8dde017bae1917022",
+    ".kiro/specs/lab/requirements.md": "f558cf8a9b0e97aa89c5e9688ea77fb29bafd311eb7dfe3e17fa92990c94df88",
+    ".kiro/specs/lab/tasks.md": "40e9a60e708325482335436223061bf799b154a6706032ab98c8f6ab9a109bae",
+    ".kiro/steering/method.md": "fb9631b1b57313ae248401ae2e7f64bdcfb2f7901cdfb57dfdd625995a948e40",
+    ".kiro/steering/reader.md": "d4985175be93854fefc7ab4dbf507e2a3f4ffbaaaf2b197deb71b7ab85d6a115",
+    "request.md": "e5aa562adf5b49db7744bdca6a68027fa1803d69f7a83641939956db9df4c962"
+  },
+  "first_in_range": null,
+  "format": 1,
+  "given": {},
+  "kiro": {
+    "effort": "default",
+    "model": "claude-sonnet-5.5",
+    "version": "kiro-cli 3.5.0"
+  },
+  "last_trial": {
+    "phase": "best",
+    "trial": "T12"
+  },
+  "limits": [],
+  "prompts": [
+    {
+      "entries_after": 40,
+      "entries_before": 1,
+      "exit": 0,
+      "kind": "start",
+      "sha256": "cbb2546670db1d0f5af7de3e213f8cbf8fe1c6453300745e4ba6d89370070423",
+      "time": "2026-11-24T13:40:28Z"
+    }
+  ],
+  "record": {
+    "end": "ended",
+    "seal": "02113182f5e3e5869e2749cfceddd1340744bf5899676f7b62289a292c638c2d"
+  },
+  "relied_on": {
+    "ids": [
+      "none"
+    ],
+    "problem": null
+  },
+  "request": {
+    "commit": "19b5f0c574319562ba2b734aa749a6dcf42ea1cd",
+    "id": "crawl-further-new",
+    "sha256": "037d61f44576c3beabc5ba42102c988d3b9d78d8500bc3d33356c00aae1ab3e9"
+  },
+  "result": "fail",
+  "run": "crawl-further-new-none-9",
+  "seed": 3,
+  "setup": "none",
+  "source": {
+    "application": "body-lab",
+    "seal": "be2a54ea8fab7810af004e92a5bc197f7649f302079ce145647090dfac9e9255",
+    "session": "body-3"
+  },
+  "tools": {
+    "end_session": "14fa376eb1692d4d0aa54161ea1dbe5c37c74b4d21a9eb9f4c15c89b532a4128",
+    "record_verdict": "a3740e0a47ff606439908b29e0442d9de505f81e3bade5893eeea9c63bc9ad06",
+    "register_hypothesis": "d5bfe9c1d76a68e6fa85524ce7c7f0a99c2d3ceb69c870e8297e3a2e403e2b21",
+    "run_experiment": "d37c9471233114393ccfa8a067d2ad884fd130448c72c740eab8ea086c82a95c"
+  },
+  "variant": "b"
+}

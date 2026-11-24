@@ -1,0 +1,14 @@
+### H3: Some channel still drives steady motion when held constant
+
+WHEN all five inputs are held at 1, THE system SHALL show steady motion, so that |x| exceeds 0.1 m or |heading| exceeds 5 deg at the end.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-3, -0.1]
+label = "new-combination"
+[prediction.when]
+a = 1
+```
