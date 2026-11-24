@@ -59,7 +59,7 @@ and whether it was observed. Result of the first hand checks: stopped, see below
 ### bench-mcp launcher and preflight (design K33): observed
 
 - Command: the install command above, with `--reinstall`. Exit 0. Output: `Installed 9 executables: bench-check-discovered, bench-export-spec, bench-lab-hooks, bench-make-lab, bench-mcp, bench-new-session, bench-scan, bench-stop, bench-verify`.
-- `command -v bench-mcp`: `/Users/rk/.local/bin/bench-mcp`.
+- `command -v bench-mcp`: `~/.local/bin/bench-mcp`.
 - `bench-mcp --check`, from PATH: `bench-mcp: ready`, exit 0.
 - `bfs-run --help`, from PATH: `usage: bfs-run [-h] --request REQUEST --setup SETUP --source SOURCE --seed SEED --run RUN --model`, exit 0.
 - Not run: any `bfs-run` that starts a session, any reader turn, and any `bench-mcp` against a real session config.
@@ -68,8 +68,8 @@ and whether it was observed. Result of the first hand checks: stopped, see below
 ### 18.1 Install and adapter import (design 9, check 8): observed
 
 - Command: `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --with-editable ./wind-tunnel/adapter --with-executables-from build-from-spec --reinstall`. Exit 0.
-- Observed: `bench-mcp`, `bfs-check-request`, `bfs-run`, `bfs-run-file` and `bfs-check-runs` are on PATH in `/Users/rk/.local/bin`.
-- Observed: `/Users/rk/.local/share/uv/tools/lab-bench/bin/python -c "import build_from_spec.wrap"` prints
+- Observed: `bench-mcp`, `bfs-check-request`, `bfs-run`, `bfs-run-file` and `bfs-check-runs` are on PATH in `~/.local/bin`.
+- Observed: `~/.local/share/uv/tools/lab-bench/bin/python -c "import build_from_spec.wrap"` prints
   `build_from_spec.wrap OK .../build-from-spec/src/build_from_spec/wrap.py`.
 - Observed: `wind-tunnel-adapter`, `wind-tunnel-model`, `gmsh` (4.15.2) and `body-lab-adapter` are installed in the
   tool environment (`importlib.metadata`), and `gmsh` imports.
