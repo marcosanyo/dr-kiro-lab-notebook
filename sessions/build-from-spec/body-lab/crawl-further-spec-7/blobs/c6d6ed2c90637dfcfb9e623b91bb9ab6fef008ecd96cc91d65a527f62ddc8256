@@ -1,0 +1,29 @@
+# H3: Some channel still drives steady motion when held constant
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a"]
+TRIALS = [
+    [1],
+]
+
+
+def c0(t, a):
+    return a
+
+
+def c1(t, a):
+    return a
+
+
+def c2(t, a):
+    return a
+
+
+def c3(t, a):
+    return a
+
+
+def c4(t, a):
+    return a

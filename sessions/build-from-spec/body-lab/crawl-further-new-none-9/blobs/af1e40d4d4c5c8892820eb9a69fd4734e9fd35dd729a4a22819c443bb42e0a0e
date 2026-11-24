@@ -1,0 +1,8 @@
+# Design
+
+## Notes
+
+- c0 and c1 (constant or sin/cos at 1 s) did not move the body. c2 and c3 in quadrature (sin, cos) produce the motion. c4 alone gave a slow heading drift.
+- Reversing the sign of c3 turns the body instead of crawling (heading 56 deg at 1 s period).
+- Forward travel with c2/c3 quadrature at amplitude 1: period 2 s gives 0.055 m, 1 s gives 0.042 m, 0.5 s gives 0.144 m, 0.33 s gives -0.009 m, 0.25 s gives 0.117 m, 0.2 s gives 0.131 m. Sideways drift y is about +0.14 to +0.17 m for the faster periods.
+- The goal of 0.3 to 0.5 m forward was not reached. Budget is spent.

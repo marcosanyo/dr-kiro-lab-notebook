@@ -1,0 +1,31 @@
+# H2: A small c4 with lag 200 to 225 deg gives x of at least 0.3 m with heading under 20 deg
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["f", "phi", "a4"]
+TRIALS = [
+    [2.1, 210, 0.3],
+    [2.1, 225, 0.3],
+    [2.1, 200, 0.3],
+]
+
+
+def c0(t, f, phi, a4):
+    return 0
+
+
+def c1(t, f, phi, a4):
+    return 0
+
+
+def c2(t, f, phi, a4):
+    return math.sin(2 * math.pi * f * t)
+
+
+def c3(t, f, phi, a4):
+    return math.sin(2 * math.pi * f * t - math.radians(phi))
+
+
+def c4(t, f, phi, a4):
+    return a4 * math.sin(2 * math.pi * f * t)

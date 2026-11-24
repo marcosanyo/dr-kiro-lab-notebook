@@ -1,0 +1,31 @@
+# H2: Quadrature sinusoids on c0 and c1 move the body
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a0", "a1", "a2", "a3", "a4", "period"]
+TRIALS = [
+    [1.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0, 0.0, 1.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0, 1.0],
+]
+
+
+def c0(t, a0, period):
+    return a0 * math.sin(2 * math.pi * t / period)
+
+
+def c1(t, a1, period):
+    return a1 * math.cos(2 * math.pi * t / period)
+
+
+def c2(t, a2, period):
+    return a2 * math.sin(2 * math.pi * t / period)
+
+
+def c3(t, a3, period):
+    return a3 * math.cos(2 * math.pi * t / period)
+
+
+def c4(t, a4, period):
+    return a4 * math.sin(2 * math.pi * t / period)

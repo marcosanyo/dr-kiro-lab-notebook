@@ -1,0 +1,19 @@
+### H2: Quadrature sinusoids on c0 and c1 move the body
+
+WHEN c0 = sin(2 pi t / 1 s) and c1 = cos(2 pi t / 1 s) at amplitude 1 and c2 to c4 are 0, THE system SHALL end at least 0.05 m from the start in x.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 1.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1.0
+a1 = 1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+period = 1.0
+```

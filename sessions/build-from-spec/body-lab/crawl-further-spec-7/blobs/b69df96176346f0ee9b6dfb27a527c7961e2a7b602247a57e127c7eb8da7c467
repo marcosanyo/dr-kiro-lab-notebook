@@ -1,0 +1,9 @@
+# Tasks
+
+- [x] E1 a1=-0.5 with c3 sine (rejected)
+- [x] E2 replicate a1=-1 results (rejected)
+- [x] E3 all inputs held at 1 (rejected)
+- [x] E4 wave f=1.5, ph=1 (rejected)
+- [x] E5 wave ph 0, 2, -1 (rejected)
+- [x] E6 wave ph=1.7 at f=3 and 1.5 (partly)
+- [ ] Budget used up. Open: f=3 with ph tuned to cut heading from +29 to under 20.

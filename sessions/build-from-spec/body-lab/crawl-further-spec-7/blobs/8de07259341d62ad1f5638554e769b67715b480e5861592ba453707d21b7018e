@@ -1,0 +1,30 @@
+# H6: A wave with ph = 1.7 stops the rotation
+import math
+
+PHASE = "best"
+MODE = "compare"
+PARAMS = ["a", "f", "ph"]
+TRIALS = [
+    [1, 3.0, 1.7],
+    [1, 1.5, 1.7],
+]
+
+
+def c0(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 0)
+
+
+def c1(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 1)
+
+
+def c2(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 2)
+
+
+def c3(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 3)
+
+
+def c4(t, a, f, ph):
+    return a * math.sin(2 * math.pi * f * t - ph * 4)

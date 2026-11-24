@@ -1,0 +1,122 @@
+# Requirements
+
+### H1: Half-strength c1 with a c3 sine at 1.5 Hz crawls 0.3 to 0.5 m and stays straight
+
+WHEN c1 is held at -0.5 and c3 is a unit sine at 1.5 Hz with the other inputs at 0, THE system SHALL end at x between 0.3 and 0.5 m with heading within 20 deg of the start.
+
+```prediction
+# relies on: R9, R11, E9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 1.5
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-20, 20]
+label = "new-combination"
+[prediction.when]
+a1 = -0.5
+s3 = 1
+f = 1.5
+```
+
+Result (E1): rejected. x -0.055, -0.028, -0.023 at f = 2, 1, 1.5; heading -7.7, -1.2, -1.2. The body hardly moved, which contradicts R9 and R11 at a1 = -0.5.
+
+### H2: Replicating the given a1 = -1 results
+
+WHEN c1 is held at -1 and c3 is a unit sine at 1.5 Hz with the other inputs at 0, THE system SHALL end at x between 0.4 and 0.55 m, as E9 reported (0.469); and WHEN c1 is -1 with c3 at 0, THE system SHALL end at x between 0.08 and 0.15 m.
+
+```prediction
+# relies on: R9, R11, E9
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.4, 0.55]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 1
+f = 1.5
+
+[[prediction]]
+id = "P2"
+measurement = "x"
+range = [0.08, 0.15]
+label = "inside"
+[prediction.when]
+a1 = -1
+s3 = 0
+f = 1.5
+```
+
+Result (E2): rejected. c1=-1 alone: x 2.5e-5, heading -0.004 (decaying transient only). c1=-1 with c3 sine at 1.5 Hz: x -0.023, heading -1.2. The given c1 rule does not hold in this system.
+
+### H3: Some channel still drives steady motion when held constant
+
+WHEN all five inputs are held at 1, THE system SHALL show steady motion, so that |x| exceeds 0.1 m or |heading| exceeds 5 deg at the end.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-3, -0.1]
+label = "new-combination"
+[prediction.when]
+a = 1
+```
+
+Result (E3): rejected. x -0.009, heading -12.6, settles in 0.1 s. No steady drift from constants.
+
+### H4: Travelling wave at 1.5 Hz, lag 1.0 rad per channel, gives modest forward travel
+
+WHEN channel i is sin(2*pi*1.5*t - 1.0*i) for i = 0..4, THE system SHALL end at x between 0.1 and 0.4 m with heading within 40 deg of the start, as E5 suggested (x 0.219 at f = 1.5).
+
+```prediction
+# relies on: R5
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.4]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.0
+
+[[prediction]]
+id = "P2"
+measurement = "heading"
+range = [-40, 40]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.0
+```
+
+Result (E4): rejected. x -0.080, y 0.076, heading -146 (steady rotation about 30 deg/s). Given E5's x 0.219 did not reproduce.
+
+### H5: A wave with a different phase lag moves the body forward without rotating it
+
+WHEN all five inputs are 1.5 Hz unit sines with lag ph per channel, THE system SHALL end with x between 0.3 and 0.5 m and heading within 20 deg for at least one of ph = 0, 2, -1 (here stated for ph = -1).
+
+```prediction
+# relies on: E4
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.3, 0.5]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = -1.0
+```

@@ -1,0 +1,16 @@
+### H6: A wave with ph = 1.7 stops the rotation
+
+WHEN all five inputs are 1.5 Hz unit sines with lag ph = 1.7 rad per channel, THE system SHALL end with heading within 20 deg of the start, because heading falls from -146 at ph 1 to +61 at ph 2.
+
+```prediction
+# relies on: E4, E5
+[[prediction]]
+id = "P1"
+measurement = "heading"
+range = [-20, 20]
+label = "new-combination"
+[prediction.when]
+a = 1
+f = 1.5
+ph = 1.7
+```

@@ -1,0 +1,89 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Zero input leaves the body at rest
+
+WHEN all five inputs c0 to c4 are held at 0 for the whole trial, THE system SHALL end within 0.05 m of the start in x.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.05, 0.05]
+label = "inside"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+```
+
+Result: supported. T1 x = 2.5e-5 m. Constant c0=1 and constant c1=1 also left the body at rest (x about 1e-5 to 3e-5). The picture shows a small body with one thin limb, no motion.
+
+### H2: Quadrature sinusoids on c0 and c1 move the body
+
+WHEN c0 = sin(2 pi t / 1 s) and c1 = cos(2 pi t / 1 s) at amplitude 1 and c2 to c4 are 0, THE system SHALL end at least 0.05 m from the start in x.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 1.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1.0
+a1 = 1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+period = 1.0
+```
+
+Result (E2): rejected. c0 sin plus c1 cos gave x = 3.9e-5 m, no motion. c2 sin plus c3 cos (T5) gave x = 0.042 m, y = 0.089 m, heading wobbling about +-10 deg, final -4.2 deg. c4 sin alone (T6) gave x = 0.002 m, heading drifting to 5.8 deg. So c2 and c3 drive motion and c0, c1 do nothing in this form.
+
+### H3: Slower or reversed c2/c3 quadrature gives more forward travel
+
+WHEN c2 = sin(2 pi t / 2 s) and c3 = cos(2 pi t / 2 s) at amplitude 1 and c0, c1, c4 are 0, THE system SHALL end with x between 0.1 and 0.6 m.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.1, 0.6]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 1.0
+a3 = 1.0
+a4 = 0.0
+period = 2.0
+```
+
+Result (E3): partly. Period 2 (T7): x = 0.055, y = 0.052, heading 11 deg. Reversed c3 at period 1 (T8): x = 0.051, y = -0.042, heading 56 deg, turns instead of crawling. Period 0.5 (T9): x = 0.144, y = 0.161, heading -6 deg. Faster is better; slow period 2 gave x below the predicted 0.1.
+
+### H4: Faster c2/c3 quadrature gives more forward travel
+
+WHEN c2 = sin(2 pi t / 0.25 s) and c3 = cos(2 pi t / 0.25 s) at amplitude 1 and c0, c1, c4 are 0, THE system SHALL end with x between 0.2 and 0.6 m.
+
+```prediction
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.2, 0.6]
+label = "new-combination"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 1.0
+a3 = 1.0
+a4 = 0.0
+period = 0.25
+```
+
+Result (E4): rejected. Period 0.25 (T10): x = 0.117, y = 0.139, heading 20 deg. Period 0.33 (T11): x = -0.009, y = 0.153, heading 5 deg. Period 0.2 (T12): x = 0.131, y = 0.165, heading 43 deg. No period gave x of 0.2 m or more. Best x seen is 0.144 m at period 0.5 (T9). Budget is spent.

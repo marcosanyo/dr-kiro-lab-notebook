@@ -1,0 +1,44 @@
+# Requirements
+
+## Hypotheses
+
+### H1: Zero input leaves the body at rest
+
+WHEN all five inputs c0 to c4 are held at 0 for the whole trial, THE system SHALL end within 0.05 m of the start in x.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [-0.05, 0.05]
+label = "inside"
+[prediction.when]
+a0 = 0.0
+a1 = 0.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+```
+
+Result: supported. T1 x = 2.5e-5 m. Constant c0=1 and constant c1=1 also left the body at rest (x about 1e-5 to 3e-5). The picture shows a small body with one thin limb, no motion.
+
+### H2: Quadrature sinusoids on c0 and c1 move the body
+
+WHEN c0 = sin(2 pi t / 1 s) and c1 = cos(2 pi t / 1 s) at amplitude 1 and c2 to c4 are 0, THE system SHALL end at least 0.05 m from the start in x.
+
+```prediction
+# relies on: none
+[[prediction]]
+id = "P1"
+measurement = "x"
+range = [0.05, 1.0]
+label = "new-combination"
+[prediction.when]
+a0 = 1.0
+a1 = 1.0
+a2 = 0.0
+a3 = 0.0
+a4 = 0.0
+period = 1.0
+```

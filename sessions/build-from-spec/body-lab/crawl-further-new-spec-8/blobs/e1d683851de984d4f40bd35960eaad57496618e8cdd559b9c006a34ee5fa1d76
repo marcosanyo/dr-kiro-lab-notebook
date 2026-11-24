@@ -1,0 +1,9 @@
+# Design
+
+## Notes
+
+- Answer: c2 = sin(2 pi 2.1 t), c3 = sin(2 pi 2.1 t - 225 deg), c4 = 0.35 sin(2 pi 2.1 t), c0 = c1 = 0. Measured x 0.338 m, y 0.152 m, heading 8.4 deg (E3 T8).
+- c4 in phase with c2 adds x and turns the body left. Amplitude 0.3 gives x 0.303, 0.35 gives 0.338, 0.5 gives 0.312 at lag 225 (heading 24.9, y 0.195).
+- Lag below 215 deg with c4 turns the body more than 20 deg (E2).
+- 2.2 Hz is worse than 2.1 Hz (x 0.240, heading -27).
+- Final heading wobbles about +-10 deg at 2.1 Hz, so margins matter.

@@ -1,0 +1,9 @@
+# Design
+
+Goal: x in 0.3 to 0.5 m, |y| <= 0.2 m, |heading| <= 20 deg.
+
+- The given c1 constant drift and c3 stroking rules did not reproduce (E1, E2). Constants on all channels give a 0.1 s transient only (E3).
+- A five-channel lagged wave rotates the body (E4, E5). Heading at f=1.5 runs from -146 (ph 1) to +61 (ph 2).
+- Best trial: f=3, ph=1.7, unit amplitude: x 0.391, y 0.162, heading +29 (E6 T11). It misses the heading limit by 9 deg.
+- Last trial (f=1.5, ph=1.7) gave x 0.006, so the final answer does not meet the goal.
+- Next, if budget allowed: f=3 with ph slightly lower or higher (heading falls as ph falls toward 1.5 at f=1.5, unverified at f=3).
