@@ -19,7 +19,7 @@ import threading
 import time
 from pathlib import Path
 
-REPO = Path("/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook")
+REPO = Path(__file__).resolve().parents[2]
 OUT = Path("/tmp/timing")
 FREE_FLOOR = 2.5e9
 

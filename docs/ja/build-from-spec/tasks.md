@@ -1,8 +1,8 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/build-from-spec/tasks.md`](../../../.kiro/specs/build-from-spec/tasks.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読まず、タスクの実行や完了チェックは英語版だけで行います。この訳のチェック状態は訳した時点のものです。
-> 原文 SHA-256: `eb23d31aae5cfe8796055f14185abeb179a5630fcd5ba11669d0124776036112`
+> 原文 SHA-256: `0b38e44a0d4ceb8774e2e1756a4de3e3bd4b58788380cfe1c5ab967efd99e1bb`
 # 実装計画: build-from-spec
 ## Overview
-`build-from-spec` のタスクです。`requirements.md`（要件 1-19）と `design.md` から作りました。このワークツリーではなく、**メインフォルダー** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook` で実行します。実装は、別のチャットのノートブックの作業が main にマージされ、ユーザーが go と言ってからだけ始めます。両方がメインフォルダーを使うためです（決定 18）。この計画のどれも、それまでは始めません。
+`build-from-spec` のタスクです。`requirements.md`（要件 1-19）と `design.md` から作りました。このワークツリーではなく、**メインフォルダー**（リポジトリの main の作業フォルダー）で実行します。実装は、別のチャットのノートブックの作業が main にマージされ、ユーザーが go と言ってからだけ始めます。両方がメインフォルダーを使うためです（決定 18）。この計画のどれも、それまでは始めません。
 
 実行するリクエストは `build-from-spec/requests/stop-ahead.toml` です: 6 回の実行、`spec`、`none`、`record` で `n` = 1 と 2、元セッションは `sessions/body-lab/body-2`。`straight-ahead` と `turn-right` はコミットされたままで、実行しません。body-2 がその合格範囲の内側の試行をすでに含んでいるためです（決定 18）。
 順序は次のとおりです。まず `lab-bench` の 2 つの改訂を、そのテストと、`lab-bench` および `dr-kiro` 仕様の対応する文言とともに行います（パート 1、設計 3.14）。次に `build-from-spec/` の uv プロジェクトを、依存の順にモジュールごとに、それぞれのテストとプロパティテストとともに作ります（パート 2）。そのあと、設計の第 9 節の実装時チェック、準備の確認、実行を行います（パート 3）。最後に `lab-notebook` 仕様への引き継ぎと最終チェックポイントです。

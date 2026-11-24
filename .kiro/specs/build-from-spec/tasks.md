@@ -3,7 +3,7 @@
 ## Overview
 
 Tasks for `build-from-spec`, from `requirements.md` (Requirements 1-19) and `design.md`. They are carried out in the
-**main folder** `/Users/rk/dev/llm/hackathon/dr-kiro-lab-notebook`, not in this worktree. Implementation starts only
+**main folder** (the repository's main checkout), not in this worktree. Implementation starts only
 after the other chat's notebook work is merged into main and the user says go, because both use the main folder
 (Decision 18). Nothing in this plan is started before that.
 
