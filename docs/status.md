@@ -3,6 +3,15 @@
 Kiro Web とローカルの Kiro の引き継ぎ用です。セッションの最初に読み、最後に更新します（`.kiro/steering/handoff.md`）。
 経緯は git と各 spec の tasks・Decisions にあります。
 
+## reader の 3 回ずつの追加（ブランチ `feat/reader-three-runs`、main の 741e64f から、2026-11-24、ローカル）
+- 記録: `crawl-further-spec-7`（古い spec、fail）、`crawl-further-new-spec-8`（新しい spec、pass）、`crawl-further-new-none-9`（spec なし、fail）の 3 回を、体 b（variant b）、seed 3、モデル `claude-sonnet-5.5`、effort default で走らせた。各条件を 2 回から 3 回にするため。
+- 結果: 古い spec 0/3（前は 0/2）、新しい spec 3/3（前は 2/2）、spec なし 0/3（前は 0/2）。
+- 経緯: 最初は main のまま `bfs-run` を実行したが、「the working folder differs from an earlier run of this request」で止まった。6 回を走らせた後に、hook（`calllog.py`、`confine.py`）と `method.md` を直していたため。そこで、6 回を記録した d766724 の worktree（`.worktrees/reader-n3`）を作り、そこから `uv tool install` し直して、同じ条件で 3 回走らせた。記録は worktree から main の作業ツリーへ写した。
+- 確かめ: `bfs-check-runs` は 15 件すべて `ok`。3 件の `bench-verify` は、いずれも `verified`。run file の設定（seed、variant、モデル、effort、request、既定のファイルの hash）は 6 回と同じ。記録は d766724 の hook と method.md で走らせたもので、main で直した後の版ではない。
+- 直したもの: README の「2 of 2」「0 of 2」を「3 of 3」「0 of 3」に。notebook の固定の文（`tests/real/test_book_real.py`）と、読み込みの一覧の検査（`tests/real/test_reader_files_real.py`、12 件 → 15 件）を新しい数に。spec の例文（`.kiro/specs/notebook-shelf/requirements.md`、訳を含む）も同じ数に。訳の原文ハッシュを更新。`notebook` のテスト 497 件、`ja-check` は通る。
+- 残り: `.worktrees/reader-n3` の worktree は、確かめの後も残している（記録の写しが未コミットで入っている）。push と PR はまだしない。
+- 注意: `sessions/` の記録は 3 回増えた。notebook の表示（body-3 の「What happened here」と reader の欄）は記録から作られるので、ビルドし直すと 3 of 3 に変わる。
+
 ## ノートの表示の直し（ブランチ `fix/notebook-display-issues`、main の f6cd5a7 から、2026-11-23、ローカル）
 - 済み: 折りたたみの三角を 1 つだけにした（ブラウザーの三角を消し、タスクのカードの ▸ は出さない）。390px では上の棚のカードを縦に積む。how・legend の見出し、段落、リストに余白を足した。夜の垂れは題の右側（left 74%）へ。reader の課題文は赤でなく青のペン（コメンタリーの色）。凡例に赤のペンを足し、コメンタリーを青のペンと書いた。上の小見出しはラボの名（`case`）、上の行に「how the lab works」。夜の spec のテープは規則の上の縁より上へ（判子と重ならない）。
 - 済み: 「★ new best」は、セッションの最良を出した試行（body-3 なら T40）にだけ付く。`min_gain` の案は取り下げた。カードの右下に「▸ open note」の印を置いた（開けるカード）。

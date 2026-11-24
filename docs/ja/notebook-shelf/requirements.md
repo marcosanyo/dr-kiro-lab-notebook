@@ -1,5 +1,5 @@
 > **参考訳（日本語）** — 正本は英語版 [`.kiro/specs/notebook-shelf/requirements.md`](../../../.kiro/specs/notebook-shelf/requirements.md) です。内容が食い違う場合は英語版が優先されます。Kiro はこのファイルを読みません。
-> 原文 SHA-256: `9cc860f93c237ba97302456ced4c818840b9e2e29fe6bb9bc268b987e33f35e2`
+> 原文 SHA-256: `bb5866d10d0ac1480a2c6c0906d511e65f6ebb01f5452b5889264ed3614459dc`
 # Requirements Document
 Spec: `notebook-shelf`。
 ## Introduction
@@ -27,7 +27,7 @@ Spec: `notebook-shelf`。
 7. ラボのページの最初の画面（1280 × 900 ピクセル）で、見どころの 2 枚の写真が見える: インクと名前の凡例（インクの説明と記号の行）は 1 行「How to read this notebook: the inks and the names」の下に畳み、セッションのカードは行を分け合う。
 ### Requirement 2A: ノートの意味
 1. 見どころの後に、このセッションで起きたことを矢印でつないだ 3 つの段で言う。数字はすべて記録、表、リーダーの実行から数え、言葉はふつうの英語: Dr. Kiro が書いた予測の数（それぞれ実験の前）、外れた数と、取り消して書き直した規則の数、次の Kiro が spec から得るもの。
-2. 3 つ目の段は、そのセッションのリーダーの実行が記録にあれば、リーダーがしたこと（「Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2.」）を言う。なければ、spec のどの行を信じてよく、どの行が一部しか試されていないか、観察だけか、そして 2 人目の Kiro はこの spec で走らせていないことを言う。走らせていないリーダーを言うことはしない。最終の spec がない記録は、次の Kiro が読むものがまだないと言う。
+2. 3 つ目の段は、そのセッションのリーダーの実行が記録にあれば、リーダーがしたこと（「Another Kiro, given only this spec, did the task in 3 of 3 tries. With nothing, 0 of 3.」）を言う。なければ、spec のどの行を信じてよく、どの行が一部しか試されていないか、観察だけか、そして 2 人目の Kiro はこの spec で走らせていないことを言う。走らせていないリーダーを言うことはしない。最終の spec がない記録は、次の Kiro が読むものがまだないと言う。
 3. リーダーの結果は、話の結末なので、この 3 つの段のすぐ下、発見した spec の前に置く。ノートの順番は: 題、要約、札、見どころ、What happened here、リーダーのテスト、発見した spec、Dr. Kiro のタスクと全部の実験。
 4. 各節の頭に、それが何かを 1 行で書く。ただし見どころは、2 枚の写真と 3 つの数がそれを語るので書かない。H4 や R5 のような番号は小さな札で、カードの題はふつうの文。予測は「11 of 24 predictions, written before the run, came true」のように読める形にする。
 

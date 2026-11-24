@@ -20,8 +20,8 @@ checks against the record: if a status claims more than the record shows, the be
 When the session ends, the record is sealed, and the notebook is built only from sealed records.
 
 The test of a spec is whether someone else can use it. A second Kiro agent, the reader, gets only one spec and
-one task, on the same bench. After we changed the body without telling Dr. Kiro, the reader passed 2 of 2 runs
-with the spec written after the change, 0 of 2 with the spec written before it, and 0 of 2 with no spec
+one task, on the same bench. After we changed the body without telling Dr. Kiro, the reader passed 3 of 3 runs
+with the spec written after the change, 0 of 3 with the spec written before it, and 0 of 3 with no spec
 (`sessions/build-from-spec/body-lab/`).
 
 Built for Kiroween 2026, Skeleton Crew category.

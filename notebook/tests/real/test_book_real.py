@@ -400,8 +400,8 @@ def test_each_retaken_picture_has_a_corner_map_with_one_dot_per_cell(site):
 def test_the_changed_body_shows_the_earlier_spec_beside_its_own_on_the_same_request(site):
     page, found = _page(site, "body-lab/body-3.html")
     story = _story_text(page)
-    assert "Another Kiro, given only this spec, did the task in 2 of 2 tries. With nothing, 0 of 2." in story
-    assert "Given the spec of body-2, written before the body changed, 0 of 2." in story
+    assert "Another Kiro, given only this spec, did the task in 3 of 3 tries. With nothing, 0 of 3." in story
+    assert "Given the spec of body-2, written before the body changed, 0 of 3." in story
     reader = _text_of(page, 'id="reader"', 'id="spec"')
     # Three columns: the old spec (body-2) tried on this body, the new spec (this session), no spec.
     assert found.classes["tile-borrowed"] == 1 and found.classes["tile"] == 3
