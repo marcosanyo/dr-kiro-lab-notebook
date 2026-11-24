@@ -80,7 +80,7 @@ experiments, only the final spec.
 
 All numbers below come from the sealed records in [`sessions/`](sessions/).
 
-1. **The original robot (`body-2`).** 13 of 24 predictions missed, and 8 of 14 rules ended struck through, each
+1. **The original robot (`body-2`).** 13 of 24 predictions missed, and 8 of 14 rules ended `rejected`, each
    paired with its replacement. The rule that held: wire c1 steady and wire c3 on a fast sine, 0.75 m forward. Twice the
    bench refused to end the session over a `validated` it could not back.
 
@@ -217,7 +217,7 @@ solver setup in [`wind-tunnel/README.md`](wind-tunnel/README.md).
 - **Hooks.** In each lab, two hooks log every call (before and after it runs) and a third refuses any call outside
   the lab.
 - **Steering.** Two steering files in each lab (`method.md`, `workflow.md`) set Dr. Kiro's loop: one task line per
-  experiment, a numeric prediction before every run, rejected rules struck through, never deleted.
+  experiment, a numeric prediction before every run, a refuted rule kept as `rejected`, never deleted.
 - **Specs.** Dr. Kiro writes its findings as a Kiro spec. The lab itself was built from specs too:
   `.kiro/specs/` holds lab-bench, dr-kiro, body-lab, wind-tunnel, lab-notebook, notebook-shelf and
   build-from-spec.
