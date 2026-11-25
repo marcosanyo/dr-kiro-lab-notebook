@@ -4,7 +4,7 @@
 
 ![Dr. Kiro, a ghost in a lab coat, sketches a wind tunnel on the left page of a notebook; on the right page, a small stitched robot.](docs/img/hero.png)
 
-[Demo video](https://youtu.be/NlJjpljgRmU) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro yourself](#3-run-dr-kiro-yourself-in-kiro-ide)
+[Demo video](https://youtu.be/YtZ16g2ecjA) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro yourself](#3-run-dr-kiro-yourself-in-kiro-ide)
 
 Some systems come with no description: a robot whose wires nobody labelled, a rig with no docs, a simulator nobody
 has mapped. Ask an AI to spec one and every line comes back in the same confident voice, with nothing to say which
