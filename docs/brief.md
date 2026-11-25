@@ -1,6 +1,6 @@
 # Brief: Dr. Kiro's Lab Notebook
 
-This document is the input for the specs. It says what we want, the rules, and what we already know from the prototype we built on 2026-11-06, during the hackathon. It does not say how to build it; that is your design. `[DECIDE: …]` marks things that are not settled: ask, do not pick silently.
+This document is the input for the specs. It says what we want, the rules, and what we already know from our prototype, built earlier in the hackathon (November 3 to 10, 2026). It does not say how to build it; that is your design. `[DECIDE: …]` marks things that are not settled: ask, do not pick silently.
 
 ## 1. What we are building
 A lab where a Kiro custom agent ("Dr. Kiro") experiments on a system it has no description of, and writes that system's spec from evidence. Tagline: **The experiment gets the final edit.**
