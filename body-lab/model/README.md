@@ -1,6 +1,6 @@
 # The body (brought in, do not edit)
 
-These two files were made on 2026-11-06 in an earlier private prototype, before this repository existed. They are
+These two files were made on 2026-11-06, during the hackathon, in a private prototype of this project. They are
 the only prototype files brought into this repository. They are data: everything that loads and uses them is built here.
 
 **Nothing in this folder may be visible from `body-lab/lab/` or appear in any bench output.**
