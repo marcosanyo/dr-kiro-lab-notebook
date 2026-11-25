@@ -1,6 +1,6 @@
 # Brief: Dr. Kiro's Lab Notebook
 
-This document is the input for the specs. It says what we want, the rules, and what we already know from an earlier prototype. It does not say how to build it; that is your design. `[DECIDE: …]` marks things that are not settled: ask, do not pick silently.
+This document is the input for the specs. It says what we want, the rules, and what we already know from our prototype, built earlier in the hackathon (November 3 to 10, 2026). It does not say how to build it; that is your design. `[DECIDE: …]` marks things that are not settled: ask, do not pick silently.
 
 ## 1. What we are building
 A lab where a Kiro custom agent ("Dr. Kiro") experiments on a system it has no description of, and writes that system's spec from evidence. Tagline: **The experiment gets the final edit.**
@@ -53,7 +53,7 @@ Three Kiros. **You are the builder**: you build the lab from specs in the root `
 /spikes/           scratch area, not part of the product
 ```
 - Each application runs on its own. body-lab needs no Docker.
-- `body-lab/model/` is supplied by the user (made in the earlier prototype). Do not edit it.
+- `body-lab/model/` is supplied by the user (made in the prototype on 2026-11-06). Do not edit it.
 - The README must point to both kinds of `.kiro`: the root one (how the lab was built) and each `lab/.kiro` (Dr. Kiro itself).
 
 ## 4. The specs

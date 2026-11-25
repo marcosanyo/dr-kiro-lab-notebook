@@ -42,7 +42,7 @@ Each application runs on its own. body-lab needs no Docker.
 
 ## Fixed contents
 
-- `body-lab/model/` is supplied by the user from the earlier prototype. Its two model files,
+- `body-lab/model/` is supplied by the user from the prototype built earlier in the hackathon. Its two model files,
   `specimen_01.xml` and `specimen_01.wiring.json`, must not be edited, moved or renamed. Code elsewhere reads them.
   The `README.md` in that folder may be updated only when the user asks. It is the only `model/` folder that is
   fixed.

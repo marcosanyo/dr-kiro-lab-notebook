@@ -62,7 +62,7 @@ def read(lab: Path) -> dict[str, Path]:
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
         raise PointerError(f"{WHERE} is not valid JSON ({error})") from error
     if not isinstance(data, dict) or sorted(data) != sorted(FIELDS):
-        raise PointerError(f"{WHERE} must have exactly the fields {', '.join(FIELDS)}")
+        raise PointerError(f"{WHERE} must have exactly the keys {', '.join(FIELDS)}")
     paths = {}
     for name in FIELDS:
         value = data[name]

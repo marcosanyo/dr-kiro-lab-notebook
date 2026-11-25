@@ -7,6 +7,50 @@ run. Dr. Kiro takes no part in a run.
 The reader's builder files are in `src/build_from_spec/files/`. The method text is not copied here: the working
 folder takes it from the bench package.
 
+## Runs
+
+All runs are sealed records in [`sessions/build-from-spec/body-lab/`](../sessions/build-from-spec/body-lab/), each with
+its run file (`<run id>.run.json`). `bfs-check-runs` checks every run file against its record and its committed
+request. Every run used Claude Sonnet 5.5 (effort `default`) in Kiro CLI, seed 3, and up to 12 trials of 5 s. The pass
+ranges were committed before the first run of each request and were not changed after.
+
+### The test: the changed body (`crawl-further`)
+
+The task, the same in both request files: *"Crawl ahead by 0.3 to 0.5 m, keeping within 0.2 m of the start line and
+within 20 degrees of the start heading."* The body is the changed one (variant `b`, the tyre removed), on which Dr.
+Kiro's best was 0.27 m. Runs from body-2's spec use [`requests/crawl-further.toml`](requests/crawl-further.toml); runs
+from body-3's spec and with no spec use [`requests/crawl-further-new.toml`](requests/crawl-further-new.toml).
+
+| The reader was given | Runs | Passed | First trial inside all three ranges | Rules it named before running |
+|---|---|---|---|---|
+| The old spec (body-2, written before the change) | `crawl-further-spec-1`, `-2`, `-7` | 0 of 3 | none | R9 and R11, which rely on wire c1 (and R13 or E9) |
+| The new spec (body-3, written after the change) | `crawl-further-new-spec-3`, `-4`, `-8` | 3 of 3 | T7, T7, T5 | R8 (with R7, R5) |
+| No spec | `crawl-further-new-none-5`, `-6`, `-9` | 0 of 3 | none | none |
+
+Runs 1 to 6 were made first (two per setup); runs 7 to 9 added a third run per setup. The new-spec and no-spec runs
+name the same source record (body-3); the no-spec reader is given none of its files.
+
+### An earlier request: the original body (`stop-ahead`)
+
+Before the body was changed, the reader got a different task on the original body (body-2):
+*"Move ahead by about 0.45 m and stop there, keeping the heading within 12 degrees of the start heading."*
+([`requests/stop-ahead.toml`](requests/stop-ahead.toml)). Two runs per setup, with Kiro CLI 3.4.0:
+
+| The reader was given | Passed | First trial inside all three ranges |
+|---|---|---|
+| body-2's spec (`stop-ahead-spec-1`, `-2`) | 2 of 2 | T1, T1 |
+| No spec (`stop-ahead-none-1`, `-2`) | 0 of 2 | none |
+| body-2's raw record (`stop-ahead-record-1`, `-2`) | 1 of 2 | T3 in run 2 |
+
+This task could not test a stale spec, because the body had not changed yet. The runs are kept as they were made.
+
+### Requests that were not run
+
+[`requests/straight-ahead.toml`](requests/straight-ahead.toml) and [`requests/turn-right.toml`](requests/turn-right.toml)
+were written first. `bfs-check-request` refuses both against body-2's record, because trials already in that record
+fall inside their pass ranges (T31, T34, T35, T37, T38 and T39; T19, T25 and T29), so a reader could pass by repeating
+one. They stay committed and were never run.
+
 ## Install
 
 Run from the repository root. The bench front end, the body-lab adapter, this part and the wind-tunnel adapter are
@@ -47,7 +91,24 @@ The first turn of a run sends the start line, and each later turn sends the cont
 The effort `default` leaves out `--effort`, so Kiro CLI uses its own default (design K29). Any other effort is
 passed as `--effort <value>`.
 
-## Checks at implementation
+## Limits of this version
+
+The limit text is written in every run file of setup `record` (field `limits`, Kiro decision K30):
+
+> The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only.
+
+In plain terms: the reader could not use the pictures of a record. It used the record's text and the experiment
+files. The reader's own file tool was not tested with pictures. Wherever a `record` result is shown, this limit is
+shown with it.
+
+
+## Implementation log
+
+Written while the reader was being built, before the first counted run, and kept as written. "Not ready" and
+"not observed" below describe that time. The limit these checks led to is in "Limits of this version" above; the
+runs that followed are in "Runs".
+
+### Checks at implementation
 
 _Task 18 of `.kiro/specs/build-from-spec/tasks.md`, one entry per check in design section 9, with the command used
 and whether it was observed. Result of the first hand checks: stopped, see below._
@@ -56,7 +117,7 @@ and whether it was observed. Result of the first hand checks: stopped, see below
   The wheel contains `build_from_spec/files/reader.json`, `reader-prompt.md`, `reader.md`, `requirements.md`,
   `design.md` and `tasks.md`. Observed with `unzip -l`.
 
-### bench-mcp launcher and preflight (design K33): observed
+#### bench-mcp launcher and preflight (design K33): observed
 
 - Command: the install command above, with `--reinstall`. Exit 0. Output: `Installed 9 executables: bench-check-discovered, bench-export-spec, bench-lab-hooks, bench-make-lab, bench-mcp, bench-new-session, bench-scan, bench-stop, bench-verify`.
 - `command -v bench-mcp`: `~/.local/bin/bench-mcp`.
@@ -65,7 +126,7 @@ and whether it was observed. Result of the first hand checks: stopped, see below
 - Not run: any `bfs-run` that starts a session, any reader turn, and any `bench-mcp` against a real session config.
 - The preflight tests (`build-from-spec/tests/test_preflight.py`) and the launcher tests (`bench/tests/frontend/test_launch.py`) cover the failing `--check` cases.
 
-### 18.1 Install and adapter import (design 9, check 8): observed
+#### 18.1 Install and adapter import (design 9, check 8): observed
 
 - Command: `uv tool install --editable './bench[frontend]' --with-editable ./body-lab/adapter --with-editable ./build-from-spec --with-editable ./wind-tunnel/adapter --with-executables-from build-from-spec --reinstall`. Exit 0.
 - Observed: `bench-mcp`, `bfs-check-request`, `bfs-run`, `bfs-run-file` and `bfs-check-runs` are on PATH in `~/.local/bin`.
@@ -75,7 +136,7 @@ and whether it was observed. Result of the first hand checks: stopped, see below
   tool environment (`importlib.metadata`), and `gmsh` imports.
 - Install output: `Installed 4 executables from build-from-spec: bfs-check-request, bfs-check-runs, bfs-run, bfs-run-file`.
 
-### 18.2 Headless Kiro CLI (design 9, checks 1-6): stopped, not all observed
+#### 18.2 Headless Kiro CLI (design 9, checks 1-6): stopped, not all observed
 
 - `kiro-cli --version`: `kiro-cli 3.4.0`.
 - `kiro-cli chat --list-models` (Sonnet lines): `claude-sonnet-5.5  1.30x credits  Claude Sonnet 5.5 model with 1M context window`;
@@ -128,18 +189,18 @@ What happened outside the planned checks:
 Stopped here, because item 2 is not observed and item 1 is only partly observed (design 9: a check not observed stops
 the sequence). Check 7 (18.3) was not run.
 
-### 18.3 Picture blob opened by the reader's file tool (design 9, check 7): not run, stopped
+#### 18.3 Picture blob opened by the reader's file tool (design 9, check 7): not run, stopped
 
 - Not run, because 18.2 stopped with item 2 not observed. No working folder with setup `record` was built.
 - Limit to decide before any run: the reader's file tool could not be checked for `given/record/blobs/`.
 
-## Plain Kiro CLI checks (2026-11-18): not the reader
+### Plain Kiro CLI checks (2026-11-18): not the reader
 
 These two checks used plain `kiro-cli chat` with model `claude-sonnet-5.5` and the default effort. They did not use
 the reader agent (`--agent reader`), `bench-mcp`, `bfs-run` or any experiment. Each command ran from an empty folder
 under `bench-run/build-from-spec/` with no `.kiro/`. They do not replace the reader-level checks of 18.2 and 18.3.
 
-### Item 2 of 18.2 (`--resume` continues the conversation): observed, with plain Kiro CLI
+#### Item 2 of 18.2 (`--resume` continues the conversation): observed, with plain Kiro CLI
 
 Folder: `bench-run/build-from-spec/plain-resume-2026-11-18/`.
 
@@ -149,7 +210,7 @@ Folder: `bench-run/build-from-spec/plain-resume-2026-11-18/`.
   Exit 0, about 5 s. Output: `AMBER-17`.
 - `kiro-cli chat --list-sessions` lists one local session for this folder (`sess_b7b79d73-...`), so both turns are one session.
 
-### Picture blob opened by plain Kiro CLI: not opened
+#### Picture blob opened by plain Kiro CLI: not opened
 
 Folder: `bench-run/build-from-spec/plain-picture-2026-11-18/`.
 
@@ -165,26 +226,12 @@ Folder: `bench-run/build-from-spec/plain-picture-2026-11-18/`.
 - Result: the answer does not match the header, so this is "not opened". This is only plain Kiro CLI with `read`.
   The reader's own file tool was not tested.
 
-### Still not observed
+#### Still not observed
 
 - The reader's file tool opening `given/record/blobs/` (18.3).
 - Resume and the picture check with the reader agent, bench and hooks (18.2 item 2 and 18.3 at reader level).
 
-## Limits of this version
-
-The limit text is written in every run file of setup `record` (field `limits`, Kiro decision K30):
-
-> The pictures in the raw record could not be opened with Kiro CLI's file reading; the record reader used the record's text and experiment files only.
-
-In plain terms: the reader could not use the pictures of a record. It used the record's text and the experiment
-files. The reader's own file tool was not tested with pictures. Wherever a `record` result is shown, this limit is
-shown with it.
-
-## Runs
-
-_To be filled in when the runs are made. One line per run id, with its run file in `sessions/build-from-spec/`._
-
-## Readiness for the six real runs (19.1)
+### Readiness for the six real runs (19.1)
 
 Checked on branch `feat/build-from-spec-rehearsal`, on the builder's Mac. Result: not ready. Item 1 (task 18 passed)
 and item 6 (`KIRO_API_KEY` set) are not confirmed. No session was started and no model was called for these checks.
@@ -233,7 +280,7 @@ and item 6 (`KIRO_API_KEY` set) are not confirmed. No session was started and no
    `sessions/build-from-spec/body-lab/` is empty. The moved unplanned record
    `bench-run/build-from-spec/unplanned/stop-ahead-none-1` exists and does not count.
 
-### Commands for task 20
+#### Commands for task 20
 
 Not yet run: the user runs them, after this branch is merged into main.
 
@@ -248,31 +295,37 @@ bfs-run --request build-from-spec/requests/stop-ahead.toml --setup record --sour
 
 Run ids in order: `stop-ahead-spec-1`, `stop-ahead-none-1`, `stop-ahead-record-1`, `stop-ahead-spec-2`, `stop-ahead-none-2`, `stop-ahead-record-2`.
 
-### Blocks before the first run
+#### Blocks before the first run
 
 - Task 18 is not passed. 18.2 item 2 (`--resume` with the reader agent) and 18.3 (picture blob opened by the reader's file tool)
   must be observed, or the limit must be decided with the user (`.kiro/specs/build-from-spec/tasks.md`, task 18).
 - `KIRO_API_KEY` is not set in the shell that ran these checks.
 
-## Judgements of the six real runs after the judge fix (K34)
 
-6 つの実行の判定を、判定の修正（K34）のあとにやり直した。値は封印された記録から読んだ。
+### Judgements of the six `stop-ahead` runs after the judge fix (K34)
 
-| 条件 | 回 | 合否（今） | 合否（修正前） | 使った試行の数 | 最初に範囲に入った試行 | 最後の試行（x, y, heading） | 頼った id |
+The six runs were judged again after the judge fix (K34). Values are read from the sealed records.
+
+| Setup | Run | Result (now) | Result (before the fix) | Trials used | First trial in range | Last trial (x, y, heading) | Ids relied on |
 |---|---|---|---|---|---|---|---|
-| spec | 1 | pass | pass | 2 | T1 | T2（0.454, 0.075, -0.924） | R1, R11, R13 |
-| spec | 2 | pass | not-counted（修正前の規則は E9 を認めなかった） | 2 | T1 | T2（0.441, 0.077, 2.479） | R11, R13, E9 |
-| none | 1 | fail | fail | 12 | なし | T12（0.018, 0.000, 0.513） | none |
-| none | 2 | fail | fail | 12 | なし | T12（0.087, 0.019, -24.359） | none |
-| record | 1 | fail | fail | 12 | なし | T12（-0.263, -0.317, 116.103） | none |
-| record | 2 | pass | pass | 7 | T3 | T7（0.454, 0.075, -0.924） | H10, H11 |
+| spec | 1 | pass | pass | 2 | T1 | T2 (0.454, 0.075, -0.924) | R1, R11, R13 |
+| spec | 2 | pass | not-counted (the old rule did not accept E9) | 2 | T1 | T2 (0.441, 0.077, 2.479) | R11, R13, E9 |
+| none | 1 | fail | fail | 12 | none | T12 (0.018, 0.000, 0.513) | none |
+| none | 2 | fail | fail | 12 | none | T12 (0.087, 0.019, -24.359) | none |
+| record | 1 | fail | fail | 12 | none | T12 (-0.263, -0.317, 116.103) | none |
+| record | 2 | pass | pass | 7 | T3 | T7 (0.454, 0.075, -0.924) | H10, H11 |
 
-変わった回: spec 2 のみ（not-counted から pass へ）。封印記録は変えていない。
+Only spec run 2 changed (from not-counted to pass). The sealed records were not changed.
 
-原因: リーダーの steering は、`given/` にある R、H、E の id を挙げてよいと伝えていた。しかしコードは、設計表の R の行だけを受け入れていた。修正（K34）では、セットアップ spec で、与えた 3 つの spec ファイルにある id を受け入れる。また、絵の制限の文は日本語だったが、今は英語である。
+Cause: the reader's steering told it that it may name the R, H and E ids in `given/`, but the code accepted only the
+R rows of the design table. With the fix (K34), setup `spec` accepts the ids in the three spec files it was given. The
+picture-limit text, which was in Japanese, is now in English.
 
-修正前の古い実行情報ファイルは `bench-run/build-from-spec/superseded/before-judge-fix/` にある。git にはなく、数えない。
+The run files from before the fix are in `bench-run/build-from-spec/superseded/before-judge-fix/`. They are not in git
+and do not count.
 
-各実行のブラインドスキャンと bench-verify は通った。6 つの実行はやり直していない。
+The blind scan and `bench-verify` passed for every run. None of the six runs was made again.
 
-観察: spec 1 の T2 と record 2 の T7 は、計算済み入力（a1=-1, f=2, T=3.75）も計測値も同じである。ただし実験は違う（E2 と E3）。2 つの記録は独立したセッションなので、写しではない。
+Observation: spec run 1's T2 and record run 2's T7 have the same computed inputs (a1=-1, f=2, T=3.75) and the same
+measurements, from different experiments (E2 and E3). The two records come from independent sessions; neither is a
+copy of the other.

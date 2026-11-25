@@ -15,7 +15,7 @@ system's spec from evidence. One skeleton (the bench) carries two applications. 
 
 | | body-lab | wind-tunnel |
 |---|---|---|
-| System | A legged body in MuJoCo with unlabeled control channels | 2D flow around a body in OpenFOAM |
+| System | A stitched robot body (legs and a wheel) in MuJoCo with unlabeled control channels | 2D flow around a body in OpenFOAM |
 | What Dr. Kiro controls | One function of time per channel, values in [-1, 1] | Four knobs: `aspect` [0.5, 3], `corner` [0, 1], `splitter` [0, 3], `angle` [0, 15]° |
 | One trial | 5 s of simulated time | One solver run |
 | Budget per session | 40 trials | 24 runs |

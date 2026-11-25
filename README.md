@@ -4,7 +4,7 @@
 
 ![Dr. Kiro, a ghost in a lab coat, sketches a wind tunnel on the left page of a notebook; on the right page, a small stitched robot.](docs/img/hero.png)
 
-[Demo video](https://youtu.be/NlJjpljgRmU) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro yourself](#3-run-dr-kiro-yourself-in-kiro-ide)
+[Demo video](https://youtu.be/YtZ16g2ecjA) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro yourself](#3-run-dr-kiro-yourself-in-kiro-ide)
 
 Some systems come with no description: a robot whose wires nobody labelled, a rig with no docs, a simulator nobody
 has mapped. Ask an AI to spec one and every line comes back in the same confident voice, with nothing to say which
@@ -20,7 +20,7 @@ It has three parts, built in Kiro:
 
 **One experiment, in five steps:**
 
-1. Dr. Kiro gets a robot with five unlabeled wires and no manual.
+1. Dr. Kiro gets a robot with five unlabeled wires (channels c0 to c4) and no manual.
 2. It adds a line to its `tasks.md` and writes a numeric prediction into `requirements.md`: *a travelling wave
    across the wires will move the robot more than 0.20 m forward.* The bench refuses to run an experiment until a
    prediction is on record.
@@ -44,7 +44,7 @@ outside the range already tried; `observed`, no miss, but only inside what was t
 
 | | Application 1: The Wind Tunnel | Application 2: The Stitched Body |
 |---|---|---|
-| Model (hidden from Dr. Kiro) | 2D flow around a body, OpenFOAM | A legged body, MuJoCo |
+| Model (hidden from Dr. Kiro) | 2D flow around a body, OpenFOAM | A stitched robot body (legs and a wheel), MuJoCo |
 | Adapter | 4 knobs: aspect, corner, splitter, angle | 5 unlabeled channels, one signal over time each |
 | Budget | 24 solver runs | 40 trials of 5 s |
 | Notebook | by day | at night |
@@ -93,8 +93,8 @@ All numbers below come from the sealed records in [`sessions/`](sessions/).
    ![The robot before and after the tyre driven by wire c1 was removed.](docs/img/before-after.png)
 
 3. **The test.** A second Kiro, the reader, got one spec and one task on the changed robot: crawl ahead by 0.3 to
-   0.5 m (past Dr. Kiro's own best), keeping within 0.2 m of the start line and within 20° of the start heading. Each
-   condition got 3 runs of up to 12 trials; the reader never saw Dr. Kiro's experiments.
+   0.5 m (past the 0.27 m Dr. Kiro itself reached on this body), keeping within 0.2 m of the start line and within 20° of
+   the start heading. Each condition got 3 runs of up to 12 trials; the reader never saw Dr. Kiro's experiments.
 
    | The reader was given | Passed |
    |---|---|
@@ -104,7 +104,9 @@ All numbers below come from the sealed records in [`sessions/`](sessions/).
 
    ![The reader's task and the three results: 0 of 3, 3 of 3, 0 of 3.](docs/img/reader.png)
 
-   In all three runs with the old spec, the reader named the c1 rules it would rely on. The runs are in [`sessions/build-from-spec/body-lab/`](sessions/build-from-spec/body-lab/).
+   In all three runs with the old spec, the reader named the c1 rules it would rely on.
+   With the spec written after, each of the three runs first met all three bounds between trials 5 and 7 of its 12.
+   The runs are in [`sessions/build-from-spec/body-lab/`](sessions/build-from-spec/body-lab/).
 4. **Same skeleton, another world: the wind tunnel (`wt-004`).** Rounded corners and a long splitter plate stopped
    the vortex shedding, and the drag coefficient fell from 1.55 to 0.99. 16 of 17 predictions came true; the one miss keeps its rule
    `partly`.
@@ -130,6 +132,7 @@ Each is an ordinary Kiro spec, copied from an ended session and checked against 
 |---|---|
 | Read or check the records | uv |
 | Run Dr. Kiro in body-lab | uv, Kiro IDE |
+| Run the reader (`build-from-spec/`) | uv, Kiro CLI |
 | Run the wind-tunnel solver | Docker (see [`wind-tunnel/README.md`](wind-tunnel/README.md)) |
 | Publish the notebook | the AWS CLI and an AWS account |
 

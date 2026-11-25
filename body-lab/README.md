@@ -1,6 +1,6 @@
 # body-lab
 
-The first application: a legged body in MuJoCo with five unlabeled control channels. Dr. Kiro learns to move it
+The first application: a stitched robot body (legs and a wheel) in MuJoCo with five unlabeled control channels. Dr. Kiro learns to move it
 from experiments alone. Specs: `.kiro/specs/body-lab/` (Japanese: `docs/ja/body-lab/`).
 
 | Folder | What it is |
