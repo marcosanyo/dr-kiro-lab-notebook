@@ -37,8 +37,9 @@ site is flat, design N28).
 - Graph paper: faint lines `--rule-line` `#dfe6ef`, one along the bottom and one along the right edge of each 1.5rem
   tile, drawn with CSS gradients on the body. Text sits on the lines, so every text colour must also reach 4.5:1 on
   `--rule-line`.
-- From 1000px the page also has a red margin line (`--margin-line` `#e2a9a2`, 2px, at 88px from the left edge) and
-  binder holes (`--hole` `#e4dcc6`, edge `--hole-edge` `#cdc3a8`) in the left gutter, both behind the text.
+- Every notebook page, at every width, has binder holes in the left gutter (a column 1.5rem wide, `--hole` `#e4dcc6`
+  on the day page; 1.1rem below 700px) and a 2px red margin line (rgba(196, 39, 28, 0.45), 3.3rem from the left edge;
+  2.05rem below 700px), both behind the text (user, 2026-11-24).
 - Content column at most 72rem wide, centred.
 - Cards are `--card` `#fffdf8` with a 1px edge `--card-edge` `#e3d9bf` (the claim card, the rules card, the reader,
   the tab panels). `--accent` `#b4540a` is a line colour (the checked tab, the highlighter stripe's tint
@@ -182,6 +183,14 @@ the lab tabs (`.cover-labs`); the footer.
 - The refused-end note is `.sticky.sticky-stamp`: a sticky note with the stamp border (2px, rounded, pencil colour),
   its heading in stamp type. Refusal message parts inside it keep their own inks.
 
+## Progress chart (notebook-shelf Requirement 3.3)
+
+- Full width of the page, under the photos and the notes. Its frame is two hand-drawn pencil edges (`.ch-edge`, the
+  vertical and the bottom axis, `--chart-pencil` `#5a5a5a`).
+- The line is blue ink (`--chart-ink` `#2546a8`, 3 units) in one stroke with the pencil wobble. Only the named steps
+  have a dot, in the same blue.
+- Names and leader strokes are red pen (`--red-pen`, Caveat, 22px). Ticks and the caption are pencil grey in Caveat.
+
 ## Strike-through of a rejected row (Requirement 8.3)
 
 - Class `.row-rejected` on the row; only its rule cell (`td[data-label="rule"]`) has `text-decoration: line-through` 2px. In the table the line is in `--graphite`
@@ -242,9 +251,9 @@ the lab tabs (`.cover-labs`); the footer.
 
 - One small ink-drawn bat and a cobweb corner, as inline SVG in the page markup (no file, no `xmlns` attribute).
   The drawing holds no text (no `<text>`, no `<title>`, no `<desc>`).
-- Shown only at viewports of 1000px and wider, in the page gutter: at that width the body reserves a 96px left
+- Shown at viewports of 700px and wider, the spider and the larger bat only from 1100px, in the page gutter: at that width the body reserves a 96px left
   gutter and the decoration (`.deco`) is fixed inside it, so it never overlaps any text, table, chart or experiment
-  entry. Hidden below 1000px.
+  entry. Hidden below 700px.
 - Used as `<svg class="deco" aria-hidden="true">…</svg>`; `pointer-events: none`.
 - It sits behind nothing and never changes the colour of any text.
 
@@ -259,6 +268,9 @@ the lab tabs (`.cover-labs`); the footer.
   picture shows its first cell. A lab card (`data-start="first"`) waits on its first cell until "play". A
   wind-tunnel picture is its trial's only picture and moves on its own, and its "whole picture" button shows the
   sheet as before.
+- Opening another notebook from a notebook turns its page over: a 620 ms turn around the binder holes (CSS view
+  transition `page-turn`). Going back to the front page turns no page, and with `prefers-reduced-motion: reduce`
+  there is no turn (user, 2026-11-24).
 - With `prefers-reduced-motion: reduce`, a moving picture starts paused on its first cell, and CSS transitions and
   animations are off.
 
@@ -283,10 +295,13 @@ Written after the body-3 page review. These rules hold where they differ from th
 - The first screen of a lab page (1280 x 900) reaches the highlight's photos: the ink legend and the symbols line
   are folded under one muted line, the session cards grow to share the row, the subtitle is a serif block under the
   title with the "our notes" mark beside the title, and "What happened here" comes after the highlight.
-- The front page shows one card per lab, not a door: a picture cut to one height (14rem) with no controls, the
-  case line, the script title, the description, the quoted line with an accent rule on its left, and an outlined
-  button "Open the notebook" in the accent colour beside the session count. Day card on the day paper, night card
-  on the night paper.
+- The front page shows the two labs as two notebooks lying side by side on a desk (user, 2026-11-24). Each notebook
+  has a cloth spine in its lab's colour (blue-green for the wind tunnel, pumpkin brown for the stitched body), page
+  edges showing at the right and the bottom, and a slight tilt that straightens while the pointer is over it. Each
+  shows a moving picture cut to one height (14rem) with no controls, the case line, the script title, the
+  description, the quoted line with an accent rule on its left, and the button "Open the notebook" in the accent
+  colour. The session count is in the notebook's ink, not the pencil grey. The day notebook is on the day paper,
+  the night notebook on the night paper.
 
 ## Night lab (Requirement 6.2)
 
@@ -305,11 +320,14 @@ The titles are red ink: the masthead `#d8392f` on the desk, the session's title 
 
 **Three pens (user, 2026-11-22), in every lab.** Green `--ink-drkiro` for Dr. Kiro; blue for our notes (both
 applications' `pen` is `blue`; the body lab's commentary is `#1f4fa3` on the page and `#8fb4ff` on the desk); red
-`--red-pen` `#c4271c` for the section headings (`.book .cap`), the reader's request (`.request`) and the experiment's
-corrections: the line through a struck rule, the line a rewrite hangs from, a wavy line under a missed prediction.
-No red margin rule. They lie under the writing (`.book` is its own
-stacking context, the marks are at `z-index: -1`) and never move. The sewn binding is a thin, faint thread with cross
-stitches at 3rem, clear of the writing. Only the spider and the bats move.
+`--red-pen` `#c4271c` for the experiment's corrections: the line through a struck rule, the line a rewrite hangs
+from, a wavy line under a missed prediction; and for the names and leader strokes of the progress chart (user,
+2026-11-24). Section headings and page titles are orange ink (user, 2026-11-23). The reader's request is in blue.
+What happened here and the hypothesis results are commentary ink, in the blue pen; the measured numbers in them stay
+pencil grey (user, 2026-11-24).
+
+The decoration lies under the writing (`.book` is its own stacking context, the marks are at `z-index: -1`) and never
+moves. Only the spider and the bats move. The sewn binding of the earlier design is gone (user, 2026-11-24).
 
 The night palette is the default `:root` of the stylesheet, and each page without a day mode uses it. It is the same notebook on a dark desk under a lamp: warm
 near-black paper, the faint graph lines kept, cards and tabs a little lighter than the paper, the sticky note a dim
@@ -331,30 +349,30 @@ is the day paper. The reader's choice is never stored.
 
 The night values (the custom properties not listed keep their day value; a test reads this list):
 
-- `--paper` night: `#1d1b18`
+- `--paper` night: `#0e1a2c`
 - `--rule-line` night: `#2a2d33`
 - `--sticky` night: `#453d1e`
 - `--photo-frame` night: `#2e2b26`
 - `--tab` night: `#2a2620`
-- `--card` night: `#26231f`
-- `--card-edge` night: `#4a4337`
+- `--card` night: `#2a2219`
+- `--card-edge` night: `#45382a`
 - `--accent` night: `#e0873a`
 - `--accent-tint` night: `#5a3a17`
 - `--margin-line` night: `#7a3b36`
 - `--rewrite-red` night: `#ff9d92`
-- `--rewrite-bg` night: `#4a2420`
+- `--rewrite-bg` night: `#2f1e17`
 - `--observed-bg` night: `#2c2e31`
 - `--observed-edge` night: `#8b9199`
-- `--hole` night: `#11100e`
+- `--hole` night: `#050302`
 - `--hole-edge` night: `#3d382f`
-- `--ink-drkiro` night: `#a9c0ff`
-- `--ink-pencil` night: `#d2cdc2`
-- `--ink-commentary` night: `#f1e7d3`
-- `--miss-red` night: `#ff9188`
-- `--stamp-validated` night: `#7fd6a0`
-- `--stamp-partly` night: `#f0c060`
-- `--stamp-observed` night: `#b4c3d6`
-- `--stamp-rejected` night: `#d9aef0`
+- `--ink-drkiro` night: `#9ccf7f`
+- `--ink-pencil` night: `#d6cdbd`
+- `--ink-commentary` night: `#ec9a48`
+- `--miss-red` night: `#e8665a`
+- `--stamp-validated` night: `#9ccf7f`
+- `--stamp-partly` night: `#dcb556`
+- `--stamp-observed` night: `#b6ab97`
+- `--stamp-rejected` night: `#ec5a4f`
 - `--pin-brass` night: `#c9a24a`
 - `--graphite` night: `#d2cdc2`
 - `--photo-edge` night: `#4a4337`

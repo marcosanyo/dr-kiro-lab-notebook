@@ -43,7 +43,7 @@ SEALED = "sealed"
 AT_BENCH = "at_bench"
 MODES = (SEALED, AT_BENCH)
 LABEL_SHARE = 0.1
-MAX_LABELS = 4
+MAX_LABELS = 3
 LABEL_CHAR = 8.5  # pixels of the chart's own scale taken by one character of a name
 LABEL_HEIGHT = 20.0
 _TASK = re.compile(r"^\s*- \[([ xX])\] (.+?)\s*$")
@@ -462,12 +462,12 @@ def _pencil_line(corners: list[tuple[float, float]], seed: str) -> str:
     k = 0
     for (x0, y0), (x1, y1) in zip(corners, corners[1:], strict=False):
         length = math.hypot(x1 - x0, y1 - y0) or 1.0
-        pieces = max(2, int(length / 9))
+        pieces = max(2, int(length / 26))
         for j in range(1, pieces + 1):
             px, py = x0 + (x1 - x0) * j / pieces, y0 + (y1 - y0) * j / pieces
             if j < pieces:
                 k += 1
-                wobble = _jitter(seed, k) * 2.4
+                wobble = _jitter(seed, k) * 1.3
                 px += -(y1 - y0) / length * wobble
                 py += (x1 - x0) / length * wobble
             out += f"L{px:.1f} {py:.1f}"
@@ -478,7 +478,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
     """The best so far after every trial, as a step line. Only the largest steps up are named, each with its
     hypothesis and the change ("H10: +9.2 cm"), and no two names overlap."""
     source = f"{record.name}: progress"
-    width, height, left, right, top, bottom = 520.0, 250.0, 62.0, 16.0, 40.0, 30.0
+    width, height, left, right, top, bottom = 900.0, 300.0, 70.0, 20.0, 46.0, 34.0
     points = found.points
     bests = [p.best for p in points if p.best is not None]
     if not bests:
@@ -522,12 +522,14 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         elif not corners:
             corners.append((x(i), y(p.best)))
     corners.append((x(n - 1), corners[-1][1]))
-    # The line, and a second fainter pass of the pencil beside it.
+    # The two edges of the chart, drawn by hand like the line.
+    edge = [(left, top - 14), (left, height - bottom), (width - right, height - bottom)]
+    marks += html.element(
+        "path", {"class": "ch-edge", "d": _pencil_line(edge, f"{record.name}:edge"), "fill": "none"}, []
+    )
+    # The line, in one stroke of the pen.
     line = _pencil_line(corners, record.name)
     marks += html.element("path", {"class": "ch-line", "d": line, "fill": "none"}, [])
-    marks += html.element(
-        "path", {"class": "ch-pass", "d": _pencil_line(corners, f"{record.name}:second"), "fill": "none"}, []
-    )
     if found.mark_index is not None:
         m = found.mark_index
         marks += html.shape(
@@ -559,7 +561,7 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
         size = LABEL_CHAR * len(text)
         end = x(i) > width * 0.6
         box_left, box_right = (x(i) - 10 - size, x(i) - 10) if end else (x(i) + 8, x(i) + 8 + size)
-        for dy in (-12, -32, 22):
+        for dy in (-30, -52, 34):
             at = y(p.best) + dy
             if box_left < 0 or box_right > width or at < 12 or at > height - bottom:
                 continue
@@ -567,12 +569,8 @@ def _chart(record: RecordModel, found: progress.Series) -> list[Segment]:
                 named.append((box_left, box_right, at))
                 shown_steps.append((i, text, at, 0.0 if not end else 1.0, y(p.best)))
                 break
-    for i, p in enumerate(points):
-        if p.improved and p.best is not None:
-            marks += html.shape(
-                "circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{y(p.best):.1f}", "r": "4"}
-            )
     for i, label, at, end, dot in shown_steps:
+        marks += html.shape("circle", {"class": "ch-best", "cx": f"{x(i):.1f}", "cy": f"{dot:.1f}", "r": "5"})
         edge = x(i) - 8 if end else x(i) + 6
         aim = (x(i) - 3, dot - 5) if at < dot else (x(i) - 3, dot + 5)
         marks += html.element(
@@ -659,9 +657,12 @@ def _highlight(
             "data-label": text.SYNC_LABEL,
         },
     )
-    side = _el("section", "side", [*_notes(record, found, table, chosen, lab), *_chart(record, found)])
+    side = _el("section", "side", _notes(record, found, table, chosen, lab))
     return _el(
-        "section", "highlight", [*head, *_el("section", "hl-grid", [*together, *side])], id="highlight"
+        "section",
+        "highlight",
+        [*head, *_el("section", "hl-grid", [*together, *side]), *_chart(record, found)],
+        id="highlight",
     )
 
 

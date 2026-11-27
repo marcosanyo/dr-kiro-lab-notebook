@@ -988,7 +988,7 @@ fetched from another host (3.2). The steering file holds the stacks and the cove
 | Type and spacing | base 17px / 1.5; spacing scale 4, 8, 16, 24, 40px |
 | Narrow screen | at 360px one column; margin photos move below the table; the spec table is cards, so it has no sideways scroll |
 | Halloween | one small ink-drawn bat and a cobweb corner (inline SVG in the page markup, no file, no `xmlns` attribute, no text), only in the page gutter at viewports of 1000px and wider, `aria-hidden`, no text, behind nothing (6.5) |
-| Night lab | under `prefers-color-scheme: dark` only, a second `:root` in the stylesheet overrides the colour properties: warm near-black paper `#1d1b18`, lighter cards, light inks, lightened miss red, rewrite red and stamps; no switch, no script; recorded pictures unfiltered; every contrast pair checked with the night values too (6.2, Decision 52) |
+| Night lab | under `prefers-color-scheme: dark` only, a second `:root` in the stylesheet overrides the colour properties: dark navy paper and desk `#0e1a2c` (a notebook page inside `.book` stays white, with its navy binder holes and red margin line), lighter cards, light inks, lightened miss red, rewrite red and stamps; no switch, no script; recorded pictures unfiltered; every contrast pair checked with the night values too (6.2, Decision 52) |
 | Motion | one cell per `interval` of the lab's layout (body-lab 220 ms, wind-tunnel 150 ms); reduced motion starts paused (3.6) |
 
 All text colours above reach at least 4.5:1 on their backgrounds (paper and sticky yellow); the test checks each

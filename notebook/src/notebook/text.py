@@ -261,8 +261,8 @@ INK_COMMENTARY_ABOUT = (
 )
 RED_PEN_NAME = "Red pen"
 RED_PEN_ABOUT = (
-    "Our marks on the page, not the author's words: a rule struck out and the rewrite beside it, and a "
-    "prediction that missed."
+    "Our marks on the page, not the author's words: a rule struck out and the rewrite beside it, a "
+    "prediction that missed, and the names and lines on the progress chart."
 )
 MISS_RED_NAME = "Miss red"
 MISS_RED_ABOUT = (

@@ -38,11 +38,11 @@
 }
 :root {
   color-scheme: dark;
-  --paper: #0b0806;
+  --paper: #0e1a2c;
   --grid-line: rgba(232, 214, 180, 0.08);
   --lamp: rgba(255, 170, 80, 0.1);
   --brew: transparent;
-  --vignette: rgba(0, 0, 0, 0.88);
+  --vignette: rgba(2, 6, 14, 0.7);
   --page: #211b15;
   --page-edge: #3b3024;
   --hole: #050302;
@@ -1367,7 +1367,7 @@ section[data-sync] .photo-controls button[data-action="step"] {
 /* Narrow screens. */
 @media (max-width: 1100px) {
   .deco-spider,
-  .deco-bat {
+  .deco-bat-four {
     display: none;
   }
   .masthead {
@@ -2009,9 +2009,10 @@ html[data-app="wind-tunnel"][data-mode="day"] {
 html[data-mode="night"] body {
   background-image:
     radial-gradient(ellipse 60% 45% at 18% 0%, var(--lamp), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 85% 3%, rgba(190, 210, 255, 0.16), transparent 70%),
     radial-gradient(ellipse 120% 100% at 50% 40%, transparent 45%, var(--vignette) 100%);
-  background-size: 100% 100%, 100% 100%;
-  background-attachment: fixed, fixed;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed, fixed, fixed;
 }
 html[data-mode="night"] .book {
   background-color: var(--page);
@@ -2293,7 +2294,7 @@ html[data-mode="night"] .book {
   --grid-line: #e4e9f0;
   --page: #fffdf6;
   --page-edge: #e3d9bf;
-  --hole: #2a2219;
+  --hole: #0c1626;
   --ink-drkiro: #1b7a45;
   --ink-pencil: #3d3d3d;
   --ink-commentary: #c4560a;
@@ -2349,8 +2350,6 @@ html[data-mode="night"] .book .tile::before {
 html[data-mode="night"] .book {
   background-color: #ffffff;
   background-image:
-    radial-gradient(circle 0.55rem at 1.4rem 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
-    radial-gradient(circle 0.55rem at calc(100% - 1.4rem) 1.4rem, #8a8f96 55%, #50555c 62%, rgba(0, 0, 0, 0.25) 75%, transparent 80%),
     radial-gradient(ellipse 2.6rem 5.5rem at 100% 31%, rgba(45, 22, 6, 0.42), rgba(110, 60, 20, 0.24) 45%, rgba(170, 110, 50, 0.1) 68%, transparent 82%),
     radial-gradient(ellipse 2.2rem 4rem at 0 58%, rgba(45, 22, 6, 0.36), rgba(110, 60, 20, 0.2) 45%, rgba(170, 110, 50, 0.08) 68%, transparent 82%),
     radial-gradient(ellipse 3.4rem 2rem at 64% 0, rgba(45, 22, 6, 0.3), rgba(110, 60, 20, 0.16) 45%, transparent 80%),
@@ -2358,7 +2357,7 @@ html[data-mode="night"] .book {
     radial-gradient(circle 0.7rem at 37% 47%, rgba(80, 45, 15, 0.16), rgba(140, 90, 40, 0.07) 60%, transparent 100%),
     conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg),
     conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--page-grid) 90deg 180deg, transparent 180deg 360deg);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 1.5rem 1.5rem, 1.5rem 1.5rem;
 }
 /* The room behind a day notebook is a plain desk: the graph lines belong to the notebook's page only. */
 html[data-mode="day"] body {
@@ -2530,5 +2529,276 @@ html[data-mode="night"] .margin-sketch {
   .margin-sketch {
     width: 8rem;
     margin: 0.6rem 0 0.4rem 0.8rem;
+  }
+}
+/* A loose-leaf sheet: a column of binder holes the whole height of the page and a red margin line. */
+.holes {
+  top: 1rem;
+  bottom: 1rem;
+  width: 1.5rem;
+  background:
+    radial-gradient(circle at 50% 0.75rem, var(--paper) 0.6rem, transparent 0.66rem),
+    radial-gradient(circle at 50% 0.9rem, var(--hole) 0.62rem, transparent 0.68rem);
+  background-size: 1.5rem 2.75rem;
+  background-repeat: repeat-y;
+}
+.holes span {
+  display: none;
+}
+.book::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3.3rem;
+  width: 2px;
+  background: rgba(196, 39, 28, 0.45);
+  pointer-events: none;
+}
+@media (max-width: 700px) {
+  .holes {
+    width: 1.1rem;
+    background-size: 1.1rem 2.2rem;
+    background-image:
+      radial-gradient(circle at 50% 0.55rem, var(--paper) 0.45rem, transparent 0.5rem),
+      radial-gradient(circle at 50% 0.65rem, var(--hole) 0.47rem, transparent 0.52rem);
+  }
+  .book::before {
+    left: 2.05rem;
+  }
+}
+/* Opening another notebook turns the page over, around the binder holes. */
+@view-transition {
+  navigation: auto;
+}
+.book {
+  view-transition-name: book;
+}
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-group(book),
+::view-transition-new(book) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-image-pair(book) {
+  perspective: 3200px;
+  perspective-origin: left 24rem;
+}
+::view-transition-old(book) {
+  z-index: 1;
+  backface-visibility: hidden;
+  transform-origin: left center;
+  mix-blend-mode: normal;
+  animation: page-turn 620ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both;
+}
+/* Leaving for a page with no notebook (the shelf of all labs): nothing to turn to, so no turn. */
+::view-transition-old(book):only-child {
+  animation: none;
+}
+@keyframes page-turn {
+  from {
+    transform: rotateY(0deg);
+    filter: brightness(1);
+  }
+  to {
+    transform: rotateY(-92deg);
+    filter: brightness(0.75);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+/* The progress line across the whole page, below the photographs: blue ink with red pen notes, drawn like the
+   rest of the notebook. */
+.book {
+  --chart-ink: #2546a8;
+  --chart-pencil: #5a5a5a;
+}
+.highlight > .progress {
+  margin-top: 1.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.highlight > .progress .ch-line {
+  stroke: var(--chart-ink);
+  stroke-width: 3;
+}
+.highlight > .progress .ch-best {
+  fill: var(--chart-ink);
+  stroke: none;
+}
+.highlight > .progress .ch-note {
+  fill: var(--red-pen);
+  font-family: var(--font-script);
+  font-size: 22px;
+  font-weight: 700;
+}
+.highlight > .progress .ch-leader {
+  stroke: var(--red-pen);
+  stroke-width: 1.8;
+}
+.highlight > .progress .ch-edge {
+  stroke: var(--chart-pencil);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.highlight > .progress .ch-grid {
+  stroke: var(--chart-pencil);
+  stroke-dasharray: 7 6;
+  opacity: 0.7;
+}
+.highlight > .progress .ch-tick {
+  fill: var(--chart-pencil);
+  font-family: var(--font-script);
+  font-size: 19px;
+  font-weight: 700;
+}
+.highlight > .progress figcaption,
+.highlight > .progress figcaption .ink-c,
+.highlight > .progress figcaption .ink-p {
+  color: var(--chart-pencil);
+  font-family: var(--font-script);
+  font-size: 1.15rem;
+}
+/* What happened here: three notes written on the page, not boxes laid on it. */
+.story-step {
+  padding: 0.5rem 0.9rem 0.6rem;
+  border: 1.6px solid var(--chart-pencil);
+  border-radius: 14px 6px 16px 8px / 8px 16px 6px 14px;
+  background: none;
+  font-family: var(--font-script);
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+/* Our own words are in the commentary pen, as the ink legend says; the measured numbers stay in pencil. */
+.story-step .ink-c,
+.hyp-results .ink-c {
+  color: var(--ink-commentary);
+}
+/* Measured numbers keep the pencil's colour: the bench wrote them, not Dr. Kiro. */
+.story-step .ink-p {
+  color: var(--ink-pencil);
+  font-family: var(--font-script);
+  font-size: 1.15em;
+  font-weight: 700;
+}
+.story-step:not(:last-child)::after {
+  color: var(--ink-commentary);
+  font-family: var(--font-script);
+}
+/* A hypothesis in Dr. Kiro's typewriter; what the trials found, in pen below it. */
+.hyp-title {
+  font-family: var(--font-mono);
+  font-size: 0.98rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.hyp-results {
+  font-family: var(--font-script);
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+.hyp-results::before {
+  content: "→ ";
+  color: var(--ink-commentary);
+}
+.hyp-results .ink-p {
+  color: var(--ink-pencil);
+  font-family: var(--font-script);
+}
+/* The bats may cross the moon; on a phone they would cross the title, so they stay away there. */
+@media (max-width: 700px) {
+  .deco-bat {
+    display: none;
+  }
+}
+/* The front page: the two labs are two notebooks lying side by side on the desk. Each is a sheet of the same
+   squared paper as inside, with a cloth spine on its left, the edges of its pages showing at the right and the
+   bottom, and a slight tilt. The spine's colour tells the two apart: blue-green for the wind tunnel, pumpkin
+   brown for the body lab. */
+.door-day,
+.door-night {
+  --edge: #e3d9bf;
+  --face: #fffdf6;
+  --ink: #2b2118;
+  --ink-pencil: #3d3d3d;
+  --door-grid: #e4e9f0;
+}
+.door-day {
+  --accent: #1b7a45;
+  --spine: #2f6b78;
+}
+.door-night {
+  --accent: #b4500f;
+  --spine: #6e3512;
+}
+.door {
+  position: relative;
+  padding: 1.3rem 1.4rem 1.3rem 3.1rem;
+  border: 1px solid var(--edge);
+  border-radius: 3px 8px 8px 3px;
+  background-color: var(--face);
+  background-image:
+    conic-gradient(at 0 calc(100% - 1px), transparent 0deg 90deg, var(--door-grid) 90deg 180deg, transparent 180deg 360deg),
+    conic-gradient(at calc(100% - 1px) 0, transparent 0deg 90deg, var(--door-grid) 90deg 180deg, transparent 180deg 360deg);
+  background-size: 1.5rem 1.5rem, 1.5rem 1.5rem;
+  box-shadow:
+    3px 3px 0 -1px #f4eedf,
+    3px 3px 0 0 #d9cfb6,
+    6px 6px 0 -1px #f4eedf,
+    6px 6px 0 0 #d9cfb6,
+    10px 14px 26px rgba(0, 0, 0, 0.45);
+  transform: rotate(-1deg);
+  transition: transform 180ms ease;
+}
+.door-night {
+  transform: rotate(1.2deg);
+}
+/* The cloth spine, with a row of stitches down it. */
+.door::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: 1.7rem;
+  border-radius: 3px 0 0 3px;
+  background: var(--spine);
+  box-shadow: inset 4px 0 0 rgba(255, 255, 255, 0.12), inset -6px 0 7px rgba(0, 0, 0, 0.3);
+}
+.door::after {
+  content: "";
+  position: absolute;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  left: 0.8rem;
+  border-left: 2px dashed rgba(255, 244, 222, 0.55);
+}
+.door:hover,
+.door:focus-within {
+  z-index: 1;
+  transform: rotate(0deg) translateY(-3px);
+}
+.door .door-found {
+  border-left-color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .door {
+    transition: none;
+  }
+}
+@media (max-width: 700px) {
+  .door,
+  .door-night {
+    padding-left: 2.6rem;
+    transform: none;
+  }
+  .door:hover,
+  .door:focus-within {
+    transform: none;
   }
 }

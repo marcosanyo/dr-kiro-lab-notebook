@@ -121,7 +121,7 @@ def decoration(kind: str) -> list[Segment]:
     ]
     spider = [
         *html.element(
-            "path", {"class": "thread", "d": "M24 0 L24 64", "stroke": "currentColor", "fill": "none"}, []
+            "path", {"class": "thread", "d": "M24 0 L24 79", "stroke": "currentColor", "fill": "none"}, []
         ),
         *html.element(
             "path",

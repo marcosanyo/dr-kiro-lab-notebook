@@ -303,7 +303,7 @@ def test_the_chart_is_one_line_that_fills_its_frame_and_has_no_scattered_dots(si
         path = re.search(r'<path class="ch-line" d="([^"]*)"', page)
         assert path, name
         ys = [float(y) for y in re.findall(r"[ V]([0-9.]+)(?=[HV]|$)", path.group(1))]
-        assert ys and min(ys) > 41 and max(ys) < 215, (name, min(ys), max(ys))  # the frame is 40 to 220
+        assert ys and min(ys) > 47 and max(ys) < 261, (name, min(ys), max(ys))  # the frame is 46 to 266
         assert "hollow" not in page
 
 
