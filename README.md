@@ -1,42 +1,58 @@
 # Dr. Kiro's Lab Notebook
 
-**Discover the spec. Don't just follow it.** Built for Kiroween 2026, Skeleton Crew category.
+**Experiment-Driven Spec Discovery.** Spec-Driven Development builds code from a spec. This project does the
+reverse: a Kiro agent runs experiments on a system nobody documented and builds its spec from the results.
+Built for Kiroween 2026, Skeleton Crew category.
+
+*Normally the spec judges the code. Here, the experiment judges the spec.*
+
+[Demo video](https://youtu.be/CHkGD1Vu8Kg) · [Try it locally](#three-ways-to-try-it) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro in Kiro IDE](#3-run-dr-kiro-yourself-in-kiro-ide)
 
 ![Dr. Kiro, a ghost in a lab coat, sketches a wind tunnel on the left page of a notebook; on the right page, a small stitched robot.](docs/img/hero.png)
 
-[Demo video](https://youtu.be/CHkGD1Vu8Kg) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro yourself](#3-run-dr-kiro-yourself-in-kiro-ide)
+Kiro can read your source code, but not behavior that only shows up when a system runs. Ask an AI to spec a robot
+with unlabeled wires, an old test rig, or a simulator nobody mapped, and every line comes back in the same confident
+`WHEN ... SHALL ...` voice, with nothing to say which lines were tested and which were guessed. Here, every rule is
+put to an experiment, and every wrong one stays in the spec, struck through.
 
-Some systems come with no description: a robot whose wires nobody labelled, a rig with no docs, a simulator nobody
-has mapped. Ask an AI to spec one and every line comes back in the same confident voice, with nothing to say which
-lines were tested and which were guessed. This project writes such a spec from experiments instead.
+The same skeleton runs two labs: a stitched MuJoCo robot and an OpenFOAM wind tunnel. After I secretly took a tyre
+off the robot, a second Kiro agent given only the updated spec reached its target in **3 of 3** runs; with the old
+spec or no spec, **0 of 3**.
 
 It has three parts, built in Kiro:
 
-- **Dr. Kiro**, a Kiro custom agent that studies a system nobody has described and writes its spec from experiments.
-- **The lab bench**, an MCP server with four tools: Dr. Kiro's only way to touch the system, and the thing that
-  enforces the method.
-- **The Lab Notebook**, a website built from the bench's sealed records, where a person reads what was tried, what
-  was predicted and what happened.
+- **Dr. Kiro (Kiro custom agent):** plans experiments in `tasks.md`, registers numeric predictions in
+  `requirements.md`, and keeps the discovered rules in `design.md`.
+- **The lab bench (MCP server):** Dr. Kiro's only way to touch the system, with four tools. It enforces two hard
+  rules: **no prediction on record, no run**, and **no evidence in the log, no `validated` stamp**.
+- **The Lab Notebook (static site + live view):** built from the bench's sealed, hash-chained records, where a person
+  reads every trial, moving picture, prediction and struck-through rule.
 
 **One experiment, in five steps:**
 
 1. Dr. Kiro gets a robot with five unlabeled wires (channels c0 to c4) and no manual.
-2. It adds a line to its `tasks.md` and writes a numeric prediction into `requirements.md`: *a travelling wave
+2. It adds a line to its `tasks.md` and writes a numeric prediction into `requirements.md`: *a traveling wave
    across the wires will move the robot more than 0.20 m forward.* The bench refuses to run an experiment until a
    prediction is on record.
-3. The bench runs the simulator and records the result in a hash-chained record. The robot went 0.20 m backwards.
-4. The rule stays in `design.md`, never erased: its row is marked `rejected` and names its replacement. The notebook
-   shows that row struck through. Each rule carries a status word (`validated`, `partly`, `observed`, `rejected`)
-   that the bench checks against the record: if Dr. Kiro claims more than the record shows, the bench refuses to
-   seal the session.
+3. The bench runs the simulator and appends the result to a hash-chained log. The robot went 0.20 m backwards.
+4. The rule stays in `design.md`, never erased: rule R4 is marked `rejected` and names its replacement, R5. The
+   notebook shows R4 struck through.
 5. What comes out is an ordinary Kiro spec (`requirements.md`, `design.md`, `tasks.md`) and the notebook. A second
    Kiro agent that never saw the experiments can start from that spec alone.
 
 ![That miss in the notebook: the prediction was more than 0.2 m forward, the robot went back and turned; rule R4 is struck through and rewritten as R5.](docs/img/miss-rule.png)
 
-The status words mean: `validated`, every cited prediction hit and at least one hit was on a new combination or
-outside the range already tried; `observed`, no miss, but only inside what was tried; `partly`, hits and misses;
-`rejected`, a miss, with the rule that replaces it named.
+Every rule in `design.md` ends with a status word, and the bench checks it against the log before it seals the
+session:
+
+| Status | What the bench requires |
+|---|---|
+| `validated` | Every cited prediction hit, and at least one hit was on a new combination or outside the range already tried |
+| `observed` | Every cited prediction hit, but only inside what was already tried |
+| `partly` | Hits and misses |
+| `rejected` | A miss, with the rule that replaces it named |
+
+If Dr. Kiro claims more than the log shows, the bench refuses to seal the session.
 
 ## One skeleton, two applications
 
@@ -65,6 +81,9 @@ smallest working example in [`bench/src/bench/fake/adapter.py`](bench/src/bench/
 adapters in [`wind-tunnel/adapter/`](wind-tunnel/adapter/) and [`body-lab/adapter/`](body-lab/adapter/). Then make its
 lab with `bench-make-lab` and give it a notebook look in `<application>/notebook/app.toml`.
 
+Any system you can drive from code can be a lab: a hardware test rig after a part swap, an internal simulator, a
+legacy service behind a test harness, or an R&D sweep.
+
 ## Blind by design
 
 ![Dr. Kiro works through the bench and gets back numbers and pictures only; the simulator's model files stay sealed, and a hook blocks the shortcut to them.](docs/img/blind.png)
@@ -76,17 +95,18 @@ outside that folder. An automatic check (the blind scan) also keeps the model's 
 of the lab, the bench's messages and the notebook. The reader is blind in a second way: it never sees the
 experiments, only the final spec.
 
-## What happened when we ran it
+## What happened when I ran it
 
 All numbers below come from the sealed records in [`sessions/`](sessions/).
 
 1. **The original robot (`body-2`).** 13 of 24 predictions missed, and 8 of 14 rules ended `rejected`, each
-   paired with its replacement. The rule that held: wire c1 steady and wire c3 on a fast sine, 0.75 m forward. Twice the
-   bench refused to end the session over a `validated` it could not back.
+   paired with its replacement. The rule that held: wire c1 steady and wire c3 on a fast sine, 0.75 m forward. Twice, Dr.
+   Kiro labeled a rule `validated` when every hit sat inside the range it had already tested; both times, the bench
+   refused to seal the session until the status was changed to `observed`.
 
    ![The highlight for the original robot: the miss and the best gait as moving photos, 0.75 m best, 11 of 24 predictions right, 8 rules rejected, and the best distance after each trial.](docs/img/highlight.png)
 
-2. **The twist: we took a tyre off and told no one (`body-3`).** Wire c1 had driven that wheel; now it spun in the
+2. **The twist: I took a tyre off and told no one (`body-3`).** Wire c1 had driven that wheel; now it spun in the
    air. From a blank notebook, Dr. Kiro found a new crawl with c2 and c3 together, 0.27 m at best, and 12 of its 16
    predictions came true.
 
@@ -94,27 +114,27 @@ All numbers below come from the sealed records in [`sessions/`](sessions/).
 
 3. **The test.** A second Kiro, the reader, got one spec and one task on the changed robot: crawl ahead by 0.3 to
    0.5 m (past the 0.27 m Dr. Kiro itself reached on this body), keeping within 0.2 m of the start line and within 20° of
-   the start heading. Each condition got 3 runs of up to 12 trials; the reader never saw Dr. Kiro's experiments.
+   the start heading. Each condition got 3 runs of up to 12 trials, graded against pass bounds committed before the
+   runs started; the reader never saw Dr. Kiro's experiments.
 
    | The reader was given | Passed |
    |---|---|
-   | The spec written before the tyre came off (`body-2`) | 0 of 3 |
-   | The spec written after (`body-3`) | 3 of 3 |
-   | No spec | 0 of 3 |
+   | The spec written before the tyre came off (`body-2`) | **0 of 3** |
+   | The spec written after (`body-3`) | **3 of 3** (all bounds first met in trials 5 to 7 of 12) |
+   | No spec | **0 of 3** |
 
    ![The reader's task and the three results: 0 of 3, 3 of 3, 0 of 3.](docs/img/reader.png)
 
    In all three runs with the old spec, the reader named the c1 rules it would rely on.
-   With the spec written after, each of the three runs first met all three bounds between trials 5 and 7 of its 12.
    The runs are in [`sessions/build-from-spec/body-lab/`](sessions/build-from-spec/body-lab/).
 4. **Same skeleton, another world: the wind tunnel (`wt-004`).** Rounded corners and a long splitter plate stopped
-   the vortex shedding, and the drag coefficient fell from 1.55 to 0.99. 16 of 17 predictions came true; the one miss keeps its rule
+   the vortex shedding, and the drag coefficient fell from 1.55 to 0.993. 16 of 17 predictions came true; the one miss keeps its rule
    `partly`.
 
    ![The wind tunnel's highlight: the square body shedding vortices, the quiet body with rounded corners and a splitter plate, the best drag coefficient 0.993, 16 of 17 predictions, and the best drag after each trial.](docs/img/wind-tunnel.png)
 
 These are rules for these simulators and these conditions, from one to three sessions per lab, and three
-reader runs per condition.
+reader runs per condition. They show the loop working; they are not a benchmark.
 
 ### Read the specs Dr. Kiro wrote
 
@@ -133,7 +153,7 @@ Each is an ordinary Kiro spec, copied from an ended session and checked against 
 | Read or check the records | uv |
 | Run Dr. Kiro in body-lab | uv, Kiro IDE |
 | Run the reader (`build-from-spec/`) | uv, Kiro CLI |
-| Run the wind-tunnel solver | Docker (see [`wind-tunnel/README.md`](wind-tunnel/README.md)) |
+| Run the wind-tunnel solver | uv, Docker (see [`wind-tunnel/README.md`](wind-tunnel/README.md)) |
 | Publish the notebook | the AWS CLI and an AWS account |
 
 uv manages Python 3.12 and the locked dependencies for each part. No other Python install is needed.
@@ -182,7 +202,7 @@ notebook at http://127.0.0.1:8770/ that fills in as Dr. Kiro works. Make sure `u
 3. Choose the agent **Dr. Kiro** and send: `Begin the session.`
 
 Open `.kiro/specs/lab/tasks.md` to watch the experiments appear one line at a time and get ticked. A session takes
-about 10 minutes; the one in the demo video took about 8 minutes and 3.75 Kiro credits.
+about 10 minutes; the one in the demo video (Claude Haiku 5.5) took about 8 minutes and 3.75 Kiro credits.
 
 ![A session in Kiro IDE: hooks, steering and the bench MCP server on the left; every line of tasks.md ticked; the live notebook; Dr. Kiro's summary.](docs/img/ide.png)
 
@@ -196,7 +216,7 @@ sh scripts/try-lab.sh stop
 to the template. `start` again opens a new session, and the running bench server switches to it on the next call. Your trial files stay in
 `bench-run/try/`, which git ignores; `sessions/` is never written.
 
-### Run the tests
+## Run the tests
 
 Each part is its own uv project. For example:
 
@@ -212,6 +232,9 @@ solver setup in [`wind-tunnel/README.md`](wind-tunnel/README.md).
 
 **Inside the product**
 
+In an early test, all the rules lived in the prompt. When I wrote that something was "forbidden," Kiro didn't stop;
+it asked me for permission to do it anyway. Prompts are suggestions, so every rule that matters lives in the tooling:
+
 - **Custom agents.** Dr. Kiro (`body-lab/lab/.kiro/agents/dr-kiro.json`, and the same for the wind tunnel) has no
   shell: its only tools are its lab files and the bench. The reader (`build-from-spec/`) is a second Kiro agent, run with
   Kiro CLI, that starts from one spec and one task, never the experiments.
@@ -221,8 +244,8 @@ solver setup in [`wind-tunnel/README.md`](wind-tunnel/README.md).
   the lab.
 - **Steering.** Two steering files in each lab (`method.md`, `workflow.md`) set Dr. Kiro's loop: one task line per
   experiment, a numeric prediction before every run, a refuted rule kept as `rejected`, never deleted.
-- **Specs.** Dr. Kiro writes its findings as a Kiro spec. The lab itself was built from specs too:
-  `.kiro/specs/` holds lab-bench, dr-kiro, body-lab, wind-tunnel, lab-notebook, notebook-shelf and
+- **Specs.** Dr. Kiro writes its findings as a Kiro spec. The lab itself was built from seven specs
+  too: `.kiro/specs/` holds lab-bench, dr-kiro, body-lab, wind-tunnel, lab-notebook, notebook-shelf and
   build-from-spec.
 
 **Building it**
@@ -235,8 +258,8 @@ solver setup in [`wind-tunnel/README.md`](wind-tunnel/README.md).
   design and tasks in about 10 minutes.
 - **Property-based tests.** Any changed byte of a record fails verification, and a planted word from a hidden model
   is caught by the blind scan. One property stopped a Run all by finding an error in a requirement, not the code:
-  the wind tunnel's mean lift could not be within 1% of the true mean when a window holds part of a cycle. Kiro
-  stopped with three options, and the requirement was rewritten.
+  the wind tunnel's mean lift could not be within 1% of the true mean when a window holds part of a cycle. Instead
+  of weakening the test, Kiro stopped with three options, and the requirement was rewritten.
 
 ## Repository layout
 
@@ -268,6 +291,16 @@ stored.
 sh scripts/publish-notebook.sh create  --profile P --region R --stack S --bucket B
 sh scripts/publish-notebook.sh publish --profile P --region R --stack S --bucket B
 ```
+
+## What's next
+
+The spec written before the tyre came off scored 0 of 3, the same as no spec: when a system changes, its spec goes
+stale without anyone noticing. Next:
+
+- When a system changes, re-run only the affected rules on the bench, and flag which lines still hold and which
+  must be struck through.
+- Have Dr. Kiro update its rule table after every verdict, so the notebook can replay each rule being struck through
+  at the trial that refuted it.
 
 ## License
 
