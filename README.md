@@ -6,7 +6,11 @@ Built for Kiroween 2026, Skeleton Crew category.
 
 *Normally the spec judges the code. Here, the experiment judges the spec.*
 
-[Demo video](https://youtu.be/CHkGD1Vu8Kg) · [Try it locally](#three-ways-to-try-it) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro in Kiro IDE](#3-run-dr-kiro-yourself-in-kiro-ide)
+The same skeleton runs two labs: a stitched MuJoCo robot and an OpenFOAM wind tunnel. After I secretly took a tyre
+off the robot, a second Kiro agent given only the updated spec reached its target in **3 of 3** runs; with the old
+spec or no spec, **0 of 3**.
+
+[Demo video (3 min)](https://youtu.be/CHkGD1Vu8Kg) · [Try it locally](#three-ways-to-try-it) · [The specs Dr. Kiro wrote](#read-the-specs-dr-kiro-wrote) · [Run Dr. Kiro in Kiro IDE](#3-run-dr-kiro-yourself-in-kiro-ide)
 
 ![Dr. Kiro, a ghost in a lab coat, sketches a wind tunnel on the left page of a notebook; on the right page, a small stitched robot.](docs/img/hero.png)
 
@@ -14,10 +18,6 @@ Kiro can read your source code, but not behavior that only shows up when a syste
 with unlabeled wires, an old test rig, or a simulator nobody mapped, and every line comes back in the same confident
 `WHEN ... SHALL ...` voice, with nothing to say which lines were tested and which were guessed. Here, every rule is
 put to an experiment, and every wrong one stays in the spec, struck through.
-
-The same skeleton runs two labs: a stitched MuJoCo robot and an OpenFOAM wind tunnel. After I secretly took a tyre
-off the robot, a second Kiro agent given only the updated spec reached its target in **3 of 3** runs; with the old
-spec or no spec, **0 of 3**.
 
 It has three parts, built in Kiro:
 
@@ -36,7 +36,7 @@ It has three parts, built in Kiro:
    prediction is on record.
 3. The bench runs the simulator and appends the result to a hash-chained log. The robot went 0.20 m backwards.
 4. The rule stays in `design.md`, never erased: rule R4 is marked `rejected` and names its replacement, R5. The
-   notebook shows R4 struck through.
+   notebook shows R4 struck through in red.
 5. What comes out is an ordinary Kiro spec (`requirements.md`, `design.md`, `tasks.md`) and the notebook. A second
    Kiro agent that never saw the experiments can start from that spec alone.
 
@@ -65,8 +65,8 @@ If Dr. Kiro claims more than the log shows, the bench refuses to seal the sessio
 | Budget | 24 solver runs | 40 trials of 5 s |
 | Notebook | by day | at night |
 
-The skeleton is in `bench/`, `notebook/` and `build-from-spec/`. An application plugs in through an adapter with two
-methods ([`bench/src/bench/adapter.py`](bench/src/bench/adapter.py)):
+The skeleton is in `bench/`, `notebook/` and `build-from-spec/`, shared by both applications without change. An
+application plugs in through an adapter with two methods ([`bench/src/bench/adapter.py`](bench/src/bench/adapter.py)):
 
 ```python
 class Adapter(Protocol):
@@ -90,7 +90,7 @@ legacy service behind a test harness, or an R&D sweep.
 
 Dr. Kiro must learn only from experiments, like a subject in a blind test. The simulator's code and model files sit
 in this repository, but Dr. Kiro never sees them: it works inside one folder (`body-lab/lab/` or
-`wind-tunnel/lab/`) and has no shell, and a Kiro hook (`lab/.kiro/hooks/confine.py`) refuses any file access
+`wind-tunnel/lab/`) and has no shell, and a Kiro hook ([`lab/.kiro/hooks/confine.py`](body-lab/lab/.kiro/hooks/confine.py)) refuses any file access
 outside that folder. An automatic check (the blind scan) also keeps the model's own part names, and paths to it, out
 of the lab, the bench's messages and the notebook. The reader is blind in a second way: it never sees the
 experiments, only the final spec.
@@ -145,6 +145,48 @@ Each is an ordinary Kiro spec, copied from an ended session and checked against 
 | The original robot (`body-2`) | [design.md](discovered/body-lab/body-2/design.md) | [requirements.md](discovered/body-lab/body-2/requirements.md) | [tasks.md](discovered/body-lab/body-2/tasks.md) |
 | The changed robot (`body-3`) | [design.md](discovered/body-lab/body-3/design.md) | [requirements.md](discovered/body-lab/body-3/requirements.md) | [tasks.md](discovered/body-lab/body-3/tasks.md) |
 | The wind tunnel (`wt-004`) | [design.md](discovered/wind-tunnel/wt-004/design.md) | [requirements.md](discovered/wind-tunnel/wt-004/requirements.md) | [tasks.md](discovered/wind-tunnel/wt-004/tasks.md) |
+
+## How it uses Kiro
+
+**Inside the product**
+
+In an early test, all the rules lived in the prompt. When I wrote that something was "forbidden," Kiro didn't stop;
+it asked me for permission to do it anyway. Prompts are suggestions, so every rule that matters lives in the tooling:
+
+- **Custom agents.** Dr. Kiro ([`body-lab/lab/.kiro/agents/dr-kiro.json`](body-lab/lab/.kiro/agents/dr-kiro.json), and the same for the wind tunnel) has no
+  shell: its only tools are its lab files and the bench. The reader (`build-from-spec/`) is a second Kiro agent, run with
+  Kiro CLI, that starts from one spec and one task, never the experiments.
+- **MCP.** The bench is one MCP server with four tools: `register_hypothesis`, `run_experiment`, `record_verdict`,
+  `end_session`.
+- **Hooks.** In each lab ([`body-lab/lab/.kiro/hooks/`](body-lab/lab/.kiro/hooks/)), two hooks log every call (before and after it runs) and a third refuses any call outside
+  the lab.
+- **Steering.** Two steering files in each lab ([`method.md`](body-lab/lab/.kiro/steering/method.md),
+  [`workflow.md`](body-lab/lab/.kiro/steering/workflow.md)) set Dr. Kiro's loop: one task line per
+  experiment, a numeric prediction before every run, a refuted rule kept as `rejected`, never deleted.
+- **Specs.** Dr. Kiro writes its findings as a Kiro spec. The lab itself was built from seven specs
+  too: [`.kiro/specs/`](.kiro/specs/) holds lab-bench, dr-kiro, body-lab, wind-tunnel, lab-notebook, notebook-shelf and
+  build-from-spec.
+
+**Building it**
+
+- **Kiro Web, then Kiro IDE.** I started most of the build in Kiro Web, and moved the parts that needed MuJoCo,
+  Docker or a picture renderer to Kiro IDE on a Mac, with a steering file and `docs/status.md` carrying the state
+  across.
+- **A chat first, then the spec.** I talked each part through in an ordinary chat before opening its spec, and each
+  spec says where Kiro must stop and ask; the decisions stay written in it.
+- **Quick Spec.** The live notebook view was one requirement added to a finished spec; Quick Spec turned it into
+  design and tasks in about 10 minutes.
+- **Property-based tests.** Any changed byte of a record fails verification, and a planted word from a hidden model
+  is caught by the blind scan.
+
+**Where Kiro surprised me**
+
+- **A test caught my requirement, not the code.** One property stopped a Run all: the wind tunnel's mean lift could
+  not be within 1% of the true mean when a window holds part of a cycle. Instead of weakening the test, Kiro stopped
+  with three options; I picked one, the requirement was rewritten, and Run all carried on.
+- **Kiro patched its own steering.** After a sub-agent worked around a refused command, Kiro added "a refused
+  command is a stop" to [`.kiro/steering/rules.md`](.kiro/steering/rules.md). Later, another sub-agent tried to
+  `rm -rf` a 4.7 GB folder, hit the guardrail, and stopped to ask me.
 
 ## Requirements
 
@@ -225,41 +267,11 @@ Each part is its own uv project. For example:
 (cd notebook && uv run pytest -q)
 ```
 
+The tests that draw the robot's pictures with MuJoCo (in `notebook/tests/real/` and `body-lab/adapter/tests/`) need
+OpenGL; on a Linux machine without it, they fail. They pass on macOS.
+
 The reader's runs are described in [`build-from-spec/README.md`](build-from-spec/README.md), and the wind tunnel's
 solver setup in [`wind-tunnel/README.md`](wind-tunnel/README.md).
-
-## How it uses Kiro
-
-**Inside the product**
-
-In an early test, all the rules lived in the prompt. When I wrote that something was "forbidden," Kiro didn't stop;
-it asked me for permission to do it anyway. Prompts are suggestions, so every rule that matters lives in the tooling:
-
-- **Custom agents.** Dr. Kiro (`body-lab/lab/.kiro/agents/dr-kiro.json`, and the same for the wind tunnel) has no
-  shell: its only tools are its lab files and the bench. The reader (`build-from-spec/`) is a second Kiro agent, run with
-  Kiro CLI, that starts from one spec and one task, never the experiments.
-- **MCP.** The bench is one MCP server with four tools: `register_hypothesis`, `run_experiment`, `record_verdict`,
-  `end_session`.
-- **Hooks.** In each lab, two hooks log every call (before and after it runs) and a third refuses any call outside
-  the lab.
-- **Steering.** Two steering files in each lab (`method.md`, `workflow.md`) set Dr. Kiro's loop: one task line per
-  experiment, a numeric prediction before every run, a refuted rule kept as `rejected`, never deleted.
-- **Specs.** Dr. Kiro writes its findings as a Kiro spec. The lab itself was built from seven specs
-  too: `.kiro/specs/` holds lab-bench, dr-kiro, body-lab, wind-tunnel, lab-notebook, notebook-shelf and
-  build-from-spec.
-
-**Building it**
-
-- **Kiro Web, then Kiro IDE.** Most of the build started in Kiro Web; the parts that needed MuJoCo, Docker or a
-  picture renderer moved to Kiro IDE on a Mac, with a steering file and `docs/status.md` carrying the state across.
-- **A chat first, then the spec.** Each part was talked through in an ordinary chat before its spec was opened, and
-  each spec says where Kiro must stop and ask; the decisions stay written in it.
-- **Quick Spec.** The live notebook view was one requirement added to a finished spec; Quick Spec turned it into
-  design and tasks in about 10 minutes.
-- **Property-based tests.** Any changed byte of a record fails verification, and a planted word from a hidden model
-  is caught by the blind scan. One property stopped a Run all by finding an error in a requirement, not the code:
-  the wind tunnel's mean lift could not be within 1% of the true mean when a window holds part of a cycle. Instead
-  of weakening the test, Kiro stopped with three options, and the requirement was rewritten.
 
 ## Repository layout
 
